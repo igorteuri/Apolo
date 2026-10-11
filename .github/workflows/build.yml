@@ -1,0 +1,32 @@
+name: Build Ares (Windows)
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build solution
+        run: msbuild Ares.sln /m /restore:false /p:Configuration=Release /p:Platform=x86 /v:minimal
+
+      - name: Collect output
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $dirs = Get-ChildItem -Recurse -Directory -Filter "Release" | Where-Object { $_.FullName -match "\\bin\\Release$" }
+          foreach ($d in $dirs) { Copy-Item "$($d.FullName)\*" dist -Recurse -Force -ErrorAction SilentlyContinue }
+          Copy-Item "Libraries\*" dist -Recurse -Force -ErrorAction SilentlyContinue
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ares-windows
+          path: dist
