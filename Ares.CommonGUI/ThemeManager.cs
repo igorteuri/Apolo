@@ -123,6 +123,21 @@ namespace Ares.CommonGUI
         private static readonly ConditionalWeakTable<object, object> s_Hooked = new ConditionalWeakTable<object, object>();
         private static readonly ConditionalWeakTable<object, object> s_MenuAdded = new ConditionalWeakTable<object, object>();
         private static bool s_Installed;
+        private static bool s_IdleLogged;
+
+        internal static void Log(string where, Exception ex)
+        {
+            try
+            {
+                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares");
+                Directory.CreateDirectory(dir);
+                File.AppendAllText(Path.Combine(dir, "theme.log"),
+                    DateTime.Now.ToString("HH:mm:ss") + " " + where + ": " + (ex == null ? "" : ex.GetType().Name + " " + ex.Message) + Environment.NewLine);
+            }
+            catch (Exception)
+            {
+            }
+        }
 
         public static ThemePalette Current { get; private set; }
         public static int ScalePercent { get; private set; }
@@ -147,6 +162,7 @@ namespace Ares.CommonGUI
             LoadPreferences();
             UpdateRenderer();
             Application.Idle += OnApplicationIdle;
+            Log("install: theme=" + Current.Id + " scale=" + ScalePercent, null);
         }
 
         private static string PreferencesFile
@@ -245,6 +261,11 @@ namespace Ares.CommonGUI
         private static void OnApplicationIdle(object sender, EventArgs e)
         {
             // pick up forms created since the last time (dialogs, tool windows ...)
+            if (!s_IdleLogged)
+            {
+                s_IdleLogged = true;
+                Log("idle: forms=" + Application.OpenForms.Count + " theme=" + Current.Id + " scale=" + ScalePercent, null);
+            }
             foreach (Form f in Application.OpenForms.Cast<Form>().ToList())
             {
                 object dummy;
@@ -270,20 +291,21 @@ namespace Ares.CommonGUI
                 return;
             if (Current == null)
                 return;
-            try
-            {
-                ApplyInternal(control);
-            }
-            catch (Exception)
-            {
-                // theming must never break the application
-            }
+            ApplyInternal(control);
         }
 
         private static void ApplyInternal(Control c)
         {
-            HookControl(c);
-            ApplyToSingleControl(c);
+            try
+            {
+                HookControl(c);
+                ApplyToSingleControl(c);
+            }
+            catch (Exception ex)
+            {
+                // theming must never break the application, and one bad control must not stop the others
+                Log("apply " + c.GetType().Name + " '" + c.Name + "'", ex);
+            }
             foreach (Control child in c.Controls.Cast<Control>().ToList())
             {
                 ApplyInternal(child);
@@ -409,7 +431,14 @@ namespace Ares.CommonGUI
             OriginalState orig = Capture(c);
             ThemePalette p = Current;
 
-            ApplyFont(c, orig);
+            try
+            {
+                ApplyFont(c, orig);
+            }
+            catch (Exception ex)
+            {
+                Log("font " + c.GetType().Name + " '" + c.Name + "'", ex);
+            }
 
             if (p.IsClassic)
             {
