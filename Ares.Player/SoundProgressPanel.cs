@@ -32,7 +32,7 @@ namespace Ares.Player
 
         public class SoundEventArgs : EventArgs
         {
-            public SoundEventArgs(int handle) { SoundHandle = handle; }
+            public SoundEventArgs(int handle) { Handle = handle; }
             public int Handle { get; private set; }
         }
 
