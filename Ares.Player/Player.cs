@@ -104,17 +104,23 @@ namespace Ares.Player
         }
 
         private MusicProgressBar m_MusicProgressBar;
+        private SoundProgressPanel m_SoundPanel;
+        private ToolStripButton m_PauseButton;
+        private bool m_PauseShown;
         private System.Windows.Forms.Timer m_ProgressTimer;
 
         /// <summary>
-        /// Adds the seek bar for the current music title to the info box.
+        /// Adds the seek bar for the current music title (top of the window), the small bars
+        /// for the sound effects (in the info box) and the pause button (toolbar).
         /// </summary>
         private void InitMusicProgressBar()
         {
+            // music bar: full width, directly below the toolbar
             m_MusicProgressBar = new MusicProgressBar();
             m_MusicProgressBar.Name = "musicProgressBar";
-            m_MusicProgressBar.Location = new Point(8, soundsLabel.Bottom + 10);
-            m_MusicProgressBar.Width = groupBox3.ClientSize.Width - 2 * 8;
+            // geometry is derived from existing controls, so that it is correct with any font scaling
+            m_MusicProgressBar.Location = new Point(groupBox2.Left, toolStrip1.Bottom + 3);
+            m_MusicProgressBar.Size = new Size(groupBox5.Right - groupBox2.Left, groupBox2.Top - toolStrip1.Bottom - 6);
             m_MusicProgressBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             m_MusicProgressBar.SeekRequested += (sender, e) =>
             {
@@ -122,7 +128,60 @@ namespace Ares.Player
                 if (control != null)
                     control.SeekMusic(e.Seconds);
             };
-            groupBox3.Controls.Add(m_MusicProgressBar);
+            Controls.Add(m_MusicProgressBar);
+
+            // one small bar with a stop button for each sound effect
+            m_SoundPanel = new SoundProgressPanel();
+            m_SoundPanel.Name = "soundProgressPanel";
+            int top = soundsLabel.Bottom + 8;
+            m_SoundPanel.Location = new Point(8, top);
+            m_SoundPanel.Size = new Size(groupBox3.ClientSize.Width - 16, Math.Max(40, groupBox3.ClientSize.Height - top - 8));
+            m_SoundPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            m_SoundPanel.StopRequested += (sender, e) =>
+            {
+                PlayingControl control = m_PlayingControl;
+                if (control != null)
+                    control.StopSound(e.Handle);
+            };
+            m_SoundPanel.SeekRequested += (sender, e) =>
+            {
+                PlayingControl control = m_PlayingControl;
+                if (control != null)
+                    control.SeekSound(e.Handle, e.Seconds);
+            };
+            groupBox3.Controls.Add(m_SoundPanel);
+
+            // pause button, right behind the stop button
+            m_PauseButton = new ToolStripButton();
+            m_PauseButton.Name = "pauseButton";
+            m_PauseButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            m_PauseButton.Click += (sender, e) =>
+            {
+                PlayingControl control = m_PlayingControl;
+                if (control != null)
+                {
+                    control.TogglePause();
+                    UpdatePauseButton(control.IsPaused());
+                }
+            };
+            int stopIndex = toolStrip1.Items.IndexOf(stopButton);
+            toolStrip1.Items.Insert(stopIndex < 0 ? toolStrip1.Items.Count : stopIndex + 1, m_PauseButton);
+            m_PauseShown = true; // forces the first update
+            UpdatePauseButton(false);
+            Ares.CommonGUI.ThemeManager.Changed += (sender, e) =>
+            {
+                bool paused = m_PauseShown;
+                m_PauseShown = !paused;
+                UpdatePauseButton(paused);
+            };
+
+            // the window is now a bit taller: make sure it fits on small screens
+            Load += (sender, e) =>
+            {
+                Rectangle area = Screen.FromControl(this).WorkingArea;
+                if (Height > area.Height)
+                    Height = area.Height;
+            };
 
             m_ProgressTimer = new System.Windows.Forms.Timer();
             m_ProgressTimer.Interval = 200;
@@ -130,25 +189,75 @@ namespace Ares.Player
             m_ProgressTimer.Start();
         }
 
+        private string PauseText(bool paused)
+        {
+            string lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+            if (lang == "pt")
+                return paused ? "Continuar" : "Pausar";
+            if (lang == "de")
+                return paused ? "Fortsetzen" : "Pause";
+            return paused ? "Resume" : "Pause";
+        }
+
+        private void UpdatePauseButton(bool paused)
+        {
+            if (m_PauseButton == null || m_PauseShown == paused && m_PauseButton.Image != null)
+                return;
+            m_PauseShown = paused;
+            m_PauseButton.ToolTipText = PauseText(paused);
+            m_PauseButton.Text = PauseText(paused);
+            Image old = m_PauseButton.Image;
+            m_PauseButton.Image = CreatePauseImage(paused);
+            if (old != null)
+                old.Dispose();
+        }
+
+        private static Image CreatePauseImage(bool showPlayTriangle)
+        {
+            Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
+            Color color = (p != null && !p.IsClassic) ? p.Text : SystemColors.ControlText;
+            Bitmap bmp = new Bitmap(20, 20);
+            using (Graphics g = Graphics.FromImage(bmp))
+            using (SolidBrush brush = new SolidBrush(color))
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                if (showPlayTriangle)
+                {
+                    g.FillPolygon(brush, new Point[] { new Point(5, 3), new Point(5, 17), new Point(17, 10) });
+                }
+                else
+                {
+                    g.FillRectangle(brush, 4, 3, 4, 14);
+                    g.FillRectangle(brush, 12, 3, 4, 14);
+                }
+            }
+            return bmp;
+        }
+
         private void UpdateMusicProgress()
         {
             try
             {
                 PlayingControl control = m_PlayingControl;
+                if (control == null || WindowState == FormWindowState.Minimized || !Visible)
+                    return;
                 double position, length;
-                if (control != null && WindowState != FormWindowState.Minimized && Visible
-                    && control.GetMusicPosition(out position, out length))
-                {
+                if (control.GetMusicPosition(out position, out length))
                     m_MusicProgressBar.SetProgress(position, length);
-                }
                 else
-                {
                     m_MusicProgressBar.Clear();
-                }
+
+                List<Ares.Playing.PlayingFileInfo> sounds = control.GetRunningSounds();
+                if (sounds.Count > 0)
+                    m_SoundPanel.UpdateSounds(sounds);
+                else
+                    m_SoundPanel.ClearSounds();
+
+                UpdatePauseButton(control.IsPaused());
             }
             catch (Exception)
             {
-                // the bar is only informative
+                // the bars are only informative
             }
         }
 

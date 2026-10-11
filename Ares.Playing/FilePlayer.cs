@@ -102,6 +102,7 @@ namespace Ares.Playing
                 return 0;
             }
             RunningFileInfo info = new RunningFileInfo();
+            info.File = file;
             bool isStreaming = BassStreamer.Instance.IsStreaming;
             bool useMultiSpeakerChannels = false;
             int speakers = 2;
@@ -462,6 +463,124 @@ namespace Ares.Playing
             lengthSeconds = lengthSec;
             positionSeconds = Math.Min(posSec, lengthSec);
             return true;
+        }
+
+        /// <summary>
+        /// Registers what has to be done to completely stop the element which plays a file
+        /// (not only the file itself, but also repetitions).
+        /// </summary>
+        public void SetStopAction(int handle, Action stopAction)
+        {
+            lock (m_Mutex)
+            {
+                if (m_RunningFiles.ContainsKey(handle))
+                    m_RunningFiles[handle].StopAction = stopAction;
+            }
+        }
+
+        public List<PlayingFileInfo> GetRunningSounds()
+        {
+            List<KeyValuePair<int, ISoundFile>> running = new List<KeyValuePair<int, ISoundFile>>();
+            lock (m_Mutex)
+            {
+                foreach (KeyValuePair<int, RunningFileInfo> pair in m_RunningFiles)
+                {
+                    if (pair.Value.File != null && pair.Value.File.SoundFileType == SoundFileType.SoundEffect)
+                        running.Add(new KeyValuePair<int, ISoundFile>(pair.Key, pair.Value.File));
+                }
+            }
+            running.Sort((a, b) => a.Key.CompareTo(b.Key));
+            List<PlayingFileInfo> result = new List<PlayingFileInfo>();
+            foreach (KeyValuePair<int, ISoundFile> item in running)
+            {
+                double pos, length;
+                if (!GetPlayPosition(item.Key, out pos, out length))
+                {
+                    pos = 0;
+                    length = 0;
+                }
+                string title = item.Value.Path;
+                try
+                {
+                    title = System.IO.Path.GetFileNameWithoutExtension(item.Value.Path);
+                }
+                catch (ArgumentException)
+                {
+                }
+                result.Add(new PlayingFileInfo { Handle = item.Key, FileId = item.Value.Id, Title = title, Position = pos, Length = length });
+            }
+            return result;
+        }
+
+        public bool StopSound(int handle)
+        {
+            Action action = null;
+            lock (m_Mutex)
+            {
+                if (!m_RunningFiles.ContainsKey(handle))
+                    return false;
+                action = m_RunningFiles[handle].StopAction;
+            }
+            if (action != null)
+                action();
+            else
+                StopFile(handle);
+            return true;
+        }
+
+        public bool IsAnyPaused()
+        {
+            foreach (int handle in GetRunningHandles())
+            {
+                if (Bass.BASS_ChannelIsActive(handle) == BASSActive.BASS_ACTIVE_PAUSED)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Pauses all playing files, or resumes all paused files.
+        /// </summary>
+        /// <returns>whether files are paused afterwards</returns>
+        public bool TogglePause()
+        {
+            List<int> handles = GetRunningHandles();
+            bool anyPaused = false;
+            foreach (int handle in handles)
+            {
+                if (Bass.BASS_ChannelIsActive(handle) == BASSActive.BASS_ACTIVE_PAUSED)
+                {
+                    anyPaused = true;
+                    break;
+                }
+            }
+            if (anyPaused)
+            {
+                foreach (int handle in handles)
+                {
+                    if (Bass.BASS_ChannelIsActive(handle) == BASSActive.BASS_ACTIVE_PAUSED)
+                        Bass.BASS_ChannelPlay(handle, false);
+                }
+                return false;
+            }
+            bool pausedSomething = false;
+            foreach (int handle in handles)
+            {
+                if (Bass.BASS_ChannelIsActive(handle) == BASSActive.BASS_ACTIVE_PLAYING)
+                {
+                    if (Bass.BASS_ChannelPause(handle))
+                        pausedSomething = true;
+                }
+            }
+            return pausedSomething;
+        }
+
+        private List<int> GetRunningHandles()
+        {
+            lock (m_Mutex)
+            {
+                return new List<int>(m_RunningFiles.Keys);
+            }
         }
 
         /// <summary>
@@ -993,6 +1112,8 @@ namespace Ares.Playing
             public float Volume { get; set; }
             public List<int> LinkedChannels { get; set; }
             public bool CrossFade { get; set; }
+            public ISoundFile File { get; set; }
+            public Action StopAction { get; set; }
         }
 
         private Dictionary<int, RunningFileInfo> m_RunningFiles;

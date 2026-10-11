@@ -523,7 +523,7 @@
     <value>6, 25</value>
   </data>
   <data name="groupBox3.Size" type="System.Drawing.Size, System.Drawing">
-    <value>403, 266</value>
+    <value>403, 336</value>
   </data>
   <data name="menuStrip1.Text" xml:space="preserve">
     <value>menuStrip1</value>
@@ -577,7 +577,7 @@
     <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="groupBox4.Size" type="System.Drawing.Size, System.Drawing">
-    <value>249, 514</value>
+    <value>249, 584</value>
   </data>
   <data name="&gt;&gt;label17.Type" xml:space="preserve">
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -604,7 +604,7 @@
     <value>toolStrip1</value>
   </data>
   <data name="groupBox5.Location" type="System.Drawing.Point, System.Drawing">
-    <value>676, 52</value>
+    <value>676, 110</value>
   </data>
   <data name="recentToolStripMenuItem.Text" xml:space="preserve">
     <value>Recent</value>
@@ -658,7 +658,7 @@
     <value>label17</value>
   </data>
   <data name="groupBox5.Size" type="System.Drawing.Size, System.Drawing">
-    <value>395, 514</value>
+    <value>395, 584</value>
   </data>
   <data name="&gt;&gt;currentTagsLabel.ZOrder" xml:space="preserve">
     <value>2</value>
@@ -1098,7 +1098,7 @@
     <value>Repeat Current Music</value>
   </data>
   <data name="groupBox1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>12, 437</value>
+    <value>12, 565</value>
   </data>
   <data name="&gt;&gt;label13.Type" xml:space="preserve">
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -1190,7 +1190,7 @@
     <value>23, 22</value>
   </data>
   <data name="groupBox2.Location" type="System.Drawing.Point, System.Drawing">
-    <value>12, 52</value>
+    <value>12, 110</value>
   </data>
   <data name="clearTagsButton.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Right</value>
@@ -1283,7 +1283,7 @@
     <value>True</value>
   </data>
   <data name="groupBox3.Location" type="System.Drawing.Point, System.Drawing">
-    <value>12, 165</value>
+    <value>12, 223</value>
   </data>
   <data name="openButton.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -1992,7 +1992,7 @@
     <value>Extras</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>1083, 578</value>
+    <value>1083, 706</value>
   </data>
   <data name="label9.Text" xml:space="preserve">
     <value>Project:</value>
@@ -2013,7 +2013,7 @@
     <value>6, 261</value>
   </data>
   <data name="groupBox4.Location" type="System.Drawing.Point, System.Drawing">
-    <value>421, 52</value>
+    <value>421, 110</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>Ares Player</value>

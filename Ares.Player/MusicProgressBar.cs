@@ -50,6 +50,11 @@ namespace Ares.Player
 
         private const int Padding_ = 10;
 
+        /// <summary>
+        /// Compact mode (for the small bars of sound effects): no hover bubble, less height.
+        /// </summary>
+        public bool Compact { get; set; }
+
         public MusicProgressBar()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint
@@ -106,7 +111,7 @@ namespace Ares.Player
 
         private int TrackCenterY
         {
-            get { return 24; }
+            get { return Compact ? 8 : 24; }
         }
 
         private int PixelFor(double seconds)
@@ -245,7 +250,7 @@ namespace Ares.Player
                 }
 
                 // hover time bubble
-                if (m_Hover || m_Dragging)
+                if ((m_Hover || m_Dragging) && !Compact)
                 {
                     double hoverSeconds = m_Dragging ? m_DragPosition : SecondsFor(m_HoverX);
                     string bubble = FormatTime(hoverSeconds);
@@ -269,7 +274,7 @@ namespace Ares.Player
             // times
             string left = m_Seekable ? FormatTime(shown) : "--:--";
             string right = m_Seekable ? FormatTime(m_Length) : "--:--";
-            int textY = TrackCenterY + 10;
+            int textY = TrackCenterY + (Compact ? 8 : 10);
             Rectangle leftRect = new Rectangle(Padding_ - 2, textY, Width / 2, Font.Height + 2);
             Rectangle rightRect = new Rectangle(Width / 2 - Padding_ + 2, textY, Width / 2, Font.Height + 2);
             TextRenderer.DrawText(g, left, Font, leftRect, m_Seekable ? text : dim,

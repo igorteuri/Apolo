@@ -544,6 +544,11 @@ namespace Ares.Playing
                     CurrentPlayedHandle = handle;
                     CurrentFadeOut = fileElement.Effects.FadeOutTime;
                 }
+                if (handle != 0)
+                {
+                    // allows the user interface to stop this sound (including repetitions)
+                    ((FilePlayer)PlayingModule.FilePlayer).SetStopAction(handle, () => StopSounds(0));
+                }
             }
             else
             {
@@ -967,6 +972,31 @@ namespace Ares.Playing
             if (handle == 0)
                 return false;
             return ((FilePlayer)PlayingModule.FilePlayer).GetPlayPosition(handle, out positionSeconds, out lengthSeconds);
+        }
+
+        public List<PlayingFileInfo> GetRunningSounds()
+        {
+            return ((FilePlayer)PlayingModule.FilePlayer).GetRunningSounds();
+        }
+
+        public bool StopSound(int handle)
+        {
+            return ((FilePlayer)PlayingModule.FilePlayer).StopSound(handle);
+        }
+
+        public bool SetSoundPosition(int handle, double positionSeconds)
+        {
+            return ((FilePlayer)PlayingModule.FilePlayer).SetPlayPosition(handle, positionSeconds);
+        }
+
+        public bool TogglePause()
+        {
+            return ((FilePlayer)PlayingModule.FilePlayer).TogglePause();
+        }
+
+        public bool IsPaused()
+        {
+            return ((FilePlayer)PlayingModule.FilePlayer).IsAnyPaused();
         }
 
         public bool SetMusicPosition(double positionSeconds)

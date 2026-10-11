@@ -18,6 +18,7 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 using System;
+using System.Collections.Generic;
 
 namespace Ares.Playing
 {
@@ -64,6 +65,20 @@ namespace Ares.Playing
         int PlayFile(ISoundFile file, int fadeInTime, PlayingFinished callback, bool loop);
         void StopFile(int handle);
         void StopFile(int handle, bool fadeOut, int fadeOutTime, bool isCrossFade);
+    }
+
+    /// <summary>
+    /// Information about a file which is currently playing.
+    /// </summary>
+    public class PlayingFileInfo
+    {
+        public int Handle { get; set; }
+        public int FileId { get; set; }
+        public String Title { get; set; }
+        /// <summary>Position in seconds</summary>
+        public double Position { get; set; }
+        /// <summary>Length in seconds, 0 if unknown</summary>
+        public double Length { get; set; }
     }
 
     public enum MessageType
@@ -322,6 +337,32 @@ namespace Ares.Playing
         /// Jumps to a position (in seconds) in the music title which is currently playing.
         /// </summary>
         bool SetMusicPosition(double positionSeconds);
+
+        /// <summary>
+        /// Gets the sound effects which are currently playing.
+        /// </summary>
+        List<PlayingFileInfo> GetRunningSounds();
+
+        /// <summary>
+        /// Stops a single running sound effect (and its repetitions).
+        /// </summary>
+        bool StopSound(int handle);
+
+        /// <summary>
+        /// Jumps to a position (in seconds) in a running sound effect.
+        /// </summary>
+        bool SetSoundPosition(int handle, double positionSeconds);
+
+        /// <summary>
+        /// Pauses everything which is playing, or resumes everything which was paused.
+        /// </summary>
+        /// <returns>whether the playing is paused afterwards</returns>
+        bool TogglePause();
+
+        /// <summary>
+        /// Whether something is currently paused.
+        /// </summary>
+        bool IsPaused();
 
         /// <summary>
         /// Adds a music tag to the list of possible tags. If there is a file

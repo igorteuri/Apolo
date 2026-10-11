@@ -344,6 +344,31 @@ namespace Ares.Players
             return PlayingModule.ProjectPlayer.GetMusicPosition(out positionSeconds, out lengthSeconds);
         }
 
+        public List<PlayingFileInfo> GetRunningSounds()
+        {
+            return PlayingModule.ProjectPlayer.GetRunningSounds();
+        }
+
+        public void StopSound(int handle)
+        {
+            PlayingModule.ProjectPlayer.StopSound(handle);
+        }
+
+        public void SeekSound(int handle, double positionSeconds)
+        {
+            PlayingModule.ProjectPlayer.SetSoundPosition(handle, positionSeconds);
+        }
+
+        public bool TogglePause()
+        {
+            return PlayingModule.ProjectPlayer.TogglePause();
+        }
+
+        public bool IsPaused()
+        {
+            return PlayingModule.ProjectPlayer.IsPaused();
+        }
+
         public void SeekMusic(double positionSeconds)
         {
             PlayingModule.ProjectPlayer.SetMusicPosition(positionSeconds);
