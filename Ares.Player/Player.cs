@@ -107,6 +107,8 @@ namespace Ares.Player
         private SoundProgressPanel m_SoundPanel;
         private ToolStripButton m_PauseButton;
         private bool m_PauseShown;
+        private ToolStripDropDownButton m_OutputButton;
+        private int m_OutputShown = int.MinValue;
         private System.Windows.Forms.Timer m_ProgressTimer;
 
         /// <summary>
@@ -175,6 +177,24 @@ namespace Ares.Player
                 UpdatePauseButton(paused);
             };
 
+            // audio output selector, at the right end of the toolbar
+            m_OutputButton = new ToolStripDropDownButton();
+            m_OutputButton.Name = "outputDeviceButton";
+            m_OutputButton.Alignment = ToolStripItemAlignment.Right;
+            m_OutputButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+            m_OutputButton.ToolTipText = OutputToolTip();
+            m_OutputButton.DropDownOpening += (sender, e) => FillOutputMenu();
+            m_OutputButton.Image = CreateSpeakerImage();
+            toolStrip1.Items.Add(m_OutputButton);
+            UpdateOutputButton();
+            Ares.CommonGUI.ThemeManager.Changed += (sender, e) =>
+            {
+                Image oldImage = m_OutputButton.Image;
+                m_OutputButton.Image = CreateSpeakerImage();
+                if (oldImage != null)
+                    oldImage.Dispose();
+            };
+
             // the window is now a bit taller: make sure it fits on small screens
             Load += (sender, e) =>
             {
@@ -187,6 +207,109 @@ namespace Ares.Player
             m_ProgressTimer.Interval = 200;
             m_ProgressTimer.Tick += (sender, e) => UpdateMusicProgress();
             m_ProgressTimer.Start();
+        }
+
+        private string OutputToolTip()
+        {
+            string lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+            if (lang == "pt")
+                return "Saída de áudio (placa de som)";
+            if (lang == "de")
+                return "Audioausgabe (Soundkarte)";
+            return "Audio output (sound card)";
+        }
+
+        private static string ShortName(string name, int maxLength)
+        {
+            if (name == null)
+                return string.Empty;
+            return name.Length <= maxLength ? name : name.Substring(0, maxLength - 1) + "\u2026";
+        }
+
+        private string DeviceName(int deviceIndex)
+        {
+            try
+            {
+                foreach (Ares.Playing.BassInit.OutputDevice device in Ares.Playing.BassInit.GetDevices())
+                {
+                    if (device.Index == deviceIndex)
+                        return device.Name;
+                }
+            }
+            catch (Exception)
+            {
+            }
+            return deviceIndex.ToString();
+        }
+
+        private void UpdateOutputButton()
+        {
+            if (m_OutputButton == null)
+                return;
+            int index = Settings.Settings.Instance.OutputDeviceIndex;
+            if (index == m_OutputShown)
+                return;
+            m_OutputShown = index;
+            string name = DeviceName(index);
+            m_OutputButton.Text = ShortName(name, 28);
+            m_OutputButton.ToolTipText = OutputToolTip() + ": " + name;
+        }
+
+        private void FillOutputMenu()
+        {
+            m_OutputButton.DropDownItems.Clear();
+            int current = Settings.Settings.Instance.OutputDeviceIndex;
+            List<Ares.Playing.BassInit.OutputDevice> devices;
+            try
+            {
+                devices = Ares.Playing.BassInit.GetActiveDevices();
+            }
+            catch (Exception)
+            {
+                return;
+            }
+            foreach (Ares.Playing.BassInit.OutputDevice device in devices)
+            {
+                int index = device.Index;
+                ToolStripMenuItem item = new ToolStripMenuItem(device.Name);
+                item.Checked = index == current;
+                item.Click += (sender, e) => ChangeOutputDevice(index);
+                m_OutputButton.DropDownItems.Add(item);
+            }
+        }
+
+        private void ChangeOutputDevice(int deviceIndex)
+        {
+            if (deviceIndex == Settings.Settings.Instance.OutputDeviceIndex)
+                return;
+            try
+            {
+                m_BassInit.SwitchDeviceKeepPlaying(deviceIndex);
+                Settings.Settings.Instance.OutputDeviceIndex = deviceIndex;
+                WriteSettings();
+            }
+            catch (Ares.Playing.BassInitException)
+            {
+                MessageBox.Show(this, String.Format(StringResources.DeviceInitError), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            UpdateOutputButton();
+        }
+
+        private static Image CreateSpeakerImage()
+        {
+            Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
+            Color color = (p != null && !p.IsClassic) ? p.Text : SystemColors.ControlText;
+            Bitmap bmp = new Bitmap(20, 20);
+            using (Graphics g = Graphics.FromImage(bmp))
+            using (SolidBrush brush = new SolidBrush(color))
+            using (Pen pen = new Pen(color, 1.6f))
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.FillPolygon(brush, new Point[] { new Point(2, 7), new Point(6, 7), new Point(11, 3), new Point(11, 17), new Point(6, 13), new Point(2, 13) });
+                g.DrawArc(pen, 9, 6, 6, 8, -60, 120);
+                g.DrawArc(pen, 8, 3, 10, 14, -60, 120);
+            }
+            return bmp;
         }
 
         private string PauseText(bool paused)
@@ -254,6 +377,7 @@ namespace Ares.Player
                     m_SoundPanel.ClearSounds();
 
                 UpdatePauseButton(control.IsPaused());
+                UpdateOutputButton();
             }
             catch (Exception)
             {

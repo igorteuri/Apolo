@@ -184,6 +184,71 @@ namespace Ares.Playing
             return result;
         }
 
+        /// <summary>
+        /// Gets the output devices which can currently be used.
+        /// </summary>
+        public static List<OutputDevice> GetActiveDevices()
+        {
+            var result = new List<OutputDevice>();
+            result.Add(new OutputDevice() { Index = -1, Name = StringResources.Default });
+            var infos = Un4seen.Bass.Bass.BASS_GetDeviceInfos();
+            for (int i = 1; i < infos.Length; ++i)
+            {
+                if (infos[i].IsEnabled)
+                    result.Add(new OutputDevice() { Index = i, Name = infos[i].name });
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Switches to another output device without interrupting what is playing:
+        /// the running channels are moved to the new device.
+        /// If this isn't possible, nothing changes and an exception is thrown.
+        /// </summary>
+        public void SwitchDeviceKeepPlaying(int newDevice)
+        {
+            int oldDevice = Un4seen.Bass.Bass.BASS_GetDevice();
+            if (!Un4seen.Bass.Bass.BASS_Init(newDevice, 44100, Un4seen.Bass.BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero))
+            {
+                if (Un4seen.Bass.Bass.BASS_ErrorGetCode() == Un4seen.Bass.BASSError.BASS_ERROR_ALREADY)
+                    return; // this device is already in use
+                throw new BassInitException(MakeBassInitErrorMessage());
+            }
+            int actualNew = Un4seen.Bass.Bass.BASS_GetDevice();
+            List<int> moved = new List<int>();
+            bool failed = false;
+            foreach (int channel in ((FilePlayer)PlayingModule.FilePlayer).GetAllChannelHandles())
+            {
+                if (Un4seen.Bass.Bass.BASS_ChannelSetDevice(channel, actualNew))
+                {
+                    moved.Add(channel);
+                }
+                else
+                {
+                    Un4seen.Bass.BASSError error = Un4seen.Bass.Bass.BASS_ErrorGetCode();
+                    // channels which already ended or which are only decoding don't matter
+                    if (error != Un4seen.Bass.BASSError.BASS_ERROR_HANDLE && error != Un4seen.Bass.BASSError.BASS_ERROR_DECODE)
+                    {
+                        failed = true;
+                        break;
+                    }
+                }
+            }
+            if (failed)
+            {
+                foreach (int channel in moved)
+                    Un4seen.Bass.Bass.BASS_ChannelSetDevice(channel, oldDevice);
+                Un4seen.Bass.Bass.BASS_SetDevice(actualNew);
+                Un4seen.Bass.Bass.BASS_Free();
+                Un4seen.Bass.Bass.BASS_SetDevice(oldDevice);
+                throw new BassInitException(StringResources.BassDeviceFormat);
+            }
+            // everything moved: the old device isn't needed anymore
+            Un4seen.Bass.Bass.BASS_SetDevice(oldDevice);
+            Un4seen.Bass.Bass.BASS_Free();
+            Un4seen.Bass.Bass.BASS_SetDevice(actualNew);
+        }
+
         public void SwitchDevice(int newDevice)
         {
             try

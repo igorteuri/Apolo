@@ -575,6 +575,24 @@ namespace Ares.Playing
             return pausedSomething;
         }
 
+        /// <summary>
+        /// Gets the handles of all channels used by running files (including linked channels).
+        /// </summary>
+        public List<int> GetAllChannelHandles()
+        {
+            List<int> result = new List<int>();
+            lock (m_Mutex)
+            {
+                foreach (KeyValuePair<int, RunningFileInfo> pair in m_RunningFiles)
+                {
+                    result.Add(pair.Key);
+                    if (pair.Value.LinkedChannels != null)
+                        result.AddRange(pair.Value.LinkedChannels);
+                }
+            }
+            return result;
+        }
+
         private List<int> GetRunningHandles()
         {
             lock (m_Mutex)
