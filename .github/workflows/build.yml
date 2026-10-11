@@ -11,6 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create placeholder Freesound key
+        shell: pwsh
+        run: Copy-Item Ares.AudioSource.Freesound/ApiKey.example.cs Ares.AudioSource.Freesound/ApiKey.cs
+
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
