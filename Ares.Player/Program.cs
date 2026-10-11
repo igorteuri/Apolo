@@ -68,6 +68,7 @@ namespace Ares.Player
             }
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            Ares.CommonGUI.ThemeManager.Install();
             try
             {
                 using (Ares.Playing.BassInit bassInit = new Ares.Playing.BassInit(-1, s => MessageBox.Show(s, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning)))

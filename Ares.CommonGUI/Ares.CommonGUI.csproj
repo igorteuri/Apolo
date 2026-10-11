@@ -58,6 +58,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="KeyChecks.cs" />
+    <Compile Include="ThemeManager.cs" />
     <Compile Include="PathLabel.cs">
       <SubType>Component</SubType>
     </Compile>
