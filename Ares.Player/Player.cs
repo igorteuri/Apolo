@@ -101,6 +101,7 @@ namespace Ares.Player
             PrepareModelChecks();
             m_PlayingControl = new PlayingControl();
             InitMusicProgressBar();
+            InitLibraryDrop();
         }
 
         private MusicProgressBar m_MusicProgressBar;
@@ -679,7 +680,11 @@ namespace Ares.Player
             {
                 IList<Ares.Data.IMode> modes = m_Project.GetModes();
                 if (modes.Count == 0)
+                {
+                    modesList.EndUpdate();
+                    m_Listen = true;
                     return;
+                }
                 modesList.Items.Add(StringResources.MusicList);
                 modesList.Items.Add(StringResources.MusicTags);
                 int i = 2;
