@@ -339,6 +339,16 @@ namespace Ares.Players
         private int m_FadeOnPreviousNextOption = 0;
         private int m_FadeOnPreviousNextTime = 0;
 
+        public bool GetMusicPosition(out double positionSeconds, out double lengthSeconds)
+        {
+            return PlayingModule.ProjectPlayer.GetMusicPosition(out positionSeconds, out lengthSeconds);
+        }
+
+        public void SeekMusic(double positionSeconds)
+        {
+            PlayingModule.ProjectPlayer.SetMusicPosition(positionSeconds);
+        }
+
         public bool MusicRepeat
         {
             get

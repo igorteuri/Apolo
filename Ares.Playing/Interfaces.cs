@@ -312,6 +312,18 @@ namespace Ares.Playing
         bool RepeatCurrentMusic { get; set; }
 
         /// <summary>
+        /// Gets the position and length (in seconds) of the music title which is
+        /// currently playing. Returns false if there is no music playing or
+        /// if its length is unknown (e.g. web radio).
+        /// </summary>
+        bool GetMusicPosition(out double positionSeconds, out double lengthSeconds);
+
+        /// <summary>
+        /// Jumps to a position (in seconds) in the music title which is currently playing.
+        /// </summary>
+        bool SetMusicPosition(double positionSeconds);
+
+        /// <summary>
         /// Adds a music tag to the list of possible tags. If there is a file
         /// with the tag and no tagged music was playing, starts tagged music.
         /// </summary>

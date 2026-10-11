@@ -438,6 +438,51 @@ namespace Ares.Playing
             }
         }
 
+        /// <summary>
+        /// Gets the current play position and total length (in seconds) of a running file.
+        /// Returns false if the file isn't running or has no known length (e.g. web radio).
+        /// </summary>
+        public bool GetPlayPosition(int handle, out double positionSeconds, out double lengthSeconds)
+        {
+            positionSeconds = 0;
+            lengthSeconds = 0;
+            lock (m_Mutex)
+            {
+                if (!m_RunningFiles.ContainsKey(handle))
+                    return false;
+            }
+            long pos = Bass.BASS_ChannelGetPosition(handle);
+            long length = Bass.BASS_ChannelGetLength(handle);
+            if (pos < 0 || length <= 0)
+                return false;
+            double lengthSec = Bass.BASS_ChannelBytes2Seconds(handle, length);
+            double posSec = Bass.BASS_ChannelBytes2Seconds(handle, pos);
+            if (lengthSec <= 0 || posSec < 0)
+                return false;
+            lengthSeconds = lengthSec;
+            positionSeconds = Math.Min(posSec, lengthSec);
+            return true;
+        }
+
+        /// <summary>
+        /// Jumps to a position (in seconds) in a running file.
+        /// </summary>
+        public bool SetPlayPosition(int handle, double positionSeconds)
+        {
+            lock (m_Mutex)
+            {
+                if (!m_RunningFiles.ContainsKey(handle))
+                    return false;
+            }
+            long length = Bass.BASS_ChannelGetLength(handle);
+            if (length <= 0)
+                return false;
+            double lengthSec = Bass.BASS_ChannelBytes2Seconds(handle, length);
+            // stay slightly before the end so that the file doesn't end immediately in an odd state
+            double target = Math.Max(0, Math.Min(positionSeconds, Math.Max(0, lengthSec - 0.2)));
+            return Bass.BASS_ChannelSetPosition(handle, target);
+        }
+
         public void StopFile(int handle)
         {
             StopFile(handle, false, 0, false);

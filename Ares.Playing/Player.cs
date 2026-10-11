@@ -956,6 +956,30 @@ namespace Ares.Playing
             }
         }
 
+        public bool GetMusicPosition(out double positionSeconds, out double lengthSeconds)
+        {
+            positionSeconds = 0;
+            lengthSeconds = 0;
+            IMusicPlayer active = ActiveMusicPlayer;
+            if (active == null)
+                return false;
+            int handle = active.CurrentMusicHandle;
+            if (handle == 0)
+                return false;
+            return ((FilePlayer)PlayingModule.FilePlayer).GetPlayPosition(handle, out positionSeconds, out lengthSeconds);
+        }
+
+        public bool SetMusicPosition(double positionSeconds)
+        {
+            IMusicPlayer active = ActiveMusicPlayer;
+            if (active == null)
+                return false;
+            int handle = active.CurrentMusicHandle;
+            if (handle == 0)
+                return false;
+            return ((FilePlayer)PlayingModule.FilePlayer).SetPlayPosition(handle, positionSeconds);
+        }
+
         private bool m_RepeatCurrentMusic = false;
 
         public bool RepeatCurrentMusic

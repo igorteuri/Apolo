@@ -34,12 +34,15 @@ namespace Ares.Playing
         void SetMusicVolume(int volume);
         void PlayMusicTitle(Int32 elementId, bool fade, bool crossFade, int fadeTimeMs);
         bool RepeatCurrentMusic { set; }
+        int CurrentMusicHandle { get; }
         void ChangeRandomList(IRandomBackgroundMusicList newList);
         void SetMusicOnAllSpeakers(bool onAllSpeakers);
     }
 
     abstract class MusicPlayer : ElementPlayerBase, IMusicPlayer
     {
+        public int CurrentMusicHandle { get { return CurrentPlayedHandle; } }
+
         public virtual void ChangeRandomList(IRandomBackgroundMusicList newList)
         {
         }

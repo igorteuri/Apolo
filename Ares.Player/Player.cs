@@ -100,6 +100,56 @@ namespace Ares.Player
 #endif
             PrepareModelChecks();
             m_PlayingControl = new PlayingControl();
+            InitMusicProgressBar();
+        }
+
+        private MusicProgressBar m_MusicProgressBar;
+        private System.Windows.Forms.Timer m_ProgressTimer;
+
+        /// <summary>
+        /// Adds the seek bar for the current music title to the info box.
+        /// </summary>
+        private void InitMusicProgressBar()
+        {
+            m_MusicProgressBar = new MusicProgressBar();
+            m_MusicProgressBar.Name = "musicProgressBar";
+            m_MusicProgressBar.Location = new Point(8, soundsLabel.Bottom + 10);
+            m_MusicProgressBar.Width = groupBox3.ClientSize.Width - 2 * 8;
+            m_MusicProgressBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            m_MusicProgressBar.SeekRequested += (sender, e) =>
+            {
+                PlayingControl control = m_PlayingControl;
+                if (control != null)
+                    control.SeekMusic(e.Seconds);
+            };
+            groupBox3.Controls.Add(m_MusicProgressBar);
+
+            m_ProgressTimer = new System.Windows.Forms.Timer();
+            m_ProgressTimer.Interval = 200;
+            m_ProgressTimer.Tick += (sender, e) => UpdateMusicProgress();
+            m_ProgressTimer.Start();
+        }
+
+        private void UpdateMusicProgress()
+        {
+            try
+            {
+                PlayingControl control = m_PlayingControl;
+                double position, length;
+                if (control != null && WindowState != FormWindowState.Minimized && Visible
+                    && control.GetMusicPosition(out position, out length))
+                {
+                    m_MusicProgressBar.SetProgress(position, length);
+                }
+                else
+                {
+                    m_MusicProgressBar.Clear();
+                }
+            }
+            catch (Exception)
+            {
+                // the bar is only informative
+            }
         }
 
 #if !MONO
