@@ -60,6 +60,19 @@ namespace Ares.CommonGUI
             return bmp;
         }
 
+        /// <summary>Names of all embedded icons (for the icon picker), sorted.</summary>
+        public static List<string> AllNames()
+        {
+            List<string> result = new List<string>();
+            foreach (string resource in Assembly.GetExecutingAssembly().GetManifestResourceNames())
+            {
+                if (resource.StartsWith("icon.") && resource.EndsWith(".png"))
+                    result.Add(resource.Substring(5, resource.Length - 9));
+            }
+            result.Sort(StringComparer.OrdinalIgnoreCase);
+            return result;
+        }
+
         public static Color ThemeColor()
         {
             ThemePalette p = ThemeManager.Current;
