@@ -32,7 +32,7 @@ namespace Ares.Player
                 m_TrayPause = new ToolStripMenuItem(T("Pausar / continuar", "Pause / resume"));
                 m_TrayPause.Click += (s, e) =>
                 {
-                    PlayingControl control = m_PlayingControl;
+                    Ares.Players.PlayingControl control = m_PlayingControl;
                     if (control != null)
                         control.TogglePause();
                 };
