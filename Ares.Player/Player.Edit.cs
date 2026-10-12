@@ -124,7 +124,7 @@ namespace Ares.Player
             };
             modesList.KeyDown += (s, e) =>
             {
-                if (m_EditMode && e.KeyCode == Keys.F2)
+                if (m_EditMode && e.KeyCode == System.Windows.Forms.Keys.F2)
                     RenameCurrentMode();
             };
         }
