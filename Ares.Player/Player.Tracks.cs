@@ -25,7 +25,7 @@ namespace Ares.Player
         private bool m_TrackPinned = false;
         private int m_TrackLastListId = int.MinValue;
         private Panel m_TrackSplit;
-        private Button m_TrackStrip;
+        private EdgeHandle m_TrackStrip;
         private Label m_TrackTitle;
         private Button m_TrackCollapse;
         private Button m_TrackUp;
@@ -41,8 +41,7 @@ namespace Ares.Player
         private string m_TrackElementTitle;
         private bool m_LeftOpen = true;
         private int m_ModesLeftOriginal;
-        private Button m_LeftStrip;
-        private Button m_LeftCollapse;
+        private EdgeHandle m_LeftStrip;
         private List<TrackRow> m_TrackRows = new List<TrackRow>();
         private List<TrackRow> m_TrackShown = new List<TrackRow>();
         private Timer m_TrackPlayTimer;
@@ -68,14 +67,10 @@ namespace Ares.Player
                 m_TrackSplit.Name = "trackSplit";
                 m_TrackSplit.Cursor = Cursors.VSplit;
                 m_TrackSplit.Visible = false;
-                m_TrackStrip = new Button();
+                m_TrackStrip = new EdgeHandle();
                 m_TrackStrip.Name = "trackStrip";
-                m_TrackStrip.Text = "◀";
-                m_TrackStrip.Font = new Font(m_TrackStrip.Font.FontFamily, 14f, FontStyle.Bold);
-                m_TrackStrip.FlatStyle = FlatStyle.System;
-                m_TrackStrip.UseVisualStyleBackColor = true;
                 m_TrackStrip.Visible = false;
-                new ToolTip().SetToolTip(m_TrackStrip, T("Mostrar a lista de músicas (F9)", "Show the track list (F9)"));
+                new ToolTip().SetToolTip(m_TrackStrip, T("Mostrar / esconder a lista de músicas (F9)", "Show / hide the track list (F9)"));
 
                 m_TrackTitle = new Label();
                 m_TrackTitle.AutoEllipsis = true;
@@ -111,33 +106,18 @@ namespace Ares.Player
                 groupBox5.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
                 m_TrackPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
                 m_TrackSplit.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-                m_TrackStrip.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                m_TrackStrip.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
                 m_LeftOpen = Ares.CommonGUI.Preferences.GetBool("LeftOpen", true);
-                m_LeftStrip = new Button();
+                m_LeftStrip = new EdgeHandle();
                 m_LeftStrip.Name = "leftStrip";
-                m_LeftStrip.Text = "▶";
-                m_LeftStrip.Font = new Font(m_LeftStrip.Font.FontFamily, 14f, FontStyle.Bold);
-                m_LeftStrip.FlatStyle = FlatStyle.System;
-                m_LeftStrip.UseVisualStyleBackColor = true;
-                m_LeftStrip.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-                m_LeftStrip.Visible = false;
-                new ToolTip().SetToolTip(m_LeftStrip, T("Mostrar o painel esquerdo (volume, estado, rede) (F8)", "Show the left panel (volume, state, network) (F8)"));
-                m_LeftStrip.Click += (s, e) => SetLeftOpen(true);
-                m_LeftCollapse = new Button();
-                m_LeftCollapse.Name = "leftCollapse";
-                m_LeftCollapse.Text = "◀";
-                m_LeftCollapse.FlatStyle = FlatStyle.System;
-                m_LeftCollapse.UseVisualStyleBackColor = true;
-                m_LeftCollapse.TabStop = false;
-                m_LeftCollapse.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-                new ToolTip().SetToolTip(m_LeftCollapse, T("Esconder o painel esquerdo (F8)", "Hide the left panel (F8)"));
-                m_LeftCollapse.Click += (s, e) => SetLeftOpen(false);
+                m_LeftStrip.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+                new ToolTip().SetToolTip(m_LeftStrip, T("Mostrar / esconder o painel esquerdo (F8)", "Show / hide the left panel (F8)"));
+                m_LeftStrip.Click += (s2, e2) => SetLeftOpen(!m_LeftOpen);
                 host.Controls.Add(m_LeftStrip);
-                host.Controls.Add(m_LeftCollapse);
                 SizeChanged += (s, e) => LayoutMainColumns();
 
-                m_TrackCollapse.Click += (s, e) => SetTrackState(1);
-                m_TrackStrip.Click += (s, e) => SetTrackState(2);
+                m_TrackCollapse.Visible = false;
+                m_TrackStrip.Click += (s, e) => ToggleTrackPanel();
                 m_TrackUp.Click += (s, e) => MoveTrack(-1);
                 m_TrackDown.Click += (s, e) => MoveTrack(1);
                 m_TrackKind.SelectedIndexChanged += (s, e) =>
@@ -290,7 +270,8 @@ namespace Ares.Player
         {
             m_TrackPanel.Visible = m_TrackState == 2;
             m_TrackSplit.Visible = m_TrackState == 2;
-            m_TrackStrip.Visible = m_TrackState == 1;
+            m_TrackStrip.Visible = m_TrackState != 0;
+            m_TrackStrip.PointsLeft = m_TrackState == 1;
         }
 
         // opens / collapses the track panel (state 2 / 1); everything is positioned by LayoutMainColumns
@@ -349,17 +330,15 @@ namespace Ares.Player
             {
                 // left column (volume, state, network) or its strip
                 bool leftOpen = m_LeftOpen;
-                groupBox1.Visible = leftOpen;
+                groupBox1.Visible = false; // the network info lives in Extras > Network
                 groupBox2.Visible = leftOpen;
                 groupBox3.Visible = leftOpen;
-                m_LeftCollapse.Visible = leftOpen;
-                m_LeftStrip.Visible = !leftOpen;
-                int modesLeft = leftOpen ? m_ModesLeftOriginal : 12 + LeftStripWidth + TrackGap;
+                m_LeftStrip.Visible = true;
+                m_LeftStrip.PointsLeft = leftOpen;
+                int modesLeft = leftOpen ? m_ModesLeftOriginal : 12;
                 groupBox4.Left = modesLeft;
                 groupBox5.Left = modesLeft + groupBox4.Width + TrackGap;
-                m_LeftStrip.SetBounds(12, groupBox2.Top, LeftStripWidth, Math.Min(90, groupBox4.Height));
-                m_LeftCollapse.SetBounds(groupBox2.Right - 30, groupBox2.Top + 1, 26, 20);
-                m_LeftCollapse.BringToFront();
+                m_LeftStrip.SetBounds(1, groupBox4.Top, 10, groupBox4.Height);
 
                 // elements box, track panel / strip on the right
                 int right = clientWidth - MainRightMargin;
@@ -368,14 +347,12 @@ namespace Ares.Player
                 int panelWidth = 0;
                 if (m_TrackState == 2)
                     panelWidth = Math.Max(160, Math.Min(m_TrackWidth, right - groupBox5.Left - ElementsMinWidth - TrackGap));
-                else if (m_TrackState == 1)
-                    panelWidth = TrackStripWidth;
                 int reserved = panelWidth > 0 ? panelWidth + TrackGap : 0;
                 groupBox5.Width = Math.Max(100, right - reserved - groupBox5.Left);
                 int left = right - panelWidth;
                 m_TrackPanel.SetBounds(left, top, panelWidth, height);
                 m_TrackSplit.SetBounds(left - TrackGap, top, TrackGap, height);
-                m_TrackStrip.SetBounds(left, top, TrackStripWidth, Math.Min(height, 90));
+                m_TrackStrip.SetBounds(clientWidth - 11, top, 10, height);
                 if (m_TrackState == 2)
                     LayoutTrackPanel();
             }

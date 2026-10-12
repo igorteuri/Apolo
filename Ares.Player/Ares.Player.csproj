@@ -138,6 +138,8 @@
     <Compile Include="Player.Overlay.cs" />
     <Compile Include="Player.Web.cs" />
     <Compile Include="Player.Tray.cs" />
+    <Compile Include="EdgeHandle.cs" />
+    <Compile Include="Player.Status.cs" />
     <Compile Include="SoundProgressPanel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
