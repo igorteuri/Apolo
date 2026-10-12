@@ -95,6 +95,7 @@
     <Compile Include="KeyChecks.cs" />
     <Compile Include="ThemeManager.cs" />
     <Compile Include="LibraryHelper.cs" />
+    <Compile Include="Preferences.cs" />
     <Compile Include="IconLibrary.cs" />
     <Compile Include="DropOptionsDialog.cs" />
     <Compile Include="PathLabel.cs">

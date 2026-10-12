@@ -103,6 +103,7 @@ namespace Ares.Player
             InitMusicProgressBar();
             InitLibraryDrop();
             InitEditMode();
+            InitTray();
         }
 
         private MusicProgressBar m_MusicProgressBar;
@@ -1104,7 +1105,8 @@ namespace Ares.Player
 #endif
             if (keyData == (System.Windows.Forms.Keys.F4 | System.Windows.Forms.Keys.Alt))
             {
-                StopAllPlaying();
+                if (!CloseToTrayEnabled)
+                    StopAllPlaying();
                 Close();
                 return true;
             }
@@ -1319,6 +1321,9 @@ namespace Ares.Player
 
         private void Player_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (TryHideToTray(e))
+                return;
+            notifyIcon.Visible = false;
             Shutdown();
         }
 
@@ -1714,6 +1719,7 @@ namespace Ares.Player
             {
                 if (m_HideToTray && m_WasConnected)
                 {
+                    m_Quitting = true;
                     Close();
                 }
             }
@@ -1726,6 +1732,7 @@ namespace Ares.Player
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            m_Quitting = true;
             Close();
         }
 
@@ -1876,8 +1883,7 @@ namespace Ares.Player
 
         private void notifyIcon_DoubleClick(object sender, EventArgs e)
         {
-            Show();
-            WindowState = FormWindowState.Normal;
+            RestoreFromTray();
         }
 
         private void Player_Resize(object sender, EventArgs e)
