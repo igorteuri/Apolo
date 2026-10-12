@@ -158,6 +158,7 @@ namespace Ares.Player
             m_PauseButton = new ToolStripButton();
             m_PauseButton.Name = "pauseButton";
             m_PauseButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            m_PauseButton.ImageScaling = ToolStripItemImageScaling.None;
             m_PauseButton.Click += (sender, e) =>
             {
                 PlayingControl control = m_PlayingControl;
@@ -183,6 +184,7 @@ namespace Ares.Player
             m_OutputButton.Name = "outputDeviceButton";
             m_OutputButton.Alignment = ToolStripItemAlignment.Right;
             m_OutputButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+            m_OutputButton.ImageScaling = ToolStripItemImageScaling.None;
             m_OutputButton.ToolTipText = OutputToolTip();
             m_OutputButton.DropDownOpening += (sender, e) => FillOutputMenu();
             m_OutputButton.Image = CreateSpeakerImage();
@@ -195,6 +197,35 @@ namespace Ares.Player
                 if (oldImage != null)
                     oldImage.Dispose();
             };
+
+            // modern line icons (Lucide) on the toolbar
+            Ares.CommonGUI.IconLibrary.Bind(toolStrip1, new Dictionary<ToolStripItem, string>
+            {
+                { openButton, "folder-open" },
+                { messagesButton, "message-square-text" },
+                { editorButton, "square-pen" },
+                { settingsButton, "settings" },
+                { aboutButton, "info" },
+                { stopButton, "square" },
+                { previousButton, "skip-back" },
+                { nextButton, "skip-forward" },
+                { repeatButton, "repeat" }
+            }, () =>
+            {
+                try
+                {
+                    bool paused = m_PauseShown;
+                    m_PauseShown = !paused;
+                    UpdatePauseButton(paused);
+                    Image oldImage = m_OutputButton.Image;
+                    m_OutputButton.Image = CreateSpeakerImage();
+                    if (oldImage != null)
+                        oldImage.Dispose();
+                }
+                catch (Exception)
+                {
+                }
+            });
 
             // the window is now a bit taller: make sure it fits on small screens
             Load += (sender, e) =>
@@ -296,21 +327,10 @@ namespace Ares.Player
             UpdateOutputButton();
         }
 
-        private static Image CreateSpeakerImage()
+        private Image CreateSpeakerImage()
         {
-            Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
-            Color color = (p != null && !p.IsClassic) ? p.Text : SystemColors.ControlText;
-            Bitmap bmp = new Bitmap(20, 20);
-            using (Graphics g = Graphics.FromImage(bmp))
-            using (SolidBrush brush = new SolidBrush(color))
-            using (Pen pen = new Pen(color, 1.6f))
-            {
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                g.FillPolygon(brush, new Point[] { new Point(2, 7), new Point(6, 7), new Point(11, 3), new Point(11, 17), new Point(6, 13), new Point(2, 13) });
-                g.DrawArc(pen, 9, 6, 6, 8, -60, 120);
-                g.DrawArc(pen, 8, 3, 10, 14, -60, 120);
-            }
-            return bmp;
+            Image img = Ares.CommonGUI.IconLibrary.Get("volume-2", toolStrip1.ImageScalingSize);
+            return img ?? new Bitmap(20, 20);
         }
 
         private string PauseText(bool paused)
@@ -336,26 +356,10 @@ namespace Ares.Player
                 old.Dispose();
         }
 
-        private static Image CreatePauseImage(bool showPlayTriangle)
+        private Image CreatePauseImage(bool showPlayTriangle)
         {
-            Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
-            Color color = (p != null && !p.IsClassic) ? p.Text : SystemColors.ControlText;
-            Bitmap bmp = new Bitmap(20, 20);
-            using (Graphics g = Graphics.FromImage(bmp))
-            using (SolidBrush brush = new SolidBrush(color))
-            {
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                if (showPlayTriangle)
-                {
-                    g.FillPolygon(brush, new Point[] { new Point(5, 3), new Point(5, 17), new Point(17, 10) });
-                }
-                else
-                {
-                    g.FillRectangle(brush, 4, 3, 4, 14);
-                    g.FillRectangle(brush, 12, 3, 4, 14);
-                }
-            }
-            return bmp;
+            Image img = Ares.CommonGUI.IconLibrary.Get(showPlayTriangle ? "play" : "pause", toolStrip1.ImageScalingSize);
+            return img ?? new Bitmap(20, 20);
         }
 
         private void UpdateMusicProgress()
@@ -396,19 +400,38 @@ namespace Ares.Player
         }
 #endif
 
+        private ToastPanel m_Toast;
+
         private void MessageReceived(Ares.Players.Message m)
         {
             if (m.Type >= MessageType.Warning && (int)m.Type >= Ares.Settings.Settings.Instance.MessageFilterLevel)
             {
-				if (this.IsInvokeRequired())
+                if (this.IsInvokeRequired())
                 {
-                    BeginInvoke(new MethodInvoker(() => ShowMessagesForm()));
+                    BeginInvoke(new MethodInvoker(() => ShowToast(m)));
                 }
                 else
                 {
-                    ShowMessagesForm();
+                    ShowToast(m);
                 }
             }
+        }
+
+        // a small notification in the corner instead of a pop-up window
+        private void ShowToast(Ares.Players.Message m)
+        {
+            if (!listen || m_MessagesForm != null)
+                return;
+            if (WindowState == FormWindowState.Minimized && m_HideToTray)
+                return;
+            if (m_Toast == null)
+            {
+                m_Toast = new ToastPanel();
+                m_Toast.Activated += (s, e) => ShowMessagesForm();
+                Controls.Add(m_Toast);
+                Resize += (s, e) => m_Toast.PositionInParent();
+            }
+            m_Toast.ShowToast(m.Text, m.Type >= MessageType.Error);
         }
 
         private bool listen = true;

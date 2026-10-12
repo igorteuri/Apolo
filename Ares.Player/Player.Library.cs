@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,9 +11,6 @@ namespace Ares.Player
     // Each dropped folder becomes a music list ("playlist") in the mode "Biblioteca".
     public partial class Player
     {
-        private static readonly string[] s_AudioExtensions =
-            { ".mp3", ".wav", ".ogg", ".opus", ".flac", ".m4a", ".aac", ".wma", ".aif", ".aiff", ".mp2", ".mp1" };
-
         private const string LibraryModeTitle = "Biblioteca";
 
         private static bool IsPt
@@ -24,17 +21,62 @@ namespace Ares.Player
 
         private static string LibraryProjectPath
         {
-            get
-            {
-                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares");
-                Directory.CreateDirectory(dir);
-                return Path.Combine(dir, "Biblioteca.ares");
-            }
+            get { return Ares.CommonGUI.LibraryHelper.LibraryProjectPath; }
         }
 
         private void InitLibraryDrop()
         {
             HookDrop(this);
+            try
+            {
+                var lib = new ToolStripMenuItem(IsPt ? "Biblioteca" : "Library");
+                var open = new ToolStripMenuItem(IsPt ? "Abrir Biblioteca" : "Open library");
+                open.Click += (s, e) =>
+                {
+                    string path = LibraryProjectPath;
+                    EnsureProjectFile(path);
+                    OpenProject(path, false);
+                };
+                var show = new ToolStripMenuItem(IsPt ? "Abrir pasta da Biblioteca no Explorer" : "Show library folder in Explorer");
+                show.Click += (s, e) =>
+                {
+                    System.Diagnostics.Process.Start("explorer.exe", "\"" + Ares.CommonGUI.LibraryHelper.LibraryFolder + "\"");
+                };
+                var choose = new ToolStripMenuItem(IsPt ? "Escolher pasta da Biblioteca..." : "Choose library folder...");
+                choose.Click += (s, e) => ChooseLibraryFolder();
+                lib.DropDownItems.AddRange(new ToolStripItem[] { open, show, choose });
+                extrasToolStripMenuItem.DropDownItems.Insert(0, lib);
+                extrasToolStripMenuItem.DropDownItems.Insert(1, new ToolStripSeparator());
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private void ChooseLibraryFolder()
+        {
+            using (var dlg = new FolderBrowserDialog())
+            {
+                dlg.Description = IsPt ? "Pasta onde a Biblioteca (projeto com suas pastas e músicas) será guardada"
+                    : "Folder where the library project will be stored";
+                dlg.SelectedPath = Ares.CommonGUI.LibraryHelper.LibraryFolder;
+                if (dlg.ShowDialog(this) != DialogResult.OK)
+                    return;
+                string oldPath = LibraryProjectPath;
+                bool wasOpen = m_Project != null && string.Equals(m_Project.FileName, oldPath, StringComparison.OrdinalIgnoreCase);
+                Ares.CommonGUI.LibraryHelper.LibraryFolder = dlg.SelectedPath;
+                string newPath = LibraryProjectPath;
+                try
+                {
+                    if (File.Exists(oldPath) && !File.Exists(newPath))
+                        File.Copy(oldPath, newPath);
+                }
+                catch (Exception)
+                {
+                }
+                if (wasOpen && File.Exists(newPath))
+                    OpenProject(newPath, false);
+            }
         }
 
         private void HookDrop(Control control)
@@ -72,51 +114,12 @@ namespace Ares.Player
             BeginInvoke(new MethodInvoker(() => ImportDroppedPaths(paths)));
         }
 
-        private static List<string> AudioFilesIn(string folder)
-        {
-            var result = new List<string>();
-            try
-            {
-                result.AddRange(Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories)
-                    .Where(f => s_AudioExtensions.Contains(Path.GetExtension(f).ToLowerInvariant())));
-            }
-            catch (Exception)
-            {
-            }
-            result.Sort(StringComparer.CurrentCultureIgnoreCase);
-            return result;
-        }
-
         private void ImportDroppedPaths(string[] paths)
         {
             try
             {
-                // collect: one list per folder, one list for loose files
-                var lists = new List<KeyValuePair<string, List<string>>>();
-                var loose = new List<string>();
-                foreach (string p in paths)
-                {
-                    if (Directory.Exists(p))
-                    {
-                        List<string> files = AudioFilesIn(p);
-                        if (files.Count > 0)
-                        {
-                            string name = new DirectoryInfo(p).Name;
-                            lists.Add(new KeyValuePair<string, List<string>>(name, files));
-                        }
-                    }
-                    else if (File.Exists(p) && s_AudioExtensions.Contains(Path.GetExtension(p).ToLowerInvariant()))
-                    {
-                        loose.Add(p);
-                    }
-                }
-                if (loose.Count > 0)
-                {
-                    string name = loose.Count == 1 ? Path.GetFileNameWithoutExtension(loose[0])
-                        : (IsPt ? "Músicas soltas" : "Loose music");
-                    lists.Add(new KeyValuePair<string, List<string>>(name, loose));
-                }
-                if (lists.Count == 0)
+                List<Ares.CommonGUI.DroppedGroup> groups = Ares.CommonGUI.LibraryHelper.Collect(paths);
+                if (groups.Count == 0)
                 {
                     MessageBox.Show(this, IsPt ? "Nenhum arquivo de áudio encontrado no que foi arrastado."
                         : "No audio files found in what was dropped.", StringResources.Ares,
@@ -124,7 +127,11 @@ namespace Ares.Player
                     return;
                 }
 
-                // choose target project
+                int fileCount = groups.Sum(g => g.Files.Count);
+                Ares.CommonGUI.DropOptions options = Ares.CommonGUI.DropOptionsDialog.Ask(this, groups.Count, fileCount);
+                if (options == null)
+                    return;
+
                 string libPath = LibraryProjectPath;
                 string target = libPath;
                 if (m_Project != null && !string.Equals(m_Project.FileName, libPath, StringComparison.OrdinalIgnoreCase))
@@ -139,47 +146,57 @@ namespace Ares.Player
                         target = m_Project.FileName;
                 }
 
+                // loose files go into the mode that is currently selected (if it is a real mode)
+                string looseModeTitle = null;
+                if (m_Project != null && string.Equals(m_Project.FileName, target, StringComparison.OrdinalIgnoreCase)
+                    && modesList.SelectedIndex >= 2 && modesList.SelectedIndex - 2 < m_Project.GetModes().Count)
+                {
+                    looseModeTitle = m_Project.GetModes()[modesList.SelectedIndex - 2].Title;
+                }
+                if (looseModeTitle == null)
+                    looseModeTitle = IsPt ? "Músicas soltas" : "Loose music";
+
                 bool oldWatch = fileSystemWatcher1.EnableRaisingEvents;
                 fileSystemWatcher1.EnableRaisingEvents = false;
                 try
                 {
                     if (m_Project == null || !string.Equals(m_Project.FileName, target, StringComparison.OrdinalIgnoreCase))
                     {
-                        if (!File.Exists(target))
-                        {
-                            IProject created = DataModule.ProjectManager.CreateProject("Biblioteca");
-                            created.FileName = target;
-                            DataModule.ProjectManager.SaveProject(created);
-                            DataModule.ProjectManager.UnloadProject(created);
-                        }
+                        EnsureProjectFile(target);
                         OpenProject(target, false);
                     }
                     if (m_Project == null)
                         return;
                     StopAllPlaying();
 
-                    IMode mode = m_Project.GetModes().FirstOrDefault(m => m.Title == LibraryModeTitle);
-                    if (mode == null)
-                        mode = m_Project.AddMode(LibraryModeTitle);
-
-                    int totalFiles = 0;
-                    foreach (var entry in lists)
+                    int added = 0;
+                    string lastMode = null;
+                    foreach (Ares.CommonGUI.DroppedGroup g in groups)
                     {
-                        IRandomBackgroundMusicList list = DataModule.ElementFactory.CreateRandomBackgroundMusicList(entry.Key);
-                        foreach (string file in entry.Value)
+                        string modeTitle = g.IsLoose ? looseModeTitle : g.Name;
+                        IMode mode = m_Project.GetModes().FirstOrDefault(m => m.Title == modeTitle);
+                        if (mode == null)
+                            mode = m_Project.AddMode(modeTitle);
+                        var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        foreach (IModeElement old in mode.GetElements())
                         {
-                            IFileElement fe = DataModule.ElementFactory.CreateFileElement(file, SoundFileType.Music);
-                            list.AddElement(fe);
-                            totalFiles++;
+                            IFileElement oldFile = old.StartElement as IFileElement;
+                            if (oldFile != null)
+                                existing.Add(oldFile.FilePath);
                         }
-                        IModeElement me = DataModule.ElementFactory.CreateModeElement(entry.Key, list);
-                        mode.AddElement(me);
+                        List<string> newFiles = g.Files.Where(f => !existing.Contains(f)).ToList();
+                        foreach (IModeElement me in Ares.CommonGUI.LibraryHelper.BuildModeElements(g, newFiles, options))
+                        {
+                            mode.AddElement(me);
+                            added++;
+                        }
+                        lastMode = modeTitle;
                     }
                     m_Project.Changed = true;
                     DataModule.ProjectManager.SaveProject(m_Project);
                     OpenProject(m_Project.FileName, false);
-                    SelectLibraryMode();
-                    ShowLibraryMessage(lists.Count, totalFiles);
+                    SelectModeByTitle(lastMode);
+                    ShowLibraryMessage(groups.Count, added);
                 }
                 finally
                 {
@@ -193,14 +210,26 @@ namespace Ares.Player
             }
         }
 
-        private void SelectLibraryMode()
+        private static void EnsureProjectFile(string path)
         {
+            if (File.Exists(path))
+                return;
+            IProject created = DataModule.ProjectManager.CreateProject("Biblioteca");
+            created.FileName = path;
+            DataModule.ProjectManager.SaveProject(created);
+            DataModule.ProjectManager.UnloadProject(created);
+        }
+
+        private void SelectModeByTitle(string title)
+        {
+            if (title == null)
+                return;
             try
             {
                 for (int i = 0; i < modesList.Items.Count; i++)
                 {
                     string t = modesList.Items[i] as string;
-                    if (t != null && t.StartsWith(LibraryModeTitle))
+                    if (t != null && t.StartsWith(title))
                     {
                         modesList.SelectedIndex = i;
                         return;
@@ -214,8 +243,8 @@ namespace Ares.Player
 
         private void ShowLibraryMessage(int lists, int files)
         {
-            this.Text = this.Text + "  -  " + (IsPt ? lists + " lista(s), " + files + " música(s) adicionadas"
-                : lists + " list(s), " + files + " track(s) added");
+            this.Text = this.Text + "  -  " + (IsPt ? lists + " pasta(s)/modo(s), " + files + " música(s) adicionadas"
+                : lists + " mode(s), " + files + " track(s) added");
         }
     }
 }

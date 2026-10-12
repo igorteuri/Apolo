@@ -40,6 +40,23 @@
     </AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Icons\folder-open.png"><LogicalName>icon.folder-open.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\message-square-text.png"><LogicalName>icon.message-square-text.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\square-pen.png"><LogicalName>icon.square-pen.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\settings.png"><LogicalName>icon.settings.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\info.png"><LogicalName>icon.info.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\square.png"><LogicalName>icon.square.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\skip-back.png"><LogicalName>icon.skip-back.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\skip-forward.png"><LogicalName>icon.skip-forward.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\repeat.png"><LogicalName>icon.repeat.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\pause.png"><LogicalName>icon.pause.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\play.png"><LogicalName>icon.play.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\volume-2.png"><LogicalName>icon.volume-2.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\bell.png"><LogicalName>icon.bell.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\pencil.png"><LogicalName>icon.pencil.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\plus.png"><LogicalName>icon.plus.png</LogicalName></EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -59,6 +76,9 @@
     </Compile>
     <Compile Include="KeyChecks.cs" />
     <Compile Include="ThemeManager.cs" />
+    <Compile Include="LibraryHelper.cs" />
+    <Compile Include="IconLibrary.cs" />
+    <Compile Include="DropOptionsDialog.cs" />
     <Compile Include="PathLabel.cs">
       <SubType>Component</SubType>
     </Compile>

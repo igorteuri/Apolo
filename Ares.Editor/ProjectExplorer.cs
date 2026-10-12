@@ -2170,6 +2170,11 @@ namespace Ares.Editor
 
         private void CheckAllowedDrop(DragEventArgs e)
         {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = m_Project != null ? DragDropEffects.Copy : DragDropEffects.None;
+                return;
+            }
             if (e.Data.GetDataPresent(typeof(ClipboardElements)))
             {
                 TreeNode node = projectTree.GetNodeAt(projectTree.PointToClient(new Point(e.X, e.Y)));
@@ -2208,6 +2213,16 @@ namespace Ares.Editor
 
         private void projectTree_DragDrop(object sender, DragEventArgs e)
         {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] droppedPaths = e.Data.GetData(DataFormats.FileDrop) as string[];
+                if (droppedPaths != null && m_Project != null)
+                {
+                    TreeNode dropNode = projectTree.GetNodeAt(projectTree.PointToClient(new Point(e.X, e.Y)));
+                    ImportFromWindowsDrop(droppedPaths, dropNode);
+                }
+                return;
+            }
                 TreeNode node = projectTree.GetNodeAt(projectTree.PointToClient(new Point(e.X, e.Y)));
                 if (node == null || node.Tag is IBackgroundSoundChoice)
                 {
@@ -2271,6 +2286,71 @@ namespace Ares.Editor
                     e.Effect = DragDropEffects.None;
                     return;
                 }
+        }
+
+        // Folders / audio files dragged in from Windows Explorer:
+        // each folder becomes a mode, each audio file becomes an element (button) in it.
+        private void ImportFromWindowsDrop(string[] paths, TreeNode dropNode)
+        {
+            var groups = Ares.CommonGUI.LibraryHelper.Collect(paths);
+            if (groups.Count == 0)
+            {
+                MessageBox.Show(this, "Nenhum arquivo de áudio encontrado / No audio files found.", StringResources.Ares,
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            Ares.CommonGUI.DropOptions options = Ares.CommonGUI.DropOptionsDialog.Ask(this, groups.Count, groups.Sum(x => x.Files.Count));
+            if (options == null)
+                return;
+            Ares.ModelInfo.ModelChecks.Instance.CancelChecks();
+            TreeNode projectNode = projectTree.Nodes[0];
+            // loose files go into the mode under the cursor, if any
+            TreeNode looseTarget = null;
+            for (TreeNode n = dropNode; n != null; n = n.Parent)
+            {
+                if (n.Tag is IMode)
+                {
+                    looseTarget = n;
+                    break;
+                }
+            }
+            bool oldListen = listenForContainerChanges;
+            listenForContainerChanges = false;
+            try
+            {
+                TreeNode lastModeNode = null;
+                foreach (var g in groups)
+                {
+                    TreeNode modeNode;
+                    if (g.IsLoose && looseTarget != null)
+                    {
+                        modeNode = looseTarget;
+                    }
+                    else
+                    {
+                        string name = g.IsLoose ? "Músicas soltas" : g.Name;
+                        Actions.Actions.Instance.AddNew(new AddModeAction(m_Project, projectNode, out modeNode), m_Project);
+                        modeNode.ContextMenuStrip = modeContextMenu;
+                        modeNode.ImageIndex = modeNode.SelectedImageIndex = 8;
+                        (modeNode.Tag as IMode).Title = name;
+                        modeNode.Text = name;
+                    }
+                    foreach (IModeElement me in Ares.CommonGUI.LibraryHelper.BuildModeElements(g, g.Files, options))
+                    {
+                        TreeNode node = CreateModeElementNode(me);
+                        Actions.Actions.Instance.AddNew(new AddModeElementAction(modeNode, me, node), m_Project);
+                        AddSubElements(node, me.StartElement);
+                    }
+                    modeNode.Expand();
+                    lastModeNode = modeNode;
+                }
+                if (lastModeNode != null)
+                    SelectedNode = lastModeNode;
+            }
+            finally
+            {
+                listenForContainerChanges = oldListen;
+            }
         }
 
         private void toolStripMenuItem14_Click(object sender, EventArgs e)
