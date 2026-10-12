@@ -1,4 +1,4 @@
-name: Build Ares (Windows)
+name: Build Apolo (Windows)
 
 on:
   push:
@@ -28,6 +28,11 @@ jobs:
           Copy-Item wv2/lib/net462/Microsoft.Web.WebView2.WinForms.dll Libraries/
           Copy-Item wv2/runtimes/win-x86/native/WebView2Loader.dll Libraries/
 
+      - name: Download cloudflared (tunnel for the remote control)
+        shell: pwsh
+        run: |
+          Invoke-WebRequest "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile Libraries/cloudflared.exe
+
       - name: Build solution
         run: msbuild Ares.sln /m /restore:false /p:Configuration=Release /p:Platform=x86 /v:minimal
 
@@ -42,5 +47,5 @@ jobs:
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: Ares-windows
+          name: Apolo-windows
           path: dist
