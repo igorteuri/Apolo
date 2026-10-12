@@ -143,7 +143,10 @@ namespace Ares.Player
             List<string> result = new List<string>();
             try
             {
-                using (RegistryKey capture = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture"))
+                // Ares is a 32-bit program: look at the 64-bit registry view, where Windows keeps the audio devices
+                string path = @"SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture";
+                using (RegistryKey baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+                using (RegistryKey capture = baseKey.OpenSubKey(path))
                 {
                     if (capture == null)
                         return result;
