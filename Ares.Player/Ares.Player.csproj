@@ -133,7 +133,7 @@
     <Compile Include="ElementButton.cs" />
     <Compile Include="IconPickerDialog.cs" />
     <Compile Include="Player.Share.cs" />
-    <Compile Include="Player.Share.cs" />
+    <Compile Include="Player.List.cs" />
     <Compile Include="Player.Web.cs" />
     <Compile Include="Player.Tray.cs" />
     <Compile Include="SoundProgressPanel.cs" />

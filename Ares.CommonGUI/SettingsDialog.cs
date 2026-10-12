@@ -93,15 +93,28 @@ namespace Ares.CommonGUI
                     int needed = TextRenderer.MeasureText(ch.Text, ch.Font, new Size(int.MaxValue, int.MaxValue), TextFormatFlags.NoPadding | TextFormatFlags.SingleLine).Width
                         + (ch is Label ? 6 : 26);
                     int single = TextRenderer.MeasureText("Ag", ch.Font).Height * 2;
-                    if (ch.Height <= single && needed > ch.Width)
+                    if (ch.Height <= single && needed > ch.Width - 2)
                     {
-                        int delta = needed - ch.Width;
-                        int oldRight = ch.Right;
-                        ch.Width = needed;
+                        // controls to the right of the caption's start in the same row; they may even overlap the old text
+                        List<Control> row = new List<Control>();
+                        int minLeft = int.MaxValue;
                         foreach (Control s in children)
                         {
-                            if (s != ch && s.Left >= oldRight - 3 && s.Top < ch.Bottom && s.Bottom > ch.Top)
-                                s.Left += delta;
+                            if (s != ch && s.Left > ch.Left && s.Top < ch.Bottom && s.Bottom > ch.Top)
+                            {
+                                row.Add(s);
+                                minLeft = Math.Min(minLeft, s.Left);
+                            }
+                        }
+                        ch.Width = needed;
+                        if (row.Count > 0)
+                        {
+                            int delta = ch.Left + needed + 4 - minLeft;
+                            if (delta > 0)
+                            {
+                                foreach (Control s in row)
+                                    s.Left += delta;
+                            }
                         }
                     }
                 }

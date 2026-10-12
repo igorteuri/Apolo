@@ -26,6 +26,7 @@ namespace Ares.Player
                 if (notifyIcon.Icon == null)
                     notifyIcon.Icon = this.Icon;
                 notifyIcon.Text = "Ares";
+                notifyIcon.Visible = true; // always shown in the tray
 
                 m_TrayMenu = new ContextMenuStrip();
                 m_TrayMenu.Items.Add(T("Abrir Ares", "Open Ares"), null, (s, e) => RestoreFromTray());
@@ -91,8 +92,6 @@ namespace Ares.Player
             Show();
             WindowState = FormWindowState.Normal;
             Activate();
-            if (!m_HideToTray)
-                notifyIcon.Visible = false;
         }
 
         private void QuitApplication()

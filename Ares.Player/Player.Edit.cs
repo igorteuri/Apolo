@@ -154,29 +154,29 @@ namespace Ares.Player
             markerRect = Rectangle.Empty;
             foreach (Control c in elementsPanel.Controls)
             {
-                if (!(c is CheckBox))
+                if (!(c is CheckBox) || !c.Visible)
                     continue;
                 Rectangle r = new Rectangle(c.Left - c.Margin.Left, c.Top - c.Margin.Top,
                     c.Width + c.Margin.Horizontal, c.Height + c.Margin.Vertical);
                 if (r.Contains(panelPoint))
                 {
-                    bool before = panelPoint.X < c.Left + c.Width / 2;
+                    bool before = m_ListMode ? panelPoint.Y < c.Top + c.Height / 2 : panelPoint.X < c.Left + c.Width / 2;
                     if (before)
                     {
-                        markerRect = new Rectangle(c.Left - 3, c.Top, 3, c.Height);
+                        markerRect = m_ListMode ? new Rectangle(c.Left, c.Top - 3, c.Width, 3) : new Rectangle(c.Left - 3, c.Top, 3, c.Height);
                         return c;
                     }
                     int idx = elementsPanel.Controls.IndexOf(c);
                     Control next = null;
                     for (int i = idx + 1; i < elementsPanel.Controls.Count; i++)
                     {
-                        if (elementsPanel.Controls[i] is CheckBox)
+                        if (elementsPanel.Controls[i] is CheckBox && elementsPanel.Controls[i].Visible)
                         {
                             next = elementsPanel.Controls[i];
                             break;
                         }
                     }
-                    markerRect = new Rectangle(c.Right, c.Top, 3, c.Height);
+                    markerRect = m_ListMode ? new Rectangle(c.Left, c.Bottom, c.Width, 3) : new Rectangle(c.Right, c.Top, 3, c.Height);
                     return next;
                 }
             }
@@ -184,9 +184,9 @@ namespace Ares.Player
             for (int i = elementsPanel.Controls.Count - 1; i >= 0; i--)
             {
                 Control c = elementsPanel.Controls[i];
-                if (c is CheckBox)
+                if (c is CheckBox && c.Visible)
                 {
-                    markerRect = new Rectangle(c.Right, c.Top, 3, c.Height);
+                    markerRect = m_ListMode ? new Rectangle(c.Left, c.Bottom, c.Width, 3) : new Rectangle(c.Right, c.Top, 3, c.Height);
                     break;
                 }
             }

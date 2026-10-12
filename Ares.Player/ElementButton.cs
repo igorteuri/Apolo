@@ -19,6 +19,7 @@ namespace Ares.Player
         private bool m_Down;
         private Bitmap m_IconCache;
         private string m_IconCacheKey;
+        private bool m_ListMode;
 
         public ElementButton()
         {
@@ -28,6 +29,18 @@ namespace Ares.Player
             Margin = new Padding(4);
             TextAlign = ContentAlignment.MiddleCenter;
             ThemeManager.Changed += OnThemeChanged;
+        }
+
+        /// <summary>Draws the button as one row of a list instead of a card.</summary>
+        public bool ListMode
+        {
+            get { return m_ListMode; }
+            set { m_ListMode = value; Invalidate(); }
+        }
+
+        public static int RowHeight(Font font)
+        {
+            return Math.Max((int)Math.Round(34 * Scale), TextRenderer.MeasureText("Ag", font).Height + 12);
         }
 
         /// <summary>Name of a built-in icon, or null.</summary>
@@ -166,6 +179,45 @@ namespace Ares.Player
             base.OnCheckedChanged(e);
         }
 
+        private void PaintRow(Graphics g, Color text, Color accent)
+        {
+            int pad = (int)Math.Round(8 * Scale);
+            int x = pad;
+            int thumb = Height - 8;
+            if (m_Picture != null)
+            {
+                Rectangle area = new Rectangle(x, 4, thumb, thumb);
+                Region oldClip = g.Clip;
+                g.SetClip(area, CombineMode.Intersect);
+                float scale = Math.Max((float)area.Width / m_Picture.Width, (float)area.Height / m_Picture.Height);
+                int w = (int)Math.Ceiling(m_Picture.Width * scale);
+                int h = (int)Math.Ceiling(m_Picture.Height * scale);
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.DrawImage(m_Picture, area.X + (area.Width - w) / 2, area.Y + (area.Height - h) / 2, w, h);
+                g.Clip = oldClip;
+                oldClip.Dispose();
+                x += thumb + pad;
+            }
+            else if (!string.IsNullOrEmpty(m_IconName))
+            {
+                int size = Math.Min(thumb, IconSize);
+                string key = m_IconName + "|" + size + "|" + accent.ToArgb();
+                if (m_IconCache == null || m_IconCacheKey != key)
+                {
+                    DisposeIconCache();
+                    m_IconCache = IconLibrary.Get(m_IconName, new Size(size, size), Checked ? text : accent);
+                    m_IconCacheKey = key;
+                }
+                if (m_IconCache != null)
+                    g.DrawImage(m_IconCache, x, (Height - size) / 2, size, size);
+                x += size + pad;
+            }
+            Rectangle textRect = new Rectangle(x, 0, Math.Max(10, Width - x - pad), Height);
+            TextRenderer.DrawText(g, Text, Font, textRect, text,
+                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis
+                | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             ThemePalette p = ThemeManager.Current;
@@ -194,7 +246,11 @@ namespace Ares.Player
                 using (SolidBrush b = new SolidBrush(back))
                     g.FillPath(b, path);
 
-                if (m_Picture != null)
+                if (m_ListMode)
+                {
+                    PaintRow(g, text, accent);
+                }
+                else if (m_Picture != null)
                 {
                     int ph = PictureHeight;
                     Rectangle area = new Rectangle(1, 1, Width - 2, ph);
@@ -226,8 +282,11 @@ namespace Ares.Player
                     textTop = pad + size + 4;
                 }
 
+                if (!m_ListMode)
+                {
                 Rectangle textRect = new Rectangle(pad, textTop, Width - 2 * pad, Math.Max(10, textBottom - textTop));
                 TextRenderer.DrawText(g, Text, Font, textRect, text, TextFlags | TextFormatFlags.VerticalCenter);
+                }
 
                 Color line = Checked ? accent : (m_Hover ? accent : border);
                 using (Pen pen = new Pen(line, Checked ? 2f : 1f))

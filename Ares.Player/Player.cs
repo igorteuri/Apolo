@@ -105,6 +105,7 @@ namespace Ares.Player
             InitEditMode();
             InitTray();
             InitWeb();
+            InitListMode();
         }
 
         private void FitMusicBar()
@@ -791,6 +792,14 @@ namespace Ares.Player
         private int m_LastTagCategoryId = -1;
         IList<Ares.Tags.CategoryForLanguage> m_MusicTagCategories;
         
+        /// <summary>Width a button needs for its text with the font really in use (themes and zoom change the font after the buttons were first measured).</summary>
+        private static int MeasureButtonWidth(string text, Font font)
+        {
+            Size s = TextRenderer.MeasureText(text, font, new Size(int.MaxValue, int.MaxValue),
+                TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+            return s.Width + (int)Math.Ceiling(font.Size * 3.2f) + 8;
+        }
+
         private void UpdateElementsPanel()
         {
             int modeIndex = modesList.SelectedIndex;
@@ -906,8 +915,7 @@ namespace Ares.Player
                     for (int i = 0; i < tags.Count; ++i)
                     {
                         String text = tags[i].Name;
-                        checkBox.Text = text;
-                        int width = checkBox.PreferredSize.Width;
+                        int width = MeasureButtonWidth(text, tagSelectionPanel.Font);
                         if (width > maxWidth)
                             maxWidth = width;
                     }
@@ -922,6 +930,9 @@ namespace Ares.Player
                         String text = tags[i].Name;
                         checkBox.Text = text;
                         checkBox.Appearance = Appearance.Button;
+                        checkBox.Font = tagSelectionPanel.Font;
+                        checkBox.AutoEllipsis = false;
+                        checkBox.TextAlign = ContentAlignment.MiddleCenter;
                         Size size = checkBox.PreferredSize;
                         size.Width = maxWidth;
                         checkBox.SetBounds(0, 0, size.Width, size.Height);
@@ -1086,6 +1097,7 @@ namespace Ares.Player
                     label.SetBounds(0, 0, label.PreferredSize.Width, label.PreferredSize.Height);
                     elementsPanel.Controls.Add(label);
                 }
+                AfterElementsBuilt(modeIndex);
                 m_ButtonsActive = true;
                 musicList.Visible = false;
                 tagsPanel.Visible = false;
