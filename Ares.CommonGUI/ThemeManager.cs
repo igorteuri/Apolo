@@ -801,12 +801,75 @@ namespace Ares.CommonGUI
         // Tab control (owner drawn tab headers)
         // --------------------------------------------------------------------------------
 
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<TabControl, object> s_TabPainters =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<TabControl, object>();
+
+        /// <summary>Paints over the light frame which Windows draws around the page of a tab control.</summary>
+        private sealed class TabFramePainter : NativeWindow
+        {
+            private readonly TabControl m_Tab;
+
+            public TabFramePainter(TabControl tc)
+            {
+                m_Tab = tc;
+                if (tc.IsHandleCreated)
+                    AssignHandle(tc.Handle);
+                tc.HandleCreated += delegate
+                {
+                    if (Handle != IntPtr.Zero)
+                        ReleaseHandle();
+                    AssignHandle(m_Tab.Handle);
+                };
+                tc.HandleDestroyed += delegate
+                {
+                    if (Handle != IntPtr.Zero)
+                        ReleaseHandle();
+                };
+            }
+
+            protected override void WndProc(ref Message m)
+            {
+                base.WndProc(ref m);
+                if (m.Msg == 0x000F)   // WM_PAINT
+                    PaintFrame();
+            }
+
+            private void PaintFrame()
+            {
+                try
+                {
+                    ThemePalette p = Current;
+                    if (p == null || p.IsClassic || m_Tab.TabCount == 0)
+                        return;
+                    Rectangle display = m_Tab.DisplayRectangle;
+                    int top = 0;
+                    for (int i = 0; i < m_Tab.TabCount; ++i)
+                        top = Math.Max(top, m_Tab.GetTabRect(i).Bottom);
+                    Rectangle client = m_Tab.ClientRectangle;
+                    Rectangle area = new Rectangle(0, top, client.Width, client.Height - top);
+                    using (Graphics g = Graphics.FromHwnd(m_Tab.Handle))
+                    using (Region r = new Region(area))
+                    using (SolidBrush b = new SolidBrush(p.Window))
+                    {
+                        r.Exclude(display);
+                        g.FillRegion(b, r);
+                    }
+                }
+                catch (Exception)
+                {
+                }
+            }
+        }
+
         private static void ApplyTabControl(TabControl tc)
         {
             ThemePalette p = Current;
             tc.ForeColor = p.Text;
             tc.DrawItem -= OnTabDrawItem;
             tc.DrawItem += OnTabDrawItem;
+            object painter;
+            if (!s_TabPainters.TryGetValue(tc, out painter))
+                s_TabPainters.Add(tc, new TabFramePainter(tc));
             tc.DrawMode = TabDrawMode.OwnerDrawFixed;
             tc.SizeMode = TabSizeMode.Fixed;
             int maxWidth = 40;

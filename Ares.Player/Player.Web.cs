@@ -184,7 +184,20 @@ namespace Ares.Player
  var Orig = window.RTCPeerConnection;
  if (Orig) { window.RTCPeerConnection = new Proxy(Orig, { construct: function(t, a, n) { var pc = Reflect.construct(t, a, n); pcs.push(pc); return pc; } }); }
  var md = navigator.mediaDevices; var gum = md && md.getUserMedia;
- if (gum) { md.getUserMedia = function() { return gum.apply(this, arguments).then(function(s) { s.getAudioTracks().forEach(function(t) { tracks.push(t); if (window.__aresMuted) t.enabled = false; }); return s; }); }; }
+ function reg(s) { s.getAudioTracks().forEach(function(t) { tracks.push(t); if (window.__aresMuted) t.enabled = false; }); return s; }
+ if (gum) { md.getUserMedia = function(c) {
+   var self = this, args = arguments, w = (window.__aresMic || '').toLowerCase();
+   if (!w || !c || !c.audio) return gum.apply(self, args).then(reg);
+   return gum.call(self, { audio: true }).then(function(tmp) { tmp.getTracks().forEach(function(t) { t.stop(); }); return md.enumerateDevices(); }).then(function(list) {
+     var found = null, short = w.indexOf(' (') > 0 ? w.substring(0, w.indexOf(' (')) : w;
+     list.forEach(function(d) { if (!found && d.kind === 'audioinput' && d.label.toLowerCase().indexOf(w) >= 0) found = d; });
+     list.forEach(function(d) { if (!found && d.kind === 'audioinput' && d.label.toLowerCase().indexOf(short) >= 0) found = d; });
+     if (!found) return gum.apply(self, args).then(reg);
+     var nc = Object.assign({}, c), a = (c.audio === true) ? {} : Object.assign({}, c.audio);
+     a.deviceId = { exact: found.deviceId }; nc.audio = a;
+     return gum.call(self, nc).then(reg);
+   }).catch(function() { return gum.apply(self, args).then(reg); });
+ }; }
  var cl = MediaStreamTrack.prototype.clone;
  MediaStreamTrack.prototype.clone = function() { var c = cl.apply(this, arguments); if (c.kind === 'audio') { tracks.push(c); if (window.__aresMuted) c.enabled = false; } return c; };
  window.__aresSetMuted = function(m) { window.__aresMuted = m; tracks.forEach(function(t) { if (t.readyState === 'live') t.enabled = !m; }); pcs.forEach(function(pc) { try { pc.getSenders().forEach(function(s) { if (s.track && s.track.kind === 'audio') s.track.enabled = !m; }); } catch (e) {} }); };
@@ -429,7 +442,7 @@ namespace Ares.Player
                     UpdateTabState(tab);
                 };
                 if (tab.Kind == "vdo")
-                    await core.AddScriptToExecuteOnDocumentCreatedAsync(MuteScript);
+                    await core.AddScriptToExecuteOnDocumentCreatedAsync(BuildInitScript());
                 core.IsMuted = tab.Kind != "vdo" && tab.Muted;
                 core.PermissionRequested += (s, e) =>
                 {
@@ -475,6 +488,15 @@ namespace Ares.Player
                 return;
             }
             }
+        }
+
+        private static string BuildInitScript()
+        {
+            string device = Ares.CommonGUI.Preferences.Get("VdoDevice", "").Trim();
+            if (device.Length == 0)
+                device = ShareDialog.AutoDevice();
+            string json = "\"" + device.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+            return "window.__aresMic = " + json + ";\n" + MuteScript;
         }
 
         private void UpdateTabState(WebTab tab)
