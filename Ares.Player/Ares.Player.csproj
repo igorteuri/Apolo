@@ -123,6 +123,7 @@
     <Compile Include="MusicProgressBar.cs" />
     <Compile Include="Player.Library.cs" />
     <Compile Include="ToastPanel.cs" />
+    <Compile Include="Player.Edit.cs" />
     <Compile Include="SoundProgressPanel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

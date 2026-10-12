@@ -40,6 +40,24 @@
     </AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Icons\upload.png"><LogicalName>icon.upload.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\undo-2.png"><LogicalName>icon.undo-2.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\trash.png"><LogicalName>icon.trash.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\tags.png"><LogicalName>icon.tags.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\search.png"><LogicalName>icon.search.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\save.png"><LogicalName>icon.save.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\refresh-cw.png"><LogicalName>icon.refresh-cw.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\redo-2.png"><LogicalName>icon.redo-2.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\pencil-line.png"><LogicalName>icon.pencil-line.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\log-out.png"><LogicalName>icon.log-out.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\list-music.png"><LogicalName>icon.list-music.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\keyboard.png"><LogicalName>icon.keyboard.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\folder-plus.png"><LogicalName>icon.folder-plus.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\file-plus.png"><LogicalName>icon.file-plus.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\download.png"><LogicalName>icon.download.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\copy.png"><LogicalName>icon.copy.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\clock.png"><LogicalName>icon.clock.png</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Icons\circle-question-mark.png"><LogicalName>icon.circle-question-mark.png</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="Icons\folder-open.png"><LogicalName>icon.folder-open.png</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="Icons\message-square-text.png"><LogicalName>icon.message-square-text.png</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="Icons\square-pen.png"><LogicalName>icon.square-pen.png</LogicalName></EmbeddedResource>

@@ -64,6 +64,36 @@ namespace Ares.Editor
 
             PrepareModelChecks();
             InitializeComponent();
+            Ares.CommonGUI.IconLibrary.Bind(toolStrip1, new Dictionary<ToolStripItem, string>
+            {
+                { newButton, "file-plus" },
+                { openButton, "folder-open" },
+                { saveButton, "save" },
+                { undoButton, "undo-2" },
+                { redoButton, "redo-2" },
+                { stopButton, "square" }
+            });
+            Ares.CommonGUI.IconLibrary.BindMenu(menuStrip1, new Dictionary<string, string>
+            {
+                { "newToolStripMenuItem", "file-plus" },
+                { "openToolStripMenuItem", "folder-open" },
+                { "importToolStripMenuItem", "download" },
+                { "saveToolStripMenuItem", "save" },
+                { "saveAsToolStripMenuItem", "copy" },
+                { "exportToolStripMenuItem", "upload" },
+                { "recentMenuItem", "clock" },
+                { "exitToolStripMenuItem", "log-out" },
+                { "undoToolStripMenuItem", "undo-2" },
+                { "redoToolStripMenuItem", "redo-2" },
+                { "audioSourceSearchToolStripMenuItem", "search" },
+                { "tagsMenuItem", "tags" },
+                { "startPlayerToolStripMenuItem", "play" },
+                { "stopAllToolStipMenuItem", "square" },
+                { "settingsToolStripMenuItem", "settings" },
+                { "helpOnlineToolStripMenuItem", "circle-question-mark" },
+                { "checkForUpdateToolStripMenuItem", "refresh-cw" },
+                { "aboutToolStripMenuItem", "info" }
+            });
 			#if !MONO
             m_Instance.SetWindowHandle(Handle);
             m_Instance.ProjectOpenAction = (projectName2, projectPath) => OpenProjectFromRequest(projectName2, projectPath);

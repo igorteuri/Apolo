@@ -102,6 +102,7 @@ namespace Ares.Player
             m_PlayingControl = new PlayingControl();
             InitMusicProgressBar();
             InitLibraryDrop();
+            InitEditMode();
         }
 
         private MusicProgressBar m_MusicProgressBar;
@@ -226,6 +227,32 @@ namespace Ares.Player
                 {
                 }
             });
+
+            Ares.CommonGUI.IconLibrary.BindMenu(menuStrip1, new Dictionary<string, string>
+            {
+                { "openToolStripMenuItem", "folder-open" },
+                { "importToolStripMenuItem", "download" },
+                { "recentToolStripMenuItem", "clock" },
+                { "exitToolStripMenuItem", "log-out" },
+                { "stopAllToolStripMenuItem", "square" },
+                { "previousMusicToolStripMenuItem", "skip-back" },
+                { "nextMusicTitleToolStripMenuItem", "skip-forward" },
+                { "repeatCurrentMusicToolStripMenuItem", "repeat" },
+                { "startEditorToolStripMenuItem", "square-pen" },
+                { "messagesToolStripMenuItem", "message-square-text" },
+                { "settingsToolStripMenuItem1", "settings" },
+                { "showKeysMenuItem", "keyboard" },
+                { "helpOnlineToolStripMenuItem", "circle-question-mark" },
+                { "checkForUpdateToolStripMenuItem", "refresh-cw" },
+                { "aboutToolStripMenuItem", "info" }
+            });
+
+            // keep the music bar between the (now taller) toolbar and the group boxes
+            toolStrip1.SizeChanged += (sender, e) =>
+            {
+                m_MusicProgressBar.Top = toolStrip1.Bottom + 3;
+                m_MusicProgressBar.Height = Math.Max(34, groupBox2.Top - m_MusicProgressBar.Top - 3);
+            };
 
             // the window is now a bit taller: make sure it fits on small screens
             Load += (sender, e) =>
@@ -1020,6 +1047,7 @@ namespace Ares.Player
                         checkBox.CheckedChanged += handler;
                         m_CurrentButtons.Add(checkBox, handler);
                         m_ButtonsForIds.Add(id, checkBox);
+                        AttachElementMenu(checkBox, id);
                         elementsPanel.Controls.Add(checkBox);
                     }
                     if (count == 0)

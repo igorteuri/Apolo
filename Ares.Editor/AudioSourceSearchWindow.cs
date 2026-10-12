@@ -100,6 +100,12 @@ namespace Ares.Editor.AudioSourceSearch
 
             // Initialize the component
             InitializeComponent();
+            if (playButton.Owner != null)
+                Ares.CommonGUI.IconLibrary.Bind(playButton.Owner, new Dictionary<ToolStripItem, string>
+                {
+                    { playButton, "play" },
+                    { stopButton, "square" }
+                });
 
             // Populate the audio sources combo box
             foreach (IAudioSource audioSource in this.m_AudioSources)

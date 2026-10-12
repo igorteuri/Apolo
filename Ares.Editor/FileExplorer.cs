@@ -72,6 +72,12 @@ namespace Ares.Editor
         public FileExplorer(FileType fileType, IFileExplorerParent parent)
         {
             InitializeComponent();
+            if (playButton.Owner != null)
+                Ares.CommonGUI.IconLibrary.Bind(playButton.Owner, new Dictionary<ToolStripItem, string>
+                {
+                    { playButton, "play" },
+                    { stopButton, "square" }
+                });
             m_Parent = parent;
             this.Text = String.Format(StringResources.FileExplorerTitle, fileType == FileType.Music ? StringResources.Music : StringResources.Sounds);
             m_FileType = fileType;

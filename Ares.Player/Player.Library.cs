@@ -226,15 +226,20 @@ namespace Ares.Player
                 return;
             try
             {
-                for (int i = 0; i < modesList.Items.Count; i++)
+                int found = -1;
+                for (int i = 2; i < modesList.Items.Count && found < 0; i++)
+                {
+                    if (string.Equals(modesList.Items[i] as string, title, StringComparison.Ordinal))
+                        found = i;
+                }
+                for (int i = 2; i < modesList.Items.Count && found < 0; i++)
                 {
                     string t = modesList.Items[i] as string;
                     if (t != null && t.StartsWith(title))
-                    {
-                        modesList.SelectedIndex = i;
-                        return;
-                    }
+                        found = i;
                 }
+                if (found >= 0)
+                    modesList.SelectedIndex = found;
             }
             catch (Exception)
             {

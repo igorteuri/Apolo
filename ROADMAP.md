@@ -12,5 +12,6 @@ Em andamento / próximos:
 Futuro (baixa prioridade):
 - Overlay para OBS: página web local (Browser Source) mostrando o nome da música tocando agora, para lives
 - Entrada de áudio / gravação dentro do Ares para usar como música
+- Rodar na bandeja do Windows (Icon Tray): ao fechar a janela, o programa apenas minimiza para a bandeja e continua tocando
 - Corrigir / atualizar o controle web (web controller)
 - Ajustes finais de tema

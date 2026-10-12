@@ -139,5 +139,67 @@ namespace Ares.CommonGUI
                 }
             };
         }
+
+        /// <summary>
+        /// Puts icons on menu items (looked up by item name, sub-menus included; top-level headers get none).
+        /// </summary>
+        public static void BindMenu(ToolStrip menu, IDictionary<string, string> byName)
+        {
+            Size lastSize = Size.Empty;
+            Color lastColor = Color.Empty;
+            Action apply = () =>
+            {
+                int px = (int)Math.Round(18 * Math.Max(100, ThemeManager.ScalePercent) / 100f);
+                Size size = new Size(px, px);
+                Color color = ThemeColor();
+                lastSize = size;
+                lastColor = color;
+                foreach (ToolStripItem top in menu.Items)
+                {
+                    ToolStripDropDownItem dd = top as ToolStripDropDownItem;
+                    if (dd != null)
+                        ApplyMenuIcons(dd.DropDownItems, byName, size, color);
+                }
+            };
+            apply();
+            EventHandler idle = (s, e) =>
+            {
+                try
+                {
+                    int px = (int)Math.Round(18 * Math.Max(100, ThemeManager.ScalePercent) / 100f);
+                    if (!menu.IsDisposed && (new Size(px, px) != lastSize || ThemeColor() != lastColor))
+                        apply();
+                }
+                catch (Exception)
+                {
+                }
+            };
+            Application.Idle += idle;
+            menu.Disposed += (s, e) => Application.Idle -= idle;
+        }
+
+        private static void ApplyMenuIcons(ToolStripItemCollection items, IDictionary<string, string> byName, Size size, Color color)
+        {
+            foreach (ToolStripItem item in items)
+            {
+                string icon;
+                if (item.Name != null && byName.TryGetValue(item.Name, out icon))
+                {
+                    Bitmap bmp = Get(icon, size, color);
+                    if (bmp != null)
+                    {
+                        Image old = item.Image;
+                        item.ImageScaling = ToolStripItemImageScaling.None;
+                        item.ImageTransparentColor = Color.Empty;
+                        item.Image = bmp;
+                        if (old != null)
+                            old.Dispose();
+                    }
+                }
+                ToolStripDropDownItem dd = item as ToolStripDropDownItem;
+                if (dd != null && dd.HasDropDownItems)
+                    ApplyMenuIcons(dd.DropDownItems, byName, size, color);
+            }
+        }
     }
 }

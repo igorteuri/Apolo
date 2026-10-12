@@ -78,6 +78,12 @@ namespace Ares.Editor
         public ProjectExplorer()
         {
             InitializeComponent();
+            if (playButton.Owner != null)
+                Ares.CommonGUI.IconLibrary.Bind(playButton.Owner, new Dictionary<ToolStripItem, string>
+                {
+                    { playButton, "play" },
+                    { stopButton, "square" }
+                });
             projectTree.ImageList = sImageList;
             ensureDefaultImageIndex(projectTree);
             RecreateTree();
