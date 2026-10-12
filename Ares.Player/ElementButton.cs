@@ -111,7 +111,7 @@ namespace Ares.Player
                 if (kinds[i] == 1)
                     h += IconSize + 4;
                 else if (kinds[i] == 2)
-                    h += PictureHeight - pad;
+                    h = PictureHeight + 4 + textHeight + pad;
                 height = Math.Max(height, h);
             }
             return new Size(width, height);

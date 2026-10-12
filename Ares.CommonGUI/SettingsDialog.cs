@@ -58,6 +58,64 @@ namespace Ares.CommonGUI
             m_BasicSettings = basicSettings;
         }
 
+        // ------------------------------------------------------------------ layout fix for translated / larger texts
+
+        private int m_Overflow;
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            try
+            {
+                m_Overflow = 0;
+                FitCaptions(tabControl);
+                foreach (TabPage page in tabControl.TabPages)
+                    FitCaptions(page);
+                if (m_Overflow > 0)
+                    Width += m_Overflow + 8;
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private void FitCaptions(Control container)
+        {
+            List<Control> children = new List<Control>();
+            foreach (Control c in container.Controls)
+                children.Add(c);
+            foreach (Control ch in children)
+            {
+                bool caption = (ch is Label && !((Label)ch).AutoEllipsis && (ch.Name == null || ch.Name.IndexOf("DirLabel", StringComparison.OrdinalIgnoreCase) < 0))
+                    || ((ch is CheckBox || ch is RadioButton) && !((ButtonBase)ch).AutoSize);
+                if (caption && !string.IsNullOrEmpty(ch.Text))
+                {
+                    int needed = TextRenderer.MeasureText(ch.Text, ch.Font, new Size(int.MaxValue, int.MaxValue), TextFormatFlags.NoPadding | TextFormatFlags.SingleLine).Width
+                        + (ch is Label ? 6 : 26);
+                    int single = TextRenderer.MeasureText("Ag", ch.Font).Height * 2;
+                    if (ch.Height <= single && needed > ch.Width)
+                    {
+                        int delta = needed - ch.Width;
+                        int oldRight = ch.Right;
+                        ch.Width = needed;
+                        foreach (Control s in children)
+                        {
+                            if (s != ch && s.Left >= oldRight - 3 && s.Top < ch.Bottom && s.Bottom > ch.Top)
+                                s.Left += delta;
+                        }
+                    }
+                }
+                if (ch.HasChildren)
+                    FitCaptions(ch);
+            }
+            int maxRight = 0;
+            foreach (Control c in children)
+                maxRight = Math.Max(maxRight, c.Right);
+            int over = maxRight - (container.ClientSize.Width - 6);
+            if (over > m_Overflow && !(container is TabControl))
+                m_Overflow = over;
+        }
+
         public void AddPage(ISettingsDialogPage page)
         {
             TabPage tabPage = new TabPage(page.PageTitle);
