@@ -86,6 +86,10 @@ namespace Ares.Player
             m_ElementMenu.Items.Add(T("Renomear...", "Rename..."), null, (s, e) => RenameElementButton());
             m_ElementMenu.Items.Add(T("Excluir", "Delete"), null, (s, e) => DeleteElementButton());
             m_ElementMenu.Items.Add(new ToolStripSeparator());
+            m_ElementMenu.Items.Add(T("Escolher imagem...", "Choose picture..."), null, (s, e) => ChooseButtonPicture());
+            m_ElementMenu.Items.Add(T("Escolher ícone...", "Choose icon..."), null, (s, e) => ChooseButtonIcon());
+            m_ElementMenu.Items.Add(T("Remover imagem / ícone", "Remove picture / icon"), null, (s, e) => RemoveButtonImage());
+            m_ElementMenu.Items.Add(new ToolStripSeparator());
             m_ElementMenu.Items.Add(T("Mover para trás", "Move earlier"), null, (s, e) => MoveElementButton(-1));
             m_ElementMenu.Items.Add(T("Mover para frente", "Move later"), null, (s, e) => MoveElementButton(1));
 
@@ -469,6 +473,7 @@ namespace Ares.Player
             if (name == null)
                 return;
             int index = modesList.SelectedIndex - 2;
+            Ares.CommonGUI.ButtonImageStore.RenameMode(m_CurrentProjectPath, mode.Title, name);
             ApplyProjectEdit(() => m_Project.GetModes()[index].Title = name, name);
         }
 
@@ -540,7 +545,56 @@ namespace Ares.Player
                 return;
             int modeIndex = modesList.SelectedIndex - 2;
             string modeTitle = mode.Title;
+            Ares.CommonGUI.ButtonImageStore.RenameElement(m_CurrentProjectPath, modeTitle, me.Title, name);
             ApplyProjectEdit(() => m_Project.GetModes()[modeIndex].GetElements()[index].Title = name, modeTitle);
+        }
+
+        private void ChooseButtonPicture()
+        {
+            IMode mode; int index;
+            IModeElement me = MenuElement(out mode, out index);
+            if (me == null || string.IsNullOrEmpty(m_CurrentProjectPath))
+                return;
+            using (OpenFileDialog dlg = new OpenFileDialog())
+            {
+                dlg.Title = T("Escolher imagem do botão", "Choose button picture");
+                dlg.Filter = T("Imagens|*.png;*.jpg;*.jpeg;*.bmp;*.gif|Todos os arquivos|*.*", "Pictures|*.png;*.jpg;*.jpeg;*.bmp;*.gif|All files|*.*");
+                if (dlg.ShowDialog(this) != DialogResult.OK)
+                    return;
+                try
+                {
+                    string spec = Ares.CommonGUI.ButtonImageStore.ImportImage(m_CurrentProjectPath, dlg.FileName);
+                    Ares.CommonGUI.ButtonImageStore.Set(m_CurrentProjectPath, mode.Title, me.Title, spec);
+                    UpdateElementsPanel();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+        }
+
+        private void ChooseButtonIcon()
+        {
+            IMode mode; int index;
+            IModeElement me = MenuElement(out mode, out index);
+            if (me == null || string.IsNullOrEmpty(m_CurrentProjectPath))
+                return;
+            string icon = IconPickerDialog.Pick(this);
+            if (icon == null)
+                return;
+            Ares.CommonGUI.ButtonImageStore.Set(m_CurrentProjectPath, mode.Title, me.Title, "lucide:" + icon);
+            UpdateElementsPanel();
+        }
+
+        private void RemoveButtonImage()
+        {
+            IMode mode; int index;
+            IModeElement me = MenuElement(out mode, out index);
+            if (me == null || string.IsNullOrEmpty(m_CurrentProjectPath))
+                return;
+            Ares.CommonGUI.ButtonImageStore.Set(m_CurrentProjectPath, mode.Title, me.Title, null);
+            UpdateElementsPanel();
         }
 
         private void DeleteElementButton()

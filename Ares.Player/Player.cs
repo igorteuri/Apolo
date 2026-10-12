@@ -791,14 +791,6 @@ namespace Ares.Player
         private int m_LastTagCategoryId = -1;
         IList<Ares.Tags.CategoryForLanguage> m_MusicTagCategories;
         
-        /// <summary>Width a button needs for its text with the font really in use (themes and zoom change the font after the buttons were first measured).</summary>
-        private static int MeasureButtonWidth(string text, Font font)
-        {
-            Size s = TextRenderer.MeasureText(text, font, new Size(int.MaxValue, int.MaxValue),
-                TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
-            return s.Width + (int)Math.Ceiling(font.Size * 3.2f) + 8;
-        }
-
         private void UpdateElementsPanel()
         {
             int modeIndex = modesList.SelectedIndex;
@@ -914,7 +906,8 @@ namespace Ares.Player
                     for (int i = 0; i < tags.Count; ++i)
                     {
                         String text = tags[i].Name;
-                        int width = MeasureButtonWidth(text, tagSelectionPanel.Font);
+                        checkBox.Text = text;
+                        int width = checkBox.PreferredSize.Width;
                         if (width > maxWidth)
                             maxWidth = width;
                     }
@@ -929,9 +922,6 @@ namespace Ares.Player
                         String text = tags[i].Name;
                         checkBox.Text = text;
                         checkBox.Appearance = Appearance.Button;
-                        checkBox.Font = tagSelectionPanel.Font;
-                        checkBox.AutoEllipsis = false;
-                        checkBox.TextAlign = ContentAlignment.MiddleCenter;
                         Size size = checkBox.PreferredSize;
                         size.Width = maxWidth;
                         checkBox.SetBounds(0, 0, size.Width, size.Height);
@@ -1022,10 +1012,14 @@ namespace Ares.Player
                 {
                     bool showKeys = Settings.Settings.Instance.ShowKeysInButtons;
                     KeysConverter converter = new KeysConverter();
-                    IList<Ares.Data.IModeElement> elements = m_Project.GetModes()[modeIndex - 2].GetElements();
-                    int maxWidth = 0;
-                    CheckBox checkBox = new CheckBox();
-                    checkBox.Appearance = Appearance.Button;
+                    Ares.Data.IMode shownMode = m_Project.GetModes()[modeIndex - 2];
+                    IList<Ares.Data.IModeElement> elements = shownMode.GetElements();
+                    string shownModeTitle = shownMode.Title;
+                    // text, picture / icon of every visible button
+                    List<Ares.Data.IModeElement> visible = new List<Ares.Data.IModeElement>();
+                    List<string> texts = new List<string>();
+                    List<string> specs = new List<string>();
+                    List<int> kinds = new List<int>();
                     for (int i = 0; i < elements.Count; ++i)
                     {
                         if (!elements[i].IsVisibleInPlayer)
@@ -1037,37 +1031,33 @@ namespace Ares.Player
                             if (keyCode != 0)
                                 text += " (" + converter.ConvertToString((System.Windows.Forms.Keys)keyCode) + ")";
                         }
-                        int width = MeasureButtonWidth(text, elementsPanel.Font);
-                        if (width > maxWidth)
-                            maxWidth = width;
+                        string spec = Ares.CommonGUI.ButtonImageStore.Get(m_CurrentProjectPath, shownModeTitle, elements[i].Title);
+                        int kind = 0;
+                        if (spec != null && spec.StartsWith("img:") && Ares.CommonGUI.ButtonImageStore.LoadImage(m_CurrentProjectPath, spec) != null)
+                            kind = 2;
+                        else if (spec != null && spec.StartsWith("lucide:"))
+                            kind = 1;
+                        visible.Add(elements[i]);
+                        texts.Add(text);
+                        specs.Add(spec);
+                        kinds.Add(kind);
                     }
-                    checkBox.Dispose();
+                    Size cardSize = ElementButton.ComputeCardSize(texts, kinds, elementsPanel.Font);
                     int count = 0;
-                    for (int i = 0; i < elements.Count; ++i)
+                    for (int i = 0; i < visible.Count; ++i)
                     {
-                        if (!elements[i].IsVisibleInPlayer)
-                            continue;
                         ++count;
-                        int row = count / 4;
-                        int column = count % 4;
-                        checkBox = new CheckBox();
-                        String text = elements[i].Title;
-                        if (showKeys && elements[i].Trigger != null && elements[i].Trigger.TriggerType == TriggerType.Key)
-                        {
-                            int keyCode = (elements[i].Trigger as IKeyTrigger).KeyCode;
-                            if (keyCode != 0)
-                                text += " (" + converter.ConvertToString((System.Windows.Forms.Keys)keyCode) + ")";
-                        }
-                        checkBox.Text = text;
-                        checkBox.Appearance = Appearance.Button;
+                        Ares.Data.IModeElement element = visible[i];
+                        ElementButton checkBox = new ElementButton();
                         checkBox.Font = elementsPanel.Font;
-                        checkBox.AutoEllipsis = false;
-                        checkBox.TextAlign = ContentAlignment.MiddleCenter;
-                        Size size = checkBox.PreferredSize;
-                        size.Width = maxWidth;
-                        checkBox.SetBounds(0, 0, size.Width, size.Height);
-                        checkBox.Checked = m_PlayingControl.CurrentModeElements.Contains(elements[i]);
-                        int id = elements[i].Id;
+                        checkBox.Text = texts[i];
+                        if (kinds[i] == 2)
+                            checkBox.Picture = Ares.CommonGUI.ButtonImageStore.LoadImage(m_CurrentProjectPath, specs[i]);
+                        else if (kinds[i] == 1)
+                            checkBox.IconName = specs[i].Substring(7);
+                        checkBox.SetBounds(0, 0, cardSize.Width, cardSize.Height);
+                        checkBox.Checked = m_PlayingControl.CurrentModeElements.Contains(element);
+                        int id = element.Id;
                         EventHandler handler = new EventHandler((Object, EventArgs) =>
                         {
                             if (m_Listen && m_ButtonsActive)
