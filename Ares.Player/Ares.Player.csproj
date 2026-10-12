@@ -83,6 +83,12 @@
     <Reference Include="MouseKeyboardActivityMonitor">
       <HintPath>..\Libraries\MouseKeyboardActivityMonitor.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Web.WebView2.Core">
+      <HintPath>..\Libraries\Microsoft.Web.WebView2.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.WinForms">
+      <HintPath>..\Libraries\Microsoft.Web.WebView2.WinForms.dll</HintPath>
+    </Reference>
     <Reference Include="ServiceStack.Text, Version=4.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Libraries\ServiceStack.Text.dll</HintPath>
@@ -125,6 +131,8 @@
     <Compile Include="ToastPanel.cs" />
     <Compile Include="Player.Edit.cs" />
     <Compile Include="Player.Share.cs" />
+    <Compile Include="Player.Share.cs" />
+    <Compile Include="Player.Web.cs" />
     <Compile Include="Player.Tray.cs" />
     <Compile Include="SoundProgressPanel.cs" />
     <Compile Include="Program.cs" />

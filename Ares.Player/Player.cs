@@ -104,7 +104,7 @@ namespace Ares.Player
             InitLibraryDrop();
             InitEditMode();
             InitTray();
-            InitShare();
+            InitWeb();
         }
 
         private void FitMusicBar()

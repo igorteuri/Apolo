@@ -1,36 +1,13 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 
 namespace Ares.Player
 {
-    // Share the Ares audio with other people through VDO.Ninja (https://vdo.ninja).
-    // Ares plays on a virtual audio cable; the VDO.Ninja page in the browser captures that cable
-    // as its microphone and streams it to the listeners.
-    public partial class Player
-    {
-        private void InitShare()
-        {
-            try
-            {
-                ToolStripMenuItem item = new ToolStripMenuItem(T("Compartilhar via VDO.Ninja ...", "Share via VDO.Ninja ..."));
-                item.Click += (s, e) =>
-                {
-                    using (ShareDialog dlg = new ShareDialog())
-                    {
-                        dlg.ShowDialog(this);
-                    }
-                };
-                extrasToolStripMenuItem.DropDownItems.Insert(0, item);
-            }
-            catch (Exception)
-            {
-            }
-        }
-    }
-
+    // Settings for sending the Ares audio to other people through VDO.Ninja (https://vdo.ninja).
+    // Ares plays on a virtual audio cable; the VDO.Ninja page (shown in the Ares web window)
+    // captures that cable as its microphone and streams it to the listeners.
     internal class ShareDialog : Form
     {
         private TextBox m_IdBox;
@@ -79,13 +56,13 @@ namespace Ares.Player
             info.MaximumSize = new Size(560, 0);
             info.Margin = new Padding(0, 0, 0, 10);
             info.Text = T(
-                "Como funciona: o Ares toca em um cabo de áudio virtual (por exemplo o VB-CABLE) e o VDO.Ninja, no navegador, captura esse cabo como se fosse um microfone e envia para quem abrir o link do ouvinte.\n\n"
+                "Como funciona: o Ares toca em um cabo de áudio virtual (por exemplo o VB-CABLE) e a página do VDO.Ninja, dentro do Ares, captura esse cabo como se fosse um microfone e envia para quem abrir o link do ouvinte.\n\n"
                 + "1. Instale um cabo de áudio virtual (vb-audio.com/Cable) e escolha-o como dispositivo de saída do Ares (botão de saída na barra de ferramentas).\n"
-                + "2. Clique em \"Abrir no navegador\" e, na página que abrir, clique em iniciar.\n"
+                + "2. Ajuste as opções abaixo e clique em \"Aplicar\". A transmissão começa sozinha.\n"
                 + "3. Mande o link do ouvinte para seus jogadores.",
-                "How it works: Ares plays to a virtual audio cable (for example VB-CABLE) and VDO.Ninja, in the browser, captures that cable like a microphone and sends it to everyone who opens the listener link.\n\n"
+                "How it works: Ares plays to a virtual audio cable (for example VB-CABLE) and the VDO.Ninja page, inside Ares, captures that cable like a microphone and sends it to everyone who opens the listener link.\n\n"
                 + "1. Install a virtual audio cable (vb-audio.com/Cable) and choose it as the Ares output device (output button in the toolbar).\n"
-                + "2. Click \"Open in browser\" and, on the page that opens, click start.\n"
+                + "2. Adjust the options below and click \"Apply\". The broadcast starts by itself.\n"
                 + "3. Send the listener link to your players.");
             table.Controls.Add(info, 0, 0);
             table.SetColumnSpan(info, 2);
@@ -120,11 +97,13 @@ namespace Ares.Player
             buttons.AutoSize = true;
             buttons.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             buttons.Margin = new Padding(0, 10, 0, 0);
-            buttons.Controls.Add(MakeButton(T("Abrir no navegador", "Open in browser"), (s, e) => OpenInBrowser()));
+            Button apply = MakeButton(T("Aplicar", "Apply"), (s, e) => { DialogResult = DialogResult.OK; Close(); });
+            buttons.Controls.Add(apply);
             buttons.Controls.Add(MakeButton(T("Copiar link do ouvinte", "Copy listener link"), (s, e) => CopyText(m_ViewBox.Text)));
             buttons.Controls.Add(MakeButton(T("Copiar link de envio", "Copy sender link"), (s, e) => CopyText(m_PushBox.Text)));
             buttons.Controls.Add(MakeButton(T("Novo ID", "New ID"), (s, e) => { m_IdBox.Text = NewId(); }));
-            buttons.Controls.Add(MakeButton(T("Fechar", "Close"), (s, e) => Close()));
+            buttons.Controls.Add(MakeButton(T("Cancelar", "Cancel"), (s, e) => { DialogResult = DialogResult.Cancel; Close(); }));
+            AcceptButton = apply;
             table.Controls.Add(buttons, 0, 8);
             table.SetColumnSpan(buttons, 2);
 
@@ -197,6 +176,44 @@ namespace Ares.Player
             return sb.ToString();
         }
 
+        /// <summary>Sender link built from the saved settings (null if there is no stream id yet).</summary>
+        public static string BuildPushUrl()
+        {
+            string id = CleanId(Ares.CommonGUI.Preferences.Get("VdoId", ""));
+            if (id.Length == 0)
+            {
+                id = NewId();
+                Ares.CommonGUI.Preferences.Set("VdoId", id);
+            }
+            string label = Ares.CommonGUI.Preferences.Get("VdoLabel", T("Música", "Music")).Trim();
+            string device = Ares.CommonGUI.Preferences.Get("VdoDevice", "CABLE Output").Trim();
+            int kbps;
+            if (!int.TryParse(Ares.CommonGUI.Preferences.Get("VdoBitrate", "128"), out kbps) || kbps < 32 || kbps > 510)
+                kbps = 128;
+            bool pro = Ares.CommonGUI.Preferences.GetBool("VdoPro", true);
+            return BuildPush(id, label, device, kbps, pro);
+        }
+
+        public static string BuildViewUrl()
+        {
+            BuildPushUrl();
+            return "https://vdo.ninja/?view=" + CleanId(Ares.CommonGUI.Preferences.Get("VdoId", ""));
+        }
+
+        private static string BuildPush(string id, string label, string device, int kbps, bool pro)
+        {
+            StringBuilder push = new StringBuilder("https://vdo.ninja/?push=" + id + "&vd=0&autostart");
+            if (label.Length > 0)
+                push.Append("&l=").Append(Uri.EscapeDataString(label));
+            device = device.Replace(' ', '_');
+            if (device.Length > 0)
+                push.Append("&ad=").Append(Uri.EscapeDataString(device));
+            if (pro)
+                push.Append("&proaudio=1");
+            push.Append("&audiobitrate=").Append(kbps.ToString());
+            return push.ToString();
+        }
+
         private void UpdateLinks()
         {
             string id = CleanId(m_IdBox.Text);
@@ -206,17 +223,7 @@ namespace Ares.Player
                 m_ViewBox.Text = "";
                 return;
             }
-            StringBuilder push = new StringBuilder("https://vdo.ninja/?push=" + id + "&vd=0");
-            string label = m_LabelBox.Text.Trim();
-            if (label.Length > 0)
-                push.Append("&l=").Append(Uri.EscapeDataString(label));
-            string device = m_DeviceBox.Text.Trim().Replace(' ', '_');
-            if (device.Length > 0)
-                push.Append("&ad=").Append(Uri.EscapeDataString(device));
-            if (m_ProBox.Checked)
-                push.Append("&proaudio=1");
-            push.Append("&audiobitrate=").Append(((int)m_BitrateBox.Value).ToString());
-            m_PushBox.Text = push.ToString();
+            m_PushBox.Text = BuildPush(id, m_LabelBox.Text.Trim(), m_DeviceBox.Text.Trim(), (int)m_BitrateBox.Value, m_ProBox.Checked);
             m_ViewBox.Text = "https://vdo.ninja/?view=" + id;
             if (!m_Loading)
                 SavePrefs(id);
@@ -229,22 +236,6 @@ namespace Ares.Player
             Ares.CommonGUI.Preferences.Set("VdoDevice", m_DeviceBox.Text.Trim());
             Ares.CommonGUI.Preferences.Set("VdoBitrate", ((int)m_BitrateBox.Value).ToString());
             Ares.CommonGUI.Preferences.SetBool("VdoPro", m_ProBox.Checked);
-        }
-
-        private void OpenInBrowser()
-        {
-            if (m_PushBox.Text.Length == 0)
-                return;
-            try
-            {
-                ProcessStartInfo psi = new ProcessStartInfo(m_PushBox.Text);
-                psi.UseShellExecute = true;
-                Process.Start(psi);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, ex.Message, "Ares", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
         }
 
         private void CopyText(string text)

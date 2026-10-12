@@ -1134,11 +1134,16 @@ namespace Ares.CommonGUI
                 sizeRoot.DropDownOpening += refresh;
 
                 menu.Items.Add(root);
+                if (AfterAppearanceMenu != null)
+                    AfterAppearanceMenu(form, menu);
             }
             catch (Exception)
             {
             }
         }
+
+        /// <summary>Called after the Appearance menu was added to a window, so that further top-level menu entries can follow it.</summary>
+        public static Action<Form, MenuStrip> AfterAppearanceMenu;
     }
 }
 ﻿
