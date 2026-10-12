@@ -18,9 +18,12 @@ namespace Ares.Player
         }
 
         private const int TrackGap = 6;
-        private const int TrackStripWidth = 22;
+        private const int TrackStripWidth = 30;
 
-        private Panel m_TrackPanel;
+        private GroupBox m_TrackPanel;
+        private Panel m_TrackBody;
+        private bool m_TrackPinned = false;
+        private int m_TrackLastListId = int.MinValue;
         private Panel m_TrackSplit;
         private Button m_TrackStrip;
         private Label m_TrackTitle;
@@ -47,16 +50,18 @@ namespace Ares.Player
         {
             try
             {
-                Control host = elementsPanel.Parent;
-                if (host == null)
-                    return;
+                Control host = this;
                 int saved;
                 if (int.TryParse(Ares.CommonGUI.Preferences.Get("TracksWidth", "300"), out saved))
                     m_TrackWidth = Math.Max(200, Math.Min(900, saved));
 
-                m_TrackPanel = new Panel();
+                m_TrackPanel = new GroupBox();
                 m_TrackPanel.Name = "trackPanel";
+                m_TrackPanel.Text = T("Músicas do botão", "Button tracks");
                 m_TrackPanel.Visible = false;
+                m_TrackBody = new Panel();
+                m_TrackBody.Dock = DockStyle.Fill;
+                m_TrackPanel.Controls.Add(m_TrackBody);
                 m_TrackSplit = new Panel();
                 m_TrackSplit.Name = "trackSplit";
                 m_TrackSplit.Cursor = Cursors.VSplit;
@@ -64,6 +69,7 @@ namespace Ares.Player
                 m_TrackStrip = new Button();
                 m_TrackStrip.Name = "trackStrip";
                 m_TrackStrip.Text = "◀";
+                m_TrackStrip.Font = new Font(m_TrackStrip.Font.FontFamily, 14f, FontStyle.Bold);
                 m_TrackStrip.FlatStyle = FlatStyle.System;
                 m_TrackStrip.UseVisualStyleBackColor = true;
                 m_TrackStrip.Visible = false;
@@ -86,14 +92,14 @@ namespace Ares.Player
                 m_TrackList.IntegralHeight = false;
                 m_TrackList.HorizontalScrollbar = true;
 
-                m_TrackPanel.Controls.Add(m_TrackList);
-                m_TrackPanel.Controls.Add(m_TrackSearch);
-                m_TrackPanel.Controls.Add(m_TrackKind);
-                m_TrackPanel.Controls.Add(m_TrackTitle);
-                m_TrackPanel.Controls.Add(m_TrackCollapse);
-                m_TrackPanel.Controls.Add(m_TrackUp);
-                m_TrackPanel.Controls.Add(m_TrackDown);
-                m_TrackPanel.Resize += (s, e) => LayoutTrackPanel();
+                m_TrackBody.Controls.Add(m_TrackList);
+                m_TrackBody.Controls.Add(m_TrackSearch);
+                m_TrackBody.Controls.Add(m_TrackKind);
+                m_TrackBody.Controls.Add(m_TrackTitle);
+                m_TrackBody.Controls.Add(m_TrackCollapse);
+                m_TrackBody.Controls.Add(m_TrackUp);
+                m_TrackBody.Controls.Add(m_TrackDown);
+                m_TrackBody.Resize += (s, e) => LayoutTrackPanel();
                 host.Controls.Add(m_TrackPanel);
                 host.Controls.Add(m_TrackSplit);
                 host.Controls.Add(m_TrackStrip);
@@ -154,7 +160,6 @@ namespace Ares.Player
                     }
                 };
                 m_TrackList.SelectedIndexChanged += (s, e) => UpdateTrackButtons();
-                elementsPanel.VisibleChanged += (s, e) => UpdateTrackVisibility();
 
                 // splitter: drag to change the width of the panel
                 int startX = 0;
@@ -198,7 +203,7 @@ namespace Ares.Player
                 ShowEmptyTrackList();
                 Shown += (s, e) =>
                 {
-                    bool open = Ares.CommonGUI.Preferences.GetBool("TracksOpen", true);
+                    bool open = Ares.CommonGUI.Preferences.GetBool("TracksOpen", false);
                     SetTrackState(open ? 2 : 1);
                 };
             }
@@ -230,7 +235,7 @@ namespace Ares.Player
             if (m_TrackPanel == null)
                 return;
             int h = Math.Max(26, m_TrackSearch.PreferredHeight + 2);
-            int w = m_TrackPanel.ClientSize.Width;
+            int w = m_TrackBody.ClientSize.Width;
             int bw = h;
             m_TrackCollapse.SetBounds(w - bw, 0, bw, h);
             m_TrackDown.SetBounds(w - 2 * bw - 2, 0, bw, h);
@@ -241,18 +246,17 @@ namespace Ares.Player
             y += m_TrackKind.Height + 4;
             m_TrackSearch.SetBounds(0, y, w, m_TrackSearch.Height);
             y += m_TrackSearch.Height + 4;
-            m_TrackList.SetBounds(0, y, w, Math.Max(20, m_TrackPanel.ClientSize.Height - y));
+            m_TrackList.SetBounds(0, y, w, Math.Max(20, m_TrackBody.ClientSize.Height - y));
         }
 
         private void UpdateTrackVisibility()
         {
-            bool shown = elementsPanel.Visible;
-            m_TrackPanel.Visible = shown && m_TrackState == 2;
-            m_TrackSplit.Visible = shown && m_TrackState == 2;
-            m_TrackStrip.Visible = shown && m_TrackState == 1;
+            m_TrackPanel.Visible = m_TrackState == 2;
+            m_TrackSplit.Visible = m_TrackState == 2;
+            m_TrackStrip.Visible = m_TrackState == 1;
         }
 
-        // places the panel (open), the strip (collapsed) or nothing, and makes room for it
+        // places the panel (open, beside the buttons box), the strip (hidden) or nothing, and makes room for it
         private void SetTrackState(int state)
         {
             if (m_TrackPanel == null || state == m_TrackState)
@@ -260,9 +264,7 @@ namespace Ares.Player
             // undo the previous state
             if (m_TrackShrink > 0)
             {
-                elementsPanel.Width += m_TrackShrink;
-                if (m_ListBar != null)
-                    m_ListBar.Width += m_TrackShrink;
+                groupBox5.Width += m_TrackShrink;
                 m_TrackShrink = 0;
             }
             if (m_TrackGrew > 0 && WindowState == FormWindowState.Normal)
@@ -288,20 +290,17 @@ namespace Ares.Player
                     Width += need;
                 }
             }
-            int minCards = 160;
-            if (elementsPanel.Width - need < minCards)
+            int minBox = 300;
+            if (groupBox5.Width - need < minBox)
             {
-                need = Math.Max(0, elementsPanel.Width - minCards);
+                need = Math.Max(0, groupBox5.Width - minBox);
                 w = Math.Max(TrackStripWidth, need - TrackGap);
             }
             m_TrackShrink = need;
-            int barHeight = m_ListBar != null ? m_ListBar.Height + 4 : 0;
-            int top = elementsPanel.Top - barHeight;
-            elementsPanel.Width -= need;
-            if (m_ListBar != null)
-                m_ListBar.Width -= need;
-            int left = elementsPanel.Right + TrackGap;
-            int height = elementsPanel.Bottom - top;
+            groupBox5.Width -= need;
+            int left = groupBox5.Right + TrackGap;
+            int top = groupBox5.Top;
+            int height = groupBox5.Height;
             if (state == 2)
             {
                 m_TrackPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
@@ -314,7 +313,8 @@ namespace Ares.Player
             else
             {
                 m_TrackStrip.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-                m_TrackStrip.SetBounds(left, top, w, 40);
+                m_TrackStrip.SetBounds(left, top, w, Math.Min(height, 90));
+                m_TrackStrip.BringToFront();
             }
             UpdateTrackVisibility();
         }
@@ -323,15 +323,13 @@ namespace Ares.Player
         {
             if (m_TrackState != 2)
                 return;
-            int minCards = 160;
-            int max = m_TrackPanel.Width + (elementsPanel.Width - minCards);
+            int minBox = 300;
+            int max = m_TrackPanel.Width + (groupBox5.Width - minBox);
             newWidth = Math.Max(200, Math.Min(newWidth, max));
             int delta = newWidth - m_TrackPanel.Width;
             if (delta == 0)
                 return;
-            elementsPanel.Width -= delta;
-            if (m_ListBar != null)
-                m_ListBar.Width -= delta;
+            groupBox5.Width -= delta;
             m_TrackPanel.SetBounds(m_TrackPanel.Left - delta, m_TrackPanel.Top, newWidth, m_TrackPanel.Height);
             m_TrackSplit.Left -= delta;
             m_TrackShrink += delta;
@@ -339,15 +337,41 @@ namespace Ares.Player
             LayoutTrackPanel();
         }
 
+        // ---- lookups: any mode of the project, not only the one on screen ----
+
+        private IMode FindModeByTitle(string title)
+        {
+            if (m_Project == null || title == null)
+                return null;
+            foreach (IMode m in m_Project.GetModes())
+            {
+                if (m.Title == title)
+                    return m;
+            }
+            return null;
+        }
+
         private IModeElement FindTrackModeElement(int id)
         {
-            IMode mode = CurrentMode();
-            if (mode == null)
+            IMode mode;
+            return FindTrackModeElement(id, out mode);
+        }
+
+        private IModeElement FindTrackModeElement(int id, out IMode foundMode)
+        {
+            foundMode = null;
+            if (m_Project == null || id < 0)
                 return null;
-            foreach (IModeElement me in mode.GetElements())
+            foreach (IMode m in m_Project.GetModes())
             {
-                if (me.Id == id)
-                    return me;
+                foreach (IModeElement me in m.GetElements())
+                {
+                    if (me.Id == id)
+                    {
+                        foundMode = m;
+                        return me;
+                    }
+                }
             }
             return null;
         }
@@ -388,6 +412,8 @@ namespace Ares.Player
         {
             if (m_TrackPanel == null)
                 return;
+            m_TrackPinned = true; // the user chose this list: stay on it until another playlist starts
+            m_TrackLastListId = m_PlayingControl != null ? m_PlayingControl.CurrentMusicList : int.MinValue;
             LoadTrackList(modeElementId);
             if (m_TrackState != 2)
                 SetTrackState(2);
@@ -396,8 +422,8 @@ namespace Ares.Player
 
         private void LoadTrackList(int modeElementId)
         {
-            IModeElement me = FindTrackModeElement(modeElementId);
-            IMode mode = CurrentMode();
+            IMode mode;
+            IModeElement me = FindTrackModeElement(modeElementId, out mode);
             if (me == null || mode == null)
                 return;
             bool changed = modeElementId != m_TrackElementId;
@@ -511,31 +537,40 @@ namespace Ares.Player
             }
         }
 
-        // selects the file which is playing now (called when the music changes)
+        // follows the playlist which is playing (unless the user picked another one) and
+        // selects the file which is playing now; called when the music changes
         private void SyncTrackSelection()
         {
-            if (m_TrackPanel == null || m_PlayingControl == null)
-                return;
-            IMode mode = CurrentMode();
-            if (mode == null)
+            if (m_TrackPanel == null || m_PlayingControl == null || m_Project == null)
                 return;
             int listId = m_PlayingControl.CurrentMusicList;
-            // follow the playlist which is playing now, when it is a button of this mode
-            if (m_TrackElementId < 0 || FindTrackModeElement(m_TrackElementId) == null ||
-                FindTrackModeElement(m_TrackElementId).StartElement == null ||
-                FindTrackModeElement(m_TrackElementId).StartElement.Id != listId)
+            if (listId != m_TrackLastListId)
             {
-                foreach (IModeElement me in mode.GetElements())
-                {
-                    if (me.StartElement != null && me.StartElement.Id == listId && m_PlayingControl.CurrentMusicElement != -1)
-                    {
-                        LoadTrackList(me.Id);
-                        break;
-                    }
-                }
+                // another playlist started: show it
+                m_TrackLastListId = listId;
+                m_TrackPinned = false;
             }
             IModeElement shown = FindTrackModeElement(m_TrackElementId);
-            if (shown == null || shown.StartElement == null || shown.StartElement.Id != listId)
+            bool shownPlays = shown != null && shown.StartElement != null && shown.StartElement.Id == listId;
+            if (!m_TrackPinned && !shownPlays && m_PlayingControl.CurrentMusicElement != -1)
+            {
+                foreach (IMode m in m_Project.GetModes())
+                {
+                    foreach (IModeElement me in m.GetElements())
+                    {
+                        if (me.StartElement != null && me.StartElement.Id == listId)
+                        {
+                            LoadTrackList(me.Id);
+                            shown = me;
+                            shownPlays = true;
+                            break;
+                        }
+                    }
+                    if (shownPlays)
+                        break;
+                }
+            }
+            if (!shownPlays)
                 return;
             int id = m_PlayingControl.CurrentMusicElement;
             for (int i = 0; i < m_TrackShown.Count; i++)
@@ -568,8 +603,8 @@ namespace Ares.Player
         // after the project was reloaded: show the list of the same button again
         private void ReloadTrackList(string modeTitle, string elementTitle, int selectIndex)
         {
-            IMode mode = CurrentMode();
-            if (mode == null || mode.Title != modeTitle)
+            IMode mode = FindModeByTitle(modeTitle);
+            if (mode == null)
                 return;
             foreach (IModeElement me in mode.GetElements())
             {
@@ -586,8 +621,8 @@ namespace Ares.Player
         // the user picked another type in the list: rebuild the button's playlist with the same files
         private void ChangeTrackKind(int kind)
         {
-            IMode mode = CurrentMode();
-            IModeElement old = FindTrackModeElement(m_TrackElementId);
+            IMode mode;
+            IModeElement old = FindTrackModeElement(m_TrackElementId, out mode);
             if (mode == null || old == null || kind < 0 || kind == TrackKindOf(old.StartElement))
                 return;
             if (MessageBox.Show(this,
@@ -605,7 +640,7 @@ namespace Ares.Player
                 paths.Add(row.File.FilePath);
             string title = old.Title;
             string modeTitle = mode.Title;
-            int modeIndex = modesList.SelectedIndex - 2;
+            int modeIndex = new List<IMode>(m_Project.GetModes()).IndexOf(mode);
             int index = mode.GetElements().IndexOf(old);
             bool visible = old.IsVisibleInPlayer;
             int keyCode = old.Trigger is IKeyTrigger ? ((IKeyTrigger)old.Trigger).KeyCode : 0;
@@ -651,32 +686,23 @@ namespace Ares.Player
             ReloadTrackList(modeTitle, title, -1);
         }
 
-        // called after the buttons of a mode were rebuilt
+        // called after the buttons of a mode were rebuilt (the project may have been reloaded)
         private void AfterElementsForTrackPanel()
         {
-            if (m_TrackPanel == null)
+            if (m_TrackPanel == null || m_TrackElementId < 0)
                 return;
-            IMode mode = CurrentMode();
-            if (mode == null || m_TrackElementId < 0)
+            IMode mode = FindModeByTitle(m_TrackModeTitle);
+            if (mode != null)
             {
-                if (m_TrackElementId >= 0)
-                    ShowEmptyTrackList();
-                return;
-            }
-            if (mode.Title != m_TrackModeTitle)
-            {
-                ShowEmptyTrackList();
-                return;
-            }
-            // refresh the list with the (possibly) new project objects
-            foreach (IModeElement me in mode.GetElements())
-            {
-                if (me.Title == m_TrackElementTitle)
+                foreach (IModeElement me in mode.GetElements())
                 {
-                    m_TrackElementId = me.Id;
-                    BuildTrackRows(me);
-                    FillTrackList();
-                    return;
+                    if (me.Title == m_TrackElementTitle)
+                    {
+                        m_TrackElementId = me.Id;
+                        BuildTrackRows(me);
+                        FillTrackList();
+                        return;
+                    }
                 }
             }
             ShowEmptyTrackList();

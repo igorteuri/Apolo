@@ -143,7 +143,7 @@ namespace Ares.Player
                 m_TransportStrip.Dock = DockStyle.None;
                 m_TransportStrip.AutoSize = true;
                 m_TransportStrip.CanOverflow = false;
-                ToolStripItem[] moved = new ToolStripItem[] { stopButton, m_PauseButton, previousButton, nextButton, repeatButton };
+                ToolStripItem[] moved = new ToolStripItem[] { m_PauseButton, stopButton, previousButton, nextButton, repeatButton };
                 foreach (ToolStripItem item in moved)
                 {
                     toolStrip1.Items.Remove(item);
