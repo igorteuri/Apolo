@@ -67,7 +67,6 @@ namespace Ares.CommonGUI
     {
         private static readonly List<ThemePalette> s_Palettes = new List<ThemePalette>
         {
-            new ThemePalette { Id = "classic", NamePt = "Clássico (Windows)", NameEn = "Classic (Windows)", IsClassic = true },
             new ThemePalette
             {
                 Id = "dark", NamePt = "Escuro", NameEn = "Dark", IsDark = true,
