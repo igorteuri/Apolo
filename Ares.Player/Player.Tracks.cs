@@ -374,7 +374,7 @@ namespace Ares.Player
                 groupBox2.Width = lw;
             if (groupBox3.Width != lw)
                 groupBox3.Width = lw;
-            foreach (TrackBar bar in new TrackBar[] { overallVolumeBar, musicVolumeBar, soundVolumeBar })
+            foreach (Ares.CommonGUI.ModernSlider bar in new Ares.CommonGUI.ModernSlider[] { overallVolumeBar, musicVolumeBar, soundVolumeBar })
             {
                 int w = groupBox2.ClientSize.Width - bar.Left - 10;
                 if (w > 40 && bar.Width != w)

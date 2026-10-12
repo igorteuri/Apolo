@@ -173,6 +173,12 @@ namespace Ares.CommonGUI
             Current = s_Palettes.First(p => p.Id == "apolo");
             ScalePercent = 110;
             LoadPreferences();
+            if (s_NeedsThemeMigration)
+            {
+                // version 2 of the look: Apolo (dark) is the default for everybody once
+                Current = s_Palettes.First(p => p.Id == "apolo");
+                SavePreferences();
+            }
             UpdateRenderer();
             Application.Idle += OnApplicationIdle;
             Log("install: theme=" + Current.Id + " scale=" + ScalePercent, null);
@@ -187,12 +193,15 @@ namespace Ares.CommonGUI
             }
         }
 
+        private static bool s_NeedsThemeMigration;
+
         private static void LoadPreferences()
         {
             try
             {
                 if (!File.Exists(PreferencesFile))
                     return;
+                s_NeedsThemeMigration = true;
                 foreach (string line in File.ReadAllLines(PreferencesFile))
                 {
                     int idx = line.IndexOf('=');
@@ -205,6 +214,11 @@ namespace Ares.CommonGUI
                         ThemePalette p = s_Palettes.FirstOrDefault(x => x.Id == value);
                         if (p != null)
                             Current = p;
+                    }
+                    else if (key == "themev")
+                    {
+                        if (value == "2")
+                            s_NeedsThemeMigration = false;
                     }
                     else if (key == "scale")
                     {
@@ -225,7 +239,7 @@ namespace Ares.CommonGUI
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(PreferencesFile));
-                File.WriteAllLines(PreferencesFile, new string[] { "theme=" + Current.Id, "scale=" + ScalePercent });
+                File.WriteAllLines(PreferencesFile, new string[] { "theme=" + Current.Id, "scale=" + ScalePercent, "themev=2" });
             }
             catch (Exception)
             {
@@ -480,6 +494,8 @@ namespace Ares.CommonGUI
                 b.FlatAppearance.MouseDownBackColor = p.Selection;
                 b.BackColor = p.Surface;
                 b.ForeColor = p.Text;
+                b.FlatAppearance.BorderSize = 0;
+                HookRoundedButton(b);
             }
             else if (c is CheckBox && ((CheckBox)c).Appearance == Appearance.Button
                 || c is RadioButton && ((RadioButton)c).Appearance == Appearance.Button)
@@ -567,6 +583,7 @@ namespace Ares.CommonGUI
                 lb.BackColor = p.Surface;
                 lb.ForeColor = p.Text;
                 lb.BorderStyle = BorderStyle.FixedSingle;
+                ApplyListBoxLook(lb);
             }
             else if (c is TabControl)
             {
@@ -687,7 +704,10 @@ namespace Ares.CommonGUI
                     tv.BorderStyle = o.BorderStyle;
                 ListBox lbx = c as ListBox;
                 if (lbx != null)
+                {
                     lbx.BorderStyle = o.BorderStyle;
+                    RemoveListBoxLook(lbx);
+                }
             }
             TabControl tc = c as TabControl;
             if (tc != null)
@@ -779,6 +799,118 @@ namespace Ares.CommonGUI
         // --------------------------------------------------------------------------------
 
         private static readonly ConditionalWeakTable<object, object> s_GroupPaint = new ConditionalWeakTable<object, object>();
+
+        // ---- list boxes: selection in the accent color (instead of the system blue) ----
+
+        private static readonly ConditionalWeakTable<ListBox, object> s_ListLook = new ConditionalWeakTable<ListBox, object>();
+
+        private static void ApplyListBoxLook(ListBox lb)
+        {
+            if (lb is CheckedListBox)
+                return;
+            object marker;
+            if (s_ListLook.TryGetValue(lb, out marker))
+            {
+                lb.ItemHeight = Math.Max(22, lb.Font.Height + 8);
+                lb.Invalidate();
+                return;
+            }
+            if (lb.DrawMode != DrawMode.Normal)
+                return; // somebody draws it already
+            s_ListLook.Add(lb, new object());
+            lb.DrawMode = DrawMode.OwnerDrawFixed;
+            lb.ItemHeight = Math.Max(22, lb.Font.Height + 8);
+            lb.DrawItem += OnListBoxDrawItem;
+        }
+
+        private static void RemoveListBoxLook(ListBox lb)
+        {
+            object marker;
+            if (!s_ListLook.TryGetValue(lb, out marker))
+                return;
+            lb.DrawItem -= OnListBoxDrawItem;
+            s_ListLook.Remove(lb);
+            lb.DrawMode = DrawMode.Normal;
+        }
+
+        private static void OnListBoxDrawItem(object sender, DrawItemEventArgs e)
+        {
+            ListBox lb = (ListBox)sender;
+            ThemePalette p = Current;
+            if (e.Index < 0 || p == null || p.IsClassic)
+                return;
+            bool selected = (e.State & DrawItemState.Selected) != 0;
+            using (SolidBrush back = new SolidBrush(selected ? p.Selection : lb.BackColor))
+                e.Graphics.FillRectangle(back, e.Bounds);
+            if (selected)
+            {
+                using (SolidBrush bar = new SolidBrush(p.Accent))
+                    e.Graphics.FillRectangle(bar, e.Bounds.X, e.Bounds.Y, 3, e.Bounds.Height);
+            }
+            string text = lb.GetItemText(lb.Items[e.Index]);
+            Rectangle r = new Rectangle(e.Bounds.X + 8, e.Bounds.Y, e.Bounds.Width - 10, e.Bounds.Height);
+            TextRenderer.DrawText(e.Graphics, text, lb.Font, r, p.Text,
+                TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.Left);
+        }
+
+        // ---- rounded flat buttons ----
+
+        private static readonly ConditionalWeakTable<Button, object> s_RoundButtons = new ConditionalWeakTable<Button, object>();
+
+        private static void HookRoundedButton(Button b)
+        {
+            object marker;
+            if (s_RoundButtons.TryGetValue(b, out marker))
+            {
+                b.Invalidate();
+                return;
+            }
+            s_RoundButtons.Add(b, new object());
+            b.Paint += OnRoundedButtonPaint;
+            b.Invalidate();
+        }
+
+        private static Color OpaqueBack(Control c)
+        {
+            Control p = c.Parent;
+            while (p != null)
+            {
+                if (p.BackColor.A == 255)
+                    return p.BackColor;
+                p = p.Parent;
+            }
+            return Current != null ? Current.Window : SystemColors.Control;
+        }
+
+        private static void OnRoundedButtonPaint(object sender, PaintEventArgs e)
+        {
+            Button b = (Button)sender;
+            ThemePalette p = Current;
+            if (p == null || p.IsClassic || b.FlatStyle != FlatStyle.Flat || b.Width < 24 || b.Height < 18)
+                return;
+            Graphics g = e.Graphics;
+            int d = 12;
+            Rectangle r = new Rectangle(0, 0, b.Width - 1, b.Height - 1);
+            using (System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath())
+            {
+                path.AddArc(r.X, r.Y, d, d, 180, 90);
+                path.AddArc(r.Right - d, r.Y, d, d, 270, 90);
+                path.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
+                path.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
+                path.CloseFigure();
+                using (Region corners = new Region(new Rectangle(0, 0, b.Width, b.Height)))
+                using (SolidBrush parentBack = new SolidBrush(OpaqueBack(b)))
+                {
+                    corners.Exclude(path);
+                    g.FillRegion(parentBack, corners);
+                }
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                bool hot = b.Focused || b.ClientRectangle.Contains(b.PointToClient(Cursor.Position)) && b.Enabled;
+                using (Pen pen = new Pen(hot ? p.Accent : p.Border, 1f))
+                    g.DrawPath(pen, path);
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
+            }
+        }
 
         private static void ApplyGroupBox(GroupBox g)
         {

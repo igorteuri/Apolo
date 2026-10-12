@@ -57,11 +57,11 @@ namespace Ares.Player
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Player));
             this.projectNameLabel = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.soundVolumeBar = new System.Windows.Forms.TrackBar();
+            this.soundVolumeBar = new Ares.CommonGUI.ModernSlider();
             this.label4 = new System.Windows.Forms.Label();
-            this.musicVolumeBar = new System.Windows.Forms.TrackBar();
+            this.musicVolumeBar = new Ares.CommonGUI.ModernSlider();
             this.label3 = new System.Windows.Forms.Label();
-            this.overallVolumeBar = new System.Windows.Forms.TrackBar();
+            this.overallVolumeBar = new Ares.CommonGUI.ModernSlider();
             this.label2 = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.label9 = new System.Windows.Forms.Label();
@@ -849,11 +849,11 @@ namespace Ares.Player
 
         private System.Windows.Forms.Label projectNameLabel;
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.TrackBar soundVolumeBar;
+        private Ares.CommonGUI.ModernSlider soundVolumeBar;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.TrackBar musicVolumeBar;
+        private Ares.CommonGUI.ModernSlider musicVolumeBar;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.TrackBar overallVolumeBar;
+        private Ares.CommonGUI.ModernSlider overallVolumeBar;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.Label soundsLabel;

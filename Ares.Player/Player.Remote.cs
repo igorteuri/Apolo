@@ -611,63 +611,115 @@ namespace Ares.Player
                 form.MaximizeBox = false;
                 form.MinimizeBox = false;
                 form.ShowInTaskbar = false;
-                form.ClientSize = new Size(600, 420);
+                form.ClientSize = new Size(780, 470);
                 form.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0);
 
                 Label intro = new Label();
-                intro.SetBounds(16, 12, 568, 78);
+                intro.SetBounds(16, 12, 740, 56);
                 intro.Text = T(
-                    "Controle o Apolo pelo celular ou deixe outra pessoa controlar pela internet. Ao ligar, o Apolo cria um link seguro (https) — sem IP, sem abrir portas. Abra o link no navegador do celular e digite a senha.",
-                    "Control Apolo from your phone, or let someone else control it over the internet. When switched on, Apolo creates a secure (https) link - no IP, no open ports. Open the link in the phone browser and type the password.");
+                    "Controle o Apolo pelo celular ou deixe outra pessoa controlar pela internet. Ao ligar, o Apolo cria um link seguro (https) — sem IP, sem abrir portas. Abra o link (ou leia o QR code) no celular e digite a senha.",
+                    "Control Apolo from your phone, or let someone else control it over the internet. When switched on, Apolo creates a secure (https) link - no IP, no open ports. Open the link (or scan the QR code) on the phone and type the password.");
 
                 Label pwLabel = new Label();
-                pwLabel.SetBounds(16, 100, 80, 24);
+                pwLabel.SetBounds(16, 80, 70, 26);
                 pwLabel.Text = T("Senha:", "Password:");
                 pwLabel.TextAlign = ContentAlignment.MiddleLeft;
                 TextBox pw = new TextBox();
-                pw.SetBounds(100, 98, 220, 26);
+                pw.SetBounds(90, 80, 200, 26);
                 string saved = Ares.CommonGUI.Preferences.Get("RemotePassword", "");
                 pw.Text = string.IsNullOrEmpty(saved) ? RandomPassword() : saved;
-                CheckBox show = new CheckBox();
-                show.SetBounds(332, 98, 200, 26);
-                show.Text = T("Mostrar a senha", "Show password");
                 pw.UseSystemPasswordChar = true;
+                CheckBox show = new CheckBox();
+                show.SetBounds(300, 80, 140, 26);
+                show.Text = T("Mostrar", "Show");
                 show.CheckedChanged += (s, e) => pw.UseSystemPasswordChar = !show.Checked;
+                Button copyPw = new Button();
+                copyPw.SetBounds(446, 78, 130, 30);
+                copyPw.Text = T("Copiar senha", "Copy password");
+                copyPw.Click += (s, e) =>
+                {
+                    try { Clipboard.SetText(pw.Text); } catch (Exception) { }
+                };
 
                 Button toggle = new Button();
-                toggle.SetBounds(16, 140, 200, 36);
+                toggle.SetBounds(16, 124, 220, 38);
                 Label status = new Label();
-                status.SetBounds(228, 140, 356, 36);
+                status.SetBounds(248, 124, 328, 38);
                 status.TextAlign = ContentAlignment.MiddleLeft;
 
                 Label linkLabel = new Label();
-                linkLabel.SetBounds(16, 192, 568, 22);
+                linkLabel.SetBounds(16, 178, 560, 22);
                 linkLabel.Text = T("Link para abrir no celular:", "Link to open on the phone:");
                 TextBox link = new TextBox();
-                link.SetBounds(16, 216, 568, 26);
+                link.SetBounds(16, 202, 560, 26);
                 link.ReadOnly = true;
                 Button copy = new Button();
-                copy.SetBounds(16, 250, 130, 32);
+                copy.SetBounds(16, 238, 130, 32);
                 copy.Text = T("Copiar link", "Copy link");
                 Button open = new Button();
-                open.SetBounds(156, 250, 130, 32);
+                open.SetBounds(156, 238, 130, 32);
                 open.Text = T("Abrir aqui", "Open here");
 
+                // QR code of the link (black on white, so every camera reads it)
+                PictureBox qr = new PictureBox();
+                qr.SetBounds(596, 80, 168, 168);
+                qr.SizeMode = PictureBoxSizeMode.Zoom;
+                qr.BackColor = Color.White;
+                Button copyQr = new Button();
+                copyQr.SetBounds(596, 256, 82, 30);
+                copyQr.Text = T("Copiar QR", "Copy QR");
+                Button saveQr = new Button();
+                saveQr.SetBounds(682, 256, 82, 30);
+                saveQr.Text = T("Salvar QR", "Save QR");
+                string qrFor = null;
+                Bitmap qrBitmap = null;
+                copyQr.Click += (s, e) =>
+                {
+                    if (qrBitmap != null)
+                    {
+                        try { Clipboard.SetImage(qrBitmap); } catch (Exception) { }
+                    }
+                };
+                saveQr.Click += (s, e) =>
+                {
+                    if (qrBitmap == null)
+                        return;
+                    using (SaveFileDialog dlg = new SaveFileDialog())
+                    {
+                        dlg.Filter = "PNG|*.png";
+                        dlg.FileName = "apolo-qr.png";
+                        if (dlg.ShowDialog(form) == DialogResult.OK)
+                        {
+                            try { qrBitmap.Save(dlg.FileName, System.Drawing.Imaging.ImageFormat.Png); } catch (Exception) { }
+                        }
+                    }
+                };
+
                 Label warn = new Label();
-                warn.SetBounds(16, 298, 568, 100);
+                warn.SetBounds(16, 300, 748, 120);
                 warn.Text = T(
-                    "• Quem tiver o link E a senha controla o Apolo. Use uma senha forte e desligue ao terminar.\r\n• O link muda toda vez que você liga.\r\n• O acesso passa pelo túnel gratuito da Cloudflare (sem conta). O Apolo precisa ficar aberto neste computador.\r\n• Depois de 5 senhas erradas, o acesso é bloqueado por 1 minuto.",
-                    "• Anyone with the link AND the password controls Apolo. Use a strong password and switch it off when done.\r\n• The link changes every time you switch it on.\r\n• Access goes through the free Cloudflare tunnel (no account). Apolo must stay open on this computer.\r\n• After 5 wrong passwords access is blocked for 1 minute.");
+                    "• Quem tiver o link E a senha controla o Apolo. Use uma senha forte e desligue ao terminar.\r\n• O link muda toda vez que você liga; a senha fica salva.\r\n• O QR code só contém o link — a senha você envia separada.\r\n• O acesso passa pelo túnel gratuito da Cloudflare (sem conta). O Apolo precisa ficar aberto neste computador.\r\n• Depois de 5 senhas erradas, o acesso é bloqueado por 1 minuto.",
+                    "• Anyone with the link AND the password controls Apolo. Use a strong password and switch it off when done.\r\n• The link changes every time you switch it on; the password is kept.\r\n• The QR code only holds the link - send the password separately.\r\n• Access goes through the free Cloudflare tunnel (no account). Apolo must stay open on this computer.\r\n• After 5 wrong passwords access is blocked for 1 minute.");
                 warn.ForeColor = Color.Gray;
 
                 Action refresh = () =>
                 {
                     bool on = m_Remote.Running;
                     toggle.Text = on ? T("Desligar controle remoto", "Switch off") : T("Ligar controle remoto", "Switch on");
-                    pw.Enabled = !on;
+                    pw.ReadOnly = on; // can still be selected and copied while it is on
                     string url = m_Tunnel.Url;
                     link.Text = url ?? "";
                     copy.Enabled = open.Enabled = url != null;
+                    if (url != qrFor)
+                    {
+                        qrFor = url;
+                        Bitmap old = qrBitmap;
+                        qrBitmap = url != null ? QrCode.Render(url, 8) : null;
+                        qr.Image = qrBitmap;
+                        if (old != null)
+                            old.Dispose();
+                    }
+                    copyQr.Enabled = saveQr.Enabled = qrBitmap != null;
                     if (!on)
                         status.Text = T("Desligado.", "Off.");
                     else if (url != null)
@@ -695,16 +747,16 @@ namespace Ares.Player
                         }
                         if (!CloudflareTunnel.Available)
                         {
-                            if (MessageBox.Show(form, T("Falta o componente que cria o link (cloudflared, programa oficial e gratuito da Cloudflare, ~20 MB).\n\nBaixar agora do site oficial (github.com/cloudflare/cloudflared)?",
-                                "The component that creates the link is missing (cloudflared, the official free Cloudflare program, ~20 MB).\n\nDownload it now from the official site (github.com/cloudflare/cloudflared)?"),
+                            if (MessageBox.Show(form, T("Falta o componente que cria o link (cloudflared, programa oficial e gratuito da Cloudflare, ~20 MB).\n\nBaixar agora do site oficial (github.com/cloudflare/cloudflared)? Só é preciso uma vez.",
+                                "The component that creates the link is missing (cloudflared, the official free Cloudflare program, ~20 MB).\n\nDownload it now from the official site (github.com/cloudflare/cloudflared)? This is needed only once."),
                                 StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                                 return;
-                            Cursor old = form.Cursor;
+                            Cursor oldCursor = form.Cursor;
                             form.Cursor = Cursors.WaitCursor;
                             status.Text = T("Baixando...", "Downloading...");
                             status.Refresh();
                             string dlError = CloudflareTunnel.Download();
-                            form.Cursor = old;
+                            form.Cursor = oldCursor;
                             if (dlError != null)
                             {
                                 MessageBox.Show(form, T("Não consegui baixar: ", "Download failed: ") + dlError,
@@ -744,15 +796,18 @@ namespace Ares.Player
                 Button close = new Button();
                 close.Text = T("Fechar", "Close");
                 close.DialogResult = DialogResult.OK;
-                close.SetBounds(600 - 16 - 100, 420 - 12 - 32, 100, 32);
+                close.SetBounds(780 - 16 - 100, 470 - 12 - 34, 100, 34);
 
-                form.Controls.AddRange(new Control[] { intro, pwLabel, pw, show, toggle, status, linkLabel, link, copy, open, warn, close });
+                form.Controls.AddRange(new Control[] { intro, pwLabel, pw, show, copyPw, toggle, status, linkLabel, link, copy, open, qr, copyQr, saveQr, warn, close });
                 form.AcceptButton = close;
                 refresh();
                 Ares.CommonGUI.ThemeManager.Apply(form);
                 form.ShowDialog(this);
                 tick.Stop();
                 tick.Dispose();
+                qr.Image = null;
+                if (qrBitmap != null)
+                    qrBitmap.Dispose();
             }
         }
     }

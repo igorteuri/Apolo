@@ -10,7 +10,7 @@ namespace Ares.Player
     public partial class Player
     {
         private StatusStrip m_StatusStrip;
-        private ToolStripStatusLabel m_StatState, m_StatRepeat, m_StatOutput, m_StatNetwork, m_StatProject;
+        private ToolStripStatusLabel m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatProject;
         private Timer m_StatusTimer;
 
         private void InitStatusBar()
@@ -30,24 +30,19 @@ namespace Ares.Player
                 m_StatState = new ToolStripStatusLabel();
                 m_StatRepeat = new ToolStripStatusLabel();
                 m_StatOutput = new ToolStripStatusLabel();
-                m_StatNetwork = new ToolStripStatusLabel();
-                m_StatNetwork.IsLink = false;
-                m_StatNetwork.ToolTipText = T("Clique para ver os endereços de rede", "Click to see the network addresses");
-                m_StatNetwork.Click += (s, e) => ShowNetworkDialog();
+                m_StatShare = new ToolStripStatusLabel();
+                m_StatShare.ToolTipText = T("Controle remoto / compartilhamento. Clique para abrir.", "Remote control / sharing. Click to open.");
+                m_StatShare.Click += (s, e) => ShowRemoteDialog();
                 m_StatProject = new ToolStripStatusLabel();
                 m_StatProject.Spring = true;
                 m_StatProject.TextAlign = ContentAlignment.MiddleRight;
-                foreach (ToolStripStatusLabel l in new ToolStripStatusLabel[] { m_StatState, m_StatRepeat, m_StatOutput, m_StatNetwork })
+                foreach (ToolStripStatusLabel l in new ToolStripStatusLabel[] { m_StatState, m_StatRepeat, m_StatOutput, m_StatShare })
                 {
                     l.BorderSides = ToolStripStatusLabelBorderSides.Right;
                     l.Padding = new Padding(4, 0, 8, 0);
                 }
-                m_StatusStrip.Items.AddRange(new ToolStripItem[] { m_StatState, m_StatRepeat, m_StatOutput, m_StatNetwork, m_StatProject });
+                m_StatusStrip.Items.AddRange(new ToolStripItem[] { m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatProject });
                 Controls.Add(m_StatusStrip);
-
-                ToolStripMenuItem net = new ToolStripMenuItem(T("Rede...", "Network..."));
-                net.Click += (s, e) => ShowNetworkDialog();
-                extrasToolStripMenuItem.DropDownItems.Insert(2, net);
 
                 m_StatusTimer = new Timer();
                 m_StatusTimer.Interval = 500;
@@ -119,8 +114,16 @@ namespace Ares.Player
                 SetStat(m_StatState, state, color);
                 SetStat(m_StatRepeat, "↻ " + T("Repetição: ", "Repeat: ") + (repeatButton.Checked ? T("ligada", "on") : T("desligada", "off")), ForeColor);
                 SetStat(m_StatOutput, "🔊 " + (m_OutputButton != null ? m_OutputButton.Text : ""), ForeColor);
-                string web = webAddressLabel.Text;
-                SetStat(m_StatNetwork, T("Rede: ", "Network: ") + (string.IsNullOrEmpty(web) ? T("desligada", "off") : web), ForeColor);
+                if (m_Remote != null && m_Remote.Running)
+                {
+                    bool ready = m_Tunnel != null && m_Tunnel.Url != null;
+                    SetStat(m_StatShare, "🔗 " + (ready ? T("Compartilhamento: ativo", "Sharing: on") : T("Compartilhamento: iniciando...", "Sharing: starting...")),
+                        ready && p != null && !p.IsClassic ? p.Accent : ForeColor);
+                }
+                else
+                {
+                    SetStat(m_StatShare, "🔗 " + T("Compartilhamento: inativo", "Sharing: off"), p != null && !p.IsClassic ? p.TextDim : ForeColor);
+                }
                 SetStat(m_StatProject, m_Project != null ? m_Project.Title : "", ForeColor);
             }
             catch (Exception)
@@ -135,59 +138,6 @@ namespace Ares.Player
                 label.Text = text;
             if (label.ForeColor != color)
                 label.ForeColor = color;
-        }
-
-        private void ShowNetworkDialog()
-        {
-            using (Form f = new Form())
-            {
-                f.Text = T("Rede", "Network");
-                f.FormBorderStyle = FormBorderStyle.FixedDialog;
-                f.StartPosition = FormStartPosition.CenterParent;
-                f.MaximizeBox = false;
-                f.MinimizeBox = false;
-                f.ShowInTaskbar = false;
-                f.ClientSize = new Size(520, 190);
-                f.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0);
-
-                Label l1 = new Label();
-                l1.Text = T("Controle pelo navegador (web):", "Browser (web) control:");
-                l1.AutoSize = true;
-                l1.Location = new Point(16, 18);
-                f.Controls.Add(l1);
-                LinkLabel link = new LinkLabel();
-                string web = webAddressLabel.Text;
-                link.Text = string.IsNullOrEmpty(web) ? T("(desligado nas configurações)", "(off in the settings)") : web;
-                link.AutoSize = true;
-                link.Location = new Point(32, 42);
-                link.Enabled = !string.IsNullOrEmpty(web);
-                link.LinkClicked += (s, e) =>
-                {
-                    try { System.Diagnostics.Process.Start(web); } catch (Exception) { }
-                };
-                f.Controls.Add(link);
-
-                Label l2 = new Label();
-                l2.Text = T("Porta do controle remoto (rede):", "Remote control port (network):");
-                l2.AutoSize = true;
-                l2.Location = new Point(16, 78);
-                f.Controls.Add(l2);
-                Label port = new Label();
-                port.Text = string.IsNullOrEmpty(controllerPortLabel.Text) ? T("(desligada)", "(off)") : controllerPortLabel.Text;
-                port.AutoSize = true;
-                port.Location = new Point(32, 102);
-                f.Controls.Add(port);
-
-                Button ok = new Button();
-                ok.Text = "OK";
-                ok.DialogResult = DialogResult.OK;
-                ok.SetBounds(520 - 16 - 90, 190 - 16 - 28, 90, 28);
-                f.Controls.Add(ok);
-                f.AcceptButton = ok;
-                f.CancelButton = ok;
-                Ares.CommonGUI.ThemeManager.Apply(f);
-                f.ShowDialog(this);
-            }
         }
     }
 }

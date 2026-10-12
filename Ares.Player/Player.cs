@@ -608,7 +608,6 @@ namespace Ares.Player
 #endif
             Ares.Settings.Settings settings = Ares.Settings.Settings.Instance;
             Ares.CommonGUI.SettingsDialog dialog = new Ares.CommonGUI.SettingsDialog(Ares.Settings.Settings.Instance, m_BasicSettings);
-            dialog.AddPage(new NetworkPageHost());
             dialog.AddPage(new StreamingPageHost());
             dialog.AddPage(new MusicPageHost());
             dialog.SetVisiblePage(pageIndex);
@@ -1949,12 +1948,11 @@ namespace Ares.Player
 			editorButton.Enabled = false;
 			startEditorToolStripMenuItem.Enabled = false;
 #endif
-            m_Network = new Networks(this, Settings.Settings.Instance.UseLegacyNetwork, Settings.Settings.Instance.UseWebNetwork);
+            // the old network servers are gone (the remote control replaces them)
+            Settings.Settings.Instance.UseLegacyNetwork = false;
+            Settings.Settings.Instance.UseWebNetwork = false;
+            m_Network = new Networks(this, false, false);
             m_Network.InitConnectionData();
-            if (Settings.Settings.Instance.UseWebNetwork || Settings.Settings.Instance.UseLegacyNetwork)
-            {
-                m_Network.StartUdpBroadcast();
-            }
             UpdateClientState();
             broadCastTimer.Tick += new EventHandler(broadCastTimer_Tick);
             broadCastTimer.Enabled = true;

@@ -140,6 +140,7 @@
     <Compile Include="Player.Web.cs" />
     <Compile Include="Player.Tray.cs" />
     <Compile Include="EdgeHandle.cs" />
+    <Compile Include="QrCode.cs" />
     <Compile Include="Player.Status.cs" />
     <Compile Include="SoundProgressPanel.cs" />
     <Compile Include="Program.cs" />
