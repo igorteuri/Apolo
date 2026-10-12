@@ -292,7 +292,7 @@ namespace Ares.Player
             }
         }
 
-        private const int MainRightMargin = 12;
+        private const int MainRightMargin = 14;
         private const int ElementsMinWidth = 300;
         private const int LeftStripWidth = 30;
 
@@ -338,7 +338,9 @@ namespace Ares.Player
                 int modesLeft = leftOpen ? m_ModesLeftOriginal : 12;
                 groupBox4.Left = modesLeft;
                 groupBox5.Left = modesLeft + groupBox4.Width + TrackGap;
-                m_LeftStrip.SetBounds(1, groupBox4.Top, 10, groupBox4.Height);
+                m_LeftStrip.SetBounds(0, groupBox4.Top, 12, groupBox4.Height);
+                if (leftOpen)
+                    FitLeftColumn();
 
                 // elements box, track panel / strip on the right
                 int right = clientWidth - MainRightMargin;
@@ -352,13 +354,31 @@ namespace Ares.Player
                 int left = right - panelWidth;
                 m_TrackPanel.SetBounds(left, top, panelWidth, height);
                 m_TrackSplit.SetBounds(left - TrackGap, top, TrackGap, height);
-                m_TrackStrip.SetBounds(clientWidth - 11, top, 10, height);
+                m_TrackStrip.SetBounds(clientWidth - 12, top, 12, height);
                 if (m_TrackState == 2)
                     LayoutTrackPanel();
             }
             finally
             {
                 m_LayoutingColumns = false;
+            }
+        }
+
+        // keeps the volume and state boxes (and the sliders inside) exactly as wide as the left column
+        private void FitLeftColumn()
+        {
+            int lw = m_ModesLeftOriginal - TrackGap - groupBox2.Left;
+            if (lw < 200)
+                return;
+            if (groupBox2.Width != lw)
+                groupBox2.Width = lw;
+            if (groupBox3.Width != lw)
+                groupBox3.Width = lw;
+            foreach (TrackBar bar in new TrackBar[] { overallVolumeBar, musicVolumeBar, soundVolumeBar })
+            {
+                int w = groupBox2.ClientSize.Width - bar.Left - 10;
+                if (w > 40 && bar.Width != w)
+                    bar.Width = w;
             }
         }
 

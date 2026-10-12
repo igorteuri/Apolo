@@ -136,6 +136,7 @@
     <Compile Include="Player.List.cs" />
     <Compile Include="Player.Tracks.cs" />
     <Compile Include="Player.Overlay.cs" />
+    <Compile Include="Player.Remote.cs" />
     <Compile Include="Player.Web.cs" />
     <Compile Include="Player.Tray.cs" />
     <Compile Include="EdgeHandle.cs" />
@@ -161,6 +162,7 @@
     </Compile>
     <EmbeddedResource Include="Overlay\overlay.html"><LogicalName>obs.overlay.html</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="Overlay\config.html"><LogicalName>obs.config.html</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Remote\remote.html"><LogicalName>remote.html</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="MessagesForm.de.resx">
       <DependentUpon>MessagesForm.cs</DependentUpon>
     </EmbeddedResource>

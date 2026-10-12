@@ -110,6 +110,7 @@ namespace Ares.Player
             InitTrackPanel();
             InitTransportRow();
             InitOverlay();
+            InitRemote();
         }
 
         private void FitMusicBar()

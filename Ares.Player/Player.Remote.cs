@@ -1,0 +1,707 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.Globalization;
+using System.IO;
+using System.Net;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Windows.Forms;
+using Ares.Players;
+
+namespace Ares.Player
+{
+    /// <summary>
+    /// Small web server (this computer only) with the remote control page for phones / other people.
+    /// Everything needs the password; the page is reached from outside through the tunnel (CloudflareTunnel).
+    /// </summary>
+    internal class RemoteServer
+    {
+        private HttpListener m_Listener;
+        private volatile string m_State = "{}";
+        private string m_Password = "";
+        private readonly HashSet<string> m_Tokens = new HashSet<string>();
+        private readonly object m_Lock = new object();
+        private int m_Failures;
+        private DateTime m_LockedUntil = DateTime.MinValue;
+
+        public int Port { get; private set; }
+        public string LastError { get; private set; }
+        public Func<string, string, string> Execute;
+
+        public bool Running
+        {
+            get { return m_Listener != null && m_Listener.IsListening; }
+        }
+
+        public void SetState(string json)
+        {
+            m_State = json;
+        }
+
+        public bool Start(int firstPort, string password)
+        {
+            Stop();
+            m_Password = password ?? "";
+            lock (m_Lock)
+            {
+                m_Tokens.Clear();
+                m_Failures = 0;
+            }
+            for (int port = firstPort; port < firstPort + 10; port++)
+            {
+                try
+                {
+                    HttpListener listener = new HttpListener();
+                    listener.Prefixes.Add("http://localhost:" + port + "/");
+                    listener.Start();
+                    m_Listener = listener;
+                    Port = port;
+                    LastError = null;
+                    listener.BeginGetContext(OnContext, listener);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    LastError = ex.Message;
+                }
+            }
+            m_Listener = null;
+            return false;
+        }
+
+        public void Stop()
+        {
+            HttpListener listener = m_Listener;
+            m_Listener = null;
+            lock (m_Lock)
+            {
+                m_Tokens.Clear();
+            }
+            if (listener == null)
+                return;
+            try { listener.Close(); } catch (Exception) { }
+        }
+
+        private void OnContext(IAsyncResult ar)
+        {
+            HttpListener listener = (HttpListener)ar.AsyncState;
+            HttpListenerContext context;
+            try { context = listener.EndGetContext(ar); }
+            catch (Exception) { return; }
+            try
+            {
+                if (listener.IsListening)
+                    listener.BeginGetContext(OnContext, listener);
+            }
+            catch (Exception) { }
+            try { Handle(context); }
+            catch (Exception)
+            {
+                try { context.Response.Abort(); } catch (Exception) { }
+            }
+        }
+
+        private static string Resource(string name)
+        {
+            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name))
+            {
+                if (stream == null)
+                    return null;
+                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                    return reader.ReadToEnd();
+            }
+        }
+
+        private static Dictionary<string, string> ParseForm(string body)
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+            if (string.IsNullOrEmpty(body))
+                return result;
+            foreach (string part in body.Split('&'))
+            {
+                int idx = part.IndexOf('=');
+                if (idx <= 0)
+                    continue;
+                try
+                {
+                    string key = Uri.UnescapeDataString(part.Substring(0, idx).Replace('+', ' '));
+                    string value = Uri.UnescapeDataString(part.Substring(idx + 1).Replace('+', ' '));
+                    result[key] = value;
+                }
+                catch (Exception) { }
+            }
+            return result;
+        }
+
+        private static string ReadBody(HttpListenerRequest request)
+        {
+            if (!request.HasEntityBody || request.ContentLength64 > 2048)
+                return "";
+            using (StreamReader reader = new StreamReader(request.InputStream, Encoding.UTF8))
+                return reader.ReadToEnd();
+        }
+
+        private static bool SameText(string a, string b)
+        {
+            if (a == null || b == null || a.Length != b.Length)
+                return false;
+            int diff = 0;
+            for (int i = 0; i < a.Length; i++)
+                diff |= a[i] ^ b[i];
+            return diff == 0;
+        }
+
+        private bool Authorized(HttpListenerRequest request)
+        {
+            string token = request.Headers["X-Token"];
+            if (string.IsNullOrEmpty(token))
+                return false;
+            lock (m_Lock)
+            {
+                return m_Tokens.Contains(token);
+            }
+        }
+
+        private string NewToken()
+        {
+            byte[] bytes = new byte[24];
+            using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
+                rng.GetBytes(bytes);
+            return Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=');
+        }
+
+        private void Reply(HttpListenerContext context, int status, string type, string body)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(body ?? "");
+            HttpListenerResponse response = context.Response;
+            response.StatusCode = status;
+            response.ContentType = type;
+            response.ContentLength64 = bytes.Length;
+            response.Headers.Add("Cache-Control", "no-store");
+            response.Headers.Add("X-Content-Type-Options", "nosniff");
+            response.OutputStream.Write(bytes, 0, bytes.Length);
+            response.OutputStream.Close();
+        }
+
+        private void Handle(HttpListenerContext context)
+        {
+            HttpListenerRequest request = context.Request;
+            string path = request.Url.AbsolutePath.ToLowerInvariant();
+            if (request.HttpMethod == "GET" && (path == "/" || path == "/index.html"))
+            {
+                string page = Resource("remote.html");
+                Reply(context, page != null ? 200 : 500, "text/html; charset=utf-8", page ?? "missing");
+                return;
+            }
+            if (request.HttpMethod == "POST" && path == "/api/login")
+            {
+                Dictionary<string, string> form = ParseForm(ReadBody(request));
+                string given;
+                form.TryGetValue("password", out given);
+                lock (m_Lock)
+                {
+                    if (DateTime.UtcNow < m_LockedUntil)
+                    {
+                        Reply(context, 429, "text/plain; charset=utf-8", "locked");
+                        return;
+                    }
+                    if (m_Password.Length >= 4 && SameText(given, m_Password))
+                    {
+                        m_Failures = 0;
+                        if (m_Tokens.Count > 20)
+                            m_Tokens.Clear();
+                        string token = NewToken();
+                        m_Tokens.Add(token);
+                        Reply(context, 200, "text/plain; charset=utf-8", token);
+                        return;
+                    }
+                    m_Failures++;
+                    if (m_Failures >= 5)
+                    {
+                        m_LockedUntil = DateTime.UtcNow.AddSeconds(60);
+                        m_Failures = 0;
+                    }
+                }
+                System.Threading.Thread.Sleep(600); // slows down guessing
+                Reply(context, 401, "text/plain; charset=utf-8", "wrong password");
+                return;
+            }
+            if (path == "/api/state" && request.HttpMethod == "GET")
+            {
+                if (!Authorized(request))
+                {
+                    Reply(context, 401, "text/plain; charset=utf-8", "login");
+                    return;
+                }
+                Reply(context, 200, "application/json; charset=utf-8", m_State);
+                return;
+            }
+            if (path == "/api/cmd" && request.HttpMethod == "POST")
+            {
+                if (!Authorized(request))
+                {
+                    Reply(context, 401, "text/plain; charset=utf-8", "login");
+                    return;
+                }
+                Dictionary<string, string> form = ParseForm(ReadBody(request));
+                string cmd, arg;
+                form.TryGetValue("cmd", out cmd);
+                form.TryGetValue("arg", out arg);
+                Func<string, string, string> exec = Execute;
+                string result = (exec != null && !string.IsNullOrEmpty(cmd)) ? exec(cmd, arg ?? "") : "no";
+                Reply(context, 200, "text/plain; charset=utf-8", result);
+                return;
+            }
+            Reply(context, 404, "text/plain; charset=utf-8", "Not found");
+        }
+    }
+
+    /// <summary>
+    /// Starts cloudflared (free "quick tunnel", no account) which gives this computer a public https address
+    /// without opening ports or knowing the IP.
+    /// </summary>
+    internal class CloudflareTunnel
+    {
+        private Process m_Process;
+        private static readonly Regex UrlPattern = new Regex(@"https://[a-z0-9\-]+\.trycloudflare\.com", RegexOptions.IgnoreCase);
+
+        public volatile string Url;
+        public volatile string Status = "";
+
+        public static string ExePath
+        {
+            get { return Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "cloudflared.exe"); }
+        }
+
+        public bool Running
+        {
+            get
+            {
+                try { return m_Process != null && !m_Process.HasExited; }
+                catch (Exception) { return false; }
+            }
+        }
+
+        public bool Start(int port, out string error)
+        {
+            error = null;
+            Stop();
+            if (!File.Exists(ExePath))
+            {
+                error = "cloudflared.exe";
+                return false;
+            }
+            try
+            {
+                ProcessStartInfo info = new ProcessStartInfo(ExePath,
+                    "tunnel --no-autoupdate --url http://localhost:" + port + " --http-host-header localhost:" + port);
+                info.UseShellExecute = false;
+                info.CreateNoWindow = true;
+                info.RedirectStandardError = true;
+                info.RedirectStandardOutput = true;
+                Process process = new Process();
+                process.StartInfo = info;
+                process.EnableRaisingEvents = true;
+                DataReceivedEventHandler onData = (s, e) =>
+                {
+                    if (e.Data == null)
+                        return;
+                    Match m = UrlPattern.Match(e.Data);
+                    if (m.Success)
+                    {
+                        Url = m.Value;
+                        Status = "ok";
+                    }
+                    else if (e.Data.IndexOf("ERR", StringComparison.Ordinal) >= 0 && Url == null)
+                    {
+                        Status = e.Data.Length > 160 ? e.Data.Substring(0, 160) : e.Data;
+                    }
+                };
+                process.OutputDataReceived += onData;
+                process.ErrorDataReceived += onData;
+                process.Exited += (s, e) =>
+                {
+                    Url = null;
+                    if (Status == "ok" || Status == "starting")
+                        Status = "ended";
+                };
+                Url = null;
+                Status = "starting";
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                m_Process = process;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+                return false;
+            }
+        }
+
+        public void Stop()
+        {
+            Process process = m_Process;
+            m_Process = null;
+            Url = null;
+            Status = "";
+            if (process == null)
+                return;
+            try
+            {
+                if (!process.HasExited)
+                    process.Kill();
+            }
+            catch (Exception) { }
+        }
+    }
+
+    public partial class Player
+    {
+        private RemoteServer m_Remote;
+        private CloudflareTunnel m_Tunnel;
+        private Timer m_RemoteTimer;
+        private int m_RemoteInfoId = int.MinValue;
+        private MusicInfo m_RemoteInfo;
+
+        private void InitRemote()
+        {
+            try
+            {
+                m_Remote = new RemoteServer();
+                m_Remote.Execute = RemoteExecute;
+                m_Tunnel = new CloudflareTunnel();
+                m_RemoteTimer = new Timer();
+                m_RemoteTimer.Interval = 700;
+                m_RemoteTimer.Tick += (s, e) => UpdateRemoteState();
+                m_RemoteTimer.Start();
+                ToolStripMenuItem item = new ToolStripMenuItem(T("Controle remoto (celular / internet)...", "Remote control (phone / internet)..."));
+                item.Click += (s, e) => ShowRemoteDialog();
+                extrasToolStripMenuItem.DropDownItems.Insert(1, item);
+                FormClosed += (s, e) =>
+                {
+                    m_RemoteTimer.Stop();
+                    m_Tunnel.Stop();
+                    m_Remote.Stop();
+                };
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+        }
+
+        private void UpdateRemoteState()
+        {
+            if (m_Remote == null || !m_Remote.Running)
+                return;
+            PlayingControl control = m_PlayingControl;
+            if (control == null)
+                return;
+            try
+            {
+                int id = control.CurrentMusicElement;
+                bool playing = id != -1;
+                double position = 0, length = 0;
+                bool paused = false;
+                string listTitle = "";
+                if (playing)
+                {
+                    if (id != m_RemoteInfoId)
+                    {
+                        m_RemoteInfoId = id;
+                        m_RemoteInfo = MusicInfo.GetInfo(id);
+                    }
+                    control.GetMusicPosition(out position, out length);
+                    paused = control.IsPaused();
+                    Ares.Data.IElement list = Ares.Data.DataModule.ElementRepository.GetElement(control.CurrentMusicList);
+                    if (list != null)
+                        listTitle = list.Title;
+                }
+                else
+                {
+                    m_RemoteInfoId = int.MinValue;
+                    m_RemoteInfo = null;
+                }
+                MusicInfo info = m_RemoteInfo;
+                StringBuilder json = new StringBuilder();
+                json.Append("{\"playing\":").Append(playing ? "true" : "false");
+                json.Append(",\"paused\":").Append(paused ? "true" : "false");
+                json.Append(",\"title\":").Append(JsonString(info != null ? info.Title : ""));
+                json.Append(",\"artist\":").Append(JsonString(info != null ? info.Artist : ""));
+                json.Append(",\"list\":").Append(JsonString(listTitle));
+                json.Append(",\"position\":").Append(position.ToString("0.0", CultureInfo.InvariantCulture));
+                json.Append(",\"length\":").Append(length.ToString("0.0", CultureInfo.InvariantCulture));
+                json.Append(",\"repeat\":").Append(control.MusicRepeat ? "true" : "false");
+                json.Append(",\"vol\":{\"overall\":").Append(control.GlobalVolume);
+                json.Append(",\"music\":").Append(control.MusicVolume);
+                json.Append(",\"sound\":").Append(control.SoundVolume).Append("}");
+
+                int modeIndex = -1;
+                json.Append(",\"modes\":[");
+                if (m_Project != null)
+                {
+                    Ares.Data.IMode current = control.CurrentMode;
+                    int i = 0;
+                    foreach (Ares.Data.IMode mode in m_Project.GetModes())
+                    {
+                        if (i > 0)
+                            json.Append(",");
+                        json.Append(JsonString(mode.Title));
+                        if (current != null && mode.Title == current.Title && modeIndex < 0)
+                            modeIndex = i;
+                        i++;
+                    }
+                }
+                json.Append("],\"mode\":").Append(modeIndex);
+                json.Append(",\"elements\":[");
+                if (m_Project != null && modeIndex >= 0)
+                {
+                    HashSet<int> active = new HashSet<int>();
+                    foreach (Ares.Data.IModeElement me in control.CurrentModeElements)
+                        active.Add(me.Id);
+                    Ares.Data.IMode mode = m_Project.GetModes()[modeIndex];
+                    bool first = true;
+                    foreach (Ares.Data.IModeElement me in mode.GetElements())
+                    {
+                        if (!me.IsVisibleInPlayer)
+                            continue;
+                        if (!first)
+                            json.Append(",");
+                        first = false;
+                        json.Append("{\"id\":").Append(me.Id).Append(",\"title\":").Append(JsonString(me.Title));
+                        json.Append(",\"active\":").Append(active.Contains(me.Id) ? "true" : "false").Append("}");
+                    }
+                }
+                json.Append("]}");
+                m_Remote.SetState(json.ToString());
+            }
+            catch (Exception)
+            {
+                // the remote control must never disturb playing
+            }
+        }
+
+        // runs the command from the web page on the user interface thread
+        private string RemoteExecute(string cmd, string arg)
+        {
+            string result = "ok";
+            try
+            {
+                Invoke(new MethodInvoker(() =>
+                {
+                    PlayingControl control = m_PlayingControl;
+                    if (control == null)
+                    {
+                        result = "no";
+                        return;
+                    }
+                    int n;
+                    double d;
+                    switch (cmd)
+                    {
+                        case "pause": control.TogglePause(); break;
+                        case "stop": StopAllPlaying(); break;
+                        case "prev": previousButton_Click(null, EventArgs.Empty); break;
+                        case "next": nextButton_Click(null, EventArgs.Empty); break;
+                        case "repeat": repeatButton_Click(null, EventArgs.Empty); break;
+                        case "seek":
+                            if (double.TryParse(arg, NumberStyles.Float, CultureInfo.InvariantCulture, out d) && d >= 0)
+                                control.SeekMusic(d);
+                            break;
+                        case "vol_overall":
+                            if (int.TryParse(arg, out n)) { overallVolumeBar.Value = Math.Max(0, Math.Min(100, n)); overallVolumeBar_Scroll(null, EventArgs.Empty); }
+                            break;
+                        case "vol_music":
+                            if (int.TryParse(arg, out n)) { musicVolumeBar.Value = Math.Max(0, Math.Min(100, n)); musicVolumeBar_Scroll(null, EventArgs.Empty); }
+                            break;
+                        case "vol_sound":
+                            if (int.TryParse(arg, out n)) { soundVolumeBar.Value = Math.Max(0, Math.Min(100, n)); soundVolumeBar_Scroll(null, EventArgs.Empty); }
+                            break;
+                        case "mode":
+                            if (int.TryParse(arg, out n) && m_Project != null)
+                            {
+                                var modes = m_Project.GetModes();
+                                if (n >= 0 && n < modes.Count)
+                                    control.SetMode(modes[n].Title);
+                            }
+                            break;
+                        case "element":
+                            if (int.TryParse(arg, out n))
+                                control.SwitchElement(n);
+                            break;
+                        default:
+                            result = "unknown";
+                            break;
+                    }
+                }));
+            }
+            catch (Exception)
+            {
+                result = "error";
+            }
+            return result;
+        }
+
+        private static string RandomPassword()
+        {
+            const string chars = "abcdefghjkmnpqrstuvwxyz23456789";
+            byte[] bytes = new byte[10];
+            using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
+                rng.GetBytes(bytes);
+            StringBuilder sb = new StringBuilder();
+            foreach (byte b in bytes)
+                sb.Append(chars[b % chars.Length]);
+            return sb.ToString();
+        }
+
+        private void ShowRemoteDialog()
+        {
+            if (m_Remote == null)
+                return;
+            using (Form form = new Form())
+            {
+                form.Text = T("Controle remoto", "Remote control");
+                form.FormBorderStyle = FormBorderStyle.FixedDialog;
+                form.StartPosition = FormStartPosition.CenterParent;
+                form.MaximizeBox = false;
+                form.MinimizeBox = false;
+                form.ShowInTaskbar = false;
+                form.ClientSize = new Size(600, 420);
+                form.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0);
+
+                Label intro = new Label();
+                intro.SetBounds(16, 12, 568, 78);
+                intro.Text = T(
+                    "Controle o Apolo pelo celular ou deixe outra pessoa controlar pela internet. Ao ligar, o Apolo cria um link seguro (https) — sem IP, sem abrir portas. Abra o link no navegador do celular e digite a senha.",
+                    "Control Apolo from your phone, or let someone else control it over the internet. When switched on, Apolo creates a secure (https) link - no IP, no open ports. Open the link in the phone browser and type the password.");
+
+                Label pwLabel = new Label();
+                pwLabel.SetBounds(16, 100, 80, 24);
+                pwLabel.Text = T("Senha:", "Password:");
+                pwLabel.TextAlign = ContentAlignment.MiddleLeft;
+                TextBox pw = new TextBox();
+                pw.SetBounds(100, 98, 220, 26);
+                string saved = Ares.CommonGUI.Preferences.Get("RemotePassword", "");
+                pw.Text = string.IsNullOrEmpty(saved) ? RandomPassword() : saved;
+                CheckBox show = new CheckBox();
+                show.SetBounds(332, 98, 200, 26);
+                show.Text = T("Mostrar a senha", "Show password");
+                pw.UseSystemPasswordChar = true;
+                show.CheckedChanged += (s, e) => pw.UseSystemPasswordChar = !show.Checked;
+
+                Button toggle = new Button();
+                toggle.SetBounds(16, 140, 200, 36);
+                Label status = new Label();
+                status.SetBounds(228, 140, 356, 36);
+                status.TextAlign = ContentAlignment.MiddleLeft;
+
+                Label linkLabel = new Label();
+                linkLabel.SetBounds(16, 192, 568, 22);
+                linkLabel.Text = T("Link para abrir no celular:", "Link to open on the phone:");
+                TextBox link = new TextBox();
+                link.SetBounds(16, 216, 568, 26);
+                link.ReadOnly = true;
+                Button copy = new Button();
+                copy.SetBounds(16, 250, 130, 32);
+                copy.Text = T("Copiar link", "Copy link");
+                Button open = new Button();
+                open.SetBounds(156, 250, 130, 32);
+                open.Text = T("Abrir aqui", "Open here");
+
+                Label warn = new Label();
+                warn.SetBounds(16, 298, 568, 100);
+                warn.Text = T(
+                    "• Quem tiver o link E a senha controla o Apolo. Use uma senha forte e desligue ao terminar.\r\n• O link muda toda vez que você liga.\r\n• O acesso passa pelo túnel gratuito da Cloudflare (sem conta). O Apolo precisa ficar aberto neste computador.\r\n• Depois de 5 senhas erradas, o acesso é bloqueado por 1 minuto.",
+                    "• Anyone with the link AND the password controls Apolo. Use a strong password and switch it off when done.\r\n• The link changes every time you switch it on.\r\n• Access goes through the free Cloudflare tunnel (no account). Apolo must stay open on this computer.\r\n• After 5 wrong passwords access is blocked for 1 minute.");
+                warn.ForeColor = Color.Gray;
+
+                Action refresh = () =>
+                {
+                    bool on = m_Remote.Running;
+                    toggle.Text = on ? T("Desligar controle remoto", "Switch off") : T("Ligar controle remoto", "Switch on");
+                    pw.Enabled = !on;
+                    string url = m_Tunnel.Url;
+                    link.Text = url ?? "";
+                    copy.Enabled = open.Enabled = url != null;
+                    if (!on)
+                        status.Text = T("Desligado.", "Off.");
+                    else if (url != null)
+                        status.Text = T("Ligado. Pronto para usar.", "On. Ready to use.");
+                    else if (m_Tunnel.Status == "starting")
+                        status.Text = T("Criando o link (pode levar alguns segundos)...", "Creating the link (a few seconds)...");
+                    else
+                        status.Text = T("Problema no túnel: ", "Tunnel problem: ") + m_Tunnel.Status;
+                };
+                toggle.Click += (s, e) =>
+                {
+                    if (m_Remote.Running)
+                    {
+                        m_Tunnel.Stop();
+                        m_Remote.Stop();
+                    }
+                    else
+                    {
+                        string password = pw.Text.Trim();
+                        if (password.Length < 4)
+                        {
+                            MessageBox.Show(form, T("A senha precisa ter pelo menos 4 caracteres.", "The password needs at least 4 characters."),
+                                StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+                        if (!File.Exists(CloudflareTunnel.ExePath))
+                        {
+                            MessageBox.Show(form, T("O arquivo cloudflared.exe não foi encontrado ao lado do Apolo.exe. Use o build mais recente (ele vem junto) ou copie o cloudflared.exe para a pasta do programa.",
+                                "cloudflared.exe was not found next to Apolo.exe. Use the latest build (it is included) or copy cloudflared.exe into the program folder."),
+                                StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+                        Ares.CommonGUI.Preferences.Set("RemotePassword", password);
+                        if (!m_Remote.Start(8766, password))
+                        {
+                            MessageBox.Show(form, T("Não consegui iniciar o servidor local: ", "Could not start the local server: ") + m_Remote.LastError,
+                                StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+                        string error;
+                        if (!m_Tunnel.Start(m_Remote.Port, out error))
+                        {
+                            m_Remote.Stop();
+                            MessageBox.Show(form, T("Não consegui iniciar o túnel: ", "Could not start the tunnel: ") + error,
+                                StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                    refresh();
+                };
+                copy.Click += (s, e) =>
+                {
+                    try { Clipboard.SetText(link.Text); } catch (Exception) { }
+                };
+                open.Click += (s, e) => OpenInBrowser(link.Text);
+
+                Timer tick = new Timer();
+                tick.Interval = 500;
+                tick.Tick += (s, e) => refresh();
+                tick.Start();
+
+                Button close = new Button();
+                close.Text = T("Fechar", "Close");
+                close.DialogResult = DialogResult.OK;
+                close.SetBounds(600 - 16 - 100, 420 - 12 - 32, 100, 32);
+
+                form.Controls.AddRange(new Control[] { intro, pwLabel, pw, show, toggle, status, linkLabel, link, copy, open, warn, close });
+                form.AcceptButton = close;
+                refresh();
+                Ares.CommonGUI.ThemeManager.Apply(form);
+                form.ShowDialog(this);
+                tick.Stop();
+                tick.Dispose();
+            }
+        }
+    }
+}

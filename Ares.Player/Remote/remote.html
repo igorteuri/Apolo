@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16130F">
+<title>Apolo</title>
+<style>
+:root{--bg:#16130F;--surface:#221E19;--hover:#352E26;--line:#3D362D;--text:#F2ECE4;--dim:#9A9186;--accent:#FFB627;--accent2:#FF9F1C;--ok:#7BD88F}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);max-width:720px;margin:0 auto}
+h1{font-size:18px;margin:0;display:flex;align-items:center;gap:10px}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+.logo{width:28px;height:28px}
+button{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer;min-height:44px}
+button:active{background:var(--hover)}
+button.on{background:rgba(255,182,39,.22);border-color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.dim{color:var(--dim);font-size:14px}
+#title{font-size:20px;font-weight:600;word-break:break-word}
+.bar{height:8px;background:var(--hover);border-radius:6px;margin:14px 0 6px;overflow:hidden;cursor:pointer}
+.bar>div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.times{display:flex;justify-content:space-between}
+.row{display:flex;gap:10px;justify-content:center;margin-top:12px}
+.row button{flex:1;font-size:20px}
+.row button.big{flex:1.6;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#2a1c00;border:0;font-weight:700}
+.vol{display:grid;grid-template-columns:70px 1fr;align-items:center;gap:6px 10px}
+input[type=range]{width:100%;accent-color:var(--accent);height:34px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.chips button{white-space:nowrap;border-radius:20px;min-height:40px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.grid button{min-height:64px;font-weight:600;word-break:break-word}
+h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:0 0 10px}
+#login{margin-top:12vh;text-align:center}
+#login input{width:100%;font:inherit;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text);margin:14px 0}
+#login .logo{width:84px;height:84px}
+#msg{color:#ff8a80;min-height:22px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="sun" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFD54A"/><stop offset="1" stop-color="#FF9F1C"/></linearGradient></defs>
+<g stroke="#FFB627" stroke-width="3.6" stroke-linecap="round" fill="none"><path d="M32 13V1.5M41.5 15.5l5.75-9.96M48.5 22.5l9.96-5.75M51 32h12.5M48.5 41.5l9.96 5.75M41.5 48.5l5.75 9.96M32 51v12.5M22.5 48.5l-5.75 9.96M15.5 41.5l-9.96 5.75M13 32H.5M15.5 22.5L5.54 16.75M22.5 15.5l-5.75-9.96"/></g><circle cx="32" cy="32" r="13" fill="url(#g)"/></symbol></defs></svg>
+
+<div id="login">
+  <svg class="logo"><use href="#sun"/></svg>
+  <h1 style="justify-content:center;font-size:28px">Apolo</h1>
+  <p class="dim">Controle remoto</p>
+  <input id="pw" type="password" placeholder="Senha" autocomplete="current-password">
+  <button id="enter" class="on" style="width:100%">Entrar</button>
+  <p id="msg"></p>
+</div>
+
+<div id="app" class="hidden">
+  <header><h1><svg class="logo"><use href="#sun"/></svg>Apolo</h1><span class="dim" id="conn">conectado</span></header>
+  <div class="card">
+    <div class="dim" id="state">parado</div>
+    <div id="title">—</div>
+    <div class="dim" id="artist"></div>
+    <div class="bar" id="bar"><div id="fill"></div></div>
+    <div class="times dim"><span id="pos">0:00</span><span id="len">0:00</span></div>
+    <div class="row">
+      <button data-cmd="prev" aria-label="Anterior">⏮</button>
+      <button data-cmd="pause" class="big" id="pp" aria-label="Pausar">⏯</button>
+      <button data-cmd="next" aria-label="Próxima">⏭</button>
+    </div>
+    <div class="row">
+      <button data-cmd="repeat" id="rep">↻ Repetir</button>
+      <button data-cmd="stop">■ Parar tudo</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Volume</h2>
+    <div class="vol">
+      <span>Geral</span><input type="range" min="0" max="100" id="v_overall">
+      <span>Música</span><input type="range" min="0" max="100" id="v_music">
+      <span>Sons</span><input type="range" min="0" max="100" id="v_sound">
+    </div>
+  </div>
+  <div class="card"><h2>Modos</h2><div class="chips" id="modes"></div></div>
+  <div class="card"><h2 id="elTitle">Botões</h2><div class="grid" id="els"></div></div>
+</div>
+
+<script>
+var token=null,busy={},lastSeen=0,len=0;
+try{token=sessionStorage.getItem('apoloToken')}catch(e){}
+function $(id){return document.getElementById(id)}
+function fmt(s){s=Math.max(0,Math.floor(s));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)}
+function api(path,body){
+  return fetch(path,{method:body?'POST':'GET',headers:{'X-Token':token||'','Content-Type':'application/x-www-form-urlencoded'},body:body||undefined});
+}
+function send(cmd,arg){return api('/api/cmd','cmd='+encodeURIComponent(cmd)+'&arg='+encodeURIComponent(arg===undefined?'':arg)).then(poll)}
+$('enter').onclick=function(){
+  $('msg').textContent='';
+  fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'password='+encodeURIComponent($('pw').value)})
+   .then(function(r){if(r.status==429)throw 'Muitas tentativas. Aguarde um minuto.';if(!r.ok)throw 'Senha incorreta.';return r.text()})
+   .then(function(t){token=t.trim();try{sessionStorage.setItem('apoloToken',token)}catch(e){}start()})
+   .catch(function(e){$('msg').textContent=e&&e.message?'Sem conexão.':e});
+};
+$('pw').onkeydown=function(e){if(e.key==='Enter')$('enter').click()};
+document.querySelectorAll('[data-cmd]').forEach(function(b){b.onclick=function(){send(b.dataset.cmd)}});
+$('bar').onclick=function(e){if(len>0){var r=this.getBoundingClientRect();send('seek',((e.clientX-r.left)/r.width*len).toFixed(1))}};
+['overall','music','sound'].forEach(function(k){
+  var el=$('v_'+k);
+  el.oninput=function(){busy[k]=Date.now();send('vol_'+k,el.value)};
+});
+function render(s){
+  $('state').textContent=s.playing?(s.paused?'pausado':'tocando')+(s.list?' · '+s.list:''):'parado';
+  $('title').textContent=s.title||(s.playing?'…':'—');
+  $('artist').textContent=s.artist||'';
+  len=s.length;
+  $('fill').style.width=(s.length>0?Math.min(100,s.position/s.length*100):0)+'%';
+  $('pos').textContent=fmt(s.position);$('len').textContent=fmt(s.length);
+  $('rep').classList.toggle('on',!!s.repeat);
+  ['overall','music','sound'].forEach(function(k){
+    if(!busy[k]||Date.now()-busy[k]>1500)$('v_'+k).value=s.vol[k];
+  });
+  var m=$('modes');var key=JSON.stringify(s.modes)+s.mode;
+  if(m.dataset.key!==key){m.dataset.key=key;m.innerHTML='';
+    s.modes.forEach(function(t,i){var b=document.createElement('button');b.textContent=t;if(i===s.mode)b.className='on';b.onclick=function(){send('mode',i)};m.appendChild(b)})}
+  $('elTitle').textContent=s.modes[s.mode]||'Botões';
+  var g=$('els');var ek=JSON.stringify(s.elements);
+  if(g.dataset.key!==ek){g.dataset.key=ek;g.innerHTML='';
+    s.elements.forEach(function(e){var b=document.createElement('button');b.textContent=e.title;if(e.active)b.className='on';b.onclick=function(){send('element',e.id)};g.appendChild(b)})}
+}
+var timer=null;
+function poll(){
+  return api('/api/state').then(function(r){
+    if(r.status==401){logout();throw 0}
+    return r.json()}).then(function(s){$('conn').textContent='conectado';render(s)})
+   .catch(function(e){if(e!==0)$('conn').textContent='sem conexão'});
+}
+function logout(){token=null;try{sessionStorage.removeItem('apoloToken')}catch(e){}clearInterval(timer);$('app').classList.add('hidden');$('login').classList.remove('hidden')}
+function start(){$('login').classList.add('hidden');$('app').classList.remove('hidden');poll();clearInterval(timer);timer=setInterval(poll,1000)}
+if(token)start();
+</script>
+</body>
+</html>

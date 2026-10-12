@@ -24,7 +24,7 @@ namespace Ares.Player
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
             Cursor = Cursors.Hand;
             TabStop = false;
-            Width = 10;
+            Width = 12;
         }
 
         /// <summary>Direction of the chevron: true points to the left.</summary>
@@ -71,7 +71,7 @@ namespace Ares.Player
             Graphics g = e.Graphics;
             g.Clear(back);
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            int w = Math.Max(4, Width - 4);
+            int w = Math.Max(4, Width - 3);
             Rectangle r = new Rectangle((Width - w) / 2, 0, w, Height - 1);
             using (GraphicsPath path = RoundRect(r, w))
             using (SolidBrush b = new SolidBrush(m_Hover ? Color.FromArgb(70, accent) : Color.FromArgb(90, bar)))
