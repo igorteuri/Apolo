@@ -30,7 +30,7 @@ namespace Ares.Player
             m_EditButton.Name = "editModeButton";
             m_EditButton.CheckOnClick = true;
             m_EditButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
-            m_EditButton.Text = T("Editar", "Edit");
+            m_EditButton.Text = T("Modo de Edição", "Edit mode");
             m_EditButton.ToolTipText = T("Modo de edição: adicionar, renomear, excluir e reordenar modos e botões",
                 "Edit mode: add, rename, delete and reorder modes and buttons");
             m_EditButton.CheckedChanged += (s, e) => SetEditMode(m_EditButton.Checked);

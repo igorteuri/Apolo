@@ -223,7 +223,7 @@ namespace Ares.Player
         public WebWindow(Player player)
         {
             m_Player = player;
-            Text = T("Ares - Páginas web", "Ares - Web pages");
+            Text = T("Apolo - Páginas web", "Apolo - Web pages");
             Icon = player.Icon;
             StartPosition = FormStartPosition.CenterScreen;
             Size = new Size(1150, 760);
@@ -233,7 +233,7 @@ namespace Ares.Player
             bar.Height = 38;
             bar.Padding = new Padding(4);
 
-            m_ToAres = MakeBarButton(T("◀ Ares", "◀ Ares"), 4, 80, (s, e) => m_Player.BringToFrontFromWeb());
+            m_ToAres = MakeBarButton(T("◀ Apolo", "◀ Apolo"), 4, 80, (s, e) => m_Player.BringToFrontFromWeb());
             m_Back = MakeBarButton("←", 88, 36, (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CanGoBack) t.View.GoBack(); });
             m_Forward = MakeBarButton("→", 128, 36, (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CanGoForward) t.View.GoForward(); });
             m_Reload = MakeBarButton("⟳", 168, 36, (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CoreWebView2 != null) t.View.CoreWebView2.Reload(); });
@@ -624,7 +624,7 @@ namespace Ares.Player
 
         private void RemoveTab(WebTab tab)
         {
-            if (MessageBox.Show(this, T("Remover a aba \"", "Remove the tab \"") + tab.Name + "\"?", "Ares",
+            if (MessageBox.Show(this, T("Remover a aba \"", "Remove the tab \"") + tab.Name + "\"?", "Apolo",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
             int index = m_Tabs.IndexOf(tab);
@@ -685,7 +685,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, ex.Message, "Ares", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, ex.Message, "Apolo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 

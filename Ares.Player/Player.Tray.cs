@@ -19,17 +19,58 @@ namespace Ares.Player
             get { return Ares.CommonGUI.Preferences.GetBool("CloseToTray", true); }
         }
 
+        private Timer m_TrayTimer;
+        private Ares.CommonGUI.ApoloState m_TrayState = Ares.CommonGUI.ApoloState.Idle;
+        private int m_TrayPhase;
+
+        private static int TrayIconSize
+        {
+            get { return Math.Max(16, SystemInformation.SmallIconSize.Width); }
+        }
+
+        // the tray icon reacts to what is happening: stopped (grey), playing (sun with moving rays), paused
+        private void UpdateTrayIcon()
+        {
+            try
+            {
+                Ares.Players.PlayingControl control = m_PlayingControl;
+                Ares.CommonGUI.ApoloState state = Ares.CommonGUI.ApoloState.Idle;
+                if (control != null)
+                {
+                    double pos, len;
+                    bool active = control.GetMusicPosition(out pos, out len) || control.GetRunningSounds().Count > 0;
+                    if (active)
+                        state = control.IsPaused() ? Ares.CommonGUI.ApoloState.Paused : Ares.CommonGUI.ApoloState.Playing;
+                }
+                int phase = state == Ares.CommonGUI.ApoloState.Playing ? (m_TrayPhase = 1 - m_TrayPhase) : 0;
+                if (state == m_TrayState && state != Ares.CommonGUI.ApoloState.Playing)
+                    return;
+                m_TrayState = state;
+                notifyIcon.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(TrayIconSize, state, phase);
+                notifyIcon.Text = "Apolo - " + (state == Ares.CommonGUI.ApoloState.Playing ? T("tocando", "playing")
+                    : state == Ares.CommonGUI.ApoloState.Paused ? T("pausado", "paused") : T("parado", "stopped"));
+            }
+            catch (Exception)
+            {
+                // the icon is only informative
+            }
+        }
+
         private void InitTray()
         {
             try
             {
-                if (notifyIcon.Icon == null)
-                    notifyIcon.Icon = this.Icon;
-                notifyIcon.Text = "Ares";
+                this.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0);
+                notifyIcon.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(TrayIconSize, Ares.CommonGUI.ApoloState.Idle, 0);
+                notifyIcon.Text = "Apolo";
+                m_TrayTimer = new Timer();
+                m_TrayTimer.Interval = 500;
+                m_TrayTimer.Tick += (s, e) => UpdateTrayIcon();
+                m_TrayTimer.Start();
                 notifyIcon.Visible = true; // always shown in the tray
 
                 m_TrayMenu = new ContextMenuStrip();
-                m_TrayMenu.Items.Add(T("Abrir Ares", "Open Ares"), null, (s, e) => RestoreFromTray());
+                m_TrayMenu.Items.Add(T("Abrir Apolo", "Open Apolo"), null, (s, e) => RestoreFromTray());
                 m_TrayPause = new ToolStripMenuItem(T("Pausar / continuar", "Pause / resume"));
                 m_TrayPause.Click += (s, e) =>
                 {
@@ -80,9 +121,9 @@ namespace Ares.Player
             if (!m_TrayHintShown)
             {
                 m_TrayHintShown = true;
-                notifyIcon.ShowBalloonTip(3000, "Ares",
-                    T("O Ares continua tocando na bandeja do Windows. Clique no ícone para abrir; botão direito > Sair para fechar de vez.",
-                      "Ares keeps playing in the Windows tray. Click the icon to open; right-click > Exit to quit."),
+                notifyIcon.ShowBalloonTip(3000, "Apolo",
+                    T("O Apolo continua tocando na bandeja do Windows. Clique no ícone para abrir; botão direito > Sair para fechar de vez.",
+                      "Apolo keeps playing in the Windows tray. Click the icon to open; right-click > Exit to quit."),
                     ToolTipIcon.Info);
             }
         }

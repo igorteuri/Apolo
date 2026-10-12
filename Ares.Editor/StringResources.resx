@@ -124,10 +124,10 @@
     <value>All</value>
   </data>
   <data name="Ares" xml:space="preserve">
-    <value>Ares</value>
+    <value>Apolo Editor</value>
   </data>
   <data name="AresEditorTitle" xml:space="preserve">
-    <value>Ares Editor - {0}</value>
+    <value>Apolo Editor - {0}</value>
   </data>
   <data name="Category" xml:space="preserve">
     <value>category</value>

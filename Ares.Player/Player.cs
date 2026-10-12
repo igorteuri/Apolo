@@ -217,6 +217,12 @@ namespace Ares.Player
                 if (control != null)
                     control.SeekSound(e.Handle, e.Seconds);
             };
+            m_SoundPanel.RepeatRequested += (sender, e) =>
+            {
+                PlayingControl control = m_PlayingControl;
+                if (control != null)
+                    control.SetSoundRepeat(e.Handle, e.Repeat);
+            };
             groupBox3.Controls.Add(m_SoundPanel);
 
             // pause button, right behind the stop button

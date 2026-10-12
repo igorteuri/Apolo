@@ -533,7 +533,7 @@ namespace Ares.Player
         {
             bool seq = TrackContainer() is ISequentialContainer;
             int idx = m_TrackList.SelectedIndex;
-            bool canMove = seq && idx >= 0 && idx < m_TrackShown.Count && m_TrackShown[idx].Index >= 0 && m_TrackSearch.Text.Trim().Length == 0;
+            bool canMove = idx >= 0 && idx < m_TrackShown.Count && m_TrackShown[idx].Index >= 0 && m_TrackSearch.Text.Trim().Length == 0;
             m_TrackUp.Enabled = canMove && m_TrackShown[idx].Index > 0;
             m_TrackDown.Enabled = canMove && m_TrackShown[idx].Index < m_TrackRows.Count - 1;
         }
@@ -612,9 +612,22 @@ namespace Ares.Player
         private void MoveTrack(int delta)
         {
             int idx = m_TrackList.SelectedIndex;
-            ISequentialContainer seq = TrackContainer() as ISequentialContainer;
-            if (seq == null || idx < 0 || idx >= m_TrackShown.Count)
+            if (idx < 0 || idx >= m_TrackShown.Count)
                 return;
+            ISequentialContainer seq = TrackContainer() as ISequentialContainer;
+            if (seq == null)
+            {
+                // random lists and effect choices have no fixed order: offer a sequential list instead
+                if (m_TrackKind.Enabled && m_TrackKind.SelectedIndex != 1)
+                {
+                    MessageBox.Show(this,
+                        T("Esta lista não toca em ordem fixa, por isso a ordem não importa. Para reorganizar, mude o tipo para \"Música — em sequência\" (você será perguntado).",
+                          "This list has no fixed order. To reorder tracks, change the type to a sequential list (you will be asked)."),
+                        StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    m_TrackKind.DroppedDown = true;
+                }
+                return;
+            }
             int from = m_TrackShown[idx].Index;
             int to = from + delta;
             if (from < 0 || to < 0 || to >= m_TrackRows.Count)

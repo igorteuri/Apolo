@@ -363,7 +363,7 @@
 </value>
   </data>
   <data name="aboutButton.Text" xml:space="preserve">
-    <value>Über Ares ...</value>
+    <value>Über Apolo ...</value>
   </data>
   <data name="stopButton.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -672,7 +672,7 @@
     <value>163, 22</value>
   </data>
   <data name="aboutToolStripMenuItem.Text" xml:space="preserve">
-    <value>Über Ares ...</value>
+    <value>Über Apolo ...</value>
   </data>
   <data name="helpToolStripMenuItem.Text" xml:space="preserve">
     <value>Hilfe</value>

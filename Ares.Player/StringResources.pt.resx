@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AresPlayer" xml:space="preserve">
-    <value>Ares Player - {0}</value>
+    <value>Apolo - {0}</value>
   </data>
   <data name="Connected" xml:space="preserve">
     <value>Conectado</value>
@@ -207,7 +207,7 @@ Você deve ajustar algumas configurações primeiro.</value>
     <value>Requer direitos de administrador para configurar a segurança do Windows</value>
   </data>
   <data name="ShowInfo" xml:space="preserve">
-    <value>Sobre o Ares ...</value>
+    <value>Sobre o Apolo ...</value>
   </data>
   <data name="ShowMessages" xml:space="preserve">
     <value>Mensagens ...</value>

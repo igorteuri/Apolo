@@ -1247,7 +1247,7 @@
     <value>49, 20</value>
   </data>
   <data name="aboutButton.Text" xml:space="preserve">
-    <value>About Ares ...</value>
+    <value>About Apolo ...</value>
   </data>
   <data name="label2.Text" xml:space="preserve">
     <value>Overall:</value>
@@ -1256,7 +1256,7 @@
     <value>groupBox6</value>
   </data>
   <data name="notifyIcon.Text" xml:space="preserve">
-    <value>Ares Player</value>
+    <value>Apolo</value>
   </data>
   <data name="&gt;&gt;previousButton.Name" xml:space="preserve">
     <value>previousButton</value>
@@ -2016,7 +2016,7 @@
     <value>421, 110</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
-    <value>Ares Player</value>
+    <value>Apolo</value>
   </data>
   <data name="groupBox1.TabIndex" type="System.Int32, mscorlib">
     <value>4</value>

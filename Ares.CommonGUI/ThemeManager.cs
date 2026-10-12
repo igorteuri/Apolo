@@ -69,23 +69,37 @@ namespace Ares.CommonGUI
         {
             new ThemePalette
             {
+                Id = "apolo", NamePt = "Apolo (escuro)", NameEn = "Apolo (dark)", IsDark = true,
+                Window = ThemePalette.C(0x16130F), Surface = ThemePalette.C(0x221E19), Hover = ThemePalette.C(0x352E26),
+                Border = ThemePalette.C(0x3D362D), Text = ThemePalette.C(0xF2ECE4), TextDim = ThemePalette.C(0x9A9186),
+                Accent = ThemePalette.C(0xFFB627), Selection = ThemePalette.C(0x6B4A12)
+            },
+            new ThemePalette
+            {
+                Id = "apolo-light", NamePt = "Apolo (claro)", NameEn = "Apolo (light)", IsDark = false,
+                Window = ThemePalette.C(0xFAF7F2), Surface = ThemePalette.C(0xFFFFFF), Hover = ThemePalette.C(0xF0E9DD),
+                Border = ThemePalette.C(0xE0D6C6), Text = ThemePalette.C(0x2A2118), TextDim = ThemePalette.C(0x7A6E60),
+                Accent = ThemePalette.C(0xE8890C), Selection = ThemePalette.C(0xFFDDA0)
+            },
+            new ThemePalette
+            {
                 Id = "dark", NamePt = "Escuro", NameEn = "Dark", IsDark = true,
                 Window = ThemePalette.C(0x1B1D21), Surface = ThemePalette.C(0x272A30), Hover = ThemePalette.C(0x3A3F48),
-                Border = ThemePalette.C(0x6B7280), Text = ThemePalette.C(0xE6E8EB), TextDim = ThemePalette.C(0x8A9099),
+                Border = ThemePalette.C(0x3B4049), Text = ThemePalette.C(0xE6E8EB), TextDim = ThemePalette.C(0x8A9099),
                 Accent = ThemePalette.C(0x4C9AFF), Selection = ThemePalette.C(0x2F5D9E)
             },
             new ThemePalette
             {
                 Id = "midnight", NamePt = "Meia-noite", NameEn = "Midnight", IsDark = true,
                 Window = ThemePalette.C(0x0F1420), Surface = ThemePalette.C(0x182033), Hover = ThemePalette.C(0x26365A),
-                Border = ThemePalette.C(0x5B77B0), Text = ThemePalette.C(0xE3EAF7), TextDim = ThemePalette.C(0x7F8CA8),
+                Border = ThemePalette.C(0x2F3F63), Text = ThemePalette.C(0xE3EAF7), TextDim = ThemePalette.C(0x7F8CA8),
                 Accent = ThemePalette.C(0x6EA8FE), Selection = ThemePalette.C(0x2A4A86)
             },
             new ThemePalette
             {
                 Id = "violet", NamePt = "Violeta", NameEn = "Violet", IsDark = true,
                 Window = ThemePalette.C(0x17121F), Surface = ThemePalette.C(0x211A2E), Hover = ThemePalette.C(0x33284A),
-                Border = ThemePalette.C(0x7B63B5), Text = ThemePalette.C(0xEAE4F5), TextDim = ThemePalette.C(0x9187A8),
+                Border = ThemePalette.C(0x43365E), Text = ThemePalette.C(0xEAE4F5), TextDim = ThemePalette.C(0x9187A8),
                 Accent = ThemePalette.C(0xB488FF), Selection = ThemePalette.C(0x5A3E96)
             },
             new ThemePalette
@@ -156,7 +170,7 @@ namespace Ares.CommonGUI
             if (s_Installed)
                 return;
             s_Installed = true;
-            Current = s_Palettes.First(p => p.Id == "dark");
+            Current = s_Palettes.First(p => p.Id == "apolo");
             ScalePercent = 110;
             LoadPreferences();
             UpdateRenderer();
@@ -697,6 +711,24 @@ namespace Ares.CommonGUI
         // Font / size scaling
         // --------------------------------------------------------------------------------
 
+        private static FontFamily s_Segoe;
+        private static bool s_SegoeTried;
+
+        // the modern Windows UI font (the designer fonts are the old Microsoft Sans Serif)
+        private static FontFamily SegoeUI
+        {
+            get
+            {
+                if (!s_SegoeTried)
+                {
+                    s_SegoeTried = true;
+                    try { s_Segoe = new FontFamily("Segoe UI"); }
+                    catch (Exception) { s_Segoe = null; }
+                }
+                return s_Segoe;
+            }
+        }
+
         private static void ApplyFont(Control c, OriginalState orig)
         {
             if (!orig.ExplicitFont)
@@ -707,11 +739,16 @@ namespace Ares.CommonGUI
             }
             float factor = ScalePercent / 100f;
             float size = orig.Font.Size * factor;
-            if (Math.Abs(c.Font.Size - size) < 0.01f)
+            FontFamily family = orig.Font.FontFamily;
+            string old = family.Name;
+            if (Current != null && !Current.IsClassic && SegoeUI != null
+                && (old == "Microsoft Sans Serif" || old == "Tahoma" || old == "MS Sans Serif" || old == "MS Shell Dlg"))
+                family = SegoeUI;
+            if (Math.Abs(c.Font.Size - size) < 0.01f && c.Font.FontFamily.Name == family.Name)
                 return;
             try
             {
-                c.Font = new Font(orig.Font.FontFamily, size, orig.Font.Style, orig.Font.Unit);
+                c.Font = new Font(family, size, orig.Font.Style, orig.Font.Unit);
             }
             catch (Exception)
             {
@@ -782,10 +819,27 @@ namespace Ares.CommonGUI
             bool hasText = !string.IsNullOrEmpty(g.Text);
             Size ts = hasText ? TextRenderer.MeasureText(gr, g.Text, g.Font) : Size.Empty;
             int top = hasText ? ts.Height / 2 : 0;
+            gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            using (System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath())
             using (Pen pen = new Pen(p.Border))
             {
-                gr.DrawRectangle(pen, 0, top, g.Width - 1, g.Height - top - 1);
+                int d = 10; // rounded corners
+                Rectangle r = new Rectangle(0, top, g.Width - 1, g.Height - top - 1);
+                if (r.Width > d && r.Height > d)
+                {
+                    path.AddArc(r.X, r.Y, d, d, 180, 90);
+                    path.AddArc(r.Right - d, r.Y, d, d, 270, 90);
+                    path.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
+                    path.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
+                    path.CloseFigure();
+                    gr.DrawPath(pen, path);
+                }
+                else
+                {
+                    gr.DrawRectangle(pen, r);
+                }
             }
+            gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
             if (hasText)
             {
                 int x = 8;
@@ -793,7 +847,7 @@ namespace Ares.CommonGUI
                 {
                     gr.FillRectangle(back, x - 2, 0, ts.Width + 2, ts.Height);
                 }
-                TextRenderer.DrawText(gr, g.Text, g.Font, new Point(x, 0), p.Text);
+                TextRenderer.DrawText(gr, g.Text, g.Font, new Point(x, 0), p.TextDim);
             }
         }
 

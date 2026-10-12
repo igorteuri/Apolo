@@ -548,6 +548,9 @@ namespace Ares.Playing
                 {
                     // allows the user interface to stop this sound (including repetitions)
                     ((FilePlayer)PlayingModule.FilePlayer).SetStopAction(handle, () => StopSounds(0));
+                    ((FilePlayer)PlayingModule.FilePlayer).SetRepeatCallbacks(handle,
+                        () => { lock (syncObject) { return m_RepeatOverride.HasValue ? m_RepeatOverride.Value : m_RepeatState; } },
+                        (repeat) => { lock (syncObject) { m_RepeatOverride = repeat; m_RepeatState = repeat; } });
                 }
             }
             else
@@ -794,16 +797,25 @@ namespace Ares.Playing
                 IElement testElement = element.Element;
                 IRepeatableElement repeatable = testElement as IRepeatableElement;
                 IMusicList musicList = testElement as IMusicList;
-                if (m_StopSounds || musicList != null || repeatable == null || (repeatable.RepeatCount != -1 && element.PlayCount >= repeatable.RepeatCount))
+                bool forceRepeat = m_RepeatOverride.HasValue && m_RepeatOverride.Value;
+                bool forceNoRepeat = m_RepeatOverride.HasValue && !m_RepeatOverride.Value;
+                if (m_StopSounds || musicList != null || repeatable == null || forceNoRepeat
+                    || (!forceRepeat && repeatable.RepeatCount != -1 && element.PlayCount >= repeatable.RepeatCount))
                 {
                     // will not be played again; music lists are repeated inside their own players
                     m_ElementQueue.RemoveAt(0);
+                    m_RepeatState = false;
                 }
-                else if (repeatable != null && repeatable.RepeatCount == -1 && repeatable.MaximumRandomIntermediateDelay.Ticks == 0 && repeatable.FixedIntermediateDelay.Ticks == 0
+                else if (repeatable != null && (repeatable.RepeatCount == -1 || forceRepeat) && repeatable.MaximumRandomIntermediateDelay.Ticks == 0 && repeatable.FixedIntermediateDelay.Ticks == 0
                     && HasOnlyOneLoopableFileElement(element.Element))
                 {
                     m_ElementQueue.RemoveAt(0);
                     m_LoopElement = true;
+                    m_RepeatState = true;
+                }
+                else
+                {
+                    m_RepeatState = true;
                 }
                 Monitor.Exit(syncObject);
                 if (firstPlay)
@@ -857,6 +869,10 @@ namespace Ares.Playing
         private bool m_StopMusic;
 
         private bool m_LoopElement;
+
+        // does the sound repeat until stopped? (user can override while it is playing)
+        private bool m_RepeatState;
+        private bool? m_RepeatOverride;
     }
 
     class Player : IProjectPlayer, IElementPlayer
@@ -982,6 +998,11 @@ namespace Ares.Playing
         public bool StopSound(int handle)
         {
             return ((FilePlayer)PlayingModule.FilePlayer).StopSound(handle);
+        }
+
+        public bool SetSoundRepeat(int handle, bool repeat)
+        {
+            return ((FilePlayer)PlayingModule.FilePlayer).SetSoundRepeat(handle, repeat);
         }
 
         public bool SetSoundPosition(int handle, double positionSeconds)

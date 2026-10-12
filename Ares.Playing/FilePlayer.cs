@@ -478,6 +478,36 @@ namespace Ares.Playing
             }
         }
 
+        /// <summary>
+        /// Registers how the user interface can ask for / change the repeat state of a running sound.
+        /// </summary>
+        public void SetRepeatCallbacks(int handle, Func<bool> query, Action<bool> change)
+        {
+            lock (m_Mutex)
+            {
+                if (m_RunningFiles.ContainsKey(handle))
+                {
+                    m_RunningFiles[handle].RepeatQuery = query;
+                    m_RunningFiles[handle].RepeatChange = change;
+                }
+            }
+        }
+
+        public bool SetSoundRepeat(int handle, bool repeat)
+        {
+            Action<bool> change = null;
+            lock (m_Mutex)
+            {
+                if (!m_RunningFiles.ContainsKey(handle))
+                    return false;
+                change = m_RunningFiles[handle].RepeatChange;
+            }
+            if (change != null)
+                change(repeat);
+            SetRepeatFile(handle, repeat);
+            return true;
+        }
+
         public List<PlayingFileInfo> GetRunningSounds()
         {
             List<KeyValuePair<int, ISoundFile>> running = new List<KeyValuePair<int, ISoundFile>>();
@@ -507,7 +537,16 @@ namespace Ares.Playing
                 catch (ArgumentException)
                 {
                 }
-                result.Add(new PlayingFileInfo { Handle = item.Key, FileId = item.Value.Id, Title = title, Position = pos, Length = length });
+                bool repeat = false;
+                Func<bool> query = null;
+                lock (m_Mutex)
+                {
+                    if (m_RunningFiles.ContainsKey(item.Key))
+                        query = m_RunningFiles[item.Key].RepeatQuery;
+                }
+                if (query != null)
+                    repeat = query();
+                result.Add(new PlayingFileInfo { Handle = item.Key, FileId = item.Value.Id, Title = title, Position = pos, Length = length, Repeat = repeat });
             }
             return result;
         }
@@ -860,7 +899,16 @@ namespace Ares.Playing
             lock (m_Mutex)
             {
                 if (!m_NotLoops.ContainsKey(handle))
-                    return; // file is looped anyway
+                {
+                    // file was started as a loop: switching the loop off needs an end sync
+                    if (!repeat && !m_CueOutRepeats.ContainsKey(handle))
+                    {
+                        Bass.BASS_ChannelFlags(handle, BASSFlag.BASS_DEFAULT, BASSFlag.BASS_SAMPLE_LOOP);
+                        int endSync = Bass.BASS_ChannelSetSync(handle, BASSSync.BASS_SYNC_END, 0, m_EndSync, IntPtr.Zero);
+                        m_NotLoops[handle] = endSync;
+                    }
+                    return;
+                }
 
                 if (m_CueOutRepeats.ContainsKey(handle))
                 {
@@ -1132,6 +1180,8 @@ namespace Ares.Playing
             public bool CrossFade { get; set; }
             public ISoundFile File { get; set; }
             public Action StopAction { get; set; }
+            public Func<bool> RepeatQuery { get; set; }
+            public Action<bool> RepeatChange { get; set; }
         }
 
         private Dictionary<int, RunningFileInfo> m_RunningFiles;

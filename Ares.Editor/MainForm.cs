@@ -64,6 +64,7 @@ namespace Ares.Editor
 
             PrepareModelChecks();
             InitializeComponent();
+            this.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0);
             Ares.CommonGUI.IconLibrary.Bind(toolStrip1, new Dictionary<ToolStripItem, string>
             {
                 { newButton, "file-plus" },
