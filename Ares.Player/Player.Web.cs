@@ -60,7 +60,8 @@ namespace Ares.Player
         public string Name;
         public string Url;
         public string Kind;   // "web" or "vdo"
-        public TabPage Page;
+        public Panel Page;
+        public ToolStripButton Button;
         public WebView2 View;
         public bool Started;
     }
@@ -69,7 +70,9 @@ namespace Ares.Player
     {
         private readonly Player m_Player;
         private readonly List<WebTab> m_Tabs = new List<WebTab>();
-        private TabControl m_TabControl;
+        private ToolStrip m_Strip;
+        private Panel m_Host;
+        private WebTab m_Selected;
         private TextBox m_Address;
         private Button m_Back, m_Forward, m_Reload, m_Add, m_ToAres, m_VdoSettings, m_VdoCopy;
         private bool m_Force;
@@ -124,19 +127,25 @@ namespace Ares.Player
             bar.Controls.AddRange(new Control[] { m_ToAres, m_Back, m_Forward, m_Reload, m_Address, m_VdoCopy, m_VdoSettings, m_Add });
             bar.Resize += (s, e) => LayoutBar(bar);
 
-            m_TabControl = new TabControl();
-            m_TabControl.Dock = DockStyle.Fill;
-            m_TabControl.Multiline = true;
-            m_TabControl.SelectedIndexChanged += (s, e) => OnTabSelected();
-            m_TabControl.MouseUp += TabMouseUp;
+            m_Strip = new ToolStrip();
+            m_Strip.Dock = DockStyle.Top;
+            m_Strip.GripStyle = ToolStripGripStyle.Hidden;
+            m_Strip.LayoutStyle = ToolStripLayoutStyle.Flow;
+            m_Strip.ImageScalingSize = new Size(1, 1);
 
-            Controls.Add(m_TabControl);
+            m_Host = new Panel();
+            m_Host.Dock = DockStyle.Fill;
+            m_Host.Padding = new Padding(0);
+
+            Controls.Add(m_Host);
+            Controls.Add(m_Strip);
             Controls.Add(bar);
             LayoutBar(bar);
 
             LoadTabs();
-            if (m_TabControl.TabCount > 0)
-                OnTabSelected();
+            if (m_Tabs.Count > 0)
+                SelectTab(m_Tabs[0]);
+            Shown += (s, e) => OnTabSelected();
         }
 
         private Button MakeBarButton(string text, int left, int width, EventHandler click)
@@ -165,18 +174,41 @@ namespace Ares.Player
 
         private WebTab Current()
         {
-            int i = m_TabControl.SelectedIndex;
-            return (i >= 0 && i < m_Tabs.Count) ? m_Tabs[i] : null;
+            return m_Selected;
+        }
+
+        private void SelectTab(WebTab tab)
+        {
+            m_Selected = tab;
+            foreach (WebTab other in m_Tabs)
+            {
+                bool on = (other == tab);
+                other.Page.Visible = on;
+                other.Button.Checked = on;
+            }
+            OnTabSelected();
         }
 
         private WebTab AddTab(string name, string url, string kind, bool select)
         {
             WebTab tab = new WebTab { Name = name, Url = url, Kind = kind };
-            tab.Page = new TabPage(name);
+            tab.Page = new Panel();
+            tab.Page.Dock = DockStyle.Fill;
+            tab.Page.Visible = false;
+            m_Host.Controls.Add(tab.Page);
+            tab.Button = new ToolStripButton(name);
+            tab.Button.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            tab.Button.Padding = new Padding(8, 4, 8, 4);
+            tab.Button.Click += (s, e) => SelectTab(tab);
+            tab.Button.MouseUp += (s, e) =>
+            {
+                if (e.Button == MouseButtons.Right)
+                    ShowTabMenu(tab, Cursor.Position);
+            };
+            m_Strip.Items.Add(tab.Button);
             m_Tabs.Add(tab);
-            m_TabControl.TabPages.Add(tab.Page);
             if (select)
-                m_TabControl.SelectedIndex = m_Tabs.Count - 1;
+                SelectTab(tab);
             return tab;
         }
 
@@ -248,10 +280,17 @@ namespace Ares.Player
         {
             if (tab.Started)
                 return;
+            // the embedded browser can only be created once the window exists and is visible
+            if (!IsHandleCreated || !Visible || tab != m_Selected)
+                return;
             tab.Started = true;
+            int attempt = 0;
+            while (true)
+            {
             try
             {
                 string url = tab.Kind == "vdo" ? ShareDialog.BuildPushUrl() : tab.Url;
+                tab.Page.Controls.Clear();
                 tab.View = new WebView2();
                 tab.View.Dock = DockStyle.Fill;
                 tab.Page.Controls.Add(tab.View);
@@ -274,17 +313,23 @@ namespace Ares.Player
                         m_Address.Text = tab.View.Source.ToString();
                 };
                 core.Navigate(url);
+                return;
             }
             catch (Exception ex)
             {
                 s_Env = null;
-                tab.Started = false;
                 if (tab.View != null)
                 {
                     tab.Page.Controls.Remove(tab.View);
                     tab.View.Dispose();
                     tab.View = null;
                 }
+                if (++attempt < 3)
+                {
+                    await Task.Delay(500);
+                    continue;
+                }
+                tab.Started = false;
                 Label error = new Label();
                 error.Dock = DockStyle.Fill;
                 error.Padding = new Padding(20);
@@ -293,6 +338,8 @@ namespace Ares.Player
                     "The embedded browser (WebView2) could not be started. Install the \"Microsoft Edge WebView2 Runtime\" (microsoft.com/edge/webview2) and open this tab again.\n\n") + ex.Message;
                 tab.Page.Controls.Clear();
                 tab.Page.Controls.Add(error);
+                return;
+            }
             }
         }
 
@@ -335,28 +382,13 @@ namespace Ares.Player
             }
             if (WebTabDialog.Ask(this, T("Novo favorito", "New favorite"), ref name, ref url))
             {
-                WebTab nt = AddTab(name, url, "web", true);
+                AddTab(name, url, "web", true);
                 SaveTabs();
             }
         }
 
-        private void TabMouseUp(object sender, MouseEventArgs e)
+        private void ShowTabMenu(WebTab tab, Point screenPoint)
         {
-            if (e.Button != MouseButtons.Right)
-                return;
-            for (int i = 0; i < m_TabControl.TabCount; ++i)
-            {
-                if (m_TabControl.GetTabRect(i).Contains(e.Location))
-                {
-                    ShowTabMenu(i, e.Location);
-                    return;
-                }
-            }
-        }
-
-        private void ShowTabMenu(int index, Point where)
-        {
-            WebTab tab = m_Tabs[index];
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Items.Add(T("Renomear / alterar endereço ...", "Rename / change address ..."), null, (s, e) =>
             {
@@ -367,7 +399,7 @@ namespace Ares.Player
                 if (WebTabDialog.Ask(this, tab.Name, ref name, ref url, tab.Kind == "vdo"))
                 {
                     tab.Name = name;
-                    tab.Page.Text = name;
+                    tab.Button.Text = name;
                     if (tab.Kind == "web")
                         tab.Url = url;
                     SaveTabs();
@@ -379,7 +411,7 @@ namespace Ares.Player
                     tab.View.CoreWebView2.Reload();
             });
             menu.Items.Add(T("Remover aba", "Remove tab"), null, (s, e) => RemoveTab(tab));
-            menu.Show(m_TabControl, where);
+            menu.Show(screenPoint);
         }
 
         private void RemoveTab(WebTab tab)
@@ -387,11 +419,17 @@ namespace Ares.Player
             if (MessageBox.Show(this, T("Remover a aba \"", "Remove the tab \"") + tab.Name + "\"?", "Ares",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
+            int index = m_Tabs.IndexOf(tab);
             m_Tabs.Remove(tab);
-            m_TabControl.TabPages.Remove(tab.Page);
+            m_Strip.Items.Remove(tab.Button);
+            m_Host.Controls.Remove(tab.Page);
             tab.Page.Dispose();
             SaveTabs();
-            OnTabSelected();
+            m_Selected = null;
+            if (m_Tabs.Count > 0)
+                SelectTab(m_Tabs[Math.Min(index, m_Tabs.Count - 1)]);
+            else
+                OnTabSelected();
         }
 
         // ------------------------------------------------------------------ VDO.Ninja
@@ -412,11 +450,7 @@ namespace Ares.Player
                 tab = AddTab("VDO.Ninja", "", "vdo", true);
                 SaveTabs();
             }
-            else
-            {
-                m_TabControl.SelectedIndex = m_Tabs.IndexOf(tab);
-            }
-            OnTabSelected();
+            SelectTab(tab);
         }
 
         private void ConfigureVdo()
