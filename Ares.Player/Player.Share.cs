@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace Ares.Player
 {
@@ -71,8 +73,8 @@ namespace Ares.Player
             m_LabelBox = AddRow(table, 2, T("Nome exibido:", "Display name:"), new TextBox());
             m_DeviceBox = new ComboBox();
             m_DeviceBox.DropDownStyle = ComboBoxStyle.DropDown;
-            m_DeviceBox.Items.AddRange(new object[] { "CABLE Output", "Stereo Mix", "VoiceMeeter Output", "Line" });
-            AddRow(table, 3, T("Entrada de áudio no navegador (parte do nome):", "Browser audio input (part of its name):"), m_DeviceBox);
+            FillDevices();
+            AddRow(table, 3, T("Entrada de áudio (a que será enviada):", "Audio input (the one that is sent):"), m_DeviceBox);
             m_BitrateBox = new NumericUpDown();
             m_BitrateBox.Minimum = 32;
             m_BitrateBox.Maximum = 510;
@@ -101,6 +103,7 @@ namespace Ares.Player
             buttons.Controls.Add(apply);
             buttons.Controls.Add(MakeButton(T("Copiar link do ouvinte", "Copy listener link"), (s, e) => CopyText(m_ViewBox.Text)));
             buttons.Controls.Add(MakeButton(T("Copiar link de envio", "Copy sender link"), (s, e) => CopyText(m_PushBox.Text)));
+            buttons.Controls.Add(MakeButton(T("Atualizar dispositivos", "Refresh devices"), (s, e) => FillDevices()));
             buttons.Controls.Add(MakeButton(T("Novo ID", "New ID"), (s, e) => { m_IdBox.Text = NewId(); }));
             buttons.Controls.Add(MakeButton(T("Cancelar", "Cancel"), (s, e) => { DialogResult = DialogResult.Cancel; Close(); }));
             AcceptButton = apply;
@@ -113,7 +116,9 @@ namespace Ares.Player
                 id = NewId();
             m_IdBox.Text = id;
             m_LabelBox.Text = Ares.CommonGUI.Preferences.Get("VdoLabel", T("Música", "Music"));
-            m_DeviceBox.Text = Ares.CommonGUI.Preferences.Get("VdoDevice", "CABLE Output");
+            m_DeviceBox.Text = Ares.CommonGUI.Preferences.Get("VdoDevice", "");
+            if (m_DeviceBox.Text.Trim().Length == 0)
+                m_DeviceBox.Text = AutoDevice();
             int kbps;
             if (!int.TryParse(Ares.CommonGUI.Preferences.Get("VdoBitrate", "128"), out kbps) || kbps < 32 || kbps > 510)
                 kbps = 128;
@@ -128,6 +133,81 @@ namespace Ares.Player
             m_BitrateBox.ValueChanged += changed;
             m_ProBox.CheckedChanged += changed;
             UpdateLinks();
+        }
+
+        // ------------------------------------------------------------------ audio input devices
+
+        /// <summary>Names of the active Windows recording devices, as the browser shows them, e.g. "CABLE Output (VB-Audio Virtual Cable)".</summary>
+        public static List<string> GetInputDevices()
+        {
+            List<string> result = new List<string>();
+            try
+            {
+                using (RegistryKey capture = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Capture"))
+                {
+                    if (capture == null)
+                        return result;
+                    foreach (string id in capture.GetSubKeyNames())
+                    {
+                        try
+                        {
+                            using (RegistryKey dev = capture.OpenSubKey(id))
+                            {
+                                object state = dev.GetValue("DeviceState");
+                                if (state == null || Convert.ToInt32(state) != 1)
+                                    continue;
+                                using (RegistryKey props = dev.OpenSubKey("Properties"))
+                                {
+                                    if (props == null)
+                                        continue;
+                                    string desc = props.GetValue("{a45c254e-df1c-4efd-8020-67d146a850e0},2") as string;
+                                    string adapter = props.GetValue("{b3f8fa53-0004-438e-9003-51a46e139bfc},6") as string;
+                                    if (string.IsNullOrEmpty(desc))
+                                        continue;
+                                    string name = string.IsNullOrEmpty(adapter) ? desc : desc + " (" + adapter + ")";
+                                    if (!result.Contains(name))
+                                        result.Add(name);
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
+            result.Sort(StringComparer.CurrentCultureIgnoreCase);
+            return result;
+        }
+
+        /// <summary>Best guess for the device to send: a virtual cable output if there is one.</summary>
+        public static string AutoDevice()
+        {
+            List<string> devices = GetInputDevices();
+            foreach (string d in devices)
+            {
+                if (d.IndexOf("cable", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return d;
+            }
+            foreach (string d in devices)
+            {
+                if (d.IndexOf("stereo mix", StringComparison.OrdinalIgnoreCase) >= 0
+                    || d.IndexOf("mix est", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return d;
+            }
+            return devices.Count > 0 ? devices[0] : "CABLE Output";
+        }
+
+        private void FillDevices()
+        {
+            string current = m_DeviceBox.Text;
+            m_DeviceBox.Items.Clear();
+            foreach (string d in GetInputDevices())
+                m_DeviceBox.Items.Add(d);
+            m_DeviceBox.Text = current;
         }
 
         private static TC AddRow<TC>(TableLayoutPanel table, int row, string caption, TC control) where TC : Control
@@ -186,7 +266,9 @@ namespace Ares.Player
                 Ares.CommonGUI.Preferences.Set("VdoId", id);
             }
             string label = Ares.CommonGUI.Preferences.Get("VdoLabel", T("Música", "Music")).Trim();
-            string device = Ares.CommonGUI.Preferences.Get("VdoDevice", "CABLE Output").Trim();
+            string device = Ares.CommonGUI.Preferences.Get("VdoDevice", "").Trim();
+            if (device.Length == 0)
+                device = AutoDevice();
             int kbps;
             if (!int.TryParse(Ares.CommonGUI.Preferences.Get("VdoBitrate", "128"), out kbps) || kbps < 32 || kbps > 510)
                 kbps = 128;

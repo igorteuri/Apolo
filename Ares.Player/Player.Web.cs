@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
@@ -14,9 +15,31 @@ namespace Ares.Player
     public partial class Player
     {
         private WebWindow m_WebWindow;
+        private WebAudioPanel m_WebAudioPanel;
+
+        private void UpdateWebAudio()
+        {
+            if (m_WebAudioPanel == null)
+                return;
+            System.Collections.Generic.List<WebAudioInfo> infos = (m_WebWindow == null || m_WebWindow.IsDisposed)
+                ? new System.Collections.Generic.List<WebAudioInfo>()
+                : m_WebWindow.GetAudioStates();
+            m_WebAudioPanel.Rebuild(infos);
+            int h = m_WebAudioPanel.Height;
+            m_WebAudioPanel.Top = groupBox3.ClientSize.Height - h - 4;
+            int bottom = (h > 0) ? m_WebAudioPanel.Top - 4 : groupBox3.ClientSize.Height - 8;
+            m_SoundPanel.Height = Math.Max(40, bottom - m_SoundPanel.Top);
+        }
 
         private void InitWeb()
         {
+            m_WebAudioPanel = new WebAudioPanel();
+            m_WebAudioPanel.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+            m_WebAudioPanel.Left = 8;
+            m_WebAudioPanel.Width = Math.Max(50, groupBox3.ClientSize.Width - 16);
+            groupBox3.Controls.Add(m_WebAudioPanel);
+            WebWindow.StateChanged += UpdateWebAudio;
+
             Ares.CommonGUI.ThemeManager.AfterAppearanceMenu = (form, menu) =>
             {
                 if (form != this || menu != menuStrip1)
@@ -64,6 +87,83 @@ namespace Ares.Player
         public ToolStripButton Button;
         public WebView2 View;
         public bool Started;
+        public bool Playing;   // the page plays audio
+        public bool Muted;     // muted by the user
+        public bool Loaded;    // page loaded
+    }
+
+    internal class WebAudioInfo
+    {
+        public string Name;
+        public bool Vdo;
+        public bool Muted;
+        public Action Toggle;
+    }
+
+    /// <summary>Small list in the Player window: which web tabs make (or send) sound, each with a mute button.</summary>
+    internal class WebAudioPanel : Panel
+    {
+        private const int RowHeight = 28;
+
+        public WebAudioPanel()
+        {
+            Height = 0;
+            Visible = false;
+        }
+
+        private static string T(string pt, string en)
+        {
+            return System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt" ? pt : en;
+        }
+
+        public void Rebuild(System.Collections.Generic.List<WebAudioInfo> infos)
+        {
+            SuspendLayout();
+            foreach (Control c in new System.Collections.Generic.List<Control>(Controls.Cast<Control>()))
+            {
+                Controls.Remove(c);
+                c.Dispose();
+            }
+            for (int i = 0; i < infos.Count; ++i)
+            {
+                WebAudioInfo info = infos[i];
+                Label label = new Label();
+                label.AutoEllipsis = true;
+                label.TextAlign = ContentAlignment.MiddleLeft;
+                label.Text = (info.Vdo ? T("Enviando: ", "Sending: ") : T("Tocando: ", "Playing: ")) + info.Name
+                    + (info.Muted ? T("  (mudo)", "  (muted)") : "");
+                label.Tag = i;
+                Button button = new Button();
+                button.Text = info.Muted ? T("Ativar som", "Unmute") : T("Mutar", "Mute");
+                button.Tag = i;
+                button.Click += (s, e) => info.Toggle();
+                Controls.Add(label);
+                Controls.Add(button);
+            }
+            Height = infos.Count * RowHeight;
+            Visible = infos.Count > 0;
+            ResumeLayout();
+            Relayout();
+        }
+
+        private void Relayout()
+        {
+            int buttonWidth = 96;
+            foreach (Control c in Controls)
+            {
+                int row = (int)c.Tag;
+                if (c is Button)
+                    c.SetBounds(Width - buttonWidth, row * RowHeight + 1, buttonWidth, RowHeight - 3);
+                else
+                    c.SetBounds(0, row * RowHeight, Math.Max(10, Width - buttonWidth - 6), RowHeight);
+            }
+        }
+
+        protected override void OnResize(EventArgs eventargs)
+        {
+            base.OnResize(eventargs);
+            Relayout();
+        }
     }
 
     internal class WebWindow : Form
@@ -74,7 +174,21 @@ namespace Ares.Player
         private Panel m_Host;
         private WebTab m_Selected;
         private TextBox m_Address;
-        private Button m_Back, m_Forward, m_Reload, m_Add, m_ToAres, m_VdoSettings, m_VdoCopy;
+        private Button m_Back, m_Forward, m_Reload, m_Add, m_ToAres, m_VdoSettings, m_VdoCopy, m_Mute;
+        public static event Action StateChanged;
+
+        // Registers the audio of the page, so that the sent sound can be muted without leaving the stream.
+        private const string MuteScript = @"(function(){
+ if (window.__aresMuteInit) return; window.__aresMuteInit = true;
+ window.__aresMuted = false; var pcs = [], tracks = [];
+ var Orig = window.RTCPeerConnection;
+ if (Orig) { window.RTCPeerConnection = new Proxy(Orig, { construct: function(t, a, n) { var pc = Reflect.construct(t, a, n); pcs.push(pc); return pc; } }); }
+ var md = navigator.mediaDevices; var gum = md && md.getUserMedia;
+ if (gum) { md.getUserMedia = function() { return gum.apply(this, arguments).then(function(s) { s.getAudioTracks().forEach(function(t) { tracks.push(t); if (window.__aresMuted) t.enabled = false; }); return s; }); }; }
+ var cl = MediaStreamTrack.prototype.clone;
+ MediaStreamTrack.prototype.clone = function() { var c = cl.apply(this, arguments); if (c.kind === 'audio') { tracks.push(c); if (window.__aresMuted) c.enabled = false; } return c; };
+ window.__aresSetMuted = function(m) { window.__aresMuted = m; tracks.forEach(function(t) { if (t.readyState === 'live') t.enabled = !m; }); pcs.forEach(function(pc) { try { pc.getSenders().forEach(function(s) { if (s.track && s.track.kind === 'audio') s.track.enabled = !m; }); } catch (e) {} }); };
+})();";
         private bool m_Force;
         private static Task<CoreWebView2Environment> s_Env;
 
@@ -111,6 +225,7 @@ namespace Ares.Player
             m_Forward = MakeBarButton("→", 128, 36, (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CanGoForward) t.View.GoForward(); });
             m_Reload = MakeBarButton("⟳", 168, 36, (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CoreWebView2 != null) t.View.CoreWebView2.Reload(); });
             m_Add = MakeBarButton(T("+ Favorito", "+ Favorite"), 0, 90, (s, e) => AddFavorite());
+            m_Mute = MakeBarButton(T("Mutar aba", "Mute tab"), 0, 100, (s, e) => { WebTab t = Current(); if (t != null) SetTabMuted(t, !t.Muted); });
             m_VdoSettings = MakeBarButton(T("Config. VDO", "VDO settings"), 0, 100, (s, e) => ConfigureVdo());
             m_VdoCopy = MakeBarButton(T("Copiar link do ouvinte", "Copy listener link"), 0, 170, (s, e) => CopyListenerLink());
             m_Address = new TextBox();
@@ -124,7 +239,7 @@ namespace Ares.Player
                     GoToAddress();
                 }
             };
-            bar.Controls.AddRange(new Control[] { m_ToAres, m_Back, m_Forward, m_Reload, m_Address, m_VdoCopy, m_VdoSettings, m_Add });
+            bar.Controls.AddRange(new Control[] { m_ToAres, m_Back, m_Forward, m_Reload, m_Address, m_Mute, m_VdoCopy, m_VdoSettings, m_Add });
             bar.Resize += (s, e) => LayoutBar(bar);
 
             m_Strip = new ToolStrip();
@@ -167,6 +282,8 @@ namespace Ares.Player
             right = m_VdoSettings.Left - 6;
             m_VdoCopy.Left = right - m_VdoCopy.Width;
             right = m_VdoCopy.Left - 6;
+            m_Mute.Left = right - m_Mute.Width;
+            right = m_Mute.Left - 6;
             m_Address.Width = Math.Max(100, right - m_Address.Left);
         }
 
@@ -254,6 +371,8 @@ namespace Ares.Player
         {
             WebTab t = Current();
             bool vdo = t != null && t.Kind == "vdo";
+            m_Mute.Visible = t != null;
+            m_Mute.Text = (t != null && t.Muted) ? T("Ativar som", "Unmute") : T("Mutar aba", "Mute tab");
             m_VdoCopy.Visible = vdo;
             m_VdoSettings.Visible = vdo;
             if (t == null)
@@ -297,6 +416,21 @@ namespace Ares.Player
                 CoreWebView2Environment env = await GetEnvironment();
                 await tab.View.EnsureCoreWebView2Async(env);
                 CoreWebView2 core = tab.View.CoreWebView2;
+                core.IsDocumentPlayingAudioChanged += (s, e) =>
+                {
+                    tab.Playing = core.IsDocumentPlayingAudio;
+                    UpdateTabState(tab);
+                };
+                core.NavigationCompleted += (s, e) =>
+                {
+                    tab.Loaded = e.IsSuccess;
+                    if (tab.Kind == "vdo" && tab.Muted)
+                        core.ExecuteScriptAsync("window.__aresSetMuted && window.__aresSetMuted(true);");
+                    UpdateTabState(tab);
+                };
+                if (tab.Kind == "vdo")
+                    await core.AddScriptToExecuteOnDocumentCreatedAsync(MuteScript);
+                core.IsMuted = tab.Kind != "vdo" && tab.Muted;
                 core.PermissionRequested += (s, e) =>
                 {
                     if (e.PermissionKind == CoreWebView2PermissionKind.Microphone)
@@ -341,6 +475,57 @@ namespace Ares.Player
                 return;
             }
             }
+        }
+
+        private void UpdateTabState(WebTab tab)
+        {
+            string prefix = "";
+            if (tab.Muted)
+                prefix = T("[mudo] ", "[muted] ");
+            else if (tab.Kind == "vdo" && tab.Loaded)
+                prefix = "● ";
+            else if (tab.Playing)
+                prefix = "♪ ";
+            tab.Button.Text = prefix + tab.Name;
+            if (tab == m_Selected)
+                m_Mute.Text = tab.Muted ? T("Ativar som", "Unmute") : T("Mutar aba", "Mute tab");
+            Action h = StateChanged;
+            if (h != null)
+                h();
+        }
+
+        public void SetTabMuted(WebTab tab, bool muted)
+        {
+            tab.Muted = muted;
+            if (tab.View != null && tab.View.CoreWebView2 != null)
+            {
+                if (tab.Kind == "vdo")
+                    tab.View.CoreWebView2.ExecuteScriptAsync("window.__aresSetMuted && window.__aresSetMuted(" + (muted ? "true" : "false") + ");");
+                else
+                    tab.View.CoreWebView2.IsMuted = muted;
+            }
+            UpdateTabState(tab);
+        }
+
+        /// <summary>Tabs that currently make sound (or send it), for the indicator in the Player window.</summary>
+        public System.Collections.Generic.List<WebAudioInfo> GetAudioStates()
+        {
+            System.Collections.Generic.List<WebAudioInfo> list = new System.Collections.Generic.List<WebAudioInfo>();
+            foreach (WebTab tab in m_Tabs)
+            {
+                WebTab captured = tab;
+                bool active = tab.Started && (tab.Playing || tab.Muted || (tab.Kind == "vdo" && tab.Loaded));
+                if (!active)
+                    continue;
+                list.Add(new WebAudioInfo
+                {
+                    Name = tab.Name,
+                    Vdo = tab.Kind == "vdo",
+                    Muted = tab.Muted,
+                    Toggle = () => SetTabMuted(captured, !captured.Muted)
+                });
+            }
+            return list;
         }
 
         private void GoToAddress()
@@ -399,12 +584,13 @@ namespace Ares.Player
                 if (WebTabDialog.Ask(this, tab.Name, ref name, ref url, tab.Kind == "vdo"))
                 {
                     tab.Name = name;
-                    tab.Button.Text = name;
+                    UpdateTabState(tab);
                     if (tab.Kind == "web")
                         tab.Url = url;
                     SaveTabs();
                 }
             });
+            menu.Items.Add(tab.Muted ? T("Ativar som", "Unmute") : T("Mutar aba", "Mute tab"), null, (s, e) => SetTabMuted(tab, !tab.Muted));
             menu.Items.Add(T("Recarregar", "Reload"), null, (s, e) =>
             {
                 if (tab.View != null && tab.View.CoreWebView2 != null)
@@ -426,6 +612,9 @@ namespace Ares.Player
             tab.Page.Dispose();
             SaveTabs();
             m_Selected = null;
+            Action removed = StateChanged;
+            if (removed != null)
+                removed();
             if (m_Tabs.Count > 0)
                 SelectTab(m_Tabs[Math.Min(index, m_Tabs.Count - 1)]);
             else
