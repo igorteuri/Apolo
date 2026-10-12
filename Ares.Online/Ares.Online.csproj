@@ -87,10 +87,16 @@
     <EmbeddedResource Include="ChangeLogDialog.de.resx">
       <DependentUpon>ChangeLogDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ChangeLogDialog.pt.resx">
+      <DependentUpon>ChangeLogDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ChangeLogDialog.resx">
       <DependentUpon>ChangeLogDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="NewsDialog.de.resx">
+      <DependentUpon>NewsDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NewsDialog.pt.resx">
       <DependentUpon>NewsDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="NewsDialog.resx">
@@ -99,16 +105,23 @@
     <EmbeddedResource Include="NewVersionDialog.de.resx">
       <DependentUpon>NewVersionDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="NewVersionDialog.pt.resx">
+      <DependentUpon>NewVersionDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="NewVersionDialog.resx">
       <DependentUpon>NewVersionDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ProgressDialog.de.resx">
       <DependentUpon>ProgressDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ProgressDialog.pt.resx">
+      <DependentUpon>ProgressDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ProgressDialog.resx">
       <DependentUpon>ProgressDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="StringResources.de.resx" />
+    <EmbeddedResource Include="StringResources.pt.resx" />
     <EmbeddedResource Include="StringResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>StringResources.Designer.cs</LastGenOutput>

@@ -73,6 +73,7 @@ namespace Ares.Editor
                 { redoButton, "redo-2" },
                 { stopButton, "square" }
             });
+            Ares.CommonGUI.LanguageManager.AddMenu(extrasToolStripMenuItem, -1);
             Ares.CommonGUI.IconLibrary.BindMenu(menuStrip1, new Dictionary<string, string>
             {
                 { "newToolStripMenuItem", "file-plus" },

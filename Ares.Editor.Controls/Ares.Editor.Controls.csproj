@@ -242,11 +242,17 @@
     <EmbeddedResource Include="ChoiceContainerControl.de.resx">
       <DependentUpon>ChoiceContainerControl.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ChoiceContainerControl.pt.resx">
+      <DependentUpon>ChoiceContainerControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ChoiceContainerControl.resx">
       <DependentUpon>ChoiceContainerControl.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="ContainerControl.de.resx">
+      <DependentUpon>ContainerControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ContainerControl.pt.resx">
       <DependentUpon>ContainerControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ContainerControl.resx">
@@ -256,10 +262,16 @@
     <EmbeddedResource Include="CutControl.de.resx">
       <DependentUpon>CutControl.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="CutControl.pt.resx">
+      <DependentUpon>CutControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="CutControl.resx">
       <DependentUpon>CutControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DelayableControl.de.resx">
+      <DependentUpon>DelayableControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DelayableControl.pt.resx">
       <DependentUpon>DelayableControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DelayableControl.resx">
@@ -268,10 +280,16 @@
     <EmbeddedResource Include="FileEffectsControl.de.resx">
       <DependentUpon>FileEffectsControl.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="FileEffectsControl.pt.resx">
+      <DependentUpon>FileEffectsControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FileEffectsControl.resx">
       <DependentUpon>FileEffectsControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FileVolumeControl.de.resx">
+      <DependentUpon>FileVolumeControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FileVolumeControl.pt.resx">
       <DependentUpon>FileVolumeControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FileVolumeControl.resx">
@@ -280,10 +298,16 @@
     <EmbeddedResource Include="BalanceDialog.de.resx">
       <DependentUpon>BalanceDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="BalanceDialog.pt.resx">
+      <DependentUpon>BalanceDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="BalanceDialog.resx">
       <DependentUpon>BalanceDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FileVolumeDialog.de.resx">
+      <DependentUpon>FileVolumeDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FileVolumeDialog.pt.resx">
       <DependentUpon>FileVolumeDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FileVolumeDialog.resx">
@@ -293,10 +317,17 @@
       <DependentUpon>MacroControl.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="MacroControl.pt.resx">
+      <DependentUpon>MacroControl.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="MacroControl.resx">
       <DependentUpon>MacroControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="TempoDialog.de.resx">
+      <DependentUpon>TempoDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TempoDialog.pt.resx">
       <DependentUpon>TempoDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="TempoDialog.resx">
@@ -305,10 +336,16 @@
     <EmbeddedResource Include="ReverbDialog.de.resx">
       <DependentUpon>ReverbDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ReverbDialog.pt.resx">
+      <DependentUpon>ReverbDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ReverbDialog.resx">
       <DependentUpon>ReverbDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SpeakersDialog.de.resx">
+      <DependentUpon>SpeakersDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SpeakersDialog.pt.resx">
       <DependentUpon>SpeakersDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SpeakersDialog.resx">
@@ -317,16 +354,25 @@
     <EmbeddedResource Include="VolumeDBDialog.de.resx">
       <DependentUpon>VolumeDBDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="VolumeDBDialog.pt.resx">
+      <DependentUpon>VolumeDBDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="VolumeDBDialog.resx">
       <DependentUpon>VolumeDBDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ParallelContainerControl.de.resx">
       <DependentUpon>ParallelContainerControl.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ParallelContainerControl.pt.resx">
+      <DependentUpon>ParallelContainerControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ParallelContainerControl.resx">
       <DependentUpon>ParallelContainerControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="PitchDialog.de.resx">
+      <DependentUpon>PitchDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PitchDialog.pt.resx">
       <DependentUpon>PitchDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="PitchDialog.resx">
@@ -339,10 +385,16 @@
     <EmbeddedResource Include="RepeatableControl.de.resx">
       <DependentUpon>RepeatableControl.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="RepeatableControl.pt.resx">
+      <DependentUpon>RepeatableControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="RepeatableControl.resx">
       <DependentUpon>RepeatableControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SequentialContainerControl.de.resx">
+      <DependentUpon>SequentialContainerControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SequentialContainerControl.pt.resx">
       <DependentUpon>SequentialContainerControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SequentialContainerControl.resx">
@@ -352,11 +404,18 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>StringResources.de.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Include="StringResources.pt.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>StringResources.de.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="StringResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>StringResources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="VolumeControl.de.resx">
+      <DependentUpon>VolumeControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="VolumeControl.pt.resx">
       <DependentUpon>VolumeControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="VolumeControl.resx">

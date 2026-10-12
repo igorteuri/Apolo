@@ -147,10 +147,16 @@
     <EmbeddedResource Include="MessagesForm.de.resx">
       <DependentUpon>MessagesForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="MessagesForm.pt.resx">
+      <DependentUpon>MessagesForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MessagesForm.resx">
       <DependentUpon>MessagesForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MusicPage.de.resx">
+      <DependentUpon>MusicPage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MusicPage.pt.resx">
       <DependentUpon>MusicPage.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MusicPage.resx">
@@ -159,10 +165,16 @@
     <EmbeddedResource Include="NetworkPage.de.resx">
       <DependentUpon>NetworkPage.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="NetworkPage.pt.resx">
+      <DependentUpon>NetworkPage.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="NetworkPage.resx">
       <DependentUpon>NetworkPage.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Player.de.resx">
+      <DependentUpon>Player.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Player.pt.resx">
       <DependentUpon>Player.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Player.resx">
@@ -182,10 +194,17 @@
     <EmbeddedResource Include="StreamingPage.de.resx">
       <DependentUpon>StreamingPage.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="StreamingPage.pt.resx">
+      <DependentUpon>StreamingPage.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="StreamingPage.resx">
       <DependentUpon>StreamingPage.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="StringResources.de.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>StringResources.de.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="StringResources.pt.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>StringResources.de.Designer.cs</LastGenOutput>
     </EmbeddedResource>

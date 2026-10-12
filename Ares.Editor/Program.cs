@@ -44,6 +44,7 @@ namespace Ares.Editor
                     System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo(arg);
                 }
             }
+            Ares.CommonGUI.LanguageManager.Apply();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Ares.CommonGUI.ThemeManager.Install();

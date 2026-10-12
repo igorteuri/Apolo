@@ -95,6 +95,7 @@
     <Compile Include="KeyChecks.cs" />
     <Compile Include="ThemeManager.cs" />
     <Compile Include="LibraryHelper.cs" />
+    <Compile Include="LanguageManager.cs" />
     <Compile Include="Preferences.cs" />
     <Compile Include="IconLibrary.cs" />
     <Compile Include="DropOptionsDialog.cs" />
@@ -141,10 +142,16 @@
     <EmbeddedResource Include="AboutDialog.de.resx">
       <DependentUpon>AboutDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="AboutDialog.pt.resx">
+      <DependentUpon>AboutDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="AboutDialog.resx">
       <DependentUpon>AboutDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ProgressDialog.de.resx">
+      <DependentUpon>ProgressDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ProgressDialog.pt.resx">
       <DependentUpon>ProgressDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ProgressDialog.resx">
@@ -153,10 +160,14 @@
     <EmbeddedResource Include="SettingsDialog.de.resx">
       <DependentUpon>SettingsDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="SettingsDialog.pt.resx">
+      <DependentUpon>SettingsDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="SettingsDialog.resx">
       <DependentUpon>SettingsDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="StringResources.de.resx" />
+    <EmbeddedResource Include="StringResources.pt.resx" />
     <EmbeddedResource Include="StringResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>StringResources.Designer.cs</LastGenOutput>

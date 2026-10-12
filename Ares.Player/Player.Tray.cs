@@ -49,6 +49,12 @@ namespace Ares.Player
                 m_CloseToTrayItem.CheckedChanged += (s, e) =>
                     Ares.CommonGUI.Preferences.SetBool("CloseToTray", m_CloseToTrayItem.Checked);
                 extrasToolStripMenuItem.DropDownItems.Insert(2, m_CloseToTrayItem);
+                Ares.CommonGUI.LanguageManager.AddMenu(extrasToolStripMenuItem, 3);
+                notifyIcon.MouseClick += (s, e) =>
+                {
+                    if (e.Button == MouseButtons.Left)
+                        RestoreFromTray();
+                };
             }
             catch (Exception ex)
             {

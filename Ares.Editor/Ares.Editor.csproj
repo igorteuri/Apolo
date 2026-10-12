@@ -332,10 +332,16 @@
     <EmbeddedResource Include="Dialogs\AddID3TagsDialog.de.resx">
       <DependentUpon>AddID3TagsDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\AddID3TagsDialog.pt.resx">
+      <DependentUpon>AddID3TagsDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\AddID3TagsDialog.resx">
       <DependentUpon>AddID3TagsDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\AddLanguageDialog.de.resx">
+      <DependentUpon>AddLanguageDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\AddLanguageDialog.pt.resx">
       <DependentUpon>AddLanguageDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\AddLanguageDialog.resx">
@@ -344,10 +350,16 @@
     <EmbeddedResource Include="Dialogs\AddTagDialog.de.resx">
       <DependentUpon>AddTagDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\AddTagDialog.pt.resx">
+      <DependentUpon>AddTagDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\AddTagDialog.resx">
       <DependentUpon>AddTagDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\AddTranslationDialog.de.resx">
+      <DependentUpon>AddTranslationDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\AddTranslationDialog.pt.resx">
       <DependentUpon>AddTranslationDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\AddTranslationDialog.resx">
@@ -356,10 +368,16 @@
     <EmbeddedResource Include="Dialogs\ExceptionDialog.de.resx">
       <DependentUpon>ExceptionDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\ExceptionDialog.pt.resx">
+      <DependentUpon>ExceptionDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\ExceptionDialog.resx">
       <DependentUpon>ExceptionDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\FileTagsDialog.de.resx">
+      <DependentUpon>FileTagsDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\FileTagsDialog.pt.resx">
       <DependentUpon>FileTagsDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\FileTagsDialog.resx">
@@ -368,10 +386,16 @@
     <EmbeddedResource Include="Dialogs\ImportDialog.de.resx">
       <DependentUpon>ImportDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\ImportDialog.pt.resx">
+      <DependentUpon>ImportDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\ImportDialog.resx">
       <DependentUpon>ImportDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\InputDialog.de.resx">
+      <DependentUpon>InputDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\InputDialog.pt.resx">
       <DependentUpon>InputDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\InputDialog.resx">
@@ -380,10 +404,16 @@
     <EmbeddedResource Include="Dialogs\KeyDialog.de.resx">
       <DependentUpon>KeyDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\KeyDialog.pt.resx">
+      <DependentUpon>KeyDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\KeyDialog.resx">
       <DependentUpon>KeyDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\MacroCommandDialog.de.resx">
+      <DependentUpon>MacroCommandDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\MacroCommandDialog.pt.resx">
       <DependentUpon>MacroCommandDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\MacroCommandDialog.resx">
@@ -392,10 +422,16 @@
     <EmbeddedResource Include="Dialogs\OnlineDbPage.de.resx">
       <DependentUpon>OnlineDbPage.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\OnlineDbPage.pt.resx">
+      <DependentUpon>OnlineDbPage.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\OnlineDbPage.resx">
       <DependentUpon>OnlineDbPage.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\OnlineDbResultDialog.de.resx">
+      <DependentUpon>OnlineDbResultDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\OnlineDbResultDialog.pt.resx">
       <DependentUpon>OnlineDbResultDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\OnlineDbResultDialog.resx">
@@ -405,10 +441,16 @@
     <EmbeddedResource Include="Dialogs\ProjectFilterDialog.de.resx">
       <DependentUpon>ProjectFilterDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\ProjectFilterDialog.pt.resx">
+      <DependentUpon>ProjectFilterDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\ProjectFilterDialog.resx">
       <DependentUpon>ProjectFilterDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\TagFilterDialog.de.resx">
+      <DependentUpon>TagFilterDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\TagFilterDialog.pt.resx">
       <DependentUpon>TagFilterDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\TagFilterDialog.resx">
@@ -417,10 +459,16 @@
     <EmbeddedResource Include="Dialogs\TipOfDayDialog.de.resx">
       <DependentUpon>TipOfDayDialog.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\TipOfDayDialog.pt.resx">
+      <DependentUpon>TipOfDayDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\TipOfDayDialog.resx">
       <DependentUpon>TipOfDayDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\ToolsPage.de.resx">
+      <DependentUpon>ToolsPage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\ToolsPage.pt.resx">
       <DependentUpon>ToolsPage.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\ToolsPage.resx">
@@ -429,16 +477,25 @@
     <EmbeddedResource Include="ElementEditors\ChoiceContainerEditor.de.resx">
       <DependentUpon>ChoiceContainerEditor.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ElementEditors\ChoiceContainerEditor.pt.resx">
+      <DependentUpon>ChoiceContainerEditor.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\ChoiceContainerEditor.resx">
       <DependentUpon>ChoiceContainerEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\FileElementEditor.de.resx">
       <DependentUpon>FileElementEditor.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ElementEditors\FileElementEditor.pt.resx">
+      <DependentUpon>FileElementEditor.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\FileElementEditor.resx">
       <DependentUpon>FileElementEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\FileTagsEditor.de.resx">
+      <DependentUpon>FileTagsEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ElementEditors\FileTagsEditor.pt.resx">
       <DependentUpon>FileTagsEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\FileTagsEditor.resx">
@@ -450,10 +507,16 @@
     <EmbeddedResource Include="ElementEditors\MusicByTagsEditor.de.resx">
       <DependentUpon>MusicByTagsEditor.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ElementEditors\MusicByTagsEditor.pt.resx">
+      <DependentUpon>MusicByTagsEditor.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\MusicByTagsEditor.resx">
       <DependentUpon>MusicByTagsEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\ParallelContainerEditor.de.resx">
+      <DependentUpon>ParallelContainerEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ElementEditors\ParallelContainerEditor.pt.resx">
       <DependentUpon>ParallelContainerEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\ParallelContainerEditor.resx">
@@ -462,10 +525,16 @@
     <EmbeddedResource Include="ElementEditors\RandomPlaylistEditor.de.resx">
       <DependentUpon>RandomPlaylistEditor.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ElementEditors\RandomPlaylistEditor.pt.resx">
+      <DependentUpon>RandomPlaylistEditor.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\RandomPlaylistEditor.resx">
       <DependentUpon>RandomPlaylistEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\SequentialContainerEditor.de.resx">
+      <DependentUpon>SequentialContainerEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ElementEditors\SequentialContainerEditor.pt.resx">
       <DependentUpon>SequentialContainerEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\SequentialContainerEditor.resx">
@@ -474,10 +543,16 @@
     <EmbeddedResource Include="ElementEditors\SequentialPlaylistEditor.de.resx">
       <DependentUpon>SequentialPlaylistEditor.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ElementEditors\SequentialPlaylistEditor.pt.resx">
+      <DependentUpon>SequentialPlaylistEditor.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\SequentialPlaylistEditor.resx">
       <DependentUpon>SequentialPlaylistEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\TagsEditor.de.resx">
+      <DependentUpon>TagsEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ElementEditors\TagsEditor.pt.resx">
       <DependentUpon>TagsEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\TagsEditor.resx">
@@ -486,16 +561,25 @@
     <EmbeddedResource Include="ElementEditors\TriggerEditor.de.resx">
       <DependentUpon>TriggerEditor.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ElementEditors\TriggerEditor.pt.resx">
+      <DependentUpon>TriggerEditor.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\TriggerEditor.resx">
       <DependentUpon>TriggerEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\WebRadioEditor.de.resx">
       <DependentUpon>WebRadioEditor.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ElementEditors\WebRadioEditor.pt.resx">
+      <DependentUpon>WebRadioEditor.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ElementEditors\WebRadioEditor.resx">
       <DependentUpon>WebRadioEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ErrorWindow.de.resx">
+      <DependentUpon>ErrorWindow.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ErrorWindow.pt.resx">
       <DependentUpon>ErrorWindow.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="ErrorWindow.resx">
@@ -506,11 +590,19 @@
       <DependentUpon>AudioSourceSearchWindow.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="AudioSourceSearchWindow.pt.resx">
+      <DependentUpon>AudioSourceSearchWindow.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="AudioSourceSearchWindow.resx">
       <DependentUpon>AudioSourceSearchWindow.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="FileExplorer.de.resx">
+      <DependentUpon>FileExplorer.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FileExplorer.pt.resx">
       <DependentUpon>FileExplorer.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
@@ -527,11 +619,19 @@
       <DependentUpon>MainForm.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="MainForm.pt.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="ProjectExplorer.de.resx">
+      <DependentUpon>ProjectExplorer.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ProjectExplorer.pt.resx">
       <DependentUpon>ProjectExplorer.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
@@ -553,11 +653,18 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>StringResources.de.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Include="StringResources.pt.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>StringResources.de.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="StringResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>StringResources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="VolumeWindow.de.resx">
+      <DependentUpon>VolumeWindow.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="VolumeWindow.pt.resx">
       <DependentUpon>VolumeWindow.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="VolumeWindow.resx">

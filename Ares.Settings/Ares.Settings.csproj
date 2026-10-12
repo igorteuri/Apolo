@@ -78,6 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="StringResources.de.resx" />
+    <EmbeddedResource Include="StringResources.pt.resx" />
     <EmbeddedResource Include="StringResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>StringResources.Designer.cs</LastGenOutput>
