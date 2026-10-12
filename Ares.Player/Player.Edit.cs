@@ -83,7 +83,7 @@ namespace Ares.Player
 
             // context menu for buttons (elements)
             m_ElementMenu = new ContextMenuStrip();
-            m_ElementMenu.Items.Add(T("Ver músicas", "View tracks"), null, (s, e) => ShowTrackPanel(m_MenuElementId));
+            m_ElementMenu.Items.Add(T("Ver lista de músicas", "View track list"), null, (s, e) => ShowTrackPanel(m_MenuElementId));
             m_ElementMenu.Items.Add(new ToolStripSeparator());
             m_ElementMenu.Items.Add(T("Renomear...", "Rename..."), null, (s, e) => RenameElementButton());
             m_ElementMenu.Items.Add(T("Excluir", "Delete"), null, (s, e) => DeleteElementButton());

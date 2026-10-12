@@ -57,7 +57,7 @@ namespace Ares.Player
 
                 m_TrackPanel = new GroupBox();
                 m_TrackPanel.Name = "trackPanel";
-                m_TrackPanel.Text = T("Músicas do botão", "Button tracks");
+                m_TrackPanel.Text = T("Lista de músicas", "Track list");
                 m_TrackPanel.Visible = false;
                 m_TrackBody = new Panel();
                 m_TrackBody.Dock = DockStyle.Fill;
@@ -196,7 +196,7 @@ namespace Ares.Player
                 };
 
                 // menu entry (Extras) with the shortcut
-                ToolStripMenuItem item = new ToolStripMenuItem(T("Painel de músicas\tF9", "Track panel\tF9"));
+                ToolStripMenuItem item = new ToolStripMenuItem(T("Lista de músicas\tF9", "Track list\tF9"));
                 item.Click += (s, e) => ToggleTrackPanel();
                 extrasToolStripMenuItem.DropDownItems.Insert(0, item);
 
@@ -317,6 +317,8 @@ namespace Ares.Player
                 m_TrackStrip.BringToFront();
             }
             UpdateTrackVisibility();
+            if (state == 2)
+                SyncTrackSelection();
         }
 
         private void ResizeTrackPanel(int newWidth)
@@ -391,6 +393,29 @@ namespace Ares.Player
             if (start is IElementContainer<IChoiceElement>)
                 return 2;
             return -1;
+        }
+
+        // whether a button is the one whose playlist is playing now. For sequential lists the player reports the
+        // id of the inner container, so the id alone is not enough: the playing file must belong to the button.
+        private bool TrackElementIsPlaying(IModeElement me)
+        {
+            if (me == null || me.StartElement == null || m_PlayingControl == null)
+                return false;
+            int listId = m_PlayingControl.CurrentMusicList;
+            if (listId != -1 && me.StartElement.Id == listId)
+                return true;
+            int musicId = m_PlayingControl.CurrentMusicElement;
+            if (musicId == -1)
+                return false;
+            IGeneralElementContainer container = me.StartElement as IGeneralElementContainer;
+            if (container == null)
+                return false;
+            foreach (IFileElement f in container.GetFileElements())
+            {
+                if (f.Id == musicId)
+                    return true;
+            }
+            return false;
         }
 
         private void ShowEmptyTrackList()
@@ -522,7 +547,7 @@ namespace Ares.Player
             if (me == null || me.StartElement == null)
                 return;
             int fileId = m_TrackShown[idx].File.Id;
-            bool listActive = m_PlayingControl.CurrentMusicList == me.StartElement.Id && m_PlayingControl.CurrentMusicElement != -1;
+            bool listActive = TrackElementIsPlaying(me);
             if (listActive || m_PlayingControl.CurrentModeElements.Contains(me))
             {
                 m_PlayingControl.SelectMusicElement(fileId);
@@ -551,14 +576,14 @@ namespace Ares.Player
                 m_TrackPinned = false;
             }
             IModeElement shown = FindTrackModeElement(m_TrackElementId);
-            bool shownPlays = shown != null && shown.StartElement != null && shown.StartElement.Id == listId;
+            bool shownPlays = TrackElementIsPlaying(shown);
             if (!m_TrackPinned && !shownPlays && m_PlayingControl.CurrentMusicElement != -1)
             {
                 foreach (IMode m in m_Project.GetModes())
                 {
                     foreach (IModeElement me in m.GetElements())
                     {
-                        if (me.StartElement != null && me.StartElement.Id == listId)
+                        if (TrackElementIsPlaying(me))
                         {
                             LoadTrackList(me.Id);
                             shown = me;
