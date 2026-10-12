@@ -48,8 +48,8 @@ Source: "..\build\Ares\Player_Editor\Views\*"; DestDir: "{app}\Player_Editor\Vie
 Source: "..\build\Ares\Player_Editor\Images\*"; DestDir: "{app}\Player_Editor\Images\"; Flags: ignoreversion createallsubdirs recursesubdirs; Components: Player
 Source: "..\build\Ares\Player_Editor\Ares.CmdLinePlayer.exe"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
 Source: "..\build\Ares\Player_Editor\Ares.CmdLinePlayer.exe.config"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
-Source: "..\build\Ares\Player_Editor\Ares.Player.exe"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
-Source: "..\build\Ares\Player_Editor\Ares.Player.exe.config"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
+Source: "..\build\Ares\Player_Editor\Apolo.exe"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
+Source: "..\build\Ares\Player_Editor\Apolo.exe.config"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
 Source: "..\build\Ares\Player_Editor\Ares.WinSecurity.exe"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
 Source: "..\build\Ares\Player_Editor\MouseKeyboardActivityMonitor.dll"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
 Source: "..\build\Ares\Player_Editor\MouseKeyboardHooksLicence.txt"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
@@ -64,7 +64,7 @@ Source: "..\build\Ares\Player_Editor\ServiceStack.Interfaces.dll"; DestDir: "{ap
 Source: "..\build\Ares\Player_Editor\ServiceStack.OrmLite.dll"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
 Source: "..\build\Ares\Player_Editor\ServiceStack.Razor.dll"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
 Source: "..\build\Ares\Player_Editor\System.Web.Razor.Unofficial.dll"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
-Source: "..\build\Ares\Player_Editor\Ares.Editor.exe"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Editor
+Source: "..\build\Ares\Player_Editor\Apolo.Editor.exe"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Editor
 Source: "..\build\Ares\Player_Editor\de\Ares.Editor.Actions.resources.dll"; DestDir: "{app}\Player_Editor\de\"; Flags: ignoreversion; Components: Editor
 Source: "..\build\Ares\Player_Editor\de\Ares.Editor.Controls.resources.dll"; DestDir: "{app}\Player_Editor\de\"; Flags: ignoreversion; Components: Editor
 Source: "..\build\Ares\Player_Editor\de\Ares.Editor.resources.dll"; DestDir: "{app}\Player_Editor\de\"; Flags: ignoreversion; Components: Editor
@@ -75,7 +75,7 @@ Source: "..\build\Ares\Player_Editor\plugins\de\Ares.AudioSource.Freesound.resou
 Source: "..\build\Ares\Player_Editor\Ares.Editor.Actions.dll"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Editor
 Source: "..\build\Ares\Player_Editor\Ares.Editor.Controls.dll"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Editor
 Source: "..\build\Ares\Player_Editor\Ares.Editor.AudioSource.dll"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Editor
-Source: "..\build\Ares\Player_Editor\Ares.Editor.exe.config"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Editor
+Source: "..\build\Ares\Player_Editor\Apolo.Editor.exe.config"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Editor
 Source: "..\build\Ares\Player_Editor\Ares.TagsImport.dll"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Editor
 Source: "..\build\Ares\Player_Editor\Ares.TagsImport.dll.config"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Editor
 Source: "..\build\Ares\Player_Editor\avcodec-54.dll"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Editor
@@ -138,8 +138,8 @@ Name: "{commondesktop}\{#MyAppName} Controller"; Filename: "{app}\Controller\{#M
 
 [Run]
 Filename: "{app}\Player_Editor\Ares.WinSecurity.exe"; Parameters: "AddPort"; WorkingDir: "{app}\Player_Editor"; Flags: postinstall runascurrentuser; Description: "{cm:openFirewall}"; Components: Player
-Filename: "{app}\Player_Editor\Ares.Editor.exe"; Flags: nowait postinstall skipifsilent skipifdoesntexist; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Components: Editor; Check: ShallStartEditor
-Filename: "{app}\Player_Editor\Ares.Player.exe"; Flags: nowait postinstall skipifsilent skipifdoesntexist; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Components: Player; Check: ShallStartPlayer
+Filename: "{app}\Player_Editor\Apolo.Editor.exe"; Flags: nowait postinstall skipifsilent skipifdoesntexist; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Components: Editor; Check: ShallStartEditor
+Filename: "{app}\Player_Editor\Apolo.exe"; Flags: nowait postinstall skipifsilent skipifdoesntexist; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Components: Player; Check: ShallStartPlayer
 Filename: "{app}\Controller\Ares.Controller.exe"; Flags: nowait postinstall skipifsilent skipifdoesntexist; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Components: Controller; Check: ShallStartController
 
 [Components]
@@ -187,17 +187,17 @@ german.openFirewall=Firewall konfigurieren für Web Controller Zugriff
 
 [Registry]
 Root: HKLM; Subkey: "Software\Ares"; Flags: uninsdeletekeyifempty
-Root: "HKLM"; Subkey: "Software\Ares"; ValueType: string; ValueName: "PlayerPath"; ValueData: "{app}\Player_Editor\Ares.Player.exe"; Components: Player
+Root: "HKLM"; Subkey: "Software\Ares"; ValueType: string; ValueName: "PlayerPath"; ValueData: "{app}\Player_Editor\Apolo.exe"; Components: Player
 Root: HKCR; Subkey: ".ares"; ValueType: string; ValueName: ""; ValueData: "AresProject"; Flags: uninsdeletevalue; Components: Player
 Root: HKCR; Subkey: "AresProject"; ValueType: string; ValueName: ""; ValueData: "Ares Project"; Flags: uninsdeletekey; Components: Player
 Root: HKCR; Subkey: "AresProject\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\Player_Editor\Ares.ico"; Components: Player
-Root: HKCR; Subkey: "AresProject\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Player_Editor\Ares.Editor.exe"" ""%1"""; Check: ShallStartEditor
-Root: HKCR; Subkey: "AresProject\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Player_Editor\Ares.Player.exe"" ""%1"""; Check: ShallStartPlayer
+Root: HKCR; Subkey: "AresProject\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Player_Editor\Apolo.Editor.exe"" ""%1"""; Check: ShallStartEditor
+Root: HKCR; Subkey: "AresProject\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Player_Editor\Apolo.exe"" ""%1"""; Check: ShallStartPlayer
 Root: HKCR; Subkey: ".apkg"; ValueType: string; ValueName: ""; ValueData: "AresPackedProject"; Flags: uninsdeletevalue; Components: Player
 Root: HKCR; Subkey: "AresPackedProject"; ValueType: string; ValueName: ""; ValueData: "Ares Packed Project"; Flags: uninsdeletekey; Components: Player
 Root: HKCR; Subkey: "AresPackedProject\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\Player_Editor\Ares.ico"; Components: Player
-Root: HKCR; Subkey: "AresPackedProject\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Player_Editor\Ares.Editor.exe"" ""%1"""; Check: ShallStartEditor
-Root: HKCR; Subkey: "AresPackedProject\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Player_Editor\Ares.Player.exe"" ""%1"""; Check: ShallStartPlayer
+Root: HKCR; Subkey: "AresPackedProject\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Player_Editor\Apolo.Editor.exe"" ""%1"""; Check: ShallStartEditor
+Root: HKCR; Subkey: "AresPackedProject\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Player_Editor\Apolo.exe"" ""%1"""; Check: ShallStartPlayer
 
 [UninstallRun]
 Filename: "{app}\Player_Editor\Ares.WinSecurity.exe"; Parameters: "RemovePort"; WorkingDir: "{app}\Player_Editor\"; Flags: runascurrentuser; Components: Player
@@ -424,7 +424,7 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if ((CurStep=ssPostInstall) and IsComponentSelected('Player')) then
   begin
-     SetFirewallException('Ares Player', ExpandConstant('{app}\')+'Player_Editor\Ares.Player.exe');
+     SetFirewallException('Ares Player', ExpandConstant('{app}\')+'Player_Editor\Apolo.exe');
      SetFirewallException('Ares Player', ExpandConstant('{app}\')+'Player_Editor\Ares.CmdLinePlayer.exe');
   end;
 end;
@@ -433,7 +433,7 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if CurUninstallStep=usPostUninstall then
   begin
-     RemoveFirewallException(ExpandConstant('{app}\')+'Player_Editor\Ares.Player.exe');
+     RemoveFirewallException(ExpandConstant('{app}\')+'Player_Editor\Apolo.exe');
      RemoveFirewallException(ExpandConstant('{app}\')+'Player_Editor\Ares.CmdLinePlayer.exe');
   end;
 end;

@@ -23,8 +23,80 @@ namespace Ares.Player
             return IsPt ? pt : en;
         }
 
+        // File menu: save the project (edits are also saved automatically) / save a copy under another name
+        private void InitSaveMenu()
+        {
+            ToolStripMenuItem save = new ToolStripMenuItem(T("Salvar projeto", "Save project"));
+            save.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S;
+            save.Click += (s, e) => SaveProjectNow();
+            ToolStripMenuItem saveAs = new ToolStripMenuItem(T("Salvar projeto como...", "Save project as..."));
+            saveAs.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift | System.Windows.Forms.Keys.S;
+            saveAs.Click += (s, e) => SaveProjectAsNew();
+            int pos = projectToolStripMenuItem.DropDownItems.IndexOf(openToolStripMenuItem) + 1;
+            projectToolStripMenuItem.DropDownItems.Insert(pos, save);
+            projectToolStripMenuItem.DropDownItems.Insert(pos + 1, saveAs);
+        }
+
+        private void SaveProjectNow()
+        {
+            if (m_Project == null)
+                return;
+            try
+            {
+                bool oldWatch = fileSystemWatcher1.EnableRaisingEvents;
+                fileSystemWatcher1.EnableRaisingEvents = false;
+                try
+                {
+                    m_Project.Changed = true;
+                    DataModule.ProjectManager.SaveProject(m_Project);
+                }
+                finally
+                {
+                    fileSystemWatcher1.EnableRaisingEvents = oldWatch;
+                }
+                ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
+                    T("Projeto salvo: ", "Project saved: ") + System.IO.Path.GetFileName(m_Project.FileName)));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, T("Erro ao salvar: ", "Save error: ") + ex.Message, StringResources.Ares,
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void SaveProjectAsNew()
+        {
+            if (m_Project == null)
+                return;
+            using (SaveFileDialog dlg = new SaveFileDialog())
+            {
+                dlg.Filter = T("Projetos do Apolo/Ares|*.ares|Todos os arquivos|*.*", "Apolo/Ares projects|*.ares|All files|*.*");
+                dlg.DefaultExt = "ares";
+                dlg.FileName = !string.IsNullOrEmpty(m_Project.Title) ? m_Project.Title + ".ares" : "projeto.ares";
+                if (!string.IsNullOrEmpty(m_Project.FileName))
+                    dlg.InitialDirectory = System.IO.Path.GetDirectoryName(m_Project.FileName);
+                if (dlg.ShowDialog(this) != DialogResult.OK)
+                    return;
+                try
+                {
+                    m_Project.FileName = dlg.FileName;
+                    m_Project.Changed = true;
+                    DataModule.ProjectManager.SaveProject(m_Project);
+                    OpenProject(dlg.FileName, false);
+                    ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
+                        T("Projeto salvo como: ", "Project saved as: ") + System.IO.Path.GetFileName(dlg.FileName)));
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(this, T("Erro ao salvar: ", "Save error: ") + ex.Message, StringResources.Ares,
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
         private void InitEditMode()
         {
+            InitSaveMenu();
             // toolbar: edit toggle + add menu (the add menu only shows in edit mode)
             m_EditButton = new ToolStripButton();
             m_EditButton.Name = "editModeButton";

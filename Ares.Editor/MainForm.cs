@@ -864,7 +864,7 @@ namespace Ares.Editor
                 return;
             String appDir = System.IO.Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
 			#if !MONO
-            String commandLine = System.IO.Path.Combine(appDir, "Ares.Player.exe");
+            String commandLine = System.IO.Path.Combine(appDir, "Apolo.exe");
             try
             {
                 Ares.Ipc.ApplicationInstance.CreateOrActivate("Ares.Player", commandLine,

@@ -1187,6 +1187,11 @@ namespace Ares.Player
                 ToggleTrackPanel();
                 return true;
             }
+            if (keyData == System.Windows.Forms.Keys.F8)
+            {
+                SetLeftOpen(!m_LeftOpen);
+                return true;
+            }
 #if MONO
             const int WM_KEYDOWN = 0x100;
             if (msg.Msg == WM_KEYDOWN && !tagFadeUpDown.ContainsFocus)
@@ -1642,7 +1647,7 @@ namespace Ares.Player
         {
 #if !MONO
             String appDir = System.IO.Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
-            String commandLine = System.IO.Path.Combine(appDir, "Ares.Editor.exe");
+            String commandLine = System.IO.Path.Combine(appDir, "Apolo.Editor.exe");
             try
             {
                 Ares.Ipc.ApplicationInstance.CreateOrActivate("Ares.Editor", commandLine,

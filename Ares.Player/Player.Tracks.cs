@@ -39,8 +39,10 @@ namespace Ares.Player
         private int m_TrackElementId = -1;
         private string m_TrackModeTitle;
         private string m_TrackElementTitle;
-        private int m_TrackShrink = 0;
-        private int m_TrackGrew = 0;
+        private bool m_LeftOpen = true;
+        private int m_ModesLeftOriginal;
+        private Button m_LeftStrip;
+        private Button m_LeftCollapse;
         private List<TrackRow> m_TrackRows = new List<TrackRow>();
         private List<TrackRow> m_TrackShown = new List<TrackRow>();
         private Timer m_TrackPlayTimer;
@@ -103,6 +105,36 @@ namespace Ares.Player
                 host.Controls.Add(m_TrackPanel);
                 host.Controls.Add(m_TrackSplit);
                 host.Controls.Add(m_TrackStrip);
+
+                // everything on the right of the left column is positioned by code
+                m_ModesLeftOriginal = groupBox4.Left;
+                groupBox5.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+                m_TrackPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+                m_TrackSplit.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+                m_TrackStrip.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                m_LeftOpen = Ares.CommonGUI.Preferences.GetBool("LeftOpen", true);
+                m_LeftStrip = new Button();
+                m_LeftStrip.Name = "leftStrip";
+                m_LeftStrip.Text = "▶";
+                m_LeftStrip.Font = new Font(m_LeftStrip.Font.FontFamily, 14f, FontStyle.Bold);
+                m_LeftStrip.FlatStyle = FlatStyle.System;
+                m_LeftStrip.UseVisualStyleBackColor = true;
+                m_LeftStrip.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                m_LeftStrip.Visible = false;
+                new ToolTip().SetToolTip(m_LeftStrip, T("Mostrar o painel esquerdo (volume, estado, rede) (F8)", "Show the left panel (volume, state, network) (F8)"));
+                m_LeftStrip.Click += (s, e) => SetLeftOpen(true);
+                m_LeftCollapse = new Button();
+                m_LeftCollapse.Name = "leftCollapse";
+                m_LeftCollapse.Text = "◀";
+                m_LeftCollapse.FlatStyle = FlatStyle.System;
+                m_LeftCollapse.UseVisualStyleBackColor = true;
+                m_LeftCollapse.TabStop = false;
+                m_LeftCollapse.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                new ToolTip().SetToolTip(m_LeftCollapse, T("Esconder o painel esquerdo (F8)", "Hide the left panel (F8)"));
+                m_LeftCollapse.Click += (s, e) => SetLeftOpen(false);
+                host.Controls.Add(m_LeftStrip);
+                host.Controls.Add(m_LeftCollapse);
+                SizeChanged += (s, e) => LayoutMainColumns();
 
                 m_TrackCollapse.Click += (s, e) => SetTrackState(1);
                 m_TrackStrip.Click += (s, e) => SetTrackState(2);
@@ -200,11 +232,16 @@ namespace Ares.Player
                 item.Click += (s, e) => ToggleTrackPanel();
                 extrasToolStripMenuItem.DropDownItems.Insert(0, item);
 
+                ToolStripMenuItem leftItem = new ToolStripMenuItem(T("Painel esquerdo\tF8", "Left panel\tF8"));
+                leftItem.Click += (s, e) => SetLeftOpen(!m_LeftOpen);
+                extrasToolStripMenuItem.DropDownItems.Insert(1, leftItem);
+
                 ShowEmptyTrackList();
                 Shown += (s, e) =>
                 {
                     bool open = Ares.CommonGUI.Preferences.GetBool("TracksOpen", false);
                     SetTrackState(open ? 2 : 1);
+                    LayoutMainColumns();
                 };
             }
             catch (Exception ex)
@@ -256,87 +293,117 @@ namespace Ares.Player
             m_TrackStrip.Visible = m_TrackState == 1;
         }
 
-        // places the panel (open, beside the buttons box), the strip (hidden) or nothing, and makes room for it
+        // opens / collapses the track panel (state 2 / 1); everything is positioned by LayoutMainColumns
         private void SetTrackState(int state)
         {
             if (m_TrackPanel == null || state == m_TrackState)
                 return;
-            // undo the previous state
-            if (m_TrackShrink > 0)
-            {
-                groupBox5.Width += m_TrackShrink;
-                m_TrackShrink = 0;
-            }
-            if (m_TrackGrew > 0 && WindowState == FormWindowState.Normal)
-                Width -= m_TrackGrew;
-            m_TrackGrew = 0;
             m_TrackState = state;
             Ares.CommonGUI.Preferences.SetBool("TracksOpen", state == 2);
-
-            int w = state == 2 ? m_TrackWidth : TrackStripWidth;
-            int need = w + TrackGap;
             if (state == 2 && WindowState == FormWindowState.Normal)
-            {
-                Rectangle area = Screen.FromControl(this).WorkingArea;
-                if (Right + need <= area.Right)
-                {
-                    m_TrackGrew = need;
-                    Width += need;
-                }
-                else if (Left - need >= area.Left)
-                {
-                    m_TrackGrew = need;
-                    Left -= need;
-                    Width += need;
-                }
-            }
-            int minBox = 300;
-            if (groupBox5.Width - need < minBox)
-            {
-                need = Math.Max(0, groupBox5.Width - minBox);
-                w = Math.Max(TrackStripWidth, need - TrackGap);
-            }
-            m_TrackShrink = need;
-            groupBox5.Width -= need;
-            int left = groupBox5.Right + TrackGap;
-            int top = groupBox5.Top;
-            int height = groupBox5.Height;
-            if (state == 2)
-            {
-                m_TrackPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
-                m_TrackPanel.SetBounds(left, top, w, height);
-                m_TrackSplit.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
-                m_TrackSplit.SetBounds(left - TrackGap, top, TrackGap, height);
-                m_TrackPanel.BringToFront();
-                LayoutTrackPanel();
-            }
-            else
-            {
-                m_TrackStrip.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-                m_TrackStrip.SetBounds(left, top, w, Math.Min(height, 90));
-                m_TrackStrip.BringToFront();
-            }
+                GrowForTrackPanel();
             UpdateTrackVisibility();
+            LayoutMainColumns();
             if (state == 2)
+            {
+                m_TrackPanel.BringToFront();
                 SyncTrackSelection();
+            }
+        }
+
+        private const int MainRightMargin = 12;
+        private const int ElementsMinWidth = 300;
+        private const int LeftStripWidth = 30;
+
+        // makes the window wider (as far as the screen allows) so the elements box keeps its size
+        private void GrowForTrackPanel()
+        {
+            int have = (ClientSize.Width - MainRightMargin - groupBox5.Left) - 395;
+            int deficit = m_TrackWidth + TrackGap - have;
+            if (deficit <= 0)
+                return;
+            Rectangle area = Screen.FromControl(this).WorkingArea;
+            int g = Math.Max(0, Math.Min(deficit, area.Right - Right));
+            if (g > 0)
+                Width += g;
+            int rest = deficit - g;
+            if (rest > 0 && Left - area.Left >= rest)
+            {
+                Left -= rest;
+                Width += rest;
+            }
+        }
+
+        private bool m_LayoutingColumns;
+
+        // one place decides where the left column, modes, elements, track panel and the two strips go
+        private void LayoutMainColumns()
+        {
+            if (m_TrackPanel == null || m_LayoutingColumns)
+                return;
+            int clientWidth = ClientSize.Width;
+            if (clientWidth < 300 || WindowState == FormWindowState.Minimized)
+                return;
+            m_LayoutingColumns = true;
+            try
+            {
+                // left column (volume, state, network) or its strip
+                bool leftOpen = m_LeftOpen;
+                groupBox1.Visible = leftOpen;
+                groupBox2.Visible = leftOpen;
+                groupBox3.Visible = leftOpen;
+                m_LeftCollapse.Visible = leftOpen;
+                m_LeftStrip.Visible = !leftOpen;
+                int modesLeft = leftOpen ? m_ModesLeftOriginal : 12 + LeftStripWidth + TrackGap;
+                groupBox4.Left = modesLeft;
+                groupBox5.Left = modesLeft + groupBox4.Width + TrackGap;
+                m_LeftStrip.SetBounds(12, groupBox2.Top, LeftStripWidth, Math.Min(90, groupBox4.Height));
+                m_LeftCollapse.SetBounds(groupBox2.Right - 30, groupBox2.Top + 1, 26, 20);
+                m_LeftCollapse.BringToFront();
+
+                // elements box, track panel / strip on the right
+                int right = clientWidth - MainRightMargin;
+                int top = groupBox5.Top;
+                int height = groupBox5.Height;
+                int panelWidth = 0;
+                if (m_TrackState == 2)
+                    panelWidth = Math.Max(160, Math.Min(m_TrackWidth, right - groupBox5.Left - ElementsMinWidth - TrackGap));
+                else if (m_TrackState == 1)
+                    panelWidth = TrackStripWidth;
+                int reserved = panelWidth > 0 ? panelWidth + TrackGap : 0;
+                groupBox5.Width = Math.Max(100, right - reserved - groupBox5.Left);
+                int left = right - panelWidth;
+                m_TrackPanel.SetBounds(left, top, panelWidth, height);
+                m_TrackSplit.SetBounds(left - TrackGap, top, TrackGap, height);
+                m_TrackStrip.SetBounds(left, top, TrackStripWidth, Math.Min(height, 90));
+                if (m_TrackState == 2)
+                    LayoutTrackPanel();
+            }
+            finally
+            {
+                m_LayoutingColumns = false;
+            }
+        }
+
+        private void SetLeftOpen(bool open)
+        {
+            if (m_LeftOpen == open)
+                return;
+            m_LeftOpen = open;
+            Ares.CommonGUI.Preferences.SetBool("LeftOpen", open);
+            LayoutMainColumns();
         }
 
         private void ResizeTrackPanel(int newWidth)
         {
             if (m_TrackState != 2)
                 return;
-            int minBox = 300;
-            int max = m_TrackPanel.Width + (groupBox5.Width - minBox);
+            int max = ClientSize.Width - MainRightMargin - groupBox5.Left - ElementsMinWidth - TrackGap;
             newWidth = Math.Max(200, Math.Min(newWidth, max));
-            int delta = newWidth - m_TrackPanel.Width;
-            if (delta == 0)
+            if (newWidth == m_TrackWidth)
                 return;
-            groupBox5.Width -= delta;
-            m_TrackPanel.SetBounds(m_TrackPanel.Left - delta, m_TrackPanel.Top, newWidth, m_TrackPanel.Height);
-            m_TrackSplit.Left -= delta;
-            m_TrackShrink += delta;
             m_TrackWidth = newWidth;
-            LayoutTrackPanel();
+            LayoutMainColumns();
         }
 
         // ---- lookups: any mode of the project, not only the one on screen ----
