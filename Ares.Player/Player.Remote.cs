@@ -272,9 +272,48 @@ namespace Ares.Player
         public volatile string Url;
         public volatile string Status = "";
 
+        private const string DownloadUrl = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe";
+
+        // next to the program if it is there, otherwise in the user's data folder (where a download goes)
         public static string ExePath
         {
-            get { return Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "cloudflared.exe"); }
+            get
+            {
+                string beside = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "cloudflared.exe");
+                if (File.Exists(beside))
+                    return beside;
+                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares", "cloudflared.exe");
+            }
+        }
+
+        public static bool Available
+        {
+            get { return File.Exists(ExePath); }
+        }
+
+        /// <summary>Downloads the official cloudflared.exe (about 20 MB). Returns null on success, otherwise the error.</summary>
+        public static string Download()
+        {
+            string target = ExePath;
+            string temp = target + ".part";
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(target));
+                System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
+                using (System.Net.WebClient client = new System.Net.WebClient())
+                    client.DownloadFile(DownloadUrl, temp);
+                if (new FileInfo(temp).Length < 1000000)
+                    return "download incomplete";
+                if (File.Exists(target))
+                    File.Delete(target);
+                File.Move(temp, target);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                try { if (File.Exists(temp)) File.Delete(temp); } catch (Exception) { }
+                return ex.Message;
+            }
         }
 
         public bool Running
@@ -654,12 +693,25 @@ namespace Ares.Player
                                 StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             return;
                         }
-                        if (!File.Exists(CloudflareTunnel.ExePath))
+                        if (!CloudflareTunnel.Available)
                         {
-                            MessageBox.Show(form, T("O arquivo cloudflared.exe não foi encontrado ao lado do Apolo.exe. Use o build mais recente (ele vem junto) ou copie o cloudflared.exe para a pasta do programa.",
-                                "cloudflared.exe was not found next to Apolo.exe. Use the latest build (it is included) or copy cloudflared.exe into the program folder."),
-                                StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
+                            if (MessageBox.Show(form, T("Falta o componente que cria o link (cloudflared, programa oficial e gratuito da Cloudflare, ~20 MB).\n\nBaixar agora do site oficial (github.com/cloudflare/cloudflared)?",
+                                "The component that creates the link is missing (cloudflared, the official free Cloudflare program, ~20 MB).\n\nDownload it now from the official site (github.com/cloudflare/cloudflared)?"),
+                                StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                                return;
+                            Cursor old = form.Cursor;
+                            form.Cursor = Cursors.WaitCursor;
+                            status.Text = T("Baixando...", "Downloading...");
+                            status.Refresh();
+                            string dlError = CloudflareTunnel.Download();
+                            form.Cursor = old;
+                            if (dlError != null)
+                            {
+                                MessageBox.Show(form, T("Não consegui baixar: ", "Download failed: ") + dlError,
+                                    StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                refresh();
+                                return;
+                            }
                         }
                         Ares.CommonGUI.Preferences.Set("RemotePassword", password);
                         if (!m_Remote.Start(8766, password))
