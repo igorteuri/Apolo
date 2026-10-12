@@ -88,6 +88,216 @@ namespace Ares.Player
             m_ElementMenu.Items.Add(new ToolStripSeparator());
             m_ElementMenu.Items.Add(T("Mover para trás", "Move earlier"), null, (s, e) => MoveElementButton(-1));
             m_ElementMenu.Items.Add(T("Mover para frente", "Move later"), null, (s, e) => MoveElementButton(1));
+
+            // manual drag & drop: reorder buttons, move them to another mode, reorder modes
+            elementsPanel.AllowDrop = true;
+            elementsPanel.DragOver += ElementsDragOver;
+            elementsPanel.DragDrop += ElementsDragDrop;
+            elementsPanel.DragLeave += (s, e) => HideDropMarker();
+            modesList.AllowDrop = true;
+            modesList.DragOver += ModesDragOver;
+            modesList.DragDrop += ModesDragDrop;
+            Point modeDown = Point.Empty;
+            bool modeTracking = false;
+            modesList.MouseDown += (s, e) =>
+            {
+                modeTracking = m_EditMode && e.Button == MouseButtons.Left && modesList.IndexFromPoint(e.Location) >= 2;
+                modeDown = e.Location;
+            };
+            modesList.MouseUp += (s, e) => modeTracking = false;
+            modesList.MouseMove += (s, e) =>
+            {
+                if (!modeTracking || e.Button != MouseButtons.Left)
+                    return;
+                Size ds = SystemInformation.DragSize;
+                if (Math.Abs(e.X - modeDown.X) < ds.Width && Math.Abs(e.Y - modeDown.Y) < ds.Height)
+                    return;
+                modeTracking = false;
+                int index = modesList.IndexFromPoint(modeDown);
+                if (index >= 2)
+                    modesList.DoDragDrop(new DragInfo { IsMode = true, ModeIndex = index - 2 }, DragDropEffects.Move);
+            };
+            modesList.DoubleClick += (s, e) =>
+            {
+                if (m_EditMode)
+                    RenameCurrentMode();
+            };
+            modesList.KeyDown += (s, e) =>
+            {
+                if (m_EditMode && e.KeyCode == Keys.F2)
+                    RenameCurrentMode();
+            };
+        }
+
+        private class DragInfo
+        {
+            public bool IsMode;
+            public int ModeIndex;
+            public int ElementId;
+        }
+
+        private Panel m_DropMarker;
+
+        private void HideDropMarker()
+        {
+            if (m_DropMarker != null)
+                m_DropMarker.Visible = false;
+        }
+
+        // finds the button before which a dragged button would be inserted (null = at the end)
+        private Control FindInsertBefore(Point panelPoint, out Rectangle markerRect)
+        {
+            markerRect = Rectangle.Empty;
+            foreach (Control c in elementsPanel.Controls)
+            {
+                if (!(c is CheckBox))
+                    continue;
+                Rectangle r = new Rectangle(c.Left - c.Margin.Left, c.Top - c.Margin.Top,
+                    c.Width + c.Margin.Horizontal, c.Height + c.Margin.Vertical);
+                if (r.Contains(panelPoint))
+                {
+                    bool before = panelPoint.X < c.Left + c.Width / 2;
+                    if (before)
+                    {
+                        markerRect = new Rectangle(c.Left - 3, c.Top, 3, c.Height);
+                        return c;
+                    }
+                    int idx = elementsPanel.Controls.IndexOf(c);
+                    Control next = null;
+                    for (int i = idx + 1; i < elementsPanel.Controls.Count; i++)
+                    {
+                        if (elementsPanel.Controls[i] is CheckBox)
+                        {
+                            next = elementsPanel.Controls[i];
+                            break;
+                        }
+                    }
+                    markerRect = new Rectangle(c.Right, c.Top, 3, c.Height);
+                    return next;
+                }
+            }
+            // not on a button: at the end, marker after the last one
+            for (int i = elementsPanel.Controls.Count - 1; i >= 0; i--)
+            {
+                Control c = elementsPanel.Controls[i];
+                if (c is CheckBox)
+                {
+                    markerRect = new Rectangle(c.Right, c.Top, 3, c.Height);
+                    break;
+                }
+            }
+            return null;
+        }
+
+        private void ElementsDragOver(object sender, DragEventArgs e)
+        {
+            DragInfo info = e.Data.GetData(typeof(DragInfo)) as DragInfo;
+            if (!m_EditMode || info == null || info.IsMode)
+                return;
+            e.Effect = DragDropEffects.Move;
+            Rectangle marker;
+            FindInsertBefore(elementsPanel.PointToClient(new Point(e.X, e.Y)), out marker);
+            if (marker.IsEmpty || elementsPanel.Parent == null)
+            {
+                HideDropMarker();
+                return;
+            }
+            if (m_DropMarker == null)
+            {
+                m_DropMarker = new Panel();
+                m_DropMarker.Enabled = false;
+                elementsPanel.Parent.Controls.Add(m_DropMarker);
+            }
+            Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
+            m_DropMarker.BackColor = (p != null && !p.IsClassic) ? p.Accent : SystemColors.Highlight;
+            Point topLeft = elementsPanel.Parent.PointToClient(elementsPanel.PointToScreen(marker.Location));
+            m_DropMarker.Bounds = new Rectangle(topLeft, marker.Size);
+            m_DropMarker.Visible = true;
+            m_DropMarker.BringToFront();
+        }
+
+        private void ElementsDragDrop(object sender, DragEventArgs e)
+        {
+            HideDropMarker();
+            DragInfo info = e.Data.GetData(typeof(DragInfo)) as DragInfo;
+            if (!m_EditMode || info == null || info.IsMode)
+                return;
+            Rectangle marker;
+            Control before = FindInsertBefore(elementsPanel.PointToClient(new Point(e.X, e.Y)), out marker);
+            int beforeId = -1;
+            if (before != null && before.Tag is int)
+                beforeId = (int)before.Tag;
+            int movedId = info.ElementId;
+            if (beforeId == movedId)
+                return;
+            IMode mode = CurrentMode();
+            if (mode == null)
+                return;
+            int modeIndex = modesList.SelectedIndex - 2;
+            string modeTitle = mode.Title;
+            BeginInvoke(new MethodInvoker(() => ApplyProjectEdit(() =>
+            {
+                IMode m = m_Project.GetModes()[modeIndex];
+                IModeElement moved = m.GetElements().FirstOrDefault(x => x.Id == movedId);
+                if (moved == null)
+                    return;
+                m.RemoveElement(moved);
+                int target = beforeId == -1 ? -1 : m.GetElements().ToList().FindIndex(x => x.Id == beforeId);
+                if (target < 0)
+                    m.AddElement(moved);
+                else
+                    m.InsertElement(target, moved);
+            }, modeTitle)));
+        }
+
+        private void ModesDragOver(object sender, DragEventArgs e)
+        {
+            DragInfo info = e.Data.GetData(typeof(DragInfo)) as DragInfo;
+            if (!m_EditMode || info == null)
+                return;
+            int index = modesList.IndexFromPoint(modesList.PointToClient(new Point(e.X, e.Y)));
+            e.Effect = index >= 2 ? DragDropEffects.Move : DragDropEffects.None;
+        }
+
+        private void ModesDragDrop(object sender, DragEventArgs e)
+        {
+            DragInfo info = e.Data.GetData(typeof(DragInfo)) as DragInfo;
+            if (!m_EditMode || info == null || m_Project == null)
+                return;
+            int dropIndex = modesList.IndexFromPoint(modesList.PointToClient(new Point(e.X, e.Y))) - 2;
+            if (dropIndex < 0 || dropIndex >= m_Project.GetModes().Count)
+                return;
+            if (info.IsMode)
+            {
+                int from = info.ModeIndex;
+                if (from == dropIndex)
+                    return;
+                string title = m_Project.GetModes()[from].Title;
+                BeginInvoke(new MethodInvoker(() => ApplyProjectEdit(() =>
+                {
+                    IMode m = m_Project.GetModes()[from];
+                    m_Project.RemoveMode(m);
+                    m_Project.InsertMode(dropIndex, m);
+                }, title)));
+            }
+            else
+            {
+                int fromMode = modesList.SelectedIndex - 2;
+                if (fromMode == dropIndex)
+                    return;
+                int movedId = info.ElementId;
+                string targetTitle = m_Project.GetModes()[dropIndex].Title;
+                BeginInvoke(new MethodInvoker(() => ApplyProjectEdit(() =>
+                {
+                    IMode src = m_Project.GetModes()[fromMode];
+                    IMode dst = m_Project.GetModes()[dropIndex];
+                    IModeElement moved = src.GetElements().FirstOrDefault(x => x.Id == movedId);
+                    if (moved == null)
+                        return;
+                    src.RemoveElement(moved);
+                    dst.AddElement(moved);
+                }, targetTitle)));
+            }
         }
 
         private void SetEditMode(bool on)
@@ -98,21 +308,44 @@ namespace Ares.Player
             {
                 // reuse the toast to explain how it works
                 ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Warning,
-                    T("Modo de edição: clique com o botão direito em um modo ou botão. Arraste pastas para adicionar.",
-                      "Edit mode: right-click a mode or button. Drag folders in to add them.")));
+                    T("Modo de edição: arraste botões para reordenar ou soltar sobre outro modo; arraste modos para reordenar; duplo clique no modo renomeia.",
+                      "Edit mode: drag buttons to reorder or onto another mode; drag modes to reorder; double-click a mode to rename.")));
             }
         }
 
         // called by the element panel for every created button
         private void AttachElementMenu(CheckBox box, int elementId)
         {
+            box.Tag = elementId;
+            Point down = Point.Empty;
+            bool tracking = false;
+            box.MouseDown += (s, e) =>
+            {
+                tracking = m_EditMode && e.Button == MouseButtons.Left;
+                down = e.Location;
+            };
             box.MouseUp += (s, e) =>
             {
+                tracking = false;
                 if (!m_EditMode || e.Button != MouseButtons.Right)
                     return;
                 m_MenuElementId = elementId;
                 m_ElementMenu.Show(box, e.Location);
             };
+            box.MouseMove += (s, e) =>
+            {
+                if (!tracking || !m_EditMode || e.Button != MouseButtons.Left)
+                    return;
+                Size ds = SystemInformation.DragSize;
+                if (Math.Abs(e.X - down.X) < ds.Width && Math.Abs(e.Y - down.Y) < ds.Height)
+                    return;
+                tracking = false;
+                box.DoDragDrop(new DragInfo { ElementId = elementId }, DragDropEffects.Move);
+            };
+            // dragging over a button counts as dragging over the panel
+            box.DragOver += ElementsDragOver;
+            box.DragDrop += ElementsDragDrop;
+            box.DragLeave += (s, e) => HideDropMarker();
         }
 
         // ---- helpers ----

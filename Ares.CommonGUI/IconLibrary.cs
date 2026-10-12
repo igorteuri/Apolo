@@ -15,6 +15,29 @@ namespace Ares.CommonGUI
     public static class IconLibrary
     {
         private static readonly Dictionary<string, Bitmap> s_Sources = new Dictionary<string, Bitmap>();
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<object, object> s_Managed =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<object, object>();
+
+        /// <summary>True for toolbars whose icon size is controlled by this class (the theme must not resize them).</summary>
+        public static bool IsManaged(ToolStrip strip)
+        {
+            object o;
+            return strip != null && s_Managed.TryGetValue(strip, out o);
+        }
+
+        /// <summary>Icon size for toolbars: 24 px at the default interface size (110%), scaled with the interface size.</summary>
+        public static Size ToolbarIconSize()
+        {
+            int px = (int)Math.Round(24 * Math.Max(80, ThemeManager.ScalePercent) / 110f);
+            return new Size(px, px);
+        }
+
+        /// <summary>Icon size for menus: 20 px at the default interface size.</summary>
+        public static Size MenuIconSize()
+        {
+            int px = (int)Math.Round(20 * Math.Max(80, ThemeManager.ScalePercent) / 110f);
+            return new Size(px, px);
+        }
 
         private static Bitmap LoadSource(string name)
         {
@@ -87,24 +110,33 @@ namespace Ares.CommonGUI
         {
             Size lastSize = Size.Empty;
             Color lastColor = Color.Empty;
+            try { s_Managed.Add(strip, strip); } catch (ArgumentException) { }
             Action apply = () =>
             {
-                Size size = strip.ImageScalingSize;
+                Size size = ToolbarIconSize();
+                if (strip.ImageScalingSize != size)
+                    strip.ImageScalingSize = size;
                 lastSize = size;
                 lastColor = ThemeColor();
+                int applied = 0;
                 Color color = ThemeColor();
                 foreach (KeyValuePair<ToolStripItem, string> pair in items)
                 {
                     Bitmap bmp = Get(pair.Value, size, color);
                     if (bmp == null)
+                    {
+                        ThemeManager.Log("icon missing: " + pair.Value, null);
                         continue;
+                    }
                     Image old = pair.Key.Image;
                     pair.Key.ImageScaling = ToolStripItemImageScaling.None;
                     pair.Key.ImageTransparentColor = Color.Empty;
                     pair.Key.Image = bmp;
+                    applied++;
                     if (old != null)
                         old.Dispose();
                 }
+                ThemeManager.Log("icons toolbar '" + strip.Name + "' size=" + size.Width + " applied=" + applied + "/" + items.Count, null);
                 if (extra != null)
                     extra();
             };
@@ -114,7 +146,7 @@ namespace Ares.CommonGUI
             {
                 try
                 {
-                    if (!strip.IsDisposed && (strip.ImageScalingSize != lastSize || ThemeColor() != lastColor))
+                    if (!strip.IsDisposed && (ToolbarIconSize() != lastSize || strip.ImageScalingSize != lastSize || ThemeColor() != lastColor))
                         apply();
                 }
                 catch (Exception)
@@ -149,25 +181,32 @@ namespace Ares.CommonGUI
             Color lastColor = Color.Empty;
             Action apply = () =>
             {
-                int px = (int)Math.Round(18 * Math.Max(100, ThemeManager.ScalePercent) / 100f);
-                Size size = new Size(px, px);
+                Size size = MenuIconSize();
                 Color color = ThemeColor();
                 lastSize = size;
                 lastColor = color;
-                foreach (ToolStripItem top in menu.Items)
+                int applied = 0;
+                try
                 {
-                    ToolStripDropDownItem dd = top as ToolStripDropDownItem;
-                    if (dd != null)
-                        ApplyMenuIcons(dd.DropDownItems, byName, size, color);
+                    foreach (ToolStripItem top in menu.Items)
+                    {
+                        ToolStripDropDownItem dd = top as ToolStripDropDownItem;
+                        if (dd != null)
+                            applied += ApplyMenuIcons(dd.DropDownItems, byName, size, color);
+                    }
                 }
+                catch (Exception ex)
+                {
+                    ThemeManager.Log("menu icons failed", ex);
+                }
+                ThemeManager.Log("icons menu '" + menu.Name + "' size=" + size.Width + " applied=" + applied + "/" + byName.Count, null);
             };
             apply();
             EventHandler idle = (s, e) =>
             {
                 try
                 {
-                    int px = (int)Math.Round(18 * Math.Max(100, ThemeManager.ScalePercent) / 100f);
-                    if (!menu.IsDisposed && (new Size(px, px) != lastSize || ThemeColor() != lastColor))
+                    if (!menu.IsDisposed && (MenuIconSize() != lastSize || ThemeColor() != lastColor))
                         apply();
                 }
                 catch (Exception)
@@ -178,8 +217,9 @@ namespace Ares.CommonGUI
             menu.Disposed += (s, e) => Application.Idle -= idle;
         }
 
-        private static void ApplyMenuIcons(ToolStripItemCollection items, IDictionary<string, string> byName, Size size, Color color)
+        private static int ApplyMenuIcons(ToolStripItemCollection items, IDictionary<string, string> byName, Size size, Color color)
         {
+            int count = 0;
             foreach (ToolStripItem item in items)
             {
                 string icon;
@@ -192,14 +232,16 @@ namespace Ares.CommonGUI
                         item.ImageScaling = ToolStripItemImageScaling.None;
                         item.ImageTransparentColor = Color.Empty;
                         item.Image = bmp;
+                        count++;
                         if (old != null)
                             old.Dispose();
                     }
                 }
                 ToolStripDropDownItem dd = item as ToolStripDropDownItem;
                 if (dd != null && dd.HasDropDownItems)
-                    ApplyMenuIcons(dd.DropDownItems, byName, size, color);
+                    count += ApplyMenuIcons(dd.DropDownItems, byName, size, color);
             }
+            return count;
         }
     }
 }

@@ -723,10 +723,10 @@ namespace Ares.CommonGUI
         {
             try
             {
+                // toolbars with Lucide icons size themselves (see IconLibrary)
+                if (IconLibrary.IsManaged(ts))
+                    return;
                 float factor = ScalePercent / 100f;
-                // real toolbars get larger icons; menus keep their size
-                if (!(ts is MenuStrip) && !(ts is ToolStripDropDown))
-                    factor *= 1.3f;
                 Size target = new Size(
                     (int)Math.Round(orig.ToolStripImageSize.Width * factor),
                     (int)Math.Round(orig.ToolStripImageSize.Height * factor));

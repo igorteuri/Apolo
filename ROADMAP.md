@@ -13,5 +13,6 @@ Futuro (baixa prioridade):
 - Overlay para OBS: página web local (Browser Source) mostrando o nome da música tocando agora, para lives
 - Entrada de áudio / gravação dentro do Ares para usar como música
 - Rodar na bandeja do Windows (Icon Tray): ao fechar a janela, o programa apenas minimiza para a bandeja e continua tocando
+- Enviar o áudio como bot do Discord (o bot entra no canal de voz e transmite o que o Ares toca)
 - Corrigir / atualizar o controle web (web controller)
 - Ajustes finais de tema

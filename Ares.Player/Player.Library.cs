@@ -100,7 +100,9 @@ namespace Ares.Player
 
         private void LibraryDragEnter(object sender, DragEventArgs e)
         {
-            e.Effect = e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+            // only file drops are handled here; other (internal) drags are left to their own handlers
+            if (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
+                e.Effect = DragDropEffects.Copy;
         }
 
         private void LibraryDragDrop(object sender, DragEventArgs e)
