@@ -106,6 +106,19 @@ namespace Ares.Player
             InitTray();
         }
 
+        private void FitMusicBar()
+        {
+            if (m_MusicProgressBar == null)
+                return;
+            int margin = groupBox2.Left;
+            int width = ClientSize.Width - 2 * margin;
+            if (width > 50 && (m_MusicProgressBar.Left != margin || m_MusicProgressBar.Width != width))
+            {
+                m_MusicProgressBar.Left = margin;
+                m_MusicProgressBar.Width = width;
+            }
+        }
+
         private MusicProgressBar m_MusicProgressBar;
         private SoundProgressPanel m_SoundPanel;
         private ToolStripButton m_PauseButton;
@@ -254,6 +267,10 @@ namespace Ares.Player
                 m_MusicProgressBar.Top = toolStrip1.Bottom + 3;
                 m_MusicProgressBar.Height = Math.Max(34, groupBox2.Top - m_MusicProgressBar.Top - 3);
             };
+
+            // the music bar always spans the full window width (same margin on both sides)
+            Layout += (sender, e) => FitMusicBar();
+            Load += (sender, e) => FitMusicBar();
 
             // the window is now a bit taller: make sure it fits on small screens
             Load += (sender, e) =>

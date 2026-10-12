@@ -283,7 +283,7 @@
     <value>Transição entre músicas:</value>
   </data>
   <data name="playToolStripMenuItem.Text" xml:space="preserve">
-    <value>Tocar</value>
+    <value>Tocando</value>
   </data>
   <data name="label14.Text" xml:space="preserve">
     <value>Categoria selecionada:</value>
