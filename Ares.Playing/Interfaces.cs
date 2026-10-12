@@ -351,6 +351,11 @@ namespace Ares.Playing
         bool StopSound(int handle);
 
         /// <summary>
+        /// Switches the repetition of a running sound effect on or off.
+        /// </summary>
+        bool SetSoundRepeat(int handle, bool repeat);
+
+        /// <summary>
         /// Jumps to a position (in seconds) in a running sound effect.
         /// </summary>
         bool SetSoundPosition(int handle, double positionSeconds);
