@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Ares overlay</title>
+<style>
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+#stage { position: fixed; left: 0; top: 0; right: 0; bottom: 0; display: flex; box-sizing: border-box; padding: 12px; }
+#card { box-sizing: border-box; max-width: 100%; transition: opacity .6s ease, transform .6s ease; opacity: 0; }
+#card.on { opacity: 1; transform: none; }
+.anim-slide #card.off { transform: translateY(24px); }
+.anim-none #card { transition: none; }
+#prefix { font-size: .45em; letter-spacing: .08em; text-transform: uppercase; opacity: .95; margin-bottom: .15em; }
+#title { font-weight: 700; line-height: 1.1; overflow-wrap: anywhere; }
+#artist { font-size: .6em; opacity: .9; margin-top: .15em; overflow-wrap: anywhere; }
+#bar { height: .12em; margin-top: .5em; background: rgba(255,255,255,.25); border-radius: .1em; overflow: hidden; }
+#fill { height: 100%; width: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="card" class="off">
+    <div id="prefix"></div>
+    <div id="title"></div>
+    <div id="artist"></div>
+    <div id="bar"><div id="fill"></div></div>
+  </div>
+</div>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  function p(n, d) { var v = q.get(n); return v === null ? d : v; }
+  function col(v) { return /^[0-9a-f]{3,8}$/i.test(v) ? '#' + v : v; }
+  function flag(n, d) { return p(n, d ? '1' : '0') === '1'; }
+
+  var o = {
+    size: parseFloat(p('size', '42')),
+    font: p('font', 'Segoe UI'),
+    color: col(p('color', 'ffffff')),
+    accent: col(p('accent', 'ffb347')),
+    bg: col(p('bg', '00000000')),
+    align: p('align', 'left'),
+    valign: p('valign', 'bottom'),
+    artist: flag('artist', true),
+    prefix: p('prefix', 'Tocando agora'),
+    icon: flag('icon', true),
+    progress: flag('progress', false),
+    hidepause: flag('hidepause', false),
+    showfor: parseFloat(p('showfor', '0')),
+    anim: p('anim', 'fade'),
+    shadow: flag('shadow', true),
+    upper: flag('upper', false),
+    radius: parseFloat(p('radius', '0')),
+    pad: parseFloat(p('pad', '0')),
+    demo: flag('demo', false)
+  };
+
+  var stage = document.getElementById('stage');
+  var card = document.getElementById('card');
+  var elPrefix = document.getElementById('prefix');
+  var elTitle = document.getElementById('title');
+  var elArtist = document.getElementById('artist');
+  var bar = document.getElementById('bar');
+  var fill = document.getElementById('fill');
+
+  var justify = { left: 'flex-start', center: 'center', right: 'flex-end' };
+  var items = { top: 'flex-start', middle: 'center', bottom: 'flex-end' };
+  stage.style.justifyContent = justify[o.align] || 'flex-start';
+  stage.style.alignItems = items[o.valign] || 'flex-end';
+  stage.className = 'anim-' + o.anim;
+  card.style.textAlign = o.align;
+  card.style.fontFamily = "'" + o.font + "', 'Segoe UI', Arial, sans-serif";
+  card.style.fontSize = o.size + 'px';
+  card.style.color = o.color;
+  card.style.background = o.bg;
+  card.style.borderRadius = o.radius + 'px';
+  card.style.padding = o.pad + 'px';
+  if (o.upper) card.style.textTransform = 'uppercase';
+  if (o.shadow) card.style.textShadow = '0 0 .12em rgba(0,0,0,.9), 0 .04em .12em rgba(0,0,0,.8)';
+  elPrefix.style.color = o.accent;
+  fill.style.background = o.accent;
+  bar.style.display = o.progress ? 'block' : 'none';
+  elPrefix.style.display = (o.prefix || o.icon) ? 'block' : 'none';
+  elArtist.style.display = 'none';
+
+  var last = '';
+  var hideTimer = null;
+
+  function show(on) {
+    card.className = on ? 'on' : 'off';
+  }
+
+  function setText(s) {
+    var pre = (o.icon ? '♪ ' : '') + (o.prefix || '');
+    elPrefix.textContent = pre.trim();
+    elTitle.textContent = s.title || '';
+    var hasArtist = o.artist && s.artist;
+    elArtist.style.display = hasArtist ? 'block' : 'none';
+    elArtist.textContent = hasArtist ? s.artist : '';
+  }
+
+  function handle(s) {
+    if (o.demo) {
+      s = { playing: true, paused: false, id: 1, title: 'Nome da música', artist: 'Artista • Álbum', position: 62, length: 180 };
+    }
+    if (!s.playing || (o.hidepause && s.paused)) {
+      show(false);
+      last = '';
+      return;
+    }
+    var key = s.id + '|' + s.title;
+    if (key !== last) {
+      last = key;
+      setText(s);
+      show(true);
+      clearTimeout(hideTimer);
+      if (o.showfor > 0 && !o.demo) {
+        hideTimer = setTimeout(function () { show(false); }, o.showfor * 1000);
+      }
+    } else if (!(o.showfor > 0) || o.demo) {
+      show(true);
+    }
+    if (o.progress && s.length > 0) {
+      fill.style.width = Math.max(0, Math.min(100, 100 * s.position / s.length)) + '%';
+    }
+  }
+
+  function tick() {
+    var x = new XMLHttpRequest();
+    x.open('GET', '/now.json?_=' + Date.now(), true);
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4) return;
+      if (x.status === 200) {
+        try { handle(JSON.parse(x.responseText)); } catch (e) { show(false); }
+      } else if (o.demo) {
+        handle({});
+      } else {
+        show(false);
+      }
+    };
+    x.send();
+  }
+
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>

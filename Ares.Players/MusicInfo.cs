@@ -28,11 +28,23 @@ namespace Ares.Players
     {
         public String LongTitle { get; private set; }
         public String ShortTitle { get; private set; }
+        /// <summary>Title from the file tag (or the element title), artist and album from the tag (may be empty).</summary>
+        public String Title { get; private set; }
+        public String Artist { get; private set; }
+        public String Album { get; private set; }
 
         private MusicInfo(String longTitle, String shortTitle)
+            : this(longTitle, shortTitle, shortTitle, String.Empty, String.Empty)
+        {
+        }
+
+        private MusicInfo(String longTitle, String shortTitle, String title, String artist, String album)
         {
             LongTitle = longTitle;
             ShortTitle = shortTitle;
+            Title = title ?? String.Empty;
+            Artist = artist ?? String.Empty;
+            Album = album ?? String.Empty;
         }
 
         public static MusicInfo GetInfo(int musicElementId)
@@ -47,6 +59,9 @@ namespace Ares.Players
                 IFileElement fileElement = musicElement as IFileElement;
                 String shortTitle = musicElement.Title;
                 String longTitle = musicElement.Title;
+                String tagTitle = musicElement.Title;
+                String tagArtist = String.Empty;
+                String tagAlbum = String.Empty;
                 if (fileElement != null)
                 {
                     String path = Settings.Settings.Instance.MusicDirectory;
@@ -63,9 +78,13 @@ namespace Ares.Players
                             musicInfoBuilder.Append(" - ");
                         musicInfoBuilder.Append(tag.title);
                         longTitle = musicInfoBuilder.ToString();
+                        tagArtist = tag.artist;
+                        tagAlbum = tag.album;
+                        if (!String.IsNullOrEmpty(tag.title))
+                            tagTitle = tag.title;
                     }
                 }
-                return new MusicInfo(longTitle, shortTitle);
+                return new MusicInfo(longTitle, shortTitle, tagTitle, tagArtist, tagAlbum);
             }
             else
             {
