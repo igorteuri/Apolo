@@ -71,24 +71,24 @@ namespace Ares.Player
                     SendMessage(m_TrackSearch.Handle, 0x1501, (IntPtr)1, T("Buscar música...", "Search track..."));
                 m_TrackSearch.KeyDown += (s, e) =>
                 {
-                    if (e.KeyCode == Keys.Escape)
+                    if (e.KeyCode == System.Windows.Forms.Keys.Escape)
                     {
                         m_TrackSearch.Text = "";
                         e.SuppressKeyPress = true;
                     }
-                    else if (e.KeyCode == Keys.Enter)
+                    else if (e.KeyCode == System.Windows.Forms.Keys.Enter)
                     {
                         e.SuppressKeyPress = true;
                         if (m_TrackList.SelectedIndex < 0 && m_TrackList.Items.Count > 0)
                             m_TrackList.SelectedIndex = 0;
                         PlaySelectedTrack();
                     }
-                    else if (e.KeyCode == Keys.Down && m_TrackList.Items.Count > 0)
+                    else if (e.KeyCode == System.Windows.Forms.Keys.Down && m_TrackList.Items.Count > 0)
                     {
                         m_TrackList.SelectedIndex = Math.Min(m_TrackList.Items.Count - 1, m_TrackList.SelectedIndex + 1);
                         e.SuppressKeyPress = true;
                     }
-                    else if (e.KeyCode == Keys.Up && m_TrackList.Items.Count > 0)
+                    else if (e.KeyCode == System.Windows.Forms.Keys.Up && m_TrackList.Items.Count > 0)
                     {
                         m_TrackList.SelectedIndex = Math.Max(0, m_TrackList.SelectedIndex - 1);
                         e.SuppressKeyPress = true;
@@ -106,7 +106,7 @@ namespace Ares.Player
                 };
                 m_TrackList.KeyDown += (s, e) =>
                 {
-                    if (e.KeyCode == Keys.Enter)
+                    if (e.KeyCode == System.Windows.Forms.Keys.Enter)
                     {
                         e.SuppressKeyPress = true;
                         PlaySelectedTrack();
