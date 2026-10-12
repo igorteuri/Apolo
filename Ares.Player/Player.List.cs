@@ -160,6 +160,7 @@ namespace Ares.Player
             }
             ApplyElementFilter();
             elementsPanel.ResumeLayout(true);
+            AfterElementsForTrackPanel();
         }
 
         private void ApplyElementFilter()

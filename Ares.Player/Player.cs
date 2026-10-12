@@ -106,6 +106,7 @@ namespace Ares.Player
             InitTray();
             InitWeb();
             InitListMode();
+            InitTrackPanel();
         }
 
         private void FitMusicBar()
@@ -1196,6 +1197,7 @@ namespace Ares.Player
             {
                 musicLabel.Text = MusicInfo.GetInfo(musicElementId).LongTitle;
                 lastMusicElementId = musicElementId;
+                SyncTrackSelection();
                 var currentMusicList = Ares.Data.DataModule.ElementRepository.GetElement(m_PlayingControl.CurrentMusicList) as IMusicList;
                 var elements = currentMusicList != null ? currentMusicList.GetFileElements() : null;
                 if (elements != null && musicList.Items.Count > 0)

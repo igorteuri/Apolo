@@ -83,6 +83,8 @@ namespace Ares.Player
 
             // context menu for buttons (elements)
             m_ElementMenu = new ContextMenuStrip();
+            m_ElementMenu.Items.Add(T("Ver músicas", "View tracks"), null, (s, e) => ShowTrackPanel(m_MenuElementId));
+            m_ElementMenu.Items.Add(new ToolStripSeparator());
             m_ElementMenu.Items.Add(T("Renomear...", "Rename..."), null, (s, e) => RenameElementButton());
             m_ElementMenu.Items.Add(T("Excluir", "Delete"), null, (s, e) => DeleteElementButton());
             m_ElementMenu.Items.Add(new ToolStripSeparator());
@@ -331,9 +333,12 @@ namespace Ares.Player
             box.MouseUp += (s, e) =>
             {
                 tracking = false;
-                if (!m_EditMode || e.Button != MouseButtons.Right)
+                if (e.Button != MouseButtons.Right)
                     return;
                 m_MenuElementId = elementId;
+                // outside edit mode only "View tracks" is offered
+                for (int i = 1; i < m_ElementMenu.Items.Count; i++)
+                    m_ElementMenu.Items[i].Visible = m_EditMode;
                 m_ElementMenu.Show(box, e.Location);
             };
             box.MouseMove += (s, e) =>

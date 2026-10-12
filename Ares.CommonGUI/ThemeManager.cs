@@ -1131,6 +1131,22 @@ namespace Ares.CommonGUI
                 base.OnRenderArrow(e);
             }
 
+            protected override void OnRenderButtonBackground(ToolStripItemRenderEventArgs e)
+            {
+                ToolStripButton button = e.Item as ToolStripButton;
+                if (button != null && button.Checked && button.Enabled)
+                {
+                    // clearly visible "on" state for toggle buttons (repeat, edit mode, ...)
+                    Rectangle r = new Rectangle(1, 1, button.Width - 3, button.Height - 3);
+                    using (SolidBrush fill = new SolidBrush(Color.FromArgb(120, Current.Accent)))
+                        e.Graphics.FillRectangle(fill, r);
+                    using (Pen border = new Pen(Current.Accent))
+                        e.Graphics.DrawRectangle(border, r);
+                    return;
+                }
+                base.OnRenderButtonBackground(e);
+            }
+
             protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
             {
                 // no border around menu strips / toolbars / status strips
