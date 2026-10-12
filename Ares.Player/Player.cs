@@ -107,6 +107,7 @@ namespace Ares.Player
             InitWeb();
             InitListMode();
             InitTrackPanel();
+            InitTransportRow();
         }
 
         private void FitMusicBar()
@@ -114,11 +115,56 @@ namespace Ares.Player
             if (m_MusicProgressBar == null)
                 return;
             int margin = groupBox2.Left;
-            int width = ClientSize.Width - 2 * margin;
-            if (width > 50 && (m_MusicProgressBar.Left != margin || m_MusicProgressBar.Width != width))
+            int left = margin;
+            if (m_TransportStrip != null)
             {
-                m_MusicProgressBar.Left = margin;
+                m_TransportStrip.Left = margin;
+                m_TransportStrip.Top = m_MusicProgressBar.Top + Math.Max(0, (m_MusicProgressBar.Height - m_TransportStrip.Height) / 2);
+                left = m_TransportStrip.Right + 8;
+            }
+            int width = ClientSize.Width - margin - left;
+            if (width > 50 && (m_MusicProgressBar.Left != left || m_MusicProgressBar.Width != width))
+            {
+                m_MusicProgressBar.Left = left;
                 m_MusicProgressBar.Width = width;
+            }
+        }
+
+        private ToolStrip m_TransportStrip;
+
+        // stop, pause, previous, next and repeat on the same row as the progress bar, at its left
+        private void InitTransportRow()
+        {
+            try
+            {
+                m_TransportStrip = new ToolStrip();
+                m_TransportStrip.Name = "transportStrip";
+                m_TransportStrip.GripStyle = ToolStripGripStyle.Hidden;
+                m_TransportStrip.Dock = DockStyle.None;
+                m_TransportStrip.AutoSize = true;
+                m_TransportStrip.CanOverflow = false;
+                ToolStripItem[] moved = new ToolStripItem[] { stopButton, m_PauseButton, previousButton, nextButton, repeatButton };
+                foreach (ToolStripItem item in moved)
+                {
+                    toolStrip1.Items.Remove(item);
+                    m_TransportStrip.Items.Add(item);
+                }
+                toolStrip1.Items.Remove(toolStripSeparator1);
+                Controls.Add(m_TransportStrip);
+                m_TransportStrip.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                m_TransportStrip.SizeChanged += (s, e) => FitMusicBar();
+                Ares.CommonGUI.IconLibrary.Bind(m_TransportStrip, new Dictionary<ToolStripItem, string>
+                {
+                    { stopButton, "square" },
+                    { previousButton, "skip-back" },
+                    { nextButton, "skip-forward" },
+                    { repeatButton, "repeat" }
+                });
+                FitMusicBar();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message);
             }
         }
 
@@ -1129,6 +1175,11 @@ namespace Ares.Player
 
         protected override bool ProcessCmdKey(ref System.Windows.Forms.Message msg, System.Windows.Forms.Keys keyData)
         {
+            if (keyData == System.Windows.Forms.Keys.F9)
+            {
+                ToggleTrackPanel();
+                return true;
+            }
 #if MONO
             const int WM_KEYDOWN = 0x100;
             if (msg.Msg == WM_KEYDOWN && !tagFadeUpDown.ContainsFocus)

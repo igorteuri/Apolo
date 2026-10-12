@@ -847,6 +847,16 @@ namespace Ares.CommonGUI
                         top = Math.Max(top, m_Tab.GetTabRect(i).Bottom);
                     Rectangle client = m_Tab.ClientRectangle;
                     Rectangle area = new Rectangle(0, top, client.Width, client.Height - top);
+                    int tabsRight = 0;
+                    for (int i = 0; i < m_Tab.TabCount; ++i)
+                        tabsRight = Math.Max(tabsRight, m_Tab.GetTabRect(i).Right);
+                    Color stripBack = m_Tab.Parent != null ? m_Tab.Parent.BackColor : p.Window;
+                    using (Graphics g2 = Graphics.FromHwnd(m_Tab.Handle))
+                    using (SolidBrush b2 = new SolidBrush(stripBack))
+                    {
+                        // the empty part of the tab row, to the right of the last tab
+                        g2.FillRectangle(b2, new Rectangle(tabsRight, 0, Math.Max(0, client.Width - tabsRight), top));
+                    }
                     using (Graphics g = Graphics.FromHwnd(m_Tab.Handle))
                     using (Region r = new Region(area))
                     using (SolidBrush b = new SolidBrush(p.Window))
