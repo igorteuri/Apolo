@@ -1,0 +1,285 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="BufLostError" xml:space="preserve">
+    <value>Samplingpuffer verloren</value>
+  </data>
+  <data name="CodecError" xml:space="preserve">
+    <value>Codec nicht verfügbar</value>
+  </data>
+  <data name="CreateError" xml:space="preserve">
+    <value>Datei konnte nicht erzeugt werden</value>
+  </data>
+  <data name="DeviceError" xml:space="preserve">
+    <value>Ungültige Gerätenummer</value>
+  </data>
+  <data name="DriverError" xml:space="preserve">
+    <value>Kann keinen Treiber finden</value>
+  </data>
+  <data name="DxError" xml:space="preserve">
+    <value>Keine ausreichende Version von DirectX installiert</value>
+  </data>
+  <data name="EndedError" xml:space="preserve">
+    <value>Kanal / Datei hat geendet</value>
+  </data>
+  <data name="FileformError" xml:space="preserve">
+    <value>Nicht unterstütztes Dateiformat</value>
+  </data>
+  <data name="FileOpenError" xml:space="preserve">
+    <value>Kann Datei nicht öffnen</value>
+  </data>
+  <data name="FormatError" xml:space="preserve">
+    <value>Nicht unterstütztes Sample Format</value>
+  </data>
+  <data name="FreqError" xml:space="preserve">
+    <value>Ungültige Samplingrate</value>
+  </data>
+  <data name="HandleError" xml:space="preserve">
+    <value>Ungültiges Handle</value>
+  </data>
+  <data name="IllParamError" xml:space="preserve">
+    <value>Ungültiger Parameter angegeben</value>
+  </data>
+  <data name="IllTypeError" xml:space="preserve">
+    <value>Ungültiger Typ angegeben</value>
+  </data>
+  <data name="MemError" xml:space="preserve">
+    <value>Speicherfehler</value>
+  </data>
+  <data name="No3DError" xml:space="preserve">
+    <value>Keine 3D-Unterstützung</value>
+  </data>
+  <data name="NoChanError" xml:space="preserve">
+    <value>Kann keinen freien Kanal finden</value>
+  </data>
+  <data name="NoEaxError" xml:space="preserve">
+    <value>Keine EAX-Unterstützung</value>
+  </data>
+  <data name="NoFxError" xml:space="preserve">
+    <value>Effekte sind nicht verfügbar</value>
+  </data>
+  <data name="NoHwError" xml:space="preserve">
+    <value>Keine Hardwarestimmen verfügbar</value>
+  </data>
+  <data name="NoPlayError" xml:space="preserve">
+    <value>Wird nicht abgespielt</value>
+  </data>
+  <data name="NotAudioError" xml:space="preserve">
+    <value>Kein Audio Track</value>
+  </data>
+  <data name="NotFileError" xml:space="preserve">
+    <value>Der Datenstrom ist kein Dateistrom</value>
+  </data>
+  <data name="PlayingError" xml:space="preserve">
+    <value>Kanal wird abgespielt</value>
+  </data>
+  <data name="PositionError" xml:space="preserve">
+    <value>Ungültige Abspielposition</value>
+  </data>
+  <data name="SpeakerError" xml:space="preserve">
+    <value>Lautsprecher nicht verfügbar oder Datei ist Stereo.</value>
+  </data>
+  <data name="UnexpectedError" xml:space="preserve">
+    <value>Unerwarteter Fehler: {0}</value>
+  </data>
+  <data name="FilePlayingError" xml:space="preserve">
+    <value>Fehler beim Abspielen der Datei: {0}</value>
+  </data>
+  <data name="SetVolumeError" xml:space="preserve">
+    <value>Fehler beim Setzen der Lautstärke: {0}</value>
+  </data>
+  <data name="SetEffectError" xml:space="preserve">
+    <value>Fehler beim Setzen eines Effekts: {0}</value>
+  </data>
+  <data name="SpeakerNotAvailable" xml:space="preserve">
+    <value>Der eingestellte Lautsprecher ist nicht verfügbar.</value>
+  </data>
+  <data name="StreamingError" xml:space="preserve">
+    <value>Streaming-Fehler: {0}</value>
+  </data>
+  <data name="TagsDbError" xml:space="preserve">
+    <value>Fehler beim Zugriff auf die Tags-Datenbasis:
+{0}</value>
+  </data>
+  <data name="TaggedMusic" xml:space="preserve">
+    <value>Musik per Tags</value>
+  </data>
+  <data name="BassAacLoadFail" xml:space="preserve">
+    <value>Konnte BASS Aac AddOn-Library nicht laden. Installationsproblem?</value>
+  </data>
+  <data name="BassDeviceAlready" xml:space="preserve">
+    <value>Gerät ist bereits initialisiert. Wird es von einer anderen Anwendung verwendet?</value>
+  </data>
+  <data name="BassDeviceDriver" xml:space="preserve">
+    <value>Kein Gerätetreiber verfügbar. Sind Soundkarte und Lautsprecher korrekt installiert? Wird das Gerät von einer anderen Anwendung verwendet?</value>
+  </data>
+  <data name="BassDeviceFormat" xml:space="preserve">
+    <value>Das Audiogerät konnte mit dem benötigten Format nicht geöffnet werden.</value>
+  </data>
+  <data name="BassDeviceInfo" xml:space="preserve">
+    <value>Gerät: {0}, Treiber: {1}, Status: {2}</value>
+  </data>
+  <data name="BassDeviceInvalid" xml:space="preserve">
+    <value>Ungültiges Gerät. Sind Soundkarte und Lautsprecher korrekt installiert?</value>
+  </data>
+  <data name="BassFlacLoadFail" xml:space="preserve">
+    <value>Konnte BASS Flac AddOn-Library nicht laden. Installationsproblem?</value>
+  </data>
+  <data name="BassFxLoadFail" xml:space="preserve">
+    <value>Konnte BASS Fx AddOn-Library nicht laden. Installationsproblem?</value>
+  </data>
+  <data name="BassInitFail" xml:space="preserve">
+    <value>Fehler: Konnte die Audio-Engine nicht initialisieren!
+Fehlermeldung: {0}
+{1}</value>
+  </data>
+  <data name="BassLoadFail" xml:space="preserve">
+    <value>Konnte BASS-Library nicht laden. Installationsproblem?</value>
+  </data>
+  <data name="BassNo3D" xml:space="preserve">
+    <value>Das Gerät unterstützt 3D-Ausgabe nicht.</value>
+  </data>
+  <data name="BassNoMem" xml:space="preserve">
+    <value>Es steht nicht genug Speicher zur Verfügung.</value>
+  </data>
+  <data name="BassOpusLoadFail" xml:space="preserve">
+    <value>Konnte BASS Opus AddOn-Library nicht laden. Installationsproblem?</value>
+  </data>
+  <data name="BassUnknown" xml:space="preserve">
+    <value>Unbekannter Fehler. Sind Soundkarte und Lautsprecher korrekt installiert?</value>
+  </data>
+  <data name="DeviceDisabled" xml:space="preserve">
+    <value>abgeschaltet</value>
+  </data>
+  <data name="DeviceEnabled" xml:space="preserve">
+    <value>angeschaltet</value>
+  </data>
+  <data name="NoDevice" xml:space="preserve">
+    <value>Keine Soundkarte gefunden.</value>
+  </data>
+  <data name="NoDeviceDriver" xml:space="preserve">
+    <value>Kein Sound-Treiber gefunden.</value>
+  </data>
+  <data name="Default" xml:space="preserve">
+    <value>Standard</value>
+  </data>
+  <data name="EncoderNotFound" xml:space="preserve">
+    <value>Encoder '{0}' nicht gefunden</value>
+  </data>
+</root>

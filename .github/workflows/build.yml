@@ -13,7 +13,7 @@ jobs:
 
       - name: Create placeholder Freesound key
         shell: pwsh
-        run: Copy-Item Ares.AudioSource.Freesound/ApiKey.example.cs Ares.AudioSource.Freesound/ApiKey.cs
+        run: Copy-Item src/Ares.AudioSource.Freesound/ApiKey.example.cs src/Ares.AudioSource.Freesound/ApiKey.cs
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
@@ -125,8 +125,8 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist/discord | Out-Null
-          Copy-Item Ares.Player/Discord/package.json dist/discord/
-          Copy-Item Ares.Player/Discord/discord-bridge.js dist/discord/
+          Copy-Item src/Ares.Player/Discord/package.json dist/discord/
+          Copy-Item src/Ares.Player/Discord/discord-bridge.js dist/discord/
           Push-Location dist/discord
           npm install --omit=dev --no-audit --no-fund
           if ($LASTEXITCODE -ne 0) { exit 1 }

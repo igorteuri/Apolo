@@ -1,6 +1,6 @@
 # Módulos do Apolo
 
-O Apolo é dividido em módulos (projetos .NET) para separar responsabilidades. Os nomes internos `Ares.*` vêm do projeto original.
+O Apolo é dividido em módulos (projetos .NET) para separar responsabilidades. Os nomes internos `Ares.*` vêm do projeto original. Todos os projetos .NET ficam na pasta `src`.
 
 ## Base
 
@@ -32,5 +32,5 @@ O Apolo é dividido em módulos (projetos .NET) para separar responsabilidades. 
 
 - **StreamDeck**: plugin para o Stream Deck.
 - **FoundryModule**: módulo `apolo-audio` para o Foundry VTT.
-- **Ares.Player/Discord**: ponte do Discord (Node.js).
+- **src/Ares.Player/Discord**: ponte do Discord (Node.js).
 - **Branding**: logos do Apolo.

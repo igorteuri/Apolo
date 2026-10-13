@@ -1,0 +1,357 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="selectElementKeyMenuItem.Text" xml:space="preserve">
+    <value>Selecionar tecla ...</value>
+  </data>
+  <data name="toolStripMenuItem2.Text" xml:space="preserve">
+    <value>Selecionar tecla ...</value>
+  </data>
+  <data name="tagsToolStripMenuItem.Text" xml:space="preserve">
+    <value>Tags ...</value>
+  </data>
+  <data name="sortModesByNameDescMenuItem.Text" xml:space="preserve">
+    <value>Decrescente por nome</value>
+  </data>
+  <data name="pasteToolStripMenuItem.Text" xml:space="preserve">
+    <value>Colar</value>
+  </data>
+  <data name="toolStripMenuItem8.Text" xml:space="preserve">
+    <value>Colar</value>
+  </data>
+  <data name="addMusicByTagsToolStripMenuItem.Text" xml:space="preserve">
+    <value>Adicionar música por tags ...</value>
+  </data>
+  <data name="addBackgroundSoundsToolStripMenuItem1.Text" xml:space="preserve">
+    <value>Adicionar sons de fundo ...</value>
+  </data>
+  <data name="sortElementsByKeyDescMenuItem.Text" xml:space="preserve">
+    <value>Decrescente por tecla</value>
+  </data>
+  <data name="sortElementsByKeyAscMenuItem.Text" xml:space="preserve">
+    <value>Crescente por tecla</value>
+  </data>
+  <data name="musicByTagsToolStripItem.Text" xml:space="preserve">
+    <value>Adicionar música por tags ...</value>
+  </data>
+  <data name="addSequentialElementToolStripMenuItem.Text" xml:space="preserve">
+    <value>Adicionar lista sequencial ...</value>
+  </data>
+  <data name="addSequentialElementToolStripMenuItem1.Text" xml:space="preserve">
+    <value>Adicionar lista sequencial ...</value>
+  </data>
+  <data name="modeElementStartingToolStripMenuItem2.Text" xml:space="preserve">
+    <value>Iniciando ...</value>
+  </data>
+  <data name="exportToolStripMenuItem3.Text" xml:space="preserve">
+    <value>Exportar ...</value>
+  </data>
+  <data name="$this.Text" xml:space="preserve">
+    <value>Explorador do projeto</value>
+  </data>
+  <data name="addSequentialPlaylistToolStripMenuItem.Text" xml:space="preserve">
+    <value>Adicionar lista de músicas sequencial ...</value>
+  </data>
+  <data name="moveDownButton.Text" xml:space="preserve">
+    <value>Mover para baixo</value>
+  </data>
+  <data name="exportToolStripMenuItem1.Text" xml:space="preserve">
+    <value>Exportar ...</value>
+  </data>
+  <data name="toolStripMenuItem6.Text" xml:space="preserve">
+    <value>Recortar</value>
+  </data>
+  <data name="toolStripMenuItem1.Text" xml:space="preserve">
+    <value>Adicionar modo ...</value>
+  </data>
+  <data name="playButton.Text" xml:space="preserve">
+    <value>Tocar</value>
+  </data>
+  <data name="selectBGSoundsKeyMenuItem.Text" xml:space="preserve">
+    <value>Selecionar tecla ...</value>
+  </data>
+  <data name="modeElementStartingToolStripMenuItem1.Text" xml:space="preserve">
+    <value>Iniciando ...</value>
+  </data>
+  <data name="importDialog.Filter" xml:space="preserve">
+    <value>Projetos do Apolo|*.apolo;*.ares|Projetos compactados do Apolo|*.apkg|Todos os arquivos|*.*</value>
+  </data>
+  <data name="editToolStripMenuItem1.Text" xml:space="preserve">
+    <value>Editar ...</value>
+  </data>
+  <data name="importToolStripMenuItem.Text" xml:space="preserve">
+    <value>Importar ...</value>
+  </data>
+  <data name="renameToolStripMenuItem.Text" xml:space="preserve">
+    <value>Renomear</value>
+  </data>
+  <data name="toolStripMenuItem15.Text" xml:space="preserve">
+    <value>Colar como atalho</value>
+  </data>
+  <data name="addBackgroundSoundsToolStripMenuItem.Text" xml:space="preserve">
+    <value>Adicionar sons de fundo ...</value>
+  </data>
+  <data name="sortModesByNameAscMenuItem.Text" xml:space="preserve">
+    <value>Crescente por nome</value>
+  </data>
+  <data name="exportDialog.Filter" xml:space="preserve">
+    <value>Projetos do Apolo|*.apolo;*.ares|Projetos compactados do Apolo|*.apkg|Todos os arquivos|*.*</value>
+  </data>
+  <data name="toolStripMenuItem7.Text" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="sortElementsByNameAscMenuItem.Text" xml:space="preserve">
+    <value>Crescente por nome</value>
+  </data>
+  <data name="importToolStripMenuItem4.Text" xml:space="preserve">
+    <value>Importar ...</value>
+  </data>
+  <data name="exportToolStripMenuItem.Text" xml:space="preserve">
+    <value>Exportar ...</value>
+  </data>
+  <data name="addChoiceListToolStripMenuItem1.Text" xml:space="preserve">
+    <value>Adicionar lista aleatória ...</value>
+  </data>
+  <data name="exportToolStripMenuItem2.Text" xml:space="preserve">
+    <value>Exportar ...</value>
+  </data>
+  <data name="toolStripMenuItem16.Text" xml:space="preserve">
+    <value>Colar como atalho</value>
+  </data>
+  <data name="toolStripMenuItem14.Text" xml:space="preserve">
+    <value>Adicionar macro ...</value>
+  </data>
+  <data name="sortModesToolStripMenuItem.Text" xml:space="preserve">
+    <value>Ordenar modos</value>
+  </data>
+  <data name="toolStripMenuItem5.Text" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="sortModesByKeyAscMenuItem.Text" xml:space="preserve">
+    <value>Crescente por tecla</value>
+  </data>
+  <data name="importToolStripMenuItem1.Text" xml:space="preserve">
+    <value>Importar ...</value>
+  </data>
+  <data name="toolStripMenuItem10.Text" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="selectContainerKeyMenuItem.Text" xml:space="preserve">
+    <value>Selecionar tecla ...</value>
+  </data>
+  <data name="addRandomPlaylistToolStripMenuItem.Text" xml:space="preserve">
+    <value>Adicionar lista de músicas aleatória ...</value>
+  </data>
+  <data name="renameToolStripMenuItem4.Text" xml:space="preserve">
+    <value>Renomear</value>
+  </data>
+  <data name="renameToolStripMenuItem1.Text" xml:space="preserve">
+    <value>Renomear</value>
+  </data>
+  <data name="renameToolStripMenuItem2.Text" xml:space="preserve">
+    <value>Renomear</value>
+  </data>
+  <data name="sortElementsByNameDescMenuItem.Text" xml:space="preserve">
+    <value>Decrescente por nome</value>
+  </data>
+  <data name="addScenarioToolStripMenuItem.Text" xml:space="preserve">
+    <value>Adicionar cenário ...</value>
+  </data>
+  <data name="addChoiceListToolStripMenuItem.Text" xml:space="preserve">
+    <value>Adicionar lista aleatória ...</value>
+  </data>
+  <data name="toolStripMenuItem3.Text" xml:space="preserve">
+    <value>Colar</value>
+  </data>
+  <data name="addRandomPlaylistToolStripMenuItem1.Text" xml:space="preserve">
+    <value>Adicionar lista de músicas aleatória ...</value>
+  </data>
+  <data name="addSequentialPlaylistToolStripMenuItem1.Text" xml:space="preserve">
+    <value>Adicionar lista de músicas sequencial ...</value>
+  </data>
+  <data name="editToolStripMenuItem.Text" xml:space="preserve">
+    <value>Editar ...</value>
+  </data>
+  <data name="addParallelElementToolStripMenuItem.Text" xml:space="preserve">
+    <value>Adicionar lista paralela ...</value>
+  </data>
+  <data name="addParallelElementToolStripMenuItem1.Text" xml:space="preserve">
+    <value>Adicionar lista paralela ...</value>
+  </data>
+  <data name="toolStripMenuItem11.Text" xml:space="preserve">
+    <value>Recortar</value>
+  </data>
+  <data name="deleteToolStripMenuItem1.Text" xml:space="preserve">
+    <value>Excluir</value>
+  </data>
+  <data name="moveUpButton.Text" xml:space="preserve">
+    <value>Mover para cima</value>
+  </data>
+  <data name="webRadioItem2.Text" xml:space="preserve">
+    <value>Adicionar rádio web ...</value>
+  </data>
+  <data name="toolStripMenuItem9.Text" xml:space="preserve">
+    <value>Recortar</value>
+  </data>
+  <data name="deleteToolStripMenuItem2.Text" xml:space="preserve">
+    <value>Excluir</value>
+  </data>
+  <data name="toolStripMenuItem17.Text" xml:space="preserve">
+    <value>Ordenar elementos</value>
+  </data>
+  <data name="toolStripMenuItem4.Text" xml:space="preserve">
+    <value>Recortar</value>
+  </data>
+  <data name="webRadioMenuItem.Text" xml:space="preserve">
+    <value>Adicionar rádio web ...</value>
+  </data>
+  <data name="deleteToolStripMenuItem3.Text" xml:space="preserve">
+    <value>Excluir</value>
+  </data>
+  <data name="importToolStripMenuItem2.Text" xml:space="preserve">
+    <value>Importar ...</value>
+  </data>
+  <data name="toolStripMenuItem13.Text" xml:space="preserve">
+    <value>Colar</value>
+  </data>
+  <data name="deleteToolStripMenuItem.Text" xml:space="preserve">
+    <value>Excluir</value>
+  </data>
+  <data name="renameToolStripMenuItem3.Text" xml:space="preserve">
+    <value>Renomear</value>
+  </data>
+  <data name="sortModesByKeyDescMenuItem.Text" xml:space="preserve">
+    <value>Decrescente por tecla</value>
+  </data>
+  <data name="modeElementStartingToolStripMenuItem.Text" xml:space="preserve">
+    <value>Iniciando ...</value>
+  </data>
+  <data name="setKeyButton.Text" xml:space="preserve">
+    <value>Selecionar tecla ...</value>
+  </data>
+  <data name="toolStripMenuItem12.Text" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="stopButton.Text" xml:space="preserve">
+    <value>Parar</value>
+  </data>
+  <data name="addSoundChoiceToolStripMenuItem.Text" xml:space="preserve">
+    <value>Adicionar escolha de som</value>
+  </data>
+</root>

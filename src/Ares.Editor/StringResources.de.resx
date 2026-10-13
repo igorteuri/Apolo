@@ -1,0 +1,519 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AddCategory" xml:space="preserve">
+    <value>Kategorie hinzufügen</value>
+  </data>
+  <data name="All" xml:space="preserve">
+    <value>Alle</value>
+  </data>
+  <data name="Ares" xml:space="preserve">
+    <value>Apolo Editor</value>
+  </data>
+  <data name="AresEditorTitle" xml:space="preserve">
+    <value>Apolo Editor - {0}</value>
+  </data>
+  <data name="Category" xml:space="preserve">
+    <value>der Kategorie</value>
+  </data>
+  <data name="CategoryExists" xml:space="preserve">
+    <value>Eine Kategorie mit diesem Namen existiert bereits.</value>
+  </data>
+  <data name="Copying" xml:space="preserve">
+    <value>Kopiere ...</value>
+  </data>
+  <data name="CopyOrMoveParentIntoChild" xml:space="preserve">
+    <value>Ein Verzeichnis kann nicht in eines seiner Unterverzeichnisse kopiert oder verschoben werden.</value>
+  </data>
+  <data name="CorrectErrorsFirst" xml:space="preserve">
+    <value>Bitte korrigieren Sie erst die Fehler (siehe Tooltips der Fehlersymbole).</value>
+  </data>
+  <data name="DeleteError" xml:space="preserve">
+    <value>Fehler beim Löschen der Dateien: {0}</value>
+  </data>
+  <data name="ElementIsEndless" xml:space="preserve">
+    <value>Ein erneuter Tastendruck stoppt das Element (es enthält unbegrenzte Wiederholungen).</value>
+  </data>
+  <data name="ElementIsSingle" xml:space="preserve">
+    <value>Ein erneuter Tastendruck startet das Element ein weiteres Mal.</value>
+  </data>
+  <data name="ExportError" xml:space="preserve">
+    <value>Fehler beim Exportieren des Projektes: {0}</value>
+  </data>
+  <data name="Exporting" xml:space="preserve">
+    <value>Exportiere ...</value>
+  </data>
+  <data name="ExternalPlayerStartFail" xml:space="preserve">
+    <value>Externer Player konnte nicht gestartet werden. Fehlermeldung: {0}</value>
+  </data>
+  <data name="ExtractingMusicIds" xml:space="preserve">
+    <value>Ermittle Musik-Ids ...</value>
+  </data>
+  <data name="ExtractingTags" xml:space="preserve">
+    <value>Extrahiere Tags ...</value>
+  </data>
+  <data name="FileExplorerTitle" xml:space="preserve">
+    <value>{0}-Explorer</value>
+  </data>
+  <data name="FileOpError" xml:space="preserve">
+    <value>Fehler bei Dateioperation: {0}</value>
+  </data>
+  <data name="FlePlayed" xml:space="preserve">
+    <value>Fehler bei Datei: {0}</value>
+  </data>
+  <data name="General" xml:space="preserve">
+    <value>Allgemein
+=========
+Esc               - Stoppt alle Geräusche und Musik
+Pfeil nach oben   - Erhöht die Gesamtlautstärke
+Pfeil nach unten  - Verringert die Gesamtlautstärke
+Bild hoch         - Erhöht die Geräuschlautstärke
+Bild runter       - Verringert die Geräuschlautstärke
+Einfg             - Erhöht die Musiklautstärke
+Entf              - Verrringert die Musiklautstärke
+Pfeil nach rechts - Nächstes Musikstück
+Pfeil nach links  - Vorheriges Musikstück</value>
+  </data>
+  <data name="HelpPage" xml:space="preserve">
+    <value>http://aresrpg.sourceforge.net/hilfe/Editor.html</value>
+  </data>
+  <data name="ImportError" xml:space="preserve">
+    <value>Fehler beim Importieren des Projektes: {0}</value>
+  </data>
+  <data name="Importing" xml:space="preserve">
+    <value>Importiere ...</value>
+  </data>
+  <data name="InsufficientCommandData" xml:space="preserve">
+    <value>Die Anweisung braucht noch weitere Daten. Bitte die notwendigen Elemente auswählen.</value>
+  </data>
+  <data name="InvalidModeElement" xml:space="preserve">
+    <value>&lt;nicht gefunden&gt;</value>
+  </data>
+  <data name="LangCodeWrong" xml:space="preserve">
+    <value>Der Sprachcode muss aus zwei Buchstaben bestehen</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>der Sprache</value>
+  </data>
+  <data name="LanguageExists" xml:space="preserve">
+    <value>Eine Sprache mit diesem Namen existiert bereits.</value>
+  </data>
+  <data name="LanguageExists2" xml:space="preserve">
+    <value>Eine Sprache mit diesem Code existiert bereits. Vielleicht hat sie nur keine Übersetzung nach {0}.</value>
+  </data>
+  <data name="LanguageMustHaveName" xml:space="preserve">
+    <value>Der Name darf nicht leer sein</value>
+  </data>
+  <data name="LanguageMustHaveTranslation" xml:space="preserve">
+    <value>Der Name in der Sprache selbst darf nicht leer sein</value>
+  </data>
+  <data name="Length" xml:space="preserve">
+    <value>Länge: {0}</value>
+  </data>
+  <data name="LoadError" xml:space="preserve">
+    <value>Fehler beim Laden des Projektes: {0}</value>
+  </data>
+  <data name="ModeElementDisplay" xml:space="preserve">
+    <value>{0}/{1}</value>
+  </data>
+  <data name="ModeIntro" xml:space="preserve">
+    <value>Modus "{0}": </value>
+  </data>
+  <data name="Moving" xml:space="preserve">
+    <value>Verschiebe ...</value>
+  </data>
+  <data name="Music" xml:space="preserve">
+    <value>Musik</value>
+  </data>
+  <data name="MusicIdExtractionError" xml:space="preserve">
+    <value>Fehler beim Ermitteln der Musik-Ids: {0}</value>
+  </data>
+  <data name="NameInLanguage" xml:space="preserve">
+    <value>Name in {0}:</value>
+  </data>
+  <data name="NewBackgroundSounds" xml:space="preserve">
+    <value>Neue Hintergrundgeräusche</value>
+  </data>
+  <data name="NewCategoryName" xml:space="preserve">
+    <value>Name der neuen Kategorie:</value>
+  </data>
+  <data name="NewCategoryName2" xml:space="preserve">
+    <value>Neuer Name der Kategorie:</value>
+  </data>
+  <data name="NewLanguageName" xml:space="preserve">
+    <value>Neuer Name der Sprache:</value>
+  </data>
+  <data name="NewMacro" xml:space="preserve">
+    <value>Neues Makro</value>
+  </data>
+  <data name="NewParallelList" xml:space="preserve">
+    <value>Neue Parallele Liste</value>
+  </data>
+  <data name="NewPlaylist" xml:space="preserve">
+    <value>Neue Spielliste</value>
+  </data>
+  <data name="NewProject" xml:space="preserve">
+    <value>Neues Projekt</value>
+  </data>
+  <data name="NewRandomList" xml:space="preserve">
+    <value>Neue Zufällige Liste</value>
+  </data>
+  <data name="NewScenario" xml:space="preserve">
+    <value>Neues Szenario</value>
+  </data>
+  <data name="NewSequentialList" xml:space="preserve">
+    <value>Neue Sequentielle Liste</value>
+  </data>
+  <data name="NewSoundChoice" xml:space="preserve">
+    <value>Neue Geräuschauswahl</value>
+  </data>
+  <data name="NewTagName" xml:space="preserve">
+    <value>Neuer Name des Tags:</value>
+  </data>
+  <data name="NoDroppableElements" xml:space="preserve">
+    <value>Diese Elemente können hier nicht eingefügt werden.</value>
+  </data>
+  <data name="NoElementsFound" xml:space="preserve">
+    <value>Die Datei "{0}" wird derzeit im Projekt nicht verwendet.</value>
+  </data>
+  <data name="NoFileOrFolderFound" xml:space="preserve">
+    <value>Keine Datei gefunden.</value>
+  </data>
+  <data name="NoFurtherFileOrFolderFound" xml:space="preserve">
+    <value>Keine andere Datei gefunden.</value>
+  </data>
+  <data name="NoImportableElements" xml:space="preserve">
+    <value>In der Datei wurden keine Elemente gefunden, die hier importiert werden könnten.</value>
+  </data>
+  <data name="NoKey" xml:space="preserve">
+    <value>&lt;Keine Taste&gt;</value>
+  </data>
+  <data name="NoOpenedProject" xml:space="preserve">
+    <value>Kein Projekt geöffnet</value>
+  </data>
+  <data name="NoPasteableElements" xml:space="preserve">
+    <value>In der Zwischenablage wurden keine Elemente gefunden, die hier eingefügt werden könnten.</value>
+  </data>
+  <data name="NoProjectName" xml:space="preserve">
+    <value>[Kein Name]</value>
+  </data>
+  <data name="NoSettings" xml:space="preserve">
+    <value>Dies scheint der erste Start des Editors zu sein.
+Sie sollten zuerst ein paar Einstellungen vornehmen.</value>
+  </data>
+  <data name="NoSoundFileEditor" xml:space="preserve">
+    <value>Es wurde noch kein Editor für Audiodateien konfiguriert. Möchten Sie jetzt einen konfigurieren?</value>
+  </data>
+  <data name="NoTags" xml:space="preserve">
+    <value>Keine Tags für die Datei gesetzt</value>
+  </data>
+  <data name="NoTranslationsLabelText" xml:space="preserve">
+    <value>Kein Element ausgewählt</value>
+  </data>
+  <data name="OpenHelpError" xml:space="preserve">
+    <value>Konnte Hilfeseite nicht öffnen. Grund:
+{0}</value>
+  </data>
+  <data name="OpenProjectQuestion" xml:space="preserve">
+    <value>Projekt {0} öffnen?</value>
+  </data>
+  <data name="PlayerStartError" xml:space="preserve">
+    <value>Konnte Player nicht starten. Grund:
+{0}</value>
+  </data>
+  <data name="PleaseSelectElement" xml:space="preserve">
+    <value>Bitte ein Element auswählen.</value>
+  </data>
+  <data name="PleaseSelectTag" xml:space="preserve">
+    <value>Bitte einen Tag auswählen</value>
+  </data>
+  <data name="ProjectChanged" xml:space="preserve">
+    <value>Das aktuelle Projekt hat ungespeicherte Änderungen.
+Soll es jetzt gespeichert werden?</value>
+  </data>
+  <data name="ReallyDelete" xml:space="preserve">
+    <value>Dateien werden permanent gelöscht. Fortsetzen?</value>
+  </data>
+  <data name="ReallyDeleteCategory" xml:space="preserve">
+    <value>Es werden auch alle Tags der Kategorie gelöscht und das Löschen kann nicht rückgängig gemacht werden. Sind Sie sicher?</value>
+  </data>
+  <data name="ReallyDeleteLanguage" xml:space="preserve">
+    <value>Es werden auch alle Übersetzungen von Kategorien und Tags in die Sprache gelöscht und das Löschen kann nicht rückgängig gemacht werden. Sind Sie sicher?</value>
+  </data>
+  <data name="ReallyDeleteTag" xml:space="preserve">
+    <value>Das Löschen eines Tags kann nicht rückgängig gemacht werden. Sind Sie sicher?</value>
+  </data>
+  <data name="ReallyDeleteTranslation" xml:space="preserve">
+    <value>Das Löschen einer Übersetzung kann nicht rückgängig gemacht werden. Sind Sie sicher?</value>
+  </data>
+  <data name="RenameCategory" xml:space="preserve">
+    <value>Kategorie umbenennen</value>
+  </data>
+  <data name="RenameLanguage" xml:space="preserve">
+    <value>Sprache umbenennen</value>
+  </data>
+  <data name="RenameTag" xml:space="preserve">
+    <value>Tag umbenennen</value>
+  </data>
+  <data name="SaveError" xml:space="preserve">
+    <value>Fehler beim Speichern des Projektes: {0}</value>
+  </data>
+  <data name="SearchElementsTitle" xml:space="preserve">
+    <value>Die Datei "{0}" wird derzeit hier verwendet:</value>
+  </data>
+  <data name="SetFadingForAll" xml:space="preserve">
+    <value>Übernehme Blenden-Einstellungen für alle Modus-Elemente</value>
+  </data>
+  <data name="SoundFileEditorStartFail" xml:space="preserve">
+    <value>Editor konnte nicht gestartet werden. Fehlermeldung: {0}</value>
+  </data>
+  <data name="Sounds" xml:space="preserve">
+    <value>Geräusche</value>
+  </data>
+  <data name="Tag" xml:space="preserve">
+    <value>des Tags</value>
+  </data>
+  <data name="TagExists" xml:space="preserve">
+    <value>Ein Tag mit diesem Namen existiert bereits.</value>
+  </data>
+  <data name="TagExtractionError" xml:space="preserve">
+    <value>Fehler beim Extrahieren der Tags: {0}</value>
+  </data>
+  <data name="TagMustHaveCategory" xml:space="preserve">
+    <value>Der Tag muss eine Kategorie haben.</value>
+  </data>
+  <data name="TagMustHaveName" xml:space="preserve">
+    <value>Der Tag muss einen Namen haben.</value>
+  </data>
+  <data name="Tags" xml:space="preserve">
+    <value>Tags: </value>
+  </data>
+  <data name="TagsDbError" xml:space="preserve">
+    <value>Fehler beim Zugriff auf die Tags-Datenbasis:
+{0}</value>
+  </data>
+  <data name="TranslationBoxTitle" xml:space="preserve">
+    <value>Übersetzung von "{0}"</value>
+  </data>
+  <data name="TranslationMustHaveName" xml:space="preserve">
+    <value>Der Name darf nicht leer sein</value>
+  </data>
+  <data name="TranslationsLabelText" xml:space="preserve">
+    <value>Übersetzungen {0} "{1}":</value>
+  </data>
+  <data name="TriggerEditorTitle" xml:space="preserve">
+    <value>Start von {0}</value>
+  </data>
+  <data name="Unknown" xml:space="preserve">
+    <value>Unbekannt</value>
+  </data>
+  <data name="WriteFileListError" xml:space="preserve">
+    <value>Dateiliste konnte nicht geschrieben werden. Grund:
+{0}</value>
+  </data>
+  <data name="WriteKeyListError" xml:space="preserve">
+    <value>Tasten konnten nicht geschrieben werden. Grund:
+{0}</value>
+  </data>
+  <data name="WriteSettingsError" xml:space="preserve">
+    <value>Einstellungen konnten nicht gespeichert werden. Grund:
+{0}</value>
+  </data>
+  <data name="DownloadOperationSuccess" xml:space="preserve">
+    <value>Herunterladen von Tags von {0} war erfolgreich.</value>
+  </data>
+  <data name="OnlineDB" xml:space="preserve">
+    <value>Online Tags DB</value>
+  </data>
+  <data name="OnlineDbUserIdRequired" xml:space="preserve">
+    <value>Um Tags hochzuladen, wird ein Benutzername (z.B. eine E-Mail-Adresse) benötigt. Möchten Sie diesen jetzt festlegen?</value>
+  </data>
+  <data name="TagsForMultipleFiles" xml:space="preserve">
+    <value>Tags für {0} Dateien</value>
+  </data>
+  <data name="TagsForSingleFile" xml:space="preserve">
+    <value>Tags für {0}</value>
+  </data>
+  <data name="Tools" xml:space="preserve">
+    <value>Werkzeuge</value>
+  </data>
+  <data name="UploadOperationSuccess" xml:space="preserve">
+    <value>Hochladen von Tags nach {0} war erfolgreich.</value>
+  </data>
+  <data name="TagsDownloadStats" xml:space="preserve">
+    <value>Tags wurden für {0} der {1} Dateien gefunden.</value>
+  </data>
+  <data name="DownloadError" xml:space="preserve">
+    <value>Fehler beim Herunterladen der Tags: {0}</value>
+  </data>
+  <data name="DownloadingTags" xml:space="preserve">
+    <value>Lade Tags herunter ...</value>
+  </data>
+  <data name="SharingTags" xml:space="preserve">
+    <value>Lade Tags hoch ...</value>
+  </data>
+  <data name="UploadError" xml:space="preserve">
+    <value>Fehler beim Hochladen der Tags: {0}</value>
+  </data>
+  <data name="MusicIdStats" xml:space="preserve">
+    <value>Ids wurden für {0} der {1} Dateien gefunden.</value>
+  </data>
+  <data name="ImportNoProject" xml:space="preserve">
+    <value>Die Datei enthält kein Ares-Projekt. Falls sie ein Projekt-Element (z.B. ein Szenario) enthält, importieren Sie die Datei an einem Modus im Projekt-Explorer.</value>
+  </data>
+  <data name="OpenProjectError" xml:space="preserve">
+    <value>Die Datei enthält kein gültiges Ares-Projekt. Falls sie ein Projekt-Element (z.B. ein Szenario) enthält, importieren Sie die Datei an einem Modus im Projekt-Explorer.</value>
+  </data>
+  <data name="AddingFiles" xml:space="preserve">
+    <value>Füge Dateien hinzu ...</value>
+  </data>
+  <data name="GettingTitles" xml:space="preserve">
+    <value>Hole Titel aus ID3-Tags ...</value>
+  </data>
+  <data name="TagsCleanedUp" xml:space="preserve">
+    <value>Tag-Datenbasis wurde gesäubert. Log anzeigen?</value>
+  </data>
+  <data name="ForumPage" xml:space="preserve">
+    <value>http://sourceforge.net/p/aresrpg/discussion/allgemein/</value>
+  </data>
+  <data name="TipsFile" xml:space="preserve">
+    <value>TipsOfTheDay_de.xml</value>
+  </data>
+  <data name="FindingFilesInDB" xml:space="preserve">
+    <value>Suche Dateien in Datenbank ...</value>
+  </data>
+  <data name="MultiFileTagQuestion" xml:space="preserve">
+    <value>Sie haben {0} Dateien in {1} Verzeichnissen ausgewählt. Tags für alle diese Dateien setzen?</value>
+  </data>
+  <data name="NewWebRadio" xml:space="preserve">
+    <value>Neues Web-Radio</value>
+  </data>
+  <data name="AudioSourceSearchTitle" xml:space="preserve">
+    <value>Online Audio-Quellen</value>
+  </data>
+  <data name="SearchError" xml:space="preserve">
+    <value>Fehler bei der Audio-Suche: {0}</value>
+  </data>
+  <data name="SearchingForAudio" xml:space="preserve">
+    <value>Suche nach Audio-Dateien ...</value>
+  </data>
+  <data name="DownloadingAudio" xml:space="preserve">
+    <value>Lade Audio-Daten herunter ...</value>
+  </data>
+</root>

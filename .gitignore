@@ -14,6 +14,6 @@
 # chaves e certificados (nunca no repositório)
 /CodeSigning/signing_password.cmd
 /CodeSigning/ares_code_signing_certificate.pfx
-/Ares.AudioSource.Freesound/ApiKey.cs
-Ares.AudioSource.Test/Resources/music.mp3
-Ares.AudioSource.Test/Resources/sound.mp3
+/src/Ares.AudioSource.Freesound/ApiKey.cs
+src/Ares.AudioSource.Test/Resources/music.mp3
+src/Ares.AudioSource.Test/Resources/sound.mp3

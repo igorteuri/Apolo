@@ -9,8 +9,8 @@ O arquivo `.github/workflows/build.yml` compila tudo a cada envio (`push`). Ele 
 ## No seu computador
 
 1. Instale o Visual Studio (Community) com a carga de trabalho **Desenvolvimento para desktop com .NET**.
-2. Coloque na pasta `Libraries` as bibliotecas que o workflow baixa (veja os passos "Download ... libraries" em `.github/workflows/build.yml`) e crie `Ares.AudioSource.Freesound/ApiKey.cs` a partir de `ApiKey.example.cs`.
-3. Abra `Ares.sln`, escolha **Release** e **x86** e compile. A saída fica em `bin\Release`.
+2. Coloque na pasta `Libraries` as bibliotecas que o workflow baixa (veja os passos "Download ... libraries" em `.github/workflows/build.yml`) e crie `src/Ares.AudioSource.Freesound/ApiKey.cs` a partir de `ApiKey.example.cs`.
+3. Abra `Ares.sln`, escolha **Release** e **x86** e compile. A saída fica em `src\bin\Release`.
 4. Copie o conteúdo de `Libraries` para a pasta de saída, para o programa rodar.
 
 ## Observações

@@ -2,43 +2,43 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Data", "Ares.Data\Ares.Data.csproj", "{F64D6AF3-3543-47F0-A7B8-0336750B09C3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Data", "src\Ares.Data\Ares.Data.csproj", "{F64D6AF3-3543-47F0-A7B8-0336750B09C3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Playing", "Ares.Playing\Ares.Playing.csproj", "{6C55F933-0F49-489C-AFF4-E0E0A8581E42}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Playing", "src\Ares.Playing\Ares.Playing.csproj", "{6C55F933-0F49-489C-AFF4-E0E0A8581E42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Editor", "Ares.Editor\Ares.Editor.csproj", "{499C1067-ECA5-4986-A985-8EAFD744BF80}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Editor", "src\Ares.Editor\Ares.Editor.csproj", "{499C1067-ECA5-4986-A985-8EAFD744BF80}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Editor.Controls", "Ares.Editor.Controls\Ares.Editor.Controls.csproj", "{E9189223-5024-4284-B02A-9F22C83DAE88}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Editor.Controls", "src\Ares.Editor.Controls\Ares.Editor.Controls.csproj", "{E9189223-5024-4284-B02A-9F22C83DAE88}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Editor.Actions", "Ares.Editor.Actions\Ares.Editor.Actions.csproj", "{7799985C-64E9-4414-ACA8-01184B704032}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Editor.Actions", "src\Ares.Editor.Actions\Ares.Editor.Actions.csproj", "{7799985C-64E9-4414-ACA8-01184B704032}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Settings", "Ares.Settings\Ares.Settings.csproj", "{E99E229E-2D6A-4C49-8E6F-C06E3F346606}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Settings", "src\Ares.Settings\Ares.Settings.csproj", "{E99E229E-2D6A-4C49-8E6F-C06E3F346606}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Player", "Ares.Player\Ares.Player.csproj", "{FF45F69E-C808-46A5-9557-307D5F8A0A6D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Player", "src\Ares.Player\Ares.Player.csproj", "{FF45F69E-C808-46A5-9557-307D5F8A0A6D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Ipc", "Ares.Ipc\Ares.Ipc.csproj", "{07BE1372-C1D2-4E2A-9678-DC27BE0D9FF0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Ipc", "src\Ares.Ipc\Ares.Ipc.csproj", "{07BE1372-C1D2-4E2A-9678-DC27BE0D9FF0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.ModelInfo", "Ares.ModelChecks\Ares.ModelInfo.csproj", "{50EA19EE-5337-499C-8B7B-1B22EA9E24A6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.ModelInfo", "src\Ares.ModelChecks\Ares.ModelInfo.csproj", "{50EA19EE-5337-499C-8B7B-1B22EA9E24A6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Players", "Ares.Players\Ares.Players.csproj", "{87F61D82-5515-48C4-94F5-FC5EF8435DBF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Players", "src\Ares.Players\Ares.Players.csproj", "{87F61D82-5515-48C4-94F5-FC5EF8435DBF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Online", "Ares.Online\Ares.Online.csproj", "{7550AD48-17A5-45BF-A632-B75EB82123DD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Online", "src\Ares.Online\Ares.Online.csproj", "{7550AD48-17A5-45BF-A632-B75EB82123DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Tags", "Ares.Tags\Ares.Tags.csproj", "{ED78886A-8674-499F-B0F9-98EB25322EBB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.Tags", "src\Ares.Tags\Ares.Tags.csproj", "{ED78886A-8674-499F-B0F9-98EB25322EBB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.TagsImport", "Ares.TagsImport\Ares.TagsImport.csproj", "{5F09CB94-0FC1-4F91-90AD-C6F08A89C146}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.TagsImport", "src\Ares.TagsImport\Ares.TagsImport.csproj", "{5F09CB94-0FC1-4F91-90AD-C6F08A89C146}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.CommonGUI", "Ares.CommonGUI\Ares.CommonGUI.csproj", "{ED16F93E-23F3-4075-B72D-F64E49D08E2D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.CommonGUI", "src\Ares.CommonGUI\Ares.CommonGUI.csproj", "{ED16F93E-23F3-4075-B72D-F64E49D08E2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.CmdLinePlayer", "Ares.CmdLinePlayer\Ares.CmdLinePlayer.csproj", "{8F96265C-6608-4B98-9C56-C60F0D02751C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.CmdLinePlayer", "src\Ares.CmdLinePlayer\Ares.CmdLinePlayer.csproj", "{8F96265C-6608-4B98-9C56-C60F0D02751C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.WinSecurity", "Ares.WinSecurity\Ares.WinSecurity.csproj", "{4AA4230A-F538-4DB3-BDA3-E96A0B737275}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.WinSecurity", "src\Ares.WinSecurity\Ares.WinSecurity.csproj", "{4AA4230A-F538-4DB3-BDA3-E96A0B737275}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.AudioSource", "Ares.AudioSource\Ares.AudioSource.csproj", "{505BF261-DD7F-4201-B0E3-471E464B39AF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.AudioSource", "src\Ares.AudioSource\Ares.AudioSource.csproj", "{505BF261-DD7F-4201-B0E3-471E464B39AF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.AudioSource.Test", "Ares.AudioSource.Test\Ares.AudioSource.Test.csproj", "{EA1A2DD2-456B-4241-B093-EA3436A8580A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.AudioSource.Test", "src\Ares.AudioSource.Test\Ares.AudioSource.Test.csproj", "{EA1A2DD2-456B-4241-B093-EA3436A8580A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.AudioSource.Freesound", "Ares.AudioSource.Freesound\Ares.AudioSource.Freesound.csproj", "{BEA071A5-8049-405C-97C1-004981A8949C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ares.AudioSource.Freesound", "src\Ares.AudioSource.Freesound\Ares.AudioSource.Freesound.csproj", "{BEA071A5-8049-405C-97C1-004981A8949C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
