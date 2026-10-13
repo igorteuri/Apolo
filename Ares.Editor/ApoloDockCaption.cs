@@ -16,7 +16,7 @@ namespace Ares.Editor
 
         public ApoloDockCaption(DockPane pane) : base(pane)
         {
-            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaintMsg, true);
+            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true);
         }
 
         protected override int MeasureHeight()
