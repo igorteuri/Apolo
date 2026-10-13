@@ -44,6 +44,24 @@ jobs:
           foreach ($d in $dirs) { Copy-Item "$($d.FullName)\*" dist -Recurse -Force -ErrorAction SilentlyContinue }
           Copy-Item "Libraries\*" dist -Recurse -Force -ErrorAction SilentlyContinue
 
+      - name: Setup Node.js (for the Discord bridge)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Package the Discord bridge (Node.js + libraries)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/discord | Out-Null
+          Copy-Item Ares.Player/Discord/package.json dist/discord/
+          Copy-Item Ares.Player/Discord/discord-bridge.js dist/discord/
+          Push-Location dist/discord
+          npm install --omit=dev --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Pop-Location
+          Copy-Item (Get-Command node).Source dist/discord/node.exe
+
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
