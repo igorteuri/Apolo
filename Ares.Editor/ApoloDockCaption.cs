@@ -97,7 +97,7 @@ namespace Ares.Editor
         }
     }
 
-    internal class ApoloDockCaptionFactory : IDockPaneCaptionFactory
+    internal class ApoloDockCaptionFactory : DockPanelExtender.IDockPaneCaptionFactory
     {
         public DockPaneCaptionBase CreateDockPaneCaption(DockPane pane)
         {

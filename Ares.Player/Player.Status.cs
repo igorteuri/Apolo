@@ -132,6 +132,11 @@ namespace Ares.Player
                 SetStat(m_StatDiscord, "🎧 " + discordText, discordActive && p != null && !p.IsClassic ? p.Accent
                     : (m_Discord != null && m_Discord.State == DiscordState.Off && p != null && !p.IsClassic ? p.TextDim : ForeColor));
                 SetStat(m_StatProject, m_Project != null ? m_Project.Title : "", ForeColor);
+                // the quick buttons in the menu bar are highlighted while the feature is on
+                if (m_DiscordButton != null)
+                    m_DiscordButton.Checked = discordActive;
+                if (m_NetButton != null)
+                    m_NetButton.Checked = m_Remote != null && m_Remote.Running;
             }
             catch (Exception)
             {

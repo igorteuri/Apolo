@@ -42,7 +42,17 @@ namespace Ares.Player
                     m_EditButton.Alignment = ToolStripItemAlignment.Right;
                     menuStrip1.Items.Add(m_EditButton);
                 }
-                menuStrip1.ImageScalingSize = Ares.CommonGUI.IconLibrary.MenuIconSize();
+                // quick access to the sharing options (left of the edit buttons)
+                menuStrip1.Items.Add(new ToolStripSeparator { Alignment = ToolStripItemAlignment.Right });
+                m_NetButton = MakeQuickButton("netButton", T("Controle remoto / compartilhamento em rede...", "Remote control / network sharing..."), () => ShowRemoteDialog());
+                m_VdoButton = MakeQuickButton("vdoButton", T("Enviar áudio por VDO.Ninja...", "Send audio through VDO.Ninja..."), () => ShowWebWindow(true));
+                m_DiscordButton = MakeQuickButton("discordButton", T("Conectar ao Discord (tocar num canal de voz)...", "Connect to Discord (play in a voice channel)..."), () => ShowDiscordDialog());
+                Ares.CommonGUI.IconLibrary.Bind(menuStrip1, new Dictionary<ToolStripItem, string>
+                {
+                    { m_NetButton, "globe" },
+                    { m_VdoButton, "send" },
+                    { m_DiscordButton, "headphones" }
+                });
                 toolStrip1.Visible = false;
 
                 // 2. bigger transport buttons
@@ -91,6 +101,21 @@ namespace Ares.Player
             {
                 System.Diagnostics.Debug.WriteLine(ex.Message);
             }
+        }
+
+        private ToolStripButton m_NetButton, m_VdoButton, m_DiscordButton;
+
+        private ToolStripButton MakeQuickButton(string name, string tip, Action click)
+        {
+            ToolStripButton b = new ToolStripButton();
+            b.Name = name;
+            b.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            b.ImageScaling = ToolStripItemImageScaling.None;
+            b.ToolTipText = tip;
+            b.Alignment = ToolStripItemAlignment.Right;
+            b.Click += (s, e) => click();
+            menuStrip1.Items.Add(b);
+            return b;
         }
 
         // places the transport buttons, the progress bar and the volume sliders in the header
