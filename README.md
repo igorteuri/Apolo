@@ -10,7 +10,7 @@ O Apolo é uma modernização do **[Ares](http://aresrpg.sourceforge.net/)** (*A
 
 - **Apolo** — criado e mantido por **Igor Teuri**, do canal **Dados Críticos** ([YouTube](https://youtube.com/dadoscriticos?sub_confirmation=1) · [itch.io](https://igorteuri.itch.io/)).
 - **Ares** — o programa original é de **Jörg Ruedenauer** e colaboradores. Todo o crédito pela base do programa (motor de áudio, projetos, Editor, Player e controladores) pertence a eles. O Apolo é um *fork* e mantém os nomes internos `Ares.*` e a pasta de dados `%APPDATA%\Ares` para continuar compatível com projetos antigos.
-- **Áudio:** [BASS](https://www.un4seen.com/), da un4seen developments. A BASS é gratuita só para uso **não comercial**; uso comercial exige licença própria da un4seen.
+- **Áudio:** motor de áudio próprio do Apolo, feito com [NAudio](https://github.com/naudio/NAudio), [NLayer](https://github.com/naudio/NLayer) e [NVorbis](https://github.com/NVorbis/NVorbis) (licença MIT), [Concentus](https://github.com/lostromb/concentus) (licença BSD) e [TagLib#](https://github.com/mono/taglib-sharp) (licença LGPL). Todas livres, inclusive para uso comercial.
 - **Ícones:** [Lucide](https://lucide.dev/) (licença ISC).
 - **Páginas web embutidas:** Microsoft WebView2.
 - **Túnel do controle remoto:** [cloudflared](https://github.com/cloudflare/cloudflared), da Cloudflare.
@@ -47,4 +47,4 @@ Veja [ROADMAP.md](ROADMAP.md).
 
 ## English summary
 
-**Apolo** is an audio player for tabletop RPG sessions: background music, sound effects and ambience organized in folders and playlists, controlled by mouse, keyboard, phone, Stream Deck, or sent to Discord and VDO.Ninja. It is a modernization of **[Ares](http://aresrpg.sourceforge.net/)** by **Jörg Ruedenauer**, who deserves all credit for the foundation of the program. Apolo is created and maintained by **Igor Teuri** (Dados Críticos channel). Like Ares, it is released under the GNU GPL v2 or later. Audio is played with BASS (free for non-commercial use only). See "Créditos" above for the full list of third-party components.
+**Apolo** is an audio player for tabletop RPG sessions: background music, sound effects and ambience organized in folders and playlists, controlled by mouse, keyboard, phone, Stream Deck, or sent to Discord and VDO.Ninja. It is a modernization of **[Ares](http://aresrpg.sourceforge.net/)** by **Jörg Ruedenauer**, who deserves all credit for the foundation of the program. Apolo is created and maintained by **Igor Teuri** (Dados Críticos channel). Like Ares, it is released under the GNU GPL v2 or later. Audio is played by Apolo's own engine, built on NAudio, NLayer, NVorbis (MIT), Concentus (BSD) and TagLib# (LGPL), all free for commercial use. See "Créditos" above for the full list of third-party components.

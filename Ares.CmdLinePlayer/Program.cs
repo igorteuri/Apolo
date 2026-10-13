@@ -52,7 +52,7 @@ namespace Ares.CmdLinePlayer
                 if (options.Parse(args))
                 {
                     int outputDevice = options.OutputDevice == 0 ? -1 : options.OutputDevice;
-                    using (Ares.Playing.BassInit bassInit = new Ares.Playing.BassInit(outputDevice, s => Console.WriteLine(s)))
+                    using (Ares.Playing.AudioInit bassInit = new Ares.Playing.AudioInit(outputDevice, s => Console.WriteLine(s)))
                     {
                         {
                             Player player = new Player(bassInit);
@@ -65,7 +65,7 @@ namespace Ares.CmdLinePlayer
                     res = 2;
                 }
             }
-            catch (Ares.Playing.BassInitException ex)
+            catch (Ares.Playing.AudioInitException ex)
             {
                 Console.WriteLine(ex.Message);
                 res = 1;                

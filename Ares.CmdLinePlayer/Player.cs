@@ -126,7 +126,7 @@ namespace Ares.CmdLinePlayer
 
     class Player : INetworkClient
     {
-        public Player(Ares.Playing.BassInit init)
+        public Player(Ares.Playing.AudioInit init)
         {
             m_PlayingControl = new PlayingControl();
             m_BassInit = init;
@@ -134,7 +134,7 @@ namespace Ares.CmdLinePlayer
 
         private INetworks m_Network;
         private PlayingControl m_PlayingControl;
-        private Ares.Playing.BassInit m_BassInit;
+        private Ares.Playing.AudioInit m_BassInit;
 
         private BasicSettings m_BasicSettings;
 
@@ -283,7 +283,7 @@ namespace Ares.CmdLinePlayer
                     {
                         m_BassInit.SwitchDevice(outputDevice);
                     }
-                    catch (Ares.Playing.BassInitException)
+                    catch (Ares.Playing.AudioInitException)
                     {
                         Console.WriteLine(StringResources.DeviceInitError);
                     }

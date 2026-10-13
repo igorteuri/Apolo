@@ -41,7 +41,7 @@ namespace Ares.Player
 
         private INetworks m_Network;
 
-        private Ares.Playing.BassInit m_BassInit;
+        private Ares.Playing.AudioInit m_BassInit;
 
         private bool m_HideToTray = false;
         private bool m_FirstShow = true;
@@ -50,7 +50,7 @@ namespace Ares.Player
         private readonly MouseKeyboardActivityMonitor.KeyboardHookListener m_KeyboardHookManager;
 #endif
 
-        public Player(Ares.Playing.BassInit init)
+        public Player(Ares.Playing.AudioInit init)
         {
             m_BassInit = init;
             String projectName = Environment.GetCommandLineArgs().Length > 1 ? Environment.GetCommandLineArgs()[1] : String.Empty;
@@ -377,7 +377,7 @@ namespace Ares.Player
         {
             try
             {
-                foreach (Ares.Playing.BassInit.OutputDevice device in Ares.Playing.BassInit.GetDevices())
+                foreach (Ares.Playing.AudioInit.OutputDevice device in Ares.Playing.AudioInit.GetDevices())
                 {
                     if (device.Index == deviceIndex)
                         return device.Name;
@@ -406,16 +406,16 @@ namespace Ares.Player
         {
             m_OutputButton.DropDownItems.Clear();
             int current = Settings.Settings.Instance.OutputDeviceIndex;
-            List<Ares.Playing.BassInit.OutputDevice> devices;
+            List<Ares.Playing.AudioInit.OutputDevice> devices;
             try
             {
-                devices = Ares.Playing.BassInit.GetActiveDevices();
+                devices = Ares.Playing.AudioInit.GetActiveDevices();
             }
             catch (Exception)
             {
                 return;
             }
-            foreach (Ares.Playing.BassInit.OutputDevice device in devices)
+            foreach (Ares.Playing.AudioInit.OutputDevice device in devices)
             {
                 int index = device.Index;
                 ToolStripMenuItem item = new ToolStripMenuItem(device.Name);
@@ -433,9 +433,10 @@ namespace Ares.Player
             {
                 m_BassInit.SwitchDeviceKeepPlaying(deviceIndex);
                 Settings.Settings.Instance.OutputDeviceIndex = deviceIndex;
+                Settings.Settings.Instance.OutputDeviceName = Ares.Playing.AudioInit.NameOf(deviceIndex);
                 WriteSettings();
             }
-            catch (Ares.Playing.BassInitException)
+            catch (Ares.Playing.AudioInitException)
             {
                 MessageBox.Show(this, String.Format(StringResources.DeviceInitError), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -657,12 +658,17 @@ namespace Ares.Player
         {
             try
             {
-                m_BassInit.SwitchDevice(Settings.Settings.Instance.OutputDeviceIndex);
+                // sound cards are saved with their name, because their numbers change when devices are plugged in or removed
+                int index = Ares.Playing.AudioInit.ResolveIndex(Settings.Settings.Instance.OutputDeviceIndex, Settings.Settings.Instance.OutputDeviceName);
+                m_BassInit.SwitchDevice(index);
+                Settings.Settings.Instance.OutputDeviceIndex = index;
+                Settings.Settings.Instance.OutputDeviceName = Ares.Playing.AudioInit.NameOf(index);
             }
-            catch (Ares.Playing.BassInitException)
+            catch (Ares.Playing.AudioInitException)
             {
                 MessageBox.Show(this, String.Format(StringResources.DeviceInitError), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Ares.Settings.Settings.Instance.OutputDeviceIndex = -1;
+                Ares.Settings.Settings.Instance.OutputDeviceName = String.Empty;
             }
         }
 

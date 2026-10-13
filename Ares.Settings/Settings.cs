@@ -94,6 +94,7 @@ namespace Ares.Settings
         public int LastTipOfTheDay { get; set; }
 
         public int OutputDeviceIndex { get; set; }
+        public String OutputDeviceName { get; set; }
 
 		#if ANDROID
 		public String ProjectDirectory {get;set;}
@@ -178,6 +179,7 @@ namespace Ares.Settings
         public int LastTipOfTheDay { get { return Data.LastTipOfTheDay; } set { Data.LastTipOfTheDay = value; } }
 
         public int OutputDeviceIndex { get { return Data.OutputDeviceIndex; } set { Data.OutputDeviceIndex = value; } }
+        public String OutputDeviceName { get { return Data.OutputDeviceName; } set { Data.OutputDeviceName = value; } }
 
 		#if ANDROID
 		public String ProjectDirectory { get { return Data.ProjectDirectory; } private set { Data.ProjectDirectory = value; } }
@@ -481,6 +483,7 @@ namespace Ares.Settings
             ShowTipOfTheDay = true;
             LastTipOfTheDay = -1;
             OutputDeviceIndex = -1;
+            OutputDeviceName = String.Empty;
 			#if ANDROID
 			ProjectFolder = GetDefaultProjectDirectory();
 			PlayerName = "Android Player";
@@ -522,6 +525,7 @@ namespace Ares.Settings
             writer.WriteAttributeString("ShowKeys", ShowKeysInButtons ? "true" : "false");
             writer.WriteAttributeString("GlobalKeyHook", GlobalKeyHook ? "true" : "false");
             writer.WriteAttributeString("OutputDevice", OutputDeviceIndex.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            writer.WriteAttributeString("OutputDeviceName", OutputDeviceName ?? String.Empty);
             writer.WriteEndElement();
             writer.WriteStartElement("Streaming");
             writer.WriteAttributeString("Active", UseStreaming ? "true" : "false");
@@ -661,6 +665,7 @@ namespace Ares.Settings
                     ShowKeysInButtons = reader.GetBooleanAttributeOrDefault("ShowKeys", false);
                     GlobalKeyHook = reader.GetBooleanAttributeOrDefault("GlobalKeyHook", false);
                     OutputDeviceIndex = reader.GetIntegerAttributeOrDefault("OutputDevice", -1);
+                    OutputDeviceName = reader.GetAttribute("OutputDeviceName") ?? String.Empty;
                     if (reader.IsEmptyElement)
                         reader.Read();
                     else
@@ -790,6 +795,8 @@ namespace Ares.Settings
             if (other.UdpPort != this.UdpPort)
                 return true;
             if (other.OutputDeviceIndex != this.OutputDeviceIndex)
+                return true;
+            if (other.OutputDeviceName != this.OutputDeviceName)
                 return true;
             return false;
         }

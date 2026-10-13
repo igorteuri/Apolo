@@ -38,19 +38,20 @@ namespace Ares.Player
 
         private bool listen = true;
 
-        private List<Ares.Playing.BassInit.OutputDevice> m_OutputDevices;
+        private List<Ares.Playing.AudioInit.OutputDevice> m_OutputDevices;
 
         private void SetData()
         {
             listen = false;
             Ares.Settings.Settings settings = Ares.Settings.Settings.Instance;
-            m_OutputDevices = Ares.Playing.BassInit.GetDevices();
+            m_OutputDevices = Ares.Playing.AudioInit.GetDevices();
             int outputDeviceIndex = 0;
+            int savedDevice = Ares.Playing.AudioInit.ResolveIndex(settings.OutputDeviceIndex, settings.OutputDeviceName);
             for (int i = 0; i < m_OutputDevices.Count; ++i)
             {
                 var device = m_OutputDevices[i];
                 outputDeviceCombo.Items.Add(device.Name);
-                if (device.Index == settings.OutputDeviceIndex)
+                if (device.Index == savedDevice)
                     outputDeviceIndex = i;
             }
             outputDeviceCombo.SelectedIndex = outputDeviceIndex;
@@ -107,6 +108,7 @@ namespace Ares.Player
         {
             Ares.Settings.Settings settings = Ares.Settings.Settings.Instance;
             settings.OutputDeviceIndex = m_OutputDevices[outputDeviceCombo.SelectedIndex].Index;
+            settings.OutputDeviceName = Ares.Playing.AudioInit.NameOf(settings.OutputDeviceIndex);
             settings.UseStreaming = streamingBox.Checked;
             settings.StreamingServerAddress = serverAddressBox.Text;
             settings.StreamingServerPort = (int)serverPortUpDown.Value;

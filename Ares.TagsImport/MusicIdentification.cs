@@ -27,7 +27,6 @@ using System.Xml;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Un4seen.Bass;
 
 namespace Ares.TagsImport
 {
@@ -200,7 +199,7 @@ namespace Ares.TagsImport
                 {
                     if ((query & (ARTIST | ALBUM | TITLE)) != 0)
                     {
-                        Un4seen.Bass.AddOn.Tags.TAG_INFO tag = Un4seen.Bass.AddOn.Tags.BassTags.BASS_TAG_GetFromFile(fileName, true, true);
+                        Ares.Tags.AudioTagInfo tag = Ares.Tags.AudioTags.Read(fileName);
                         if (tag != null)
                         {
                             if (!String.IsNullOrEmpty(tag.artist) && ((query & ARTIST) != 0))
@@ -389,61 +388,7 @@ namespace Ares.TagsImport
     {
         public static System.Int16[] ExtractPcm(String file, out double seconds)
         {
-            seconds = 0;
-            int handle = Bass.BASS_StreamCreateFile(file, 0, 0, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_STREAM_PRESCAN);
-            if (handle == 0)
-            {
-                BASSError error = Bass.BASS_ErrorGetCode();
-                // System.Console.WriteLine("ERROR: " + error);
-                return null;
-            }
-            long length = Bass.BASS_ChannelGetLength(handle);
-            seconds = Bass.BASS_ChannelBytes2Seconds(handle, length);
-            int mixHandle = Un4seen.Bass.AddOn.Mix.BassMix.BASS_Mixer_StreamCreate(22050, 1, BASSFlag.BASS_STREAM_DECODE);
-            if (mixHandle == 0)
-            {
-                BASSError error = Bass.BASS_ErrorGetCode();
-                // System.Console.WriteLine("ERROR: " + error);
-                return null;
-            }
-            if (!Un4seen.Bass.AddOn.Mix.BassMix.BASS_Mixer_StreamAddChannel(mixHandle, handle, BASSFlag.BASS_DEFAULT))
-            {
-                BASSError error = Bass.BASS_ErrorGetCode();
-                // System.Console.WriteLine("ERROR: " + error);
-                return null;
-            }
-            List<System.Int16> data = new List<System.Int16>();
-            while (true)
-            {
-                Int16[] buffer = new Int16[512];
-                int num = Bass.BASS_ChannelGetData(mixHandle, buffer, buffer.Length * 2);
-                if (num == -1)
-                {
-                    BASSError error = Bass.BASS_ErrorGetCode();
-                    Bass.BASS_StreamFree(handle);
-                    // System.Console.WriteLine("ERROR: " + error);
-                    return null;
-                }
-                for (int i = 0; i < num / 2; ++i)
-                {
-                    if (i < buffer.Length)
-                        data.Add(buffer[i]);
-                    else
-                        throw new ApplicationException();
-                }
-                if (num < buffer.Length * 2)
-                    break;
-            }
-            Bass.BASS_StreamFree(handle);
-            try
-            {
-                return data.ToArray();
-            }
-            catch (System.OutOfMemoryException)
-            {
-                System.GC.Collect();
-                return null;
-            }
+            return Ares.Playing.AudioDecoding.ExtractMono(file, 22050, out seconds);
         }
     }
 

@@ -11,6 +11,7 @@
     <RootNamespace>Ares.Editor</RootNamespace>
     <AssemblyName>Apolo.Editor</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -73,10 +74,6 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Bass.Net, Version=2.4.10.3, Culture=neutral, PublicKeyToken=b7566c273e6ef480, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Libraries\Bass.Net.dll</HintPath>
-    </Reference>
     <Reference Include="HtmlRenderer, Version=1.3.0.0, Culture=neutral, PublicKeyToken=e6344520280ac408, processorArchitecture=MSIL">
       <HintPath>..\Libraries\HtmlRenderer.dll</HintPath>
     </Reference>

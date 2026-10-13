@@ -230,7 +230,7 @@
     <value>No device driver available. Are soundcard and speakers installed properly? Is the device in use by another application?</value>
   </data>
   <data name="BassDeviceFormat" xml:space="preserve">
-    <value>Sound device doesn't support 44kHz sampling.</value>
+    <value>The sound device could not be opened with the needed format.</value>
   </data>
   <data name="BassDeviceInfo" xml:space="preserve">
     <value>Device: {0}, Driver: {1}, State: {2}</value>
@@ -245,7 +245,7 @@
     <value>Could not load BASS Fx add-on library. Installation problem?</value>
   </data>
   <data name="BassInitFail" xml:space="preserve">
-    <value>Fatal: Couldn't initialize BASS engine!
+    <value>Fatal: Couldn't initialize the audio engine!
 Error message: {0}
 {1}</value>
   </data>

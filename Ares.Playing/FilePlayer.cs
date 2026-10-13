@@ -19,424 +19,113 @@
  */
 using System;
 using System.Collections.Generic;
-using Un4seen.Bass;
-#if ANDROID
-using Ares.Settings;
-#endif
+using Ares.Playing.Audio;
 
 namespace Ares.Playing
 {
+    // Plays the files of the elements on the audio engine of Apolo (see the Audio folder).
     class FilePlayer : IFilePlayer
     {
+        private static AudioChannel GetChannel(int handle)
+        {
+            AudioEngine engine = AudioEngine.Instance;
+            return engine != null ? engine.GetChannel(handle) : null;
+        }
+
         public int PlayFile(ISoundFile file, int fadeInTime, PlayingFinished callback, bool loop)
         {
-            int channel = 0;
-            BASSFlag speakerFlag = GetSpeakerFlag(file);
-            BASSFlag decodeFlag = BASSFlag.BASS_STREAM_DECODE;
-            if (file.SoundFileType == SoundFileType.Music && file.Effects.SpeakerAssignment.Active)
+            AudioEngine engine = AudioEngine.Instance;
+            if (engine == null)
             {
-                switch (file.Effects.SpeakerAssignment.Assignment)
-                {
-                    case Data.SpeakerAssignment.AllSpeakers:
-                    case Data.SpeakerAssignment.BothCenterRears:
-                    case Data.SpeakerAssignment.BothFronts:
-                    case Data.SpeakerAssignment.BothRears:
-                    case Data.SpeakerAssignment.CenterAndSubwoofer:
-                    case Data.SpeakerAssignment.Default:
-                        break;
-                    default:
-                        decodeFlag |= BASSFlag.BASS_SAMPLE_MONO;
-                        break;
-                }
-            }
-#if MONO
-			System.Runtime.InteropServices.GCHandle gcHandle = new System.Runtime.InteropServices.GCHandle();
-#endif
-            if (file.SoundFileType == SoundFileType.WebRadio)
-            {
-                channel = Bass.BASS_StreamCreateURL(file.Path, 0, decodeFlag | BASSFlag.BASS_STREAM_BLOCK, null, IntPtr.Zero);
-            }
-            else
-            {
-#if MONO
-			    byte[] buffer = null;
-			    long length = 0;
-			    try 
-			    {
-#if ANDROID
-					if (file.Path.IsSmbFile())
-					{
-						buffer = SambaHelpers.GetFileContent(file.Path);
-						length = buffer.Length;
-					}
-					else
-					{
-#endif						
-					    System.IO.FileStream fs = System.IO.File.OpenRead(file.Path);
-					    length = fs.Length;
-					    buffer = new byte[length];
-					    fs.Read (buffer, 0, (int)length);
-					    fs.Close ();
-#if ANDROID
-					}
-#endif
-			    }
-			    catch (System.IO.IOException e)
-			    {
-				    ErrorHandling.ErrorOccurred(file.Id, e.Message);
-				    return 0;
-			    }
-			    gcHandle = System.Runtime.InteropServices.GCHandle.Alloc(buffer, System.Runtime.InteropServices.GCHandleType.Pinned);
-			    channel = Bass.BASS_StreamCreateFile(gcHandle.AddrOfPinnedObject(), 0L, length, decodeFlag);
-#else // #if MONO
-                channel = Bass.BASS_StreamCreateFile(file.Path, 0, 0, decodeFlag);
-#endif
-            }
-            if (channel == 0)
-            {
-#if MONO
-				if (gcHandle.IsAllocated)
-				  gcHandle.Free();
-#endif
-                ErrorHandling.BassErrorOccurred(file.Id, StringResources.FilePlayingError);
+                AudioErrors.Last = AudioError.Device;
+                ErrorHandling.AudioErrorOccurred(file.Id, StringResources.FilePlayingError);
                 return 0;
             }
+            IAudioSource source = file.SoundFileType == SoundFileType.WebRadio
+                ? AudioSources.OpenRadio(file.Path)
+                : AudioSources.OpenFile(file.Path);
+            if (source == null)
+            {
+                ErrorHandling.AudioErrorOccurred(file.Id, StringResources.FilePlayingError);
+                return 0;
+            }
+            Data.IEffects effects = file.Effects;
+            AudioChannel channel = new AudioChannel(engine, source, false);
+            int handle = channel.Handle;
+            channel.Route = DetermineRoute(file, engine.Speakers);
             RunningFileInfo info = new RunningFileInfo();
             info.File = file;
-            bool isStreaming = BassStreamer.Instance.IsStreaming;
-            bool useMultiSpeakerChannels = false;
-            int speakers = 2;
-            int origChannel = channel;
-            if (!isStreaming && file.Effects != null 
-                && file.Effects.SpeakerAssignment.Active && file.Effects.SpeakerAssignment.Assignment == Data.SpeakerAssignment.AllSpeakers 
-                && !file.Effects.Balance.Active && !file.Effects.Pitch.Active && !file.Effects.Tempo.Active)
+            lock (m_Mutex)
             {
-                speakers = Bass.BASS_GetInfo().speakers;
-                if (speakers > 2)
+                info.EndAction = new Action(() =>
                 {
-                    useMultiSpeakerChannels = true;
-                }
+                    callback(file.Id, handle);
+                });
+                info.Volume = file.Volume;
             }
-
-            Un4seen.Bass.BASSFlag flags = BASSFlag.BASS_DEFAULT;
-            if (isStreaming)
-                flags = BASSFlag.BASS_FX_FREESOURCE | BASSFlag.BASS_STREAM_DECODE;
-            else if (useMultiSpeakerChannels)
-                flags = BASSFlag.BASS_FX_FREESOURCE | BASSFlag.BASS_STREAM_DECODE;
-            else
-                flags = BASSFlag.BASS_STREAM_AUTOFREE | BASSFlag.BASS_FX_FREESOURCE | speakerFlag;
-            channel = Un4seen.Bass.AddOn.Fx.BassFx.BASS_FX_TempoCreate(channel, flags);
-            if (channel == 0)
+            channel.Loop = loop;
+            bool cueOutActive = effects != null && effects.CueOut.Active;
+            bool cueInActive = effects != null && effects.CueIn.Active;
+            if (cueOutActive)
+                channel.CueOut = effects.CueOut.Position;
+            if (cueInActive)
+                channel.LoopStart = effects.CueIn.Position;
+            SetStartVolume(file, fadeInTime, channel, info);
+            info.CrossFade = false;
+            double length = channel.Length;
+            if (effects != null && effects.FadeOutTime != 0 && length > 0)
             {
-#if MONO
-				if (gcHandle.IsAllocated)
-				  gcHandle.Free();
-#endif
-                ErrorHandling.BassErrorOccurred(file.Id, StringResources.FilePlayingError);
-                return 0;
-            }
-            bool result = true;
-            if (useMultiSpeakerChannels)
-            {
-                int splitStream = Un4seen.Bass.AddOn.Mix.BassMix.BASS_Split_StreamCreate(channel, BASSFlag.BASS_STREAM_AUTOFREE | BASSFlag.BASS_SPEAKER_FRONT, null);
-                if (splitStream == 0)
-                {
-                    result = false;
-                }
-                else
-                {
-                    int splitStream2 = Un4seen.Bass.AddOn.Mix.BassMix.BASS_Split_StreamCreate(channel, BASSFlag.BASS_STREAM_AUTOFREE | BASSFlag.BASS_SPEAKER_REAR, null);
-                    if (splitStream2 == 0)
-                    {
-                        result = false;
-                    }
-                    else
-                    {
-                        Bass.BASS_ChannelSetLink(splitStream, splitStream2);
-                        info.LinkedChannels = new List<int>();
-                        info.LinkedChannels.Add(splitStream2);
-                    }
-                    if (result && speakers > 4)
-                    {
-                        int splitStream3 = Un4seen.Bass.AddOn.Mix.BassMix.BASS_Split_StreamCreate(channel, BASSFlag.BASS_STREAM_AUTOFREE | BASSFlag.BASS_SPEAKER_CENLFE, null);
-                        if (splitStream3 == 0)
-                        {
-                            result = false;
-                        }
-                        else
-                        {
-                            Bass.BASS_ChannelSetLink(splitStream, splitStream3);
-                            info.LinkedChannels.Add(splitStream3);
-                        }
-                    }
-                    if (result && speakers > 6)
-                    {
-                        int splitStream4 = Un4seen.Bass.AddOn.Mix.BassMix.BASS_Split_StreamCreate(channel, BASSFlag.BASS_STREAM_AUTOFREE | BASSFlag.BASS_SPEAKER_REAR2, null);
-                        if (splitStream4 == 0)
-                        {
-                            result = false;
-                        }
-                        else
-                        {
-                            Bass.BASS_ChannelSetLink(splitStream, splitStream4);
-                            info.LinkedChannels.Add(splitStream4);
-                        }
-                    }
-                    if (result)
-                        channel = splitStream;
-                }
-            }
-            if (result)
-            {
-                lock (m_Mutex)
-                {
-                    info.EndAction = new Action(() =>
-                    {
-                        callback(file.Id, channel);
-                    });
-                    info.Volume = file.Volume;
-                }
+                double fadeOutSeconds = Math.Min(0.001 * effects.FadeOutTime, length);
+                double end = cueOutActive ? effects.CueOut.Position : length;
+                channel.FadeAt = Math.Max(0, end - fadeOutSeconds);
                 if (!loop)
                 {
-                    int sync = 0;
-                    // If CueOut is active ...
-                    if (file.Effects.CueOut.Active)
-                    {
-                        // Convert the CueOut position (seconds) into a byte offset
-                        long cueOutPos = Bass.BASS_ChannelSeconds2Bytes(channel, file.Effects.CueOut.Position);
-                        // Set the "end" sync to that position
-                        sync = Bass.BASS_ChannelSetSync(channel, BASSSync.BASS_SYNC_POS, cueOutPos, m_CueOutSync, new IntPtr(file.Id));
-                    }
-                    else
-                    {
-                        // Default: set the "end" sync to the end of the stream
-                        sync = Bass.BASS_ChannelSetSync(channel, BASSSync.BASS_SYNC_END, 0, m_EndSync, IntPtr.Zero);
-                    }
-
-                    if (sync == 0)
-                    {
-#if MONO
-						if (gcHandle.IsAllocated)
-						  gcHandle.Free();
-#endif
-                        ErrorHandling.BassErrorOccurred(file.Id, StringResources.FilePlayingError);
-                        return 0;
-                    }
-                    else
-                    {
-                        lock (m_Mutex)
-                        {
-                            m_NotLoops[channel] = sync;
-                        }
-                    }
+                    info.CrossFade = effects.CrossFading;
                 }
-                if (!SetStartVolume(file, fadeInTime, channel, info))
-                {
-                    return 0;
-                }
-                info.CrossFade = false;
-                if (file.Effects != null && file.Effects.FadeOutTime != 0)
-                {
-                    long totalLength = Bass.BASS_ChannelGetLength(channel);
-                    if (totalLength == -1)
-                    {
-                        ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetVolumeError);
-                        return 0;
-                    }
-                    long fadeOutLength = Bass.BASS_ChannelSeconds2Bytes(channel, 0.001 * file.Effects.FadeOutTime);
-                    if (fadeOutLength == -1)
-                    {
-                        ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetVolumeError);
-                        return 0;
-                    }
-                    if (fadeOutLength > totalLength)
-                    {
-                        fadeOutLength = totalLength;
-                    }
-                    // If CueOut is active ...
-                    if (file.Effects.CueOut.Active)
-                    {
-                        // Convert the CueOut position (seconds) into a byte offset
-                        long cueOutPos = Bass.BASS_ChannelSeconds2Bytes(channel, file.Effects.CueOut.Position);
-                        // Set the "end" sync to that position
-                        if (Bass.BASS_ChannelSetSync(channel, BASSSync.BASS_SYNC_POS, cueOutPos - fadeOutLength, m_FadeOutSync, new IntPtr(file.Effects.FadeOutTime)) == 0)
-                        {
-                            ErrorHandling.BassErrorOccurred(file.Id, StringResources.FilePlayingError);
-                            return 0;
-                        }
-                    }
-                    else
-                    {
-                        if (Bass.BASS_ChannelSetSync(channel, BASSSync.BASS_SYNC_POS, totalLength - fadeOutLength, m_FadeOutSync, new IntPtr(file.Effects.FadeOutTime)) == 0)
-                        {
-                            ErrorHandling.BassErrorOccurred(file.Id, StringResources.FilePlayingError);
-                            return 0;
-                        }
-                    }
-                    if (loop)
-                    {
-                        // If CueOut is active ...
-                        if (file.Effects.CueOut.Active)
-                        {
-                            // Convert the CueOut position (seconds) into a byte offset
-                            long cueOutPos = Bass.BASS_ChannelSeconds2Bytes(channel, file.Effects.CueOut.Position);
-                            // Set the "end" sync to that position
-                            if (Bass.BASS_ChannelSetSync(channel, BASSSync.BASS_SYNC_POS, cueOutPos, m_LoopSync, new IntPtr(file.Id)) == 0)
-                            {
-                                ErrorHandling.BassErrorOccurred(file.Id, StringResources.FilePlayingError);
-                                return 0;
-                            }
-                        }
-                        else
-                        {
-                            if (Bass.BASS_ChannelSetSync(channel, BASSSync.BASS_SYNC_POS, totalLength, m_LoopSync, new IntPtr(file.Id)) == 0)
-                            {
-                                ErrorHandling.BassErrorOccurred(file.Id, StringResources.FilePlayingError);
-                                return 0;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        info.CrossFade = file.Effects.CrossFading;
-                    }
-                }
-                if (file.Effects != null && file.Effects.Pitch.Active)
-                {
-                    float pitchValue = DetermineIntEffectValue(file.Effects.Pitch);
-                    if (!Bass.BASS_ChannelSetAttribute(channel, BASSAttribute.BASS_ATTRIB_TEMPO_PITCH, pitchValue))
-                    {
-                        ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetEffectError);
-                        return 0;
-                    }
-                }
-                if (file.Effects != null && file.Effects.Tempo.Active)
-                {
-                    float tempoValue = DetermineIntEffectValue(file.Effects.Tempo);
-                    if (!Bass.BASS_ChannelSetAttribute(channel, BASSAttribute.BASS_ATTRIB_TEMPO, tempoValue))
-                    {
-                        ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetEffectError);
-                        return 0;
-                    }
-                }
-                if (file.Effects != null && file.Effects.Balance.Active && !useMultiSpeakerChannels)
-                {
-                    SetBalanceEffect(channel, file.Id, file.Effects.Balance);
-                }
-                if (file.Effects != null && file.Effects.VolumeDB.Active)
-                {
-                    float volumeDB = DetermineIntEffectValue(file.Effects.VolumeDB);
-                    float linear = (float)Math.Pow(10d, volumeDB / 20);
-                    int volFx = Bass.BASS_ChannelSetFX(channel, BASSFXType.BASS_FX_BFX_VOLUME, 1);
-                    if (volFx == 0)
-                    {
-                        ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetEffectError);
-                        return 0;
-                    }
-                    Un4seen.Bass.AddOn.Fx.BASS_BFX_VOLUME fxVol = new Un4seen.Bass.AddOn.Fx.BASS_BFX_VOLUME(linear, Un4seen.Bass.AddOn.Fx.BASSFXChan.BASS_BFX_CHANALL);
-                    if (!Bass.BASS_FXSetParameters(volFx, fxVol))
-                    {
-                        ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetEffectError);
-                        return 0;
-                    }
-                    if (info.LinkedChannels != null) foreach (int splitStream2 in info.LinkedChannels)
-                        {
-                            int volFx2 = splitStream2 != 0 ? Bass.BASS_ChannelSetFX(splitStream2, BASSFXType.BASS_FX_BFX_VOLUME, 1) : 0;
-                            if (splitStream2 != 0 && volFx2 == 0)
-                            {
-                                ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetEffectError);
-                                return 0;
-                            }
-                            if (volFx2 != 0 && !Bass.BASS_FXSetParameters(volFx2, fxVol))
-                            {
-                                ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetEffectError);
-                                return 0;
-                            }
-                        }
-                }
-#pragma warning disable CS0618 // Type or member is obsolete
-                if (file.Effects != null && file.Effects.Reverb.Active)
-                {
-                    float linearLevel = (float)Math.Pow(10d, file.Effects.Reverb.Level / 20);
-                    int reverbFx = Bass.BASS_ChannelSetFX(channel, BASSFXType.BASS_FX_BFX_REVERB, 1);
-                    if (reverbFx == 0)
-                    {
-                        ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetEffectError);
-                        return 0;
-                    }
-                    Un4seen.Bass.AddOn.Fx.BASS_BFX_REVERB fxReverb = new Un4seen.Bass.AddOn.Fx.BASS_BFX_REVERB(linearLevel, file.Effects.Reverb.Delay);
-                    if (!Bass.BASS_FXSetParameters(reverbFx, fxReverb))
-                    {
-                        ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetEffectError);
-                        return 0;
-                    }
-                    if (info.LinkedChannels != null) foreach (int splitStream2 in info.LinkedChannels)
-                    {
-                        int reverbFx2 = splitStream2 != 0 ? Bass.BASS_ChannelSetFX(splitStream2, BASSFXType.BASS_FX_BFX_REVERB, 1) : 0;
-                        if (splitStream2 != 0 && reverbFx2 == 0)
-                        {
-                            ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetEffectError);
-                            return 0;
-                        }
-                        if (reverbFx2 != 0 && !Bass.BASS_FXSetParameters(reverbFx2, fxReverb))
-                        {
-                            ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetEffectError);
-                            return 0;
-                        }
-                    }
-                }
-#pragma warning restore CS0618 // Type or member is obsolete
-                if (loop)
-                {
-                    Bass.BASS_ChannelFlags(channel, BASSFlag.BASS_SAMPLE_LOOP, BASSFlag.BASS_SAMPLE_LOOP);
-                }
-                lock (m_Mutex)
-                {
-                    m_Loops[file.Id] = file;
-                    if (file.Effects != null && file.Effects.CueOut.Active)
-                    {
-                        m_CueOutRepeats[channel] = loop;
-                    }
-                }
-
-                if (file.Effects.CueIn.Active)
-                {
-                    Bass.BASS_ChannelSetPosition(channel, file.Effects.CueIn.Position);
-                }
-
-                if (isStreaming)
-                {
-                    result = BassStreamer.Instance.AddChannel(channel);
-                }
-                else
-                {
-                    result = Bass.BASS_ChannelPlay(channel, false);
-                }
-                if (!result)
-                {
-                    ErrorHandling.BassErrorOccurred(file.Id, StringResources.FilePlayingError);
-                    Bass.BASS_StreamFree(channel);
-#if MONO
-					if (gcHandle.IsAllocated)
-                      gcHandle.Free();
-#endif
-                    return 0;
-                }
-                lock (m_Mutex)
-                {
-                    m_RunningFiles[channel] = info;
-#if MONO
-					if (gcHandle.IsAllocated)
-                      m_GCHandles[channel] = gcHandle;
-#endif
-                }
-                return channel;
             }
-            else
+            if (effects != null && (effects.Pitch.Active || effects.Tempo.Active))
             {
-                ErrorHandling.BassErrorOccurred(file.Id, StringResources.FilePlayingError);
+                float pitchValue = effects.Pitch.Active ? DetermineIntEffectValue(effects.Pitch) : 0f;
+                float tempoValue = effects.Tempo.Active ? DetermineIntEffectValue(effects.Tempo) : 0f;
+                channel.SetTempoPitch(tempoValue, pitchValue);
+            }
+            if (effects != null && effects.Balance.Active)
+            {
+                SetBalanceEffect(channel, file.Id, effects.Balance);
+            }
+            if (effects != null && effects.VolumeDB.Active)
+            {
+                float volumeDB = DetermineIntEffectValue(effects.VolumeDB);
+                channel.Gain = (float)Math.Pow(10d, volumeDB / 20);
+            }
+            if (effects != null && effects.Reverb.Active)
+            {
+                float linearLevel = (float)Math.Pow(10d, effects.Reverb.Level / 20.0);
+                channel.SetReverb(linearLevel, effects.Reverb.Delay);
+            }
+            if (cueInActive)
+            {
+                channel.Seek(effects.CueIn.Position);
+            }
+            channel.Ended = () => FileFinished(handle, true);
+            channel.Looped = () => OnLooped(channel, file, info);
+            channel.FadeStarted = () => OnFadeStart(channel, file, info);
+
+            lock (m_Mutex)
+            {
+                m_RunningFiles[handle] = info;
+            }
+            if (!channel.Start())
+            {
+                lock (m_Mutex)
+                {
+                    m_RunningFiles.Remove(handle);
+                }
+                channel.Stop();
+                ErrorHandling.AudioErrorOccurred(file.Id, StringResources.FilePlayingError);
                 return 0;
             }
+            return handle;
         }
 
         /// <summary>
@@ -452,16 +141,14 @@ namespace Ares.Playing
                 if (!m_RunningFiles.ContainsKey(handle))
                     return false;
             }
-            long pos = Bass.BASS_ChannelGetPosition(handle);
-            long length = Bass.BASS_ChannelGetLength(handle);
-            if (pos < 0 || length <= 0)
+            AudioChannel channel = GetChannel(handle);
+            if (channel == null)
                 return false;
-            double lengthSec = Bass.BASS_ChannelBytes2Seconds(handle, length);
-            double posSec = Bass.BASS_ChannelBytes2Seconds(handle, pos);
-            if (lengthSec <= 0 || posSec < 0)
+            double length = channel.Length;
+            if (length <= 0)
                 return false;
-            lengthSeconds = lengthSec;
-            positionSeconds = Math.Min(posSec, lengthSec);
+            lengthSeconds = length;
+            positionSeconds = Math.Max(0, Math.Min(channel.Position, length));
             return true;
         }
 
@@ -571,7 +258,8 @@ namespace Ares.Playing
         {
             foreach (int handle in GetRunningHandles())
             {
-                if (Bass.BASS_ChannelIsActive(handle) == BASSActive.BASS_ACTIVE_PAUSED)
+                AudioChannel channel = GetChannel(handle);
+                if (channel != null && channel.State == ChannelState.Paused)
                     return true;
             }
             return false;
@@ -583,11 +271,17 @@ namespace Ares.Playing
         /// <returns>whether files are paused afterwards</returns>
         public bool TogglePause()
         {
-            List<int> handles = GetRunningHandles();
-            bool anyPaused = false;
-            foreach (int handle in handles)
+            List<AudioChannel> channels = new List<AudioChannel>();
+            foreach (int handle in GetRunningHandles())
             {
-                if (Bass.BASS_ChannelIsActive(handle) == BASSActive.BASS_ACTIVE_PAUSED)
+                AudioChannel channel = GetChannel(handle);
+                if (channel != null)
+                    channels.Add(channel);
+            }
+            bool anyPaused = false;
+            foreach (AudioChannel channel in channels)
+            {
+                if (channel.State == ChannelState.Paused)
                 {
                     anyPaused = true;
                     break;
@@ -595,41 +289,19 @@ namespace Ares.Playing
             }
             if (anyPaused)
             {
-                foreach (int handle in handles)
+                foreach (AudioChannel channel in channels)
                 {
-                    if (Bass.BASS_ChannelIsActive(handle) == BASSActive.BASS_ACTIVE_PAUSED)
-                        Bass.BASS_ChannelPlay(handle, false);
+                    channel.Resume();
                 }
                 return false;
             }
             bool pausedSomething = false;
-            foreach (int handle in handles)
+            foreach (AudioChannel channel in channels)
             {
-                if (Bass.BASS_ChannelIsActive(handle) == BASSActive.BASS_ACTIVE_PLAYING)
-                {
-                    if (Bass.BASS_ChannelPause(handle))
-                        pausedSomething = true;
-                }
+                if (channel.State == ChannelState.Playing && channel.Pause())
+                    pausedSomething = true;
             }
             return pausedSomething;
-        }
-
-        /// <summary>
-        /// Gets the handles of all channels used by running files (including linked channels).
-        /// </summary>
-        public List<int> GetAllChannelHandles()
-        {
-            List<int> result = new List<int>();
-            lock (m_Mutex)
-            {
-                foreach (KeyValuePair<int, RunningFileInfo> pair in m_RunningFiles)
-                {
-                    result.Add(pair.Key);
-                    if (pair.Value.LinkedChannels != null)
-                        result.AddRange(pair.Value.LinkedChannels);
-                }
-            }
-            return result;
         }
 
         private List<int> GetRunningHandles()
@@ -650,13 +322,15 @@ namespace Ares.Playing
                 if (!m_RunningFiles.ContainsKey(handle))
                     return false;
             }
-            long length = Bass.BASS_ChannelGetLength(handle);
-            if (length <= 0)
+            AudioChannel channel = GetChannel(handle);
+            if (channel == null)
                 return false;
-            double lengthSec = Bass.BASS_ChannelBytes2Seconds(handle, length);
+            double lengthSec = channel.Length;
+            if (lengthSec <= 0)
+                return false;
             // stay slightly before the end so that the file doesn't end immediately in an odd state
             double target = Math.Max(0, Math.Min(positionSeconds, Math.Max(0, lengthSec - 0.2)));
-            return Bass.BASS_ChannelSetPosition(handle, target);
+            return channel.Seek(target);
         }
 
         public void StopFile(int handle)
@@ -666,42 +340,21 @@ namespace Ares.Playing
 
         public void StopFile(int handle, bool fadeOut, int fadeOutTime, bool isCrossFade)
         {
+            AudioChannel channel = GetChannel(handle);
+            if (channel == null)
+            {
+                FileFinished(handle, true);
+                return;
+            }
             if (!fadeOut || fadeOutTime == 0)
             {
-                Bass.BASS_ChannelStop(handle); // no error handling, unimportant
+                channel.Stop();
                 FileFinished(handle, true);
             }
             else
             {
-                long pos = Bass.BASS_ChannelGetPosition(handle);
-                long length = Bass.BASS_ChannelGetLength(handle);
-                long remaining = length - pos;
-                long fadeOutLength = Bass.BASS_ChannelSeconds2Bytes(handle, 0.001 * fadeOutTime);
-                if (fadeOutLength == -1)
-                {
-                    // on error, just stop the file
-                    Bass.BASS_ChannelStop(handle);
-                    FileFinished(handle, true);
-                    return;
-                }
-                if (pos == -1 || length == -1 || remaining <= 0)
-                {
-                    // web radio doesn't have a length
-                    remaining = fadeOutLength;
-                }
-                if (fadeOutLength > remaining)
-                {
-                    fadeOutLength = remaining;
-                }
-                // if (Bass.BASS_ChannelSetSync(handle, BASSSync.BASS_SYNC_POS, pos + fadeOutLength, m_StopSync, new IntPtr(0)) == 0)
-                if (Bass.BASS_ChannelSetSync(handle, BASSSync.BASS_SYNC_SLIDE | BASSSync.BASS_SYNC_ONETIME, 0, m_StopSync, new IntPtr(handle)) == 0)
-                {
-                    // on error, just stop the file
-                    Bass.BASS_ChannelStop(handle);
-                    FileFinished(handle, true);
-                    return;
-                }
-                FadeOut(handle, fadeOutTime);
+                // the channel stops itself (and tells us) when it is silent
+                channel.FadeOutAndStop(fadeOutTime);
                 if (isCrossFade)
                 {
                     // call finished immediately to start the next file
@@ -735,75 +388,81 @@ namespace Ares.Playing
             }
         }
 
-        private static BASSFlag GetSpeakerFlag(ISoundFile file)
+        // Speakers: 0 front left, 1 front right, 2 centre, 3 subwoofer, 4 / 5 rear left / right, 6 / 7 centre rears (side)
+        private static SpeakerRoute DetermineRoute(ISoundFile file, int speakers)
         {
             if (file.Effects == null || !file.Effects.SpeakerAssignment.Active)
-                return BASSFlag.BASS_DEFAULT;
+                return SpeakerRoute.Fronts;
             Data.SpeakerAssignment assignment = file.Effects.SpeakerAssignment.Assignment;
-            int speakers = Bass.BASS_GetInfo().speakers;
             while (true)
             {
                 if (file.Effects.SpeakerAssignment.Random)
                 {
                     assignment = (Data.SpeakerAssignment)(PlayingModule.Randomizer.Next(1, speakers + 1));
                 }
-                BASSFlag flag = BASSFlag.BASS_DEFAULT;
+                int[] targets = null;
+                bool mono = false;
                 int neededNrOfSpeakers = 2;
                 switch (assignment)
                 {
                     case Data.SpeakerAssignment.LeftFront:
-                        flag = BASSFlag.BASS_SPEAKER_FRONTLEFT;
+                        targets = new[] { 0 }; mono = true;
                         break;
                     case Data.SpeakerAssignment.RightFront:
-                        flag = BASSFlag.BASS_SPEAKER_FRONTRIGHT;
+                        targets = new[] { 1 }; mono = true;
                         break;
                     case Data.SpeakerAssignment.LeftBack:
-                        flag = BASSFlag.BASS_SPEAKER_REARLEFT;
+                        targets = new[] { 4 }; mono = true;
                         neededNrOfSpeakers = 5;
                         break;
                     case Data.SpeakerAssignment.RightBack:
-                        flag = BASSFlag.BASS_SPEAKER_REARRIGHT;
+                        targets = new[] { 5 }; mono = true;
                         neededNrOfSpeakers = 5;
                         break;
                     case Data.SpeakerAssignment.Center:
-                        flag = BASSFlag.BASS_SPEAKER_CENTER;
+                        targets = new[] { 2 }; mono = true;
                         neededNrOfSpeakers = 5;
                         break;
                     case Data.SpeakerAssignment.LeftCenterBack:
-                        flag = BASSFlag.BASS_SPEAKER_REAR2LEFT;
+                        targets = new[] { 6 }; mono = true;
                         neededNrOfSpeakers = 7;
                         break;
                     case Data.SpeakerAssignment.RightCenterBack:
-                        flag = BASSFlag.BASS_SPEAKER_REAR2RIGHT;
+                        targets = new[] { 7 }; mono = true;
                         neededNrOfSpeakers = 7;
                         break;
                     case Data.SpeakerAssignment.Subwoofer:
-                        flag = BASSFlag.BASS_SPEAKER_LFE;
+                        targets = new[] { 3 }; mono = true;
                         neededNrOfSpeakers = 5;
                         break;
                     case Data.SpeakerAssignment.BothFronts:
-                        flag = BASSFlag.BASS_SPEAKER_FRONT;
+                        targets = new[] { 0, 1 };
                         break;
                     case Data.SpeakerAssignment.BothRears:
-                        flag = BASSFlag.BASS_SPEAKER_REAR;
+                        targets = new[] { 4, 5 };
                         neededNrOfSpeakers = 5;
                         break;
                     case Data.SpeakerAssignment.BothCenterRears:
-                        flag = BASSFlag.BASS_SPEAKER_REAR2;
+                        targets = new[] { 6, 7 };
                         neededNrOfSpeakers = 7;
                         break;
                     case Data.SpeakerAssignment.CenterAndSubwoofer:
-                        flag = BASSFlag.BASS_SPEAKER_CENLFE;
+                        targets = new[] { 2, 3 };
                         neededNrOfSpeakers = 5;
                         break;
                     case Data.SpeakerAssignment.AllSpeakers:
-                        flag = BASSFlag.BASS_DEFAULT;
+                        if (speakers > 6)
+                            targets = new[] { 0, 1, 4, 5, 2, 3, 6, 7 };
+                        else if (speakers > 2)
+                            targets = new[] { 0, 1, 4, 5, 2, 3 };
+                        else
+                            targets = new[] { 0, 1 };
                         break;
                     default:
                         break;
                 }
-                if (flag == BASSFlag.BASS_DEFAULT)
-                    return BASSFlag.BASS_DEFAULT;
+                if (targets == null)
+                    return SpeakerRoute.Fronts;
                 if (neededNrOfSpeakers > speakers)
                 {
                     if (file.Effects.SpeakerAssignment.Random)
@@ -813,56 +472,33 @@ namespace Ares.Playing
                     }
                     else
                     {
-                        ErrorHandling.BassErrorOccurred(file.Id, StringResources.SpeakerNotAvailable);
-                        return BASSFlag.BASS_DEFAULT;
+                        ErrorHandling.ErrorOccurred(file.Id, StringResources.SpeakerNotAvailable);
+                        return SpeakerRoute.Fronts;
                     }
                 }
-                else
-                {
-                    return flag;
-                }
+                return new SpeakerRoute { Targets = targets, Mono = mono };
             }
         }
 
-        private bool SetBalanceEffect(int channel, int id, Data.IBalanceEffect effect)
+        private bool SetBalanceEffect(AudioChannel channel, int id, Data.IBalanceEffect effect)
         {
             if (!effect.IsPanning)
             {
                 float balanceValue = DetermineIntEffectValue(effect);
                 // balance is stored as [-10..10], but must be set as [-1..1]
-                if (!Bass.BASS_ChannelSetAttribute(channel, BASSAttribute.BASS_ATTRIB_PAN, balanceValue / 10.0f))
-                {
-                    ErrorHandling.BassErrorOccurred(id, StringResources.SetEffectError);
-                    return false;
-                }
+                channel.SetPan(balanceValue / 10.0f);
                 return true;
             }
             else
             {
-                long totalLength = Bass.BASS_ChannelGetLength(channel);
-                if (totalLength == -1)
-                {
-                    ErrorHandling.BassErrorOccurred(id, StringResources.SetEffectError);
-                    return false;
-                }
-                double totalLengthSeconds = Bass.BASS_ChannelBytes2Seconds(channel, totalLength);
-                if (totalLengthSeconds < 0)
-                {
-                    ErrorHandling.BassErrorOccurred(id, StringResources.SetEffectError);
-                    return false;
-                }
                 // first set to start value
                 // balance is stored as [-10..10], but must be set as [-1..1]
-                if (!Bass.BASS_ChannelSetAttribute(channel, BASSAttribute.BASS_ATTRIB_PAN, effect.PanningStart / 10.0f))
-                {
-                    ErrorHandling.BassErrorOccurred(id, StringResources.SetEffectError);
-                    return false;
-                }
+                channel.SetPan(effect.PanningStart / 10.0f);
                 // now slide over all time to end value
-                if (!Bass.BASS_ChannelSlideAttribute(channel, BASSAttribute.BASS_ATTRIB_PAN, effect.PanningEnd / 10.0f, (int)(totalLengthSeconds * 1000)))
+                double totalLengthSeconds = channel.Length;
+                if (totalLengthSeconds > 0)
                 {
-                    ErrorHandling.BassErrorOccurred(id, StringResources.SetEffectError);
-                    return false;
+                    channel.SlidePan(effect.PanningEnd / 10.0f, totalLengthSeconds);
                 }
                 return true;
             }
@@ -872,69 +508,25 @@ namespace Ares.Playing
         {
             if (volume < 0 || volume > 100)
                 throw new ArgumentException("Invalid volume!");
-            bool error = false;
+            AudioChannel channel = GetChannel(handle);
             lock (m_Mutex)
             {
                 var info = m_RunningFiles.ContainsKey(handle) ? m_RunningFiles[handle] : null;
                 float specificVolume = info != null ? info.Volume : 0.01f;
                 specificVolume *= volume * 0.01f;
-                if (!Un4seen.Bass.Bass.BASS_ChannelSetAttribute(handle, BASSAttribute.BASS_ATTRIB_VOL, specificVolume))
-                {
-                    error = true;
-                }
-                if (info != null && info.LinkedChannels != null) foreach (int secondChannel in info.LinkedChannels)
-                        if (secondChannel != 0 && !Un4seen.Bass.Bass.BASS_ChannelSetAttribute(secondChannel, BASSAttribute.BASS_ATTRIB_VOL, specificVolume))
-                        {
-                            error = true;
-                        }
-            }
-            if (error)
-            {
-                ErrorHandling.BassErrorOccurred(-1, StringResources.SetVolumeError);
+                if (channel != null)
+                    channel.SetVolume(specificVolume);
             }
         }
 
         public void SetRepeatFile(int handle, bool repeat)
         {
-            lock (m_Mutex)
-            {
-                if (!m_NotLoops.ContainsKey(handle))
-                {
-                    // file was started as a loop: switching the loop off needs an end sync
-                    if (!repeat && !m_CueOutRepeats.ContainsKey(handle))
-                    {
-                        Bass.BASS_ChannelFlags(handle, BASSFlag.BASS_DEFAULT, BASSFlag.BASS_SAMPLE_LOOP);
-                        int endSync = Bass.BASS_ChannelSetSync(handle, BASSSync.BASS_SYNC_END, 0, m_EndSync, IntPtr.Zero);
-                        m_NotLoops[handle] = endSync;
-                    }
-                    return;
-                }
-
-                if (m_CueOutRepeats.ContainsKey(handle))
-                {
-                    m_CueOutRepeats[handle] = repeat;
-                    return;
-                }
-
-                if (repeat)
-                {
-                    Bass.BASS_ChannelFlags(handle, BASSFlag.BASS_SAMPLE_LOOP, BASSFlag.BASS_SAMPLE_LOOP);
-                    Bass.BASS_ChannelRemoveSync(handle, m_NotLoops[handle]);
-                }
-                else
-                {
-                    Bass.BASS_ChannelFlags(handle, BASSFlag.BASS_DEFAULT, BASSFlag.BASS_SAMPLE_LOOP);
-                    int sync = Bass.BASS_ChannelSetSync(handle, BASSSync.BASS_SYNC_END, 0, m_EndSync, IntPtr.Zero);
-                    m_NotLoops[handle] = sync;
-                }
-            }
+            AudioChannel channel = GetChannel(handle);
+            if (channel != null)
+                channel.Loop = repeat;
         }
 
-        private System.Collections.Generic.Dictionary<int, ISoundFile> m_Loops = new Dictionary<int, ISoundFile>();
-        private System.Collections.Generic.Dictionary<int, int> m_NotLoops = new Dictionary<int, int>(); // channel to sync
-        private System.Collections.Generic.Dictionary<int, bool> m_CueOutRepeats = new Dictionary<int, bool>(); // channel to repeat
-
-        private bool SetStartVolume(ISoundFile file, int fadeInTime, int channel, RunningFileInfo info)
+        private bool SetStartVolume(ISoundFile file, int fadeInTime, AudioChannel channel, RunningFileInfo info)
         {
             float volume = file.Volume / 100.0f;
             float specificVolume = 1.0f;
@@ -945,168 +537,47 @@ namespace Ares.Playing
             info.Volume = specificVolume;
             if ((file.Effects != null && file.Effects.FadeInTime != 0) || fadeInTime > 0)
             {
-
-                if (!Bass.BASS_ChannelSetAttribute(channel, BASSAttribute.BASS_ATTRIB_VOL, 0.0f))
-                {
-                    ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetVolumeError);
-                    return false;
-                }
-                if (info.LinkedChannels != null) foreach (int secondChannel in info.LinkedChannels)
-                        if (secondChannel != 0 && !Bass.BASS_ChannelSetAttribute(secondChannel, BASSAttribute.BASS_ATTRIB_VOL, 0.0f))
-                        {
-                            ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetVolumeError);
-                            return false;
-                        }
+                channel.SetVolume(0.0f);
                 int maxFadeInTime = file.Effects != null ? Math.Max(file.Effects.FadeInTime, fadeInTime) : fadeInTime;
-                if (!Bass.BASS_ChannelSlideAttribute(channel, BASSAttribute.BASS_ATTRIB_VOL, volume, maxFadeInTime))
-                {
-                    ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetVolumeError);
-                    return false;
-                }
-                if (info.LinkedChannels != null) foreach (int secondChannel in info.LinkedChannels)
-                        if (secondChannel != 0 && !Bass.BASS_ChannelSlideAttribute(secondChannel, BASSAttribute.BASS_ATTRIB_VOL, volume, maxFadeInTime))
-                        {
-                            ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetVolumeError);
-                            return false;
-                        }
+                channel.SlideVolume(volume, maxFadeInTime);
             }
             else
             {
-                if (!Bass.BASS_ChannelSetAttribute(channel, BASSAttribute.BASS_ATTRIB_VOL, volume))
-                {
-                    ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetVolumeError);
-                    return false;
-                }
-                if (info.LinkedChannels != null) foreach (int secondChannel in info.LinkedChannels)
-                        if (secondChannel != 0 && !Bass.BASS_ChannelSetAttribute(secondChannel, BASSAttribute.BASS_ATTRIB_VOL, volume))
-                        {
-                            ErrorHandling.BassErrorOccurred(file.Id, StringResources.SetVolumeError);
-                            return false;
-                        }
+                channel.SetVolume(volume);
             }
             return true;
         }
 
         public FilePlayer()
         {
-            m_EndSync = new SYNCPROC(EndSync);
-            m_CueOutSync = new SYNCPROC(CueOutSync);
-            m_FadeOutSync = new SYNCPROC(FadeOutSync);
-            m_LoopSync = new SYNCPROC(LoopSync);
-            m_StopSync = new SYNCPROC(StopSync);
             m_RunningFiles = new Dictionary<int, RunningFileInfo>();
-#if MONO
-            m_GCHandles = new Dictionary<int, System.Runtime.InteropServices.GCHandle>();
-#endif
         }
 
         public void Dispose()
         {
         }
 
-        private void EndSync(int handle, int channel, int data, IntPtr user)
+        // a repeated sound starts again
+        private void OnLooped(AudioChannel channel, ISoundFile file, RunningFileInfo info)
         {
-            lock (m_Mutex)
-            {
-                if (m_NotLoops.ContainsKey(user.ToInt32()))
-                    m_NotLoops.Remove(user.ToInt32());
-                if (m_Loops.ContainsKey(user.ToInt32()))
-                    m_Loops.Remove(user.ToInt32());
-                if (m_CueOutRepeats.ContainsKey(channel))
-                    m_CueOutRepeats.Remove(channel);
-            }
-            FileFinished(channel, true);
-        }
-
-        private void CueOutSync(int handle, int channel, int data, IntPtr user)
-        {
-            bool cueOutRepeat = false;
-            lock (m_Mutex)
-            {
-                cueOutRepeat = m_CueOutRepeats.ContainsKey(channel) && m_CueOutRepeats[channel];
-            }
-            if (cueOutRepeat)
-            {
-                LoopSync(handle, channel, data, user);
-            }
-            else
-            {
-                Bass.BASS_ChannelStop(channel);
-                EndSync(handle, channel, data, user);
-            }
-        }
-
-        private void StopSync(int handle, int channel, int data, IntPtr user)
-        {
-            if (user.ToInt32() == channel)
-            {
-                if (data == 2) // BASS_SLIDE_VOL
-                {
-                    float val = 1.0f;
-                    if (Bass.BASS_ChannelGetAttribute(channel, BASSAttribute.BASS_ATTRIB_VOL, ref val))
-                    {
-                        if (val < 0.001)
-                        {
-                            Bass.BASS_ChannelStop(channel);
-                            FileFinished(channel, true);
-                        }
-                    }
-                }
-            }
-        }
-
-        private void FadeOutSync(int handle, int channel, int data, IntPtr user)
-        {
-            FadeOut(channel, user.ToInt32());
-            bool crossFade = false;
-            lock (m_Mutex)
-            {
-                if (m_RunningFiles.ContainsKey(channel))
-                {
-                    var info = m_RunningFiles[channel];
-                    crossFade = info.CrossFade;
-                }
-            }
-            if (crossFade)
-            {
-                CallEndAction(channel);
-            }
-        }
-
-        private void LoopSync(int handle, int channel, int data, IntPtr user)
-        {
-            int id = user.ToInt32();
-            ISoundFile file = null;
-            RunningFileInfo info = null;
-            lock (m_Mutex)
-            {
-                file = m_Loops[id];
-                info = m_RunningFiles.ContainsKey(channel) ? m_RunningFiles[channel] : null;
-            }
-            if (info != null)
+            if (file.Effects != null && (file.Effects.FadeOutTime != 0 || file.Effects.CueOut.Active))
             {
                 SetStartVolume(file, 0, channel, info);
             }
-            if (file.Effects.CueIn.Active)
+            if (file.Effects != null && file.Effects.Balance.Active && file.Effects.Balance.IsPanning)
             {
-                Bass.BASS_ChannelSetPosition(channel, file.Effects.CueIn.Position);
+                SetBalanceEffect(channel, file.Id, file.Effects.Balance);
             }
         }
 
-        private void FadeOut(int channel, int time)
+        // the position where the fade out begins was reached
+        private void OnFadeStart(AudioChannel channel, ISoundFile file, RunningFileInfo info)
         {
-            Bass.BASS_ChannelSlideAttribute(channel, BASSAttribute.BASS_ATTRIB_VOL, 0.0f, time);
-            RunningFileInfo info = null;
-            lock (m_Mutex)
+            if (file.Effects != null)
+                channel.SlideVolume(0.0f, file.Effects.FadeOutTime);
+            if (info.CrossFade)
             {
-                info = m_RunningFiles.ContainsKey(channel) ? m_RunningFiles[channel] : null;
-            }
-            if (info != null)
-            {
-                if (info.LinkedChannels != null) foreach (int secondChannel in info.LinkedChannels)
-                    {
-                        Bass.BASS_ChannelSlideAttribute(secondChannel, BASSAttribute.BASS_ATTRIB_VOL, 0.0f, time);
-                    }
+                CallEndAction(channel.Handle);
             }
         }
 
@@ -1144,39 +615,16 @@ namespace Ares.Playing
                 }
             }
 
-            if (BassStreamer.Instance.IsStreaming)
-                BassStreamer.Instance.RemoveChannel(channel);
-
             if (endAction != null)
             {
                 endAction();
             }
-#if MONO
-            if (deleteMemory)
-            {
-				lock (m_Mutex)
-				{
-	                if (m_GCHandles.ContainsKey(channel))
-	                {
-                        m_GCHandles[channel].Free();
-	                    m_GCHandles.Remove(channel);
-	                }
-				}
-            }
-#endif
         }
-
-        private SYNCPROC m_EndSync;
-        private SYNCPROC m_FadeOutSync;
-        private SYNCPROC m_LoopSync;
-        private SYNCPROC m_StopSync;
-        private SYNCPROC m_CueOutSync;
 
         private class RunningFileInfo
         {
             public Action EndAction { get; set; }
             public float Volume { get; set; }
-            public List<int> LinkedChannels { get; set; }
             public bool CrossFade { get; set; }
             public ISoundFile File { get; set; }
             public Action StopAction { get; set; }
@@ -1185,9 +633,6 @@ namespace Ares.Playing
         }
 
         private Dictionary<int, RunningFileInfo> m_RunningFiles;
-#if MONO
-        private Dictionary<int, System.Runtime.InteropServices.GCHandle> m_GCHandles { get; set; }
-#endif
         private Object m_Mutex = new Int16();
 
     }

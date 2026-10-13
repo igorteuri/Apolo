@@ -355,7 +355,7 @@ namespace Ares.Playing
 
         public static IStreamer Streamer
         {
-            get { return BassStreamer.Instance; }
+            get { return EngineStreamer.Instance; }
         }
 
         public static void AddCallbacks(IProjectPlayingCallbacks callbacks)

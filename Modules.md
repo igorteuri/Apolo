@@ -44,7 +44,7 @@ Contains a small executable to change Windows security settings (e.g. firewall) 
 
 ### Ares.Playing
 
-Contains all the logic to actually play the elements in the projects. The low-level playing of the files and applying effects to the individual files is made using the [Un4Seen Bass](http://www.un4seen.com/) library wrapped by [Bass .Net](http://bass.radio42.com/). This module is also used in the Editor so that the user can test the elements there.
+Contains all the logic to actually play the elements in the projects. The low-level playing of the files and applying effects to the individual files is made by Apolo's own audio engine (the `Audio` folder), built on [NAudio](https://github.com/naudio/NAudio) (output), NLayer / NVorbis / Concentus (decoders) and TagLib# (tags). This module is also used in the Editor so that the user can test the elements there.
 
 ## .NET modules (assemblies) for Players
 

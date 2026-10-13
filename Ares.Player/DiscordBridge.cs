@@ -99,7 +99,7 @@ namespace Ares.Player
         private Process m_Process;
         private string m_Secret;
         private string m_Token;
-        private ProcessLoopbackCapture m_Capture;
+        private AppAudioCapture m_Capture;
         private readonly StringBuilder m_Output = new StringBuilder();
 
         public DiscordState State { get; private set; }
@@ -418,7 +418,7 @@ namespace Ares.Player
         private void StartCapture()
         {
             StopCapture();
-            ProcessLoopbackCapture capture = new ProcessLoopbackCapture(Process.GetCurrentProcess().Id);
+            AppAudioCapture capture = new AppAudioCapture(Process.GetCurrentProcess().Id);
             capture.DataAvailable += SendPcm;
             string error = capture.Start();
             lock (m_Lock)
@@ -438,7 +438,7 @@ namespace Ares.Player
 
         private void StopCapture()
         {
-            ProcessLoopbackCapture capture;
+            AppAudioCapture capture;
             lock (m_Lock)
             {
                 capture = m_Capture;

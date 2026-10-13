@@ -230,7 +230,7 @@
     <value>Kein Gerätetreiber verfügbar. Sind Soundkarte und Lautsprecher korrekt installiert? Wird das Gerät von einer anderen Anwendung verwendet?</value>
   </data>
   <data name="BassDeviceFormat" xml:space="preserve">
-    <value>Gerät unterstützt 44kHz Sampling nicht.</value>
+    <value>Das Audiogerät konnte mit dem benötigten Format nicht geöffnet werden.</value>
   </data>
   <data name="BassDeviceInfo" xml:space="preserve">
     <value>Gerät: {0}, Treiber: {1}, Status: {2}</value>
@@ -245,7 +245,7 @@
     <value>Konnte BASS Fx AddOn-Library nicht laden. Installationsproblem?</value>
   </data>
   <data name="BassInitFail" xml:space="preserve">
-    <value>Fehler: Konnte BASS nicht initialisieren!
+    <value>Fehler: Konnte die Audio-Engine nicht initialisieren!
 Fehlermeldung: {0}
 {1}</value>
   </data>

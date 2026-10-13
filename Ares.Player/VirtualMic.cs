@@ -19,7 +19,7 @@ namespace Ares.Player
 
         private readonly System.Windows.Forms.Control m_Ui;
         private readonly CoreWebView2 m_Core;
-        private ProcessLoopbackCapture m_Capture;
+        private AppAudioCapture m_Capture;
         private readonly MemoryStream m_Pending = new MemoryStream();
         private readonly object m_Lock = new object();
         private bool m_Disposed;
@@ -66,7 +66,7 @@ namespace Ares.Player
                 if (m_Capture != null || m_Disposed)
                     return;
             }
-            ProcessLoopbackCapture capture = new ProcessLoopbackCapture(Process.GetCurrentProcess().Id);
+            AppAudioCapture capture = new AppAudioCapture(Process.GetCurrentProcess().Id);
             capture.DataAvailable += OnData;
             string error = capture.Start();
             if (error != null)
@@ -90,7 +90,7 @@ namespace Ares.Player
 
         public void Stop()
         {
-            ProcessLoopbackCapture capture;
+            AppAudioCapture capture;
             lock (m_Lock)
             {
                 capture = m_Capture;

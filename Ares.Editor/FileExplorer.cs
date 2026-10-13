@@ -382,7 +382,7 @@ namespace Ares.Editor
 
                     String path = soundFileType == Data.SoundFileType.Music ? Settings.Settings.Instance.MusicDirectory : Settings.Settings.Instance.SoundDirectory;
                     path = System.IO.Path.Combine(path, item.RelativePath);
-                    Un4seen.Bass.AddOn.Tags.TAG_INFO tag = Un4seen.Bass.AddOn.Tags.BassTags.BASS_TAG_GetFromFile(path, true, true);
+                    Ares.Tags.AudioTagInfo tag = Ares.Tags.AudioTags.Read(path);
                     if (tag != null)
                     {
                         TimeSpan duration = TimeSpan.FromSeconds(tag.duration);

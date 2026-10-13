@@ -61,7 +61,7 @@ namespace Ares.Editor.ElementEditors
             filePathLabel.Text = m_Element.FilePath;
             String path = m_Element.SoundFileType == SoundFileType.Music ? Settings.Settings.Instance.MusicDirectory : Settings.Settings.Instance.SoundDirectory;
             path = System.IO.Path.Combine(path, m_Element.FilePath);
-            Un4seen.Bass.AddOn.Tags.TAG_INFO tag = Un4seen.Bass.AddOn.Tags.BassTags.BASS_TAG_GetFromFile(path, true, true);
+            Ares.Tags.AudioTagInfo tag = Ares.Tags.AudioTags.Read(path);
             if (tag != null)
             {
                 titleLabel.Text = String.IsNullOrEmpty(tag.title) ? StringResources.Unknown : tag.title;

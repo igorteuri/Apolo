@@ -79,7 +79,7 @@ namespace Ares.TagsImport
             foreach (String file in info.Files)
             {
                 String path = System.IO.Path.Combine(basePath, file);
-                Un4seen.Bass.AddOn.Tags.TAG_INFO tag = Un4seen.Bass.AddOn.Tags.BassTags.BASS_TAG_GetFromFile(path, true, true);
+                Ares.Tags.AudioTagInfo tag = Ares.Tags.AudioTags.Read(path);
                 if (tag != null)
                 {
                     if (!String.IsNullOrEmpty(tag.artist))

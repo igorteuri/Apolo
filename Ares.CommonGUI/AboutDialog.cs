@@ -74,10 +74,10 @@ namespace Ares.CommonGUI
             credits.TabStop = false;
             credits.Text = pt
                 ? "O Apolo foi criado por Igor Teuri, do canal Dados Críticos, como uma modernização do Ares.\r\n\r\nO Apolo é um fork do Ares, criado por Jörg Ruedenauer e colaboradores, e é distribuído sob a licença GNU GPL (versão 2 ou posterior), como o projeto original. Todo o crédito pela base do programa pertence ao Ares e a seu autor.\r\n\r\n"
-                  + "Áudio: BASS, da un4seen developments (www.un4seen.com). A BASS é gratuita apenas para uso não comercial; para uso comercial é necessária uma licença própria da un4seen.\r\n\r\n"
+                  + "Áudio: motor de áudio próprio do Apolo, feito com NAudio, NLayer e NVorbis (licença MIT), Concentus (licença BSD) e TagLib# (licença LGPL) — todos livres, inclusive para uso comercial.\r\n\r\n"
                   + "Ícones: Lucide (licença ISC). Páginas web embutidas: Microsoft WebView2."
                 : "Apolo was created by Igor Teuri, of the Dados Críticos channel, as a modernization of Ares.\r\n\r\nApolo is a fork of Ares, created by Jörg Ruedenauer and contributors, and is distributed under the GNU GPL (version 2 or later), like the original project. All credit for the foundation of this program belongs to Ares and its author.\r\n\r\n"
-                  + "Audio: BASS by un4seen developments (www.un4seen.com). BASS is free for non-commercial use only; commercial use requires a license from un4seen.\r\n\r\n"
+                  + "Audio: Apolo's own audio engine, built with NAudio, NLayer and NVorbis (MIT license), Concentus (BSD license) and TagLib# (LGPL license) - all free, including for commercial use.\r\n\r\n"
                   + "Icons: Lucide (ISC license). Embedded web pages: Microsoft WebView2.";
             credits.SetBounds(24, 140, 472, 230);
             Controls.Add(credits);

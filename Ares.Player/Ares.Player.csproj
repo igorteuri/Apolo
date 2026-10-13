@@ -11,6 +11,7 @@
     <RootNamespace>Ares.Player</RootNamespace>
     <AssemblyName>Apolo</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -153,6 +154,7 @@
     <Compile Include="Player.ModeTree.cs" />
     <Compile Include="DiscordBridge.cs" />
     <Compile Include="ProcessLoopbackCapture.cs" />
+    <Compile Include="AppAudioCapture.cs" />
     <Compile Include="VirtualMic.cs" />
     <Compile Include="SoundProgressPanel.cs" />
     <Compile Include="Program.cs" />

@@ -156,7 +156,7 @@ namespace Ares.ModelInfo
                 {
                     String basePath = Settings.Settings.Instance.MusicDirectory;
                     String completePath = System.IO.Path.Combine(basePath, path);
-                    Un4seen.Bass.AddOn.Tags.TAG_INFO tag = Un4seen.Bass.AddOn.Tags.BassTags.BASS_TAG_GetFromFile(completePath, true, true);
+                    Ares.Tags.AudioTagInfo tag = Ares.Tags.AudioTags.Read(completePath);
                     if (tag != null)
                     {
                         if (string.IsNullOrEmpty(result.Album))

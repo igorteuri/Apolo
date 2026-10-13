@@ -63,21 +63,56 @@
     <Optimize>false</Optimize>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BassRegistration">
-      <HintPath>..\Libraries\BassRegistration.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
     </Reference>
     <Reference Include="System.Data" />
-    <Reference Include="Bass.Net, Version=2.4.7.4, Culture=neutral, PublicKeyToken=b7566c273e6ef480">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Libraries\Bass.Net.dll</HintPath>
+    <Reference Include="NAudio.Core">
+      <HintPath>..\Libraries\NAudio.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudio.Wasapi">
+      <HintPath>..\Libraries\NAudio.Wasapi.dll</HintPath>
+    </Reference>
+    <Reference Include="NLayer">
+      <HintPath>..\Libraries\NLayer.dll</HintPath>
+    </Reference>
+    <Reference Include="NVorbis">
+      <HintPath>..\Libraries\NVorbis.dll</HintPath>
+    </Reference>
+    <Reference Include="Concentus">
+      <HintPath>..\Libraries\Concentus.dll</HintPath>
+    </Reference>
+    <Reference Include="Concentus.Oggfile">
+      <HintPath>..\Libraries\Concentus.Oggfile.dll</HintPath>
+    </Reference>
+    <!-- libraries which the packages above need (downloaded by the build; the ones which do not exist are skipped) -->
+    <Reference Include="System.Memory" Condition="Exists('..\Libraries\System.Memory.dll')">
+      <HintPath>..\Libraries\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Buffers" Condition="Exists('..\Libraries\System.Buffers.dll')">
+      <HintPath>..\Libraries\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Numerics.Vectors" Condition="Exists('..\Libraries\System.Numerics.Vectors.dll')">
+      <HintPath>..\Libraries\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe" Condition="Exists('..\Libraries\System.Runtime.CompilerServices.Unsafe.dll')">
+      <HintPath>..\Libraries\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions" Condition="Exists('..\Libraries\System.Threading.Tasks.Extensions.dll')">
+      <HintPath>..\Libraries\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ValueTuple" Condition="Exists('..\Libraries\System.ValueTuple.dll')">
+      <HintPath>..\Libraries\System.ValueTuple.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BassInit.cs" />
-    <Compile Include="BassStreamer.cs" />
+    <Compile Include="Audio\AudioChannel.cs" />
+    <Compile Include="Audio\AudioCore.cs" />
+    <Compile Include="Audio\AudioEngine.cs" />
+    <Compile Include="Audio\Sources.cs" />
+    <Compile Include="AudioDecoding.cs" />
+    <Compile Include="AudioInit.cs" />
+    <Compile Include="EngineStreamer.cs" />
     <Compile Include="FilePlayer.cs" />
     <Compile Include="Interfaces.cs" />
     <Compile Include="MacroPlayer.cs" />

@@ -72,7 +72,7 @@ namespace Ares.Player
             Ares.CommonGUI.ThemeManager.Install();
             try
             {
-                using (Ares.Playing.BassInit bassInit = new Ares.Playing.BassInit(-1, s => MessageBox.Show(s, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning)))
+                using (Ares.Playing.AudioInit bassInit = new Ares.Playing.AudioInit(-1, s => MessageBox.Show(s, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning)))
                 {
                     Application.Run(new Player(bassInit));
                 }
@@ -82,7 +82,7 @@ namespace Ares.Player
             {
             }
 #endif
-            catch (Ares.Playing.BassInitException ex)
+            catch (Ares.Playing.AudioInitException ex)
             {
                 MessageBox.Show(ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Stop);
             }
