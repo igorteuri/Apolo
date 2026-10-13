@@ -35,10 +35,13 @@ namespace Ares.Editor
         static FileExplorer()
         {
             sImageList = new ImageList();
-            sImageList.Images.Add(ImageResources.Folder);
-            sImageList.Images.Add(ImageResources.sounds1);
-            sImageList.Images.Add(ImageResources.music1);
-            sImageList.Images.Add(ImageResources.eventlogError);
+            EditorIcons.Track(sImageList, new EditorIcons.Spec[]
+            {
+                new EditorIcons.Spec("folder", EditorIcons.Normal),
+                new EditorIcons.Spec("audio-lines", EditorIcons.Warm),
+                new EditorIcons.Spec("music", EditorIcons.Accent),
+                new EditorIcons.Spec("circle-x", EditorIcons.Error)
+            });
         }
 
         private bool updatePending = false;
@@ -72,12 +75,6 @@ namespace Ares.Editor
         public FileExplorer(FileType fileType, IFileExplorerParent parent)
         {
             InitializeComponent();
-            if (playButton.Owner != null)
-                Ares.CommonGUI.IconLibrary.Bind(playButton.Owner, new Dictionary<ToolStripItem, string>
-                {
-                    { playButton, "play" },
-                    { stopButton, "square" }
-                });
             m_Parent = parent;
             this.Text = String.Format(StringResources.FileExplorerTitle, fileType == FileType.Music ? StringResources.Music : StringResources.Sounds);
             m_FileType = fileType;

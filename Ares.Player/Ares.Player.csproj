@@ -142,7 +142,6 @@
     <Compile Include="AppTabBar.cs" />
     <Compile Include="Player.Shortcuts.cs" />
     <Compile Include="Player.Missing.cs" />
-    <Compile Include="Player.EditorTab.cs" />
     <Compile Include="Player.Web.cs" />
     <Compile Include="Player.Tray.cs" />
     <Compile Include="EdgeHandle.cs" />

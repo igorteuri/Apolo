@@ -189,9 +189,8 @@ namespace Ares.Player
         {
             if (m_WebWindow == null)
                 return;
-            int count = m_WebWindow.Tabs.Count + 1 + (EditorTabIndex > 0 ? 1 : 0);
-            int current = (m_ShowingEditor && EditorTabIndex > 0) ? EditorTabIndex
-                : ((m_ShowingWeb && m_WebWindow.Selected != null) ? 1 + m_WebWindow.Tabs.IndexOf(m_WebWindow.Selected) : 0);
+            int count = m_WebWindow.Tabs.Count + 1;
+            int current = (m_ShowingWeb && m_WebWindow.Selected != null) ? 1 + m_WebWindow.Tabs.IndexOf(m_WebWindow.Selected) : 0;
             int next = ((current + delta) % count + count) % count;
             TabBar_TabSelected(next);
         }

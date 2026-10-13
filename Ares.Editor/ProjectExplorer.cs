@@ -46,44 +46,22 @@ namespace Ares.Editor
         static ProjectExplorer()
         {
             sImageList = new ImageList();
-            sImageList.Images.Add(ImageResources.random_music_list);
-            sImageList.Images.Add(ImageResources.sequential_music_list);
-            sImageList.Images.Add(ImageResources.randomsounds);
-            sImageList.Images.Add(ImageResources.parallelsounds);
-            sImageList.Images.Add(ImageResources.aressmall);
-            sImageList.Images.Add(ImageResources.random);
-            sImageList.Images.Add(ImageResources.sequential);
-            sImageList.Images.Add(ImageResources.parallel);
-            sImageList.Images.Add(ImageResources.vierge);
-            sImageList.Images.Add(ImageResources.base_cog_32);
-            sImageList.Images.Add(ImageResources.SeriousWarning);
-            sImageList.Images.Add(ImageResources.musicbytags);
-            sImageList.Images.Add(ImageResources.WebRadio);
-
-            sImageList.Images.Add(ImageResources.random_music_list_ref);
-            sImageList.Images.Add(ImageResources.sequential_music_list_ref);
-            sImageList.Images.Add(ImageResources.randomsounds_ref);
-            sImageList.Images.Add(ImageResources.parallelsounds_ref);
-            sImageList.Images.Add(ImageResources.aressmall);
-            sImageList.Images.Add(ImageResources.random_ref);
-            sImageList.Images.Add(ImageResources.sequential_ref);
-            sImageList.Images.Add(ImageResources.parallel_ref);
-            sImageList.Images.Add(ImageResources.vierge);
-            sImageList.Images.Add(ImageResources.base_cog_32_ref);
-            sImageList.Images.Add(ImageResources.SeriousWarning_ref);
-            sImageList.Images.Add(ImageResources.musicbytags_ref);
-            sImageList.Images.Add(ImageResources.WebRadio_Ref);
+            // order = image indices used by the tree; the second half are the "reference" variants (links)
+            string[] names = { "shuffle", "list-ordered", "dices", "audio-lines", "list-music", "shuffle", "list-ordered", "layers",
+                               "folder", "wand-sparkles", "triangle-alert", "tags", "radio" };
+            int[] colors = { EditorIcons.Accent, EditorIcons.Accent, EditorIcons.Warm, EditorIcons.Warm, EditorIcons.Normal, EditorIcons.Normal, EditorIcons.Normal, EditorIcons.Normal,
+                             EditorIcons.Normal, EditorIcons.Normal, EditorIcons.Warning, EditorIcons.Accent, EditorIcons.Accent };
+            var specs = new List<EditorIcons.Spec>();
+            for (int i = 0; i < names.Length; i++)
+                specs.Add(new EditorIcons.Spec(names[i], colors[i]));
+            for (int i = 0; i < names.Length; i++)
+                specs.Add(new EditorIcons.Spec(names[i], EditorIcons.Dim));
+            EditorIcons.Track(sImageList, specs);
         }
 
         public ProjectExplorer()
         {
             InitializeComponent();
-            if (playButton.Owner != null)
-                Ares.CommonGUI.IconLibrary.Bind(playButton.Owner, new Dictionary<ToolStripItem, string>
-                {
-                    { playButton, "play" },
-                    { stopButton, "square" }
-                });
             projectTree.ImageList = sImageList;
             ensureDefaultImageIndex(projectTree);
             RecreateTree();

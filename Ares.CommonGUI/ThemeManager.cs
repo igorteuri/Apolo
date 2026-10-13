@@ -138,7 +138,7 @@ namespace Ares.CommonGUI
         private static bool s_Installed;
         private static bool s_IdleLogged;
 
-        internal static void Log(string where, Exception ex)
+        public static void Log(string where, Exception ex)
         {
             try
             {
@@ -635,6 +635,21 @@ namespace Ares.CommonGUI
                 dg.DefaultCellStyle.ForeColor = p.Text;
                 dg.DefaultCellStyle.SelectionBackColor = p.Selection;
                 dg.DefaultCellStyle.SelectionForeColor = p.Text;
+                dg.AlternatingRowsDefaultCellStyle.BackColor = p.Surface;
+                dg.AlternatingRowsDefaultCellStyle.ForeColor = p.Text;
+                dg.AlternatingRowsDefaultCellStyle.SelectionBackColor = p.Selection;
+                dg.AlternatingRowsDefaultCellStyle.SelectionForeColor = p.Text;
+                dg.BorderStyle = BorderStyle.None;
+                dg.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+                dg.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+                foreach (DataGridViewColumn col in dg.Columns)
+                {
+                    // styles set on a column win over the grid's default style
+                    col.DefaultCellStyle.BackColor = p.Surface;
+                    col.DefaultCellStyle.ForeColor = p.Text;
+                    col.DefaultCellStyle.SelectionBackColor = p.Selection;
+                    col.DefaultCellStyle.SelectionForeColor = p.Text;
+                }
             }
             else if (c is PropertyGrid)
             {
@@ -1129,6 +1144,25 @@ namespace Ares.CommonGUI
             ThemePalette p = Current;
             dock.BackColor = p.Window;
             dock.ForeColor = p.Text;
+            // the area between panes / behind the splitters
+            SetProp(dock, "DockBackColor", p.Window);
+            // windows that are hidden or not yet docked are not part of the control tree
+            try
+            {
+                System.Collections.IEnumerable contents = GetProp(dock, "Contents") as System.Collections.IEnumerable;
+                if (contents != null)
+                {
+                    foreach (object content in contents)
+                    {
+                        Form contentForm = content as Form;
+                        if (contentForm != null && !contentForm.IsDisposed)
+                            Apply(contentForm);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
             object skin = GetProp(dock, "Skin");
             if (skin == null)
                 return;

@@ -680,9 +680,6 @@ namespace Ares.Player
             }
             else
             {
-                // asked by the Editor ("play in the Player"): back to the Apolo tab
-                if (m_ShowingEditor)
-                    ShowHome();
                 if (MessageBox.Show(this, String.Format(StringResources.OpenProjectQuestion, projectName), StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
                 {
                     OpenProject(projectPath, false);
@@ -1411,8 +1408,6 @@ namespace Ares.Player
 
         private void Player_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (EditorBlocksClosing(e))
-                return;
             if (TryHideToTray(e))
                 return;
             notifyIcon.Visible = false;
@@ -1641,8 +1636,17 @@ namespace Ares.Player
         private void StartEditor()
         {
 #if !MONO
-            // the Editor opens as a tab of this window
-            ShowEditorTab();
+            String appDir = System.IO.Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
+            String commandLine = System.IO.Path.Combine(appDir, "Apolo.Editor.exe");
+            try
+            {
+                Ares.Ipc.ApplicationInstance.CreateOrActivate("Ares.Editor", commandLine,
+                    m_Project != null ? m_Project.Title : "", m_Project != null ? m_Project.FileName : "");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, String.Format(StringResources.EditorStartError, ex.Message), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 #endif
         }
 

@@ -307,7 +307,7 @@ namespace Ares.Player
             }
         }
 
-        private const int MainRightMargin = 14;
+        private const int MainRightMargin = 12;
         private const int ElementsMinHeight = 150;
         private const int TrackStripHeight = 17;
         private const int LeftStripThickness = 17;
@@ -375,6 +375,10 @@ namespace Ares.Player
                 groupBox2.Width = lw;
             if (groupBox3.Width != lw)
                 groupBox3.Width = lw;
+            // the network box is hidden, so the state box takes its place: all columns end on the same line
+            int h = groupBox4.Bottom - groupBox3.Top;
+            if (h > 120 && groupBox3.Height != h)
+                groupBox3.Height = h;
             foreach (Ares.CommonGUI.ModernSlider bar in new Ares.CommonGUI.ModernSlider[] { overallVolumeBar, musicVolumeBar, soundVolumeBar })
             {
                 int w = groupBox2.ClientSize.Width - bar.Left - 10;

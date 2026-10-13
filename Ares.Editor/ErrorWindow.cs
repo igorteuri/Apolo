@@ -72,11 +72,11 @@ namespace Ares.Editor
             {
                 if (error.Severity == ModelInfo.ModelError.ErrorSeverity.Error)
                 {
-                    messagesGrid.Rows.Add(ImageResources.eventlogError, error.Message);
+                    messagesGrid.Rows.Add(EditorIcons.StatusIcon(true), error.Message);
                 }
                 else
                 {
-                    messagesGrid.Rows.Add(ImageResources.eventlogWarn, error.Message);
+                    messagesGrid.Rows.Add(EditorIcons.StatusIcon(false), error.Message);
                 }
                 m_ErrorElements.Add(error.Element);
                 if (++count == maxCount)

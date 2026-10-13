@@ -1,18 +1,28 @@
-# Ares (fork) - Roadmap
+# Apolo (fork do Ares) - Roadmap
 
-Concluído: tema escuro/claro, barra de progresso, mini-barras de SFX, pausa, seletor de saída de áudio,
-arrastar pastas/arquivos (Player e Editor), pasta da Biblioteca, ícones modernos, avisos discretos.
+## Concluído
+Tema escuro/claro, barra de progresso, pausa, seletor de saída de áudio, arrastar pastas/arquivos, Biblioteca,
+ícones modernos (Lucide), abas com páginas web, importação de pastas do disco, edição simples dentro do Player
+(seleção múltipla, apagar, opções ao soltar pastas), atalhos configuráveis, ferramenta de arquivos ausentes,
+controle remoto + plugin Stream Deck com árvore de pastas, bandeja do Windows, bot do Discord, overlay para OBS,
+Editor modernizado (tema, painéis acopláveis, ícones).
 
-Em andamento / próximos:
-- Modo de edição simples dentro do Player (renomear/remover/reordenar modos e botões)
-- Tradução para português (com opção de voltar ao inglês)
-- Compartilhamento de áudio via VDO.Ninja dentro do programa (usa o dispositivo de saída escolhido)
-- Páginas web embutidas (soundboards, YouTube)
-
-Futuro (baixa prioridade):
-- Overlay para OBS: página web local (Browser Source) mostrando o nome da música tocando agora, para lives
-- Entrada de áudio / gravação dentro do Ares para usar como música
-- Rodar na bandeja do Windows (Icon Tray): ao fechar a janela, o programa apenas minimiza para a bandeja e continua tocando
-- Enviar o áudio como bot do Discord (o bot entra no canal de voz e transmite o que o Ares toca)
+## Próximos passos
+- Instalador e aviso de atualização automática
 - Corrigir / atualizar o controle web (web controller)
-- Ajustes finais de tema
+- Ajustes finais de tema e de alinhamento da interface
+
+## Ideias em estudo
+- **Foundry VTT 14**: integração para tocar o áudio do Apolo dentro do Foundry (módulo/ponte que recebe o que o Apolo toca ou controla as playlists).
+- **Bibliotecas de áudio livres**: baixar músicas e efeitos sonoros de bibliotecas sem direitos autorais (Freesound, YouTube Audio Library e outras) direto do programa, já organizando na Biblioteca.
+- **Verificador de direitos autorais**: ferramenta para checar se uma música é segura para tocar no YouTube/Spotify (live, vídeos) ou se pode gerar bloqueio/claim.
+- **Renomeador de músicas**: limpar e embelezar nomes de arquivos (tirar "[Official Video]", números, underscores...), buscando título/artista/álbum na internet (MusicBrainz e similares) e gravando as tags.
+- **Novo formato de projeto**: trocar a extensão `.ares` por uma própria do Apolo (com compatibilidade para abrir os projetos antigos).
+- **Modos de exportação**:
+  - salvar apenas a lista de sons;
+  - compactar (zip) os arquivos de áudio e enviar junto com a lista, para compartilhar o projeto completo;
+  - exportar só as configurações do usuário (aparência, atalhos, preferências) como backup.
+- **Imagens para os botões**: ferramenta que sugere imagens bonitas para preencher os botões a partir do título (ex.: botão "Floresta" sugere fotos de floresta).
+
+## Futuro (baixa prioridade)
+- Entrada de áudio / gravação dentro do Apolo para usar como música

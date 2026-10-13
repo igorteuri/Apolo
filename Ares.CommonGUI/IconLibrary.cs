@@ -190,6 +190,12 @@ namespace Ares.CommonGUI
         /// </summary>
         public static void BindMenu(ToolStrip menu, IDictionary<string, string> byName)
         {
+            BindMenu(menu, byName, false);
+        }
+
+        /// <summary>Same, for a context menu (<paramref name="topLevelItems"/> = true: the icons go on the menu's own items).</summary>
+        public static void BindMenu(ToolStrip menu, IDictionary<string, string> byName, bool topLevelItems)
+        {
             Size lastSize = Size.Empty;
             Color lastColor = Color.Empty;
             Action apply = () =>
@@ -201,11 +207,18 @@ namespace Ares.CommonGUI
                 int applied = 0;
                 try
                 {
-                    foreach (ToolStripItem top in menu.Items)
+                    if (topLevelItems)
                     {
-                        ToolStripDropDownItem dd = top as ToolStripDropDownItem;
-                        if (dd != null)
-                            applied += ApplyMenuIcons(dd.DropDownItems, byName, size, color);
+                        applied += ApplyMenuIcons(menu.Items, byName, size, color);
+                    }
+                    else
+                    {
+                        foreach (ToolStripItem top in menu.Items)
+                        {
+                            ToolStripDropDownItem dd = top as ToolStripDropDownItem;
+                            if (dd != null)
+                                applied += ApplyMenuIcons(dd.DropDownItems, byName, size, color);
+                        }
                     }
                 }
                 catch (Exception ex)

@@ -68,12 +68,13 @@ namespace Ares.Editor.AudioSourceSearch
         static AudioSourceSearchWindow()
         {
             sImageList = new ImageList();
-            // Image Index 0: ModeElement
-            sImageList.Images.Add(ImageResources.parallel);
-            // Image Index 1: Sound
-            sImageList.Images.Add(ImageResources.sounds1);
-            // Image Index 2: Music
-            sImageList.Images.Add(ImageResources.music1);
+            // 0: ModeElement, 1: Sound, 2: Music
+            EditorIcons.Track(sImageList, new EditorIcons.Spec[]
+            {
+                new EditorIcons.Spec("layers", EditorIcons.Normal),
+                new EditorIcons.Spec("audio-lines", EditorIcons.Warm),
+                new EditorIcons.Spec("music", EditorIcons.Accent)
+            });
         }
 
         #endregion
@@ -100,12 +101,6 @@ namespace Ares.Editor.AudioSourceSearch
 
             // Initialize the component
             InitializeComponent();
-            if (playButton.Owner != null)
-                Ares.CommonGUI.IconLibrary.Bind(playButton.Owner, new Dictionary<ToolStripItem, string>
-                {
-                    { playButton, "play" },
-                    { stopButton, "square" }
-                });
 
             // Populate the audio sources combo box
             foreach (IAudioSource audioSource in this.m_AudioSources)
