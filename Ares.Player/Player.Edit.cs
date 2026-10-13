@@ -103,6 +103,7 @@ namespace Ares.Player
             InitExportMenu();
             InitMusicToolsMenu();
             InitOnlineMediaMenu();
+            InitAppearanceMenu();
             // toolbar: edit toggle + add menu (the add menu only shows in edit mode)
             m_EditButton = new ToolStripButton();
             m_EditButton.Name = "editModeButton";
@@ -148,6 +149,7 @@ namespace Ares.Player
             m_ModeMenu.Items.Add(T("Nova subpasta aqui...", "New subfolder here..."), null, (s, e) => NewEmptyMode(true));
             m_ModeMenu.Items.Add(T("Importar pasta do computador aqui dentro...", "Import a folder of the computer in here..."), null, (s, e) => ImportFolderAsFolders(true));
             m_ModeMenu.Items.Add(T("Renomear pasta...", "Rename folder..."), null, (s, e) => RenameCurrentMode());
+            m_ModeMenu.Items.Add(T("Cor da pasta...", "Folder color..."), null, (s, e) => ChooseModeColor());
             m_ModeMenu.Items.Add(T("Excluir pasta", "Delete folder"), null, (s, e) => DeleteCurrentMode());
             m_ModeMenu.Items.Add(new ToolStripSeparator());
             m_ModeMenu.Items.Add(T("Mover para cima", "Move up"), null, (s, e) => MoveCurrentMode(-1));
@@ -180,6 +182,9 @@ namespace Ares.Player
             m_ElementMenu.Items.Add(new ToolStripSeparator());
             m_ElementMenu.Items.Add(T("Escolher imagem...", "Choose picture..."), null, (s, e) => ChooseButtonPicture());
             m_ElementMenu.Items.Add(T("Sugerir imagens na internet...", "Suggest pictures from the internet..."), null, (s, e) => SuggestButtonImages());
+            m_ElementMenu.Items.Add(T("Escolher emoji...", "Choose emoji..."), null, (s, e) => ChooseButtonEmoji());
+            m_ElementMenu.Items.Add(T("Emoji automático (pelo nome)", "Automatic emoji (from the name)"), null, (s, e) => AutoIconForButton());
+            m_ElementMenu.Items.Add(T("Cor do botão...", "Button color..."), null, (s, e) => ChooseButtonColor());
             m_ElementMenu.Items.Add(T("Escolher ícone...", "Choose icon..."), null, (s, e) => ChooseButtonIcon());
             m_ElementMenu.Items.Add(T("Remover imagem / ícone", "Remove picture / icon"), null, (s, e) => RemoveButtonImage());
             m_ElementMenu.Items.Add(new ToolStripSeparator());

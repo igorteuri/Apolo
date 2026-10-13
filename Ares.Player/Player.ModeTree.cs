@@ -240,8 +240,19 @@ namespace Ares.Player
             Color back = selected ? (themed ? p.Selection : SystemColors.Highlight) : modesList.BackColor;
             Color fore = themed ? p.Text : (selected ? SystemColors.HighlightText : modesList.ForeColor);
             Color dim = themed ? p.TextDim : fore;
+            Color tint = Ares.CommonGUI.ButtonImageStore.GetColor(m_CurrentProjectPath, node.Title, null);
+            if (!tint.IsEmpty)
+            {
+                double t = selected ? 0.55 : 0.28;
+                back = Color.FromArgb(255, (int)(back.R + (tint.R - back.R) * t), (int)(back.G + (tint.G - back.G) * t), (int)(back.B + (tint.B - back.B) * t));
+            }
             using (SolidBrush b = new SolidBrush(back))
                 e.Graphics.FillRectangle(b, e.Bounds);
+            if (!tint.IsEmpty)
+            {
+                using (SolidBrush strip = new SolidBrush(tint))
+                    e.Graphics.FillRectangle(strip, e.Bounds.X, e.Bounds.Y, 5, e.Bounds.Height);
+            }
             if (selected && themed)
             {
                 using (SolidBrush bar = new SolidBrush(p.Accent))

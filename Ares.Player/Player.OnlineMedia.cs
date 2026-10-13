@@ -325,12 +325,15 @@ namespace Ares.Player
             private readonly Button m_Download = new Button();
             private readonly Button m_Folder = new Button();
             private readonly Button m_Key = new Button();
+            private readonly Button m_YouTube = new Button();
+            private readonly Button m_Import = new Button();
             private readonly Button m_Close = new Button();
             private bool m_Busy;
 
             public FreeAudioDialog()
                 : base(T("Música e efeitos sonoros livres", "Free music and sound effects"))
             {
+                ClientSize = new Size(920, 690);
                 Label l = new Label();
                 l.Text = T("Buscar:", "Search:");
                 Place(l, 12, 16, 60, 20, AnchorStyles.Top | AnchorStyles.Left);
@@ -374,32 +377,41 @@ namespace Ares.Player
                 m_List.Columns.Add(T("Licença", "Licence"), 110);
                 m_List.Columns.Add(T("Origem", "Source"), 110);
                 m_List.Columns.Add(T("Duração", "Length"), 80);
-                Place(m_List, 12, 70, 896, 430, All4);
+                Place(m_List, 12, 70, 896, 450, All4);
                 m_List.SelectedIndexChanged += (s, e) => UpdateButtons();
                 Controls.Add(m_List);
 
-                Place(m_Info, 12, 506, 896, 56, BottomLR);
+                Place(m_Info, 12, 526, 896, 52, BottomLR);
                 Controls.Add(m_Info);
-                Place(m_Progress, 12, 566, 896, 8, BottomLR);
+                Place(m_Progress, 12, 582, 896, 8, BottomLR);
                 m_Progress.Visible = false;
                 Controls.Add(m_Progress);
 
-                Place(m_Page, 12, 596, 190, 30, BottomL);
+                Place(m_Page, 12, 598, 190, 30, BottomL);
                 m_Page.Text = T("Ouvir / ver a página", "Listen / see the page");
                 m_Page.Click += (s, e) => OpenPage();
                 Controls.Add(m_Page);
-                Place(m_Download, 210, 596, 190, 30, BottomL);
+                Place(m_Download, 210, 598, 190, 30, BottomL);
                 m_Download.Text = T("Baixar para a Biblioteca", "Download to the library");
                 m_Download.Click += (s, e) => DownloadSelected();
                 Controls.Add(m_Download);
-                Place(m_Folder, 408, 596, 190, 30, BottomL);
+                Place(m_Folder, 408, 598, 190, 30, BottomL);
                 m_Folder.Text = T("Abrir a pasta dos downloads", "Open the downloads folder");
                 m_Folder.Click += (s, e) => OpenFolder();
                 Controls.Add(m_Folder);
-                Place(m_Close, 808, 596, 100, 30, BottomR);
+                Place(m_Close, 808, 634, 100, 30, BottomR);
                 m_Close.Text = T("Fechar", "Close");
                 m_Close.Click += (s, e) => Close();
                 Controls.Add(m_Close);
+
+                Place(m_YouTube, 12, 634, 280, 30, BottomL);
+                m_YouTube.Text = T("Biblioteca de áudio do YouTube (abrir)", "YouTube Audio Library (open)");
+                m_YouTube.Click += (s, e) => OpenYouTubeLibrary();
+                Controls.Add(m_YouTube);
+                Place(m_Import, 300, 634, 300, 30, BottomL);
+                m_Import.Text = T("Trazer arquivos baixados do YouTube...", "Bring files downloaded from YouTube...");
+                m_Import.Click += (s, e) => ImportYouTubeFiles();
+                Controls.Add(m_Import);
 
                 m_Info.Text = T("Digite o que procura (em inglês acha mais). Tudo vem com autor e licença, que o Apolo guarda nas tags do arquivo e no arquivo creditos.txt. "
                     + "Licenças \"BY\" pedem que você dê crédito ao autor (na descrição da live, por exemplo).",
@@ -545,6 +557,66 @@ namespace Ares.Player
                     }
                     break;
                 }
+            }
+
+            // The audio library of YouTube has no public search, it only exists inside YouTube Studio (with the account of the channel).
+            // So Apolo opens it, and brings the downloaded files into the library with the credit.
+            private void OpenYouTubeLibrary()
+            {
+                try { Process.Start("https://studio.youtube.com/"); } catch (Exception ex) { MessageBox.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+                m_Info.Text = T("No YouTube Studio, abra \"Biblioteca de áudio\" no menu da esquerda, filtre por gênero, humor ou duração e baixe as faixas. "
+                    + "Depois clique em \"Trazer arquivos baixados do YouTube...\" para colocá-las na Biblioteca do Apolo.",
+                    "In YouTube Studio open \"Audio library\" in the left menu, filter by genre, mood or length and download the tracks. "
+                    + "Then click \"Bring files downloaded from YouTube...\" to put them in the Apolo library.");
+            }
+
+            private void ImportYouTubeFiles()
+            {
+                string[] files;
+                using (OpenFileDialog dlg = new OpenFileDialog())
+                {
+                    dlg.Multiselect = true;
+                    dlg.Title = T("Arquivos baixados da Biblioteca de áudio do YouTube", "Files downloaded from the YouTube Audio Library");
+                    dlg.Filter = T("Arquivos de áudio|*.mp3;*.ogg;*.wav;*.flac;*.m4a|Todos os arquivos|*.*", "Audio files|*.mp3;*.ogg;*.wav;*.flac;*.m4a|All files|*.*");
+                    string downloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+                    if (Directory.Exists(downloads))
+                        dlg.InitialDirectory = downloads;
+                    if (dlg.ShowDialog(this) != DialogResult.OK)
+                        return;
+                    files = dlg.FileNames;
+                }
+                string folder = Path.Combine(Path.Combine(Ares.CommonGUI.LibraryHelper.LibraryFolder, "Livres"), "YouTube");
+                int ok = 0;
+                string error = null;
+                foreach (string f in files)
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(folder);
+                        string name = Path.GetFileName(f);
+                        string target = Path.Combine(folder, name);
+                        for (int i = 2; File.Exists(target) && i < 1000; i++)
+                            target = Path.Combine(folder, Path.GetFileNameWithoutExtension(name) + " (" + i + ")" + Path.GetExtension(name));
+                        File.Copy(f, target);
+                        Ares.Tags.AudioTags.WriteCredit(target, "YouTube Audio Library",
+                            "YouTube Audio Library: confira na Biblioteca de áudio se a faixa pede crédito e onde ela pode ser usada.");
+                        try
+                        {
+                            File.AppendAllText(Path.Combine(folder, "creditos.txt"),
+                                name + "\t\t\tYouTube Audio Library\thttps://studio.youtube.com/" + Environment.NewLine, System.Text.Encoding.UTF8);
+                        }
+                        catch (Exception) { }
+                        ok++;
+                    }
+                    catch (Exception ex)
+                    {
+                        error = ex.Message;
+                    }
+                }
+                m_Info.Text = ok + T(" arquivo(s) copiado(s) para: ", " file(s) copied to: ") + folder
+                    + (error != null ? "\n" + T("Erro: ", "Error: ") + error : "")
+                    + "\n" + T("Atenção: as faixas do YouTube têm regras próprias (algumas pedem crédito, e o uso fora do YouTube pode ser restrito). Confira na Biblioteca de áudio.",
+                        "Note: YouTube tracks have their own rules (some ask for credit, and use outside YouTube may be restricted). Check them in the Audio library.");
             }
 
             private void OpenFolder()

@@ -12,6 +12,7 @@ O Apolo é uma modernização do **[Ares](http://aresrpg.sourceforge.net/)** (*A
 - **Ares** — o programa original é de **Jörg Ruedenauer** e colaboradores. Todo o crédito pela base do programa (motor de áudio, projetos, Editor, Player e controladores) pertence a eles. O Apolo é um *fork* e mantém os nomes internos `Ares.*` no código. Os projetos agora são `.apolo` e os dados ficam em `%APPDATA%\Apolo`; projetos `.ares` e a pasta `%APPDATA%\Ares` antigos são copiados automaticamente na primeira abertura (os originais não são apagados).
 - **Áudio:** motor de áudio próprio do Apolo, feito com [NAudio](https://github.com/naudio/NAudio), [NLayer](https://github.com/naudio/NLayer) e [NVorbis](https://github.com/NVorbis/NVorbis) (licença MIT), [Concentus](https://github.com/lostromb/concentus) (licença BSD) e [TagLib#](https://github.com/mono/taglib-sharp) (licença LGPL). Todas livres, inclusive para uso comercial.
 - **Ícones:** [Lucide](https://lucide.dev/) (licença ISC).
+- **Emojis dos botões:** [Noto Emoji](https://github.com/googlefonts/noto-emoji), do Google (licença Apache 2.0), com o [Twemoji](https://github.com/jdecked/twemoji) (CC-BY 4.0) como segunda fonte. Os desenhos são baixados na primeira vez que um emoji é escolhido.
 - **Páginas web embutidas:** Microsoft WebView2.
 - **Túnel do controle remoto:** [cloudflared](https://github.com/cloudflare/cloudflared), da Cloudflare.
 - **Discord:** [discord.js/voice](https://github.com/discordjs/discord.js) e [@snazzah/davey](https://github.com/Snazzah/davey), rodando em um processo Node.js que acompanha o programa.
@@ -36,6 +37,7 @@ Assim como o Ares, o Apolo é distribuído sob a **GNU GPL (versão 2 ou posteri
 - **Renomeador de músicas** (menu Extras): limpa nomes de arquivo, busca título/artista/álbum na internet ([AcoustID](https://acoustid.org/) + [MusicBrainz](https://musicbrainz.org/)) e renomeia por um padrão que você escolhe, com prévia e desfazer.
 - **Verificador de direitos autorais** (menu Extras): identifica a música e mostra um semáforo de risco para lives e vídeos. É só um indicativo, não uma garantia.
 - **Música e efeitos livres** (menu Extras) e **imagens para os botões**: busca em bancos de licença livre ([Openverse](https://openverse.org/), Wikimedia Commons, Internet Archive e, opcionalmente, Freesound), sempre guardando autor e licença.
+- **Aparência:** emoji (escolhido ou sugerido automaticamente pelo nome do botão) e cor de destaque para cada botão e cada pasta.
 - **Aviso de atualização** pelos Releases do GitHub e **mostrar na pasta** para qualquer música da lista.
 - Temas claro e escuro, ícone na bandeja do Windows, português e inglês.
 

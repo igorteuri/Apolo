@@ -40,8 +40,8 @@ namespace Ares.Online
             }
         }
 
-        private const String RepositoryUrl = "https://github.com/igorteuri/Ares";
-        private const String LatestReleaseApi = "https://api.github.com/repos/igorteuri/Ares/releases/latest";
+        private const String RepositoryUrl = "https://github.com/igorteuri/Apolo";
+        private const String LatestReleaseApi = "https://api.github.com/repos/igorteuri/Apolo/releases/latest";
 
         public static void ShowHomepage(Form owner)
         {

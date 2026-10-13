@@ -1131,6 +1131,9 @@ namespace Ares.Player
                             checkBox.Picture = Ares.CommonGUI.ButtonImageStore.LoadImage(m_CurrentProjectPath, specs[i]);
                         else if (kinds[i] == 1)
                             checkBox.IconName = specs[i].Substring(7);
+                        if (kinds[i] == 2 && specs[i].IndexOf("emoji-", StringComparison.OrdinalIgnoreCase) >= 0)
+                            checkBox.PictureContain = true;
+                        checkBox.TintColor = Ares.CommonGUI.ButtonImageStore.GetColor(m_CurrentProjectPath, shownModeTitle, visible[i].Title);
                         checkBox.SetBounds(0, 0, cardSize.Width, cardSize.Height);
                         checkBox.Checked = m_PlayingControl.CurrentModeElements.Contains(element);
                         int id = element.Id;

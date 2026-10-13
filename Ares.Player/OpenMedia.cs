@@ -51,7 +51,7 @@ namespace Ares.Player
             {
                 string v = "";
                 try { v = System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString(3); } catch (Exception) { }
-                return "Apolo/" + v + " (https://github.com/igorteuri/Ares)";
+                return "Apolo/" + v + " (https://github.com/igorteuri/Apolo)";
             }
         }
 

@@ -499,7 +499,7 @@ namespace Ares.TagsImport
         {
             m_RateGate = new RateGate(1, TimeSpan.FromSeconds(1.5));
             String assemblyVersion = (new System.Reflection.AssemblyName(System.Reflection.Assembly.GetExecutingAssembly().FullName)).Version.ToString();
-            m_UserAgent = "Apolo/" + assemblyVersion + " (https://github.com/igorteuri/Ares)";
+            m_UserAgent = "Apolo/" + assemblyVersion + " (https://github.com/igorteuri/Apolo)";
         }
 
         public void Dispose()

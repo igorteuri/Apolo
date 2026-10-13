@@ -172,13 +172,76 @@ namespace Ares.CommonGUI
         {
             if (string.IsNullOrEmpty(projectPath))
                 return;
+            Dictionary<string, string> map = Load(projectPath);
+            bool changed = false;
             string spec = Get(projectPath, mode, oldTitle);
-            if (spec == null)
+            if (spec != null)
+            {
+                map.Remove(Key(mode, oldTitle));
+                map[Key(mode, newTitle)] = spec;
+                changed = true;
+            }
+            string color;
+            if (map.TryGetValue(Key(mode, ColorPrefix + oldTitle), out color))
+            {
+                map.Remove(Key(mode, ColorPrefix + oldTitle));
+                map[Key(mode, ColorPrefix + newTitle)] = color;
+                changed = true;
+            }
+            if (changed)
+                Save(projectPath);
+        }
+
+        // ---- background colors of buttons and folders ("#RRGGBB"), kept in the same sidecar file ----
+
+        private const string ColorPrefix = "cor:";
+
+        /// <summary>Highlight color of a button (element given) or of a folder (element null); Color.Empty if none.</summary>
+        public static Color GetColor(string projectPath, string mode, string element)
+        {
+            if (string.IsNullOrEmpty(projectPath))
+                return Color.Empty;
+            string spec;
+            if (!Load(projectPath).TryGetValue(Key(mode, ColorPrefix + (element ?? "")), out spec) || spec == null)
+                return Color.Empty;
+            if (spec.Length == 7 && spec[0] == '#')
+            {
+                try
+                {
+                    return Color.FromArgb(255, Convert.ToInt32(spec.Substring(1, 2), 16), Convert.ToInt32(spec.Substring(3, 2), 16),
+                        Convert.ToInt32(spec.Substring(5, 2), 16));
+                }
+                catch (Exception)
+                {
+                }
+            }
+            return Color.Empty;
+        }
+
+        /// <summary>Sets the color of a button or folder (Color.Empty removes it).</summary>
+        public static void SetColor(string projectPath, string mode, string element, Color color)
+        {
+            if (string.IsNullOrEmpty(projectPath))
                 return;
             Dictionary<string, string> map = Load(projectPath);
-            map.Remove(Key(mode, oldTitle));
-            map[Key(mode, newTitle)] = spec;
+            string key = Key(mode, ColorPrefix + (element ?? ""));
+            if (color.IsEmpty)
+                map.Remove(key);
+            else
+                map[key] = "#" + color.R.ToString("X2") + color.G.ToString("X2") + color.B.ToString("X2");
             Save(projectPath);
+        }
+
+        /// <summary>Copies the picture of an emoji into the "apolo_icons" folder beside the project; returns the setting for it.</summary>
+        public static string ImportEmoji(string projectPath, string emojiFile, string code)
+        {
+            string dir = Path.Combine(Path.GetDirectoryName(projectPath), "apolo_icons");
+            Directory.CreateDirectory(dir);
+            string name = "emoji-" + code + ".png";
+            string target = Path.Combine(dir, name);
+            if (!File.Exists(target))
+                File.Copy(emojiFile, target);
+            return "img:apolo_icons\\" + name;
         }
 
         public static void RenameMode(string projectPath, string oldMode, string newMode)

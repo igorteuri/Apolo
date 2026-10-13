@@ -71,6 +71,31 @@ namespace Ares.Player
             set { m_IconName = value; Invalidate(); }
         }
 
+        private Color m_Tint = Color.Empty;
+        private bool m_PictureContain;
+
+        /// <summary>Highlight color chosen for this button (Color.Empty = the color of the theme).</summary>
+        public Color TintColor
+        {
+            get { return m_Tint; }
+            set { m_Tint = value; Invalidate(); }
+        }
+
+        /// <summary>The picture is shown whole and centered (emojis) instead of filling the area (photos).</summary>
+        public bool PictureContain
+        {
+            get { return m_PictureContain; }
+            set { m_PictureContain = value; Invalidate(); }
+        }
+
+        private static Color Mix(Color a, Color b, double t)
+        {
+            return Color.FromArgb(255,
+                (int)Math.Round(a.R + (b.R - a.R) * t),
+                (int)Math.Round(a.G + (b.G - a.G) * t),
+                (int)Math.Round(a.B + (b.B - a.B) * t));
+        }
+
         /// <summary>Own picture (shared bitmap, not owned by the button), or null.</summary>
         public Bitmap Picture
         {
@@ -210,7 +235,9 @@ namespace Ares.Player
                 Rectangle area = new Rectangle(x, 4, thumb, thumb);
                 Region oldClip = g.Clip;
                 g.SetClip(area, CombineMode.Intersect);
-                float scale = Math.Max((float)area.Width / m_Picture.Width, (float)area.Height / m_Picture.Height);
+                float scale = m_PictureContain
+                    ? Math.Min((float)area.Width / m_Picture.Width, (float)area.Height / m_Picture.Height)
+                    : Math.Max((float)area.Width / m_Picture.Width, (float)area.Height / m_Picture.Height);
                 int w = (int)Math.Ceiling(m_Picture.Width * scale);
                 int h = (int)Math.Ceiling(m_Picture.Height * scale);
                 g.InterpolationMode = InterpolationMode.HighQualityBicubic;
@@ -250,6 +277,14 @@ namespace Ares.Player
             Color accent = p != null && !p.IsClassic ? p.Accent : SystemColors.Highlight;
             Color border = p != null && !p.IsClassic ? p.Border : SystemColors.ControlDark;
             Color text = p != null && !p.IsClassic ? p.Text : SystemColors.ControlText;
+            if (!m_Tint.IsEmpty)
+            {
+                surface = Mix(surface, m_Tint, 0.30);
+                hover = Mix(hover, m_Tint, 0.45);
+                selection = Mix(selection, m_Tint, 0.65);
+                accent = m_Tint;
+                border = Mix(border, m_Tint, 0.5);
+            }
 
             Color parentBack = Parent != null ? ThemeManager.EffectiveBack(this) : window;
             g.Clear(parentBack);
@@ -279,7 +314,17 @@ namespace Ares.Player
                     g.SetClip(path, CombineMode.Intersect);
                     g.SetClip(area, CombineMode.Intersect);
                     // cover: fill the area, cut what does not fit
-                    float scale = Math.Max((float)area.Width / m_Picture.Width, (float)area.Height / m_Picture.Height);
+                    float scale;
+                    if (m_PictureContain)
+                    {
+                        // emoji: whole picture with a little room around it
+                        Rectangle inner = Rectangle.Inflate(area, -6, -4);
+                        scale = Math.Min((float)inner.Width / m_Picture.Width, (float)inner.Height / m_Picture.Height);
+                    }
+                    else
+                    {
+                        scale = Math.Max((float)area.Width / m_Picture.Width, (float)area.Height / m_Picture.Height);
+                    }
                     int w = (int)Math.Ceiling(m_Picture.Width * scale);
                     int h = (int)Math.Ceiling(m_Picture.Height * scale);
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
