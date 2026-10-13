@@ -51,6 +51,7 @@ namespace Ares.Playing.Audio
     internal sealed class MpegSource : IAudioSource
     {
         private readonly NLayer.MpegFile m_File;
+        private readonly Stream m_Owned;
         private readonly bool m_Seekable;
         private double m_Length;
         private long m_Frames;
@@ -65,7 +66,8 @@ namespace Ares.Playing.Audio
 
         public MpegSource(Stream stream)
         {
-            m_File = new NLayer.MpegFile(stream, true);
+            m_Owned = stream;
+            m_File = new NLayer.MpegFile(stream);
             m_Seekable = false;
             m_Length = 0;
         }
@@ -93,6 +95,10 @@ namespace Ares.Playing.Audio
         public void Dispose()
         {
             m_File.Dispose();
+            if (m_Owned != null)
+            {
+                try { m_Owned.Dispose(); } catch (Exception) { }
+            }
         }
     }
 
@@ -157,7 +163,7 @@ namespace Ares.Playing.Audio
     {
         private readonly string m_Path;
         private FileStream m_File;
-        private Concentus.Structs.OpusDecoder m_Decoder;
+        private Concentus.IOpusDecoder m_Decoder;
         private Concentus.Oggfile.OpusOggReadStream m_Reader;
         private float[] m_Pending = new float[0];
         private int m_PendingStart, m_PendingCount;
@@ -186,7 +192,7 @@ namespace Ares.Playing.Audio
         {
             Close();
             m_File = new FileStream(m_Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            m_Decoder = Concentus.Structs.OpusDecoder.Create(48000, 2);
+            m_Decoder = Concentus.OpusCodecFactory.CreateDecoder(48000, 2);
             m_Reader = new Concentus.Oggfile.OpusOggReadStream(m_Decoder, m_File);
             m_PendingStart = 0;
             m_PendingCount = 0;
