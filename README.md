@@ -21,7 +21,7 @@ O Apolo é uma modernização do **[Ares](http://aresrpg.sourceforge.net/)** (*A
 
 ## Licença
 
-Assim como o Ares, o Apolo é distribuído sob a **GNU GPL (versão 2 ou posterior)**. Veja [LICENSE.txt](LICENSE.txt) e [license-gplv3.txt](license-gplv3.txt).
+Assim como o Ares, o Apolo é distribuído sob a **GNU GPL (versão 2 ou posterior)**. Veja [LICENSE.txt](LICENSE.txt) e [Licencas/license-gplv3.txt](Licencas/license-gplv3.txt).
 
 ## O que o Apolo faz
 
@@ -44,11 +44,11 @@ Assim como o Ares, o Apolo é distribuído sob a **GNU GPL (versão 2 ou posteri
 
 ## Como compilar
 
-Veja [HowToBuild.md](HowToBuild.md) e [Modules.md](Modules.md). O repositório também tem um fluxo do GitHub Actions (`.github/workflows/build.yml`) que compila o Apolo no Windows e empacota o Discord e o plugin do Stream Deck.
+Veja [docs/HowToBuild.md](docs/HowToBuild.md) e [docs/Modules.md](docs/Modules.md). O repositório também tem um fluxo do GitHub Actions (`.github/workflows/build.yml`) que compila o Apolo no Windows e empacota o Discord e o plugin do Stream Deck.
 
 ## Roadmap
 
-Veja [ROADMAP.md](ROADMAP.md).
+Veja [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ---
 
