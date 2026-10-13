@@ -25,8 +25,12 @@ const state = {
   manuallyStopped: false,
   volumeTimer: null,
   loudnessSeen: 0,
-  connectTimer: null
+  connectTimer: null,
+  now: { playing: false },
+  bridge: { port: null, timer: null, lastSent: "", lastTime: 0, lastNow: null, fails: 0 }
 };
+
+const REMOTE_COMMANDS = ["pause", "stop", "prev", "next"];
 
 const t = (key) => game.i18n.localize(`APOLO.${key}`);
 
@@ -95,6 +99,13 @@ Hooks.once("init", () => {
       await game.settings.set(MODULE_ID, "resetPosition", false);
       placeWidget();
     }
+  });
+  game.settings.register(MODULE_ID, "controllers", {
+    scope: "world",
+    config: false,
+    type: Array,
+    default: [],
+    onChange: () => updateUi()
   });
   game.settings.register(MODULE_ID, "volume", { scope: "client", config: false, type: Number, default: 0.8 });
   game.settings.register(MODULE_ID, "muted", { scope: "client", config: false, type: Boolean, default: false });
@@ -227,6 +238,14 @@ const CONTROLS_HTML = (withGrip) => `
       <input type="range" class="apolo-vol" min="0" max="100" step="1" title="${t("Volume")}">
     </span>
     ${game.user.isGM ? `<button type="button" class="apolo-call" data-apolo="call" title="${t("CallAll")}"><i class="fa-solid fa-bullhorn"></i></button>` : ""}
+    ${!withGrip && game.user.isGM ? `<button type="button" class="apolo-pick" data-apolo="pick" title="${t("PickTitle")}"><i class="fa-solid fa-user-gear"></i></button>` : ""}
+    ${!withGrip ? `<div class="apolo-now" hidden></div>
+    <div class="apolo-transport" hidden>
+      <button type="button" data-apolo="ctl" data-cmd="prev" title="${t("Prev")}"><i class="fa-solid fa-backward-step"></i></button>
+      <button type="button" data-apolo="ctl" data-cmd="pause" title="${t("Pause")}"><i class="fa-solid fa-pause"></i></button>
+      <button type="button" data-apolo="ctl" data-cmd="stop" title="${t("Stop")}"><i class="fa-solid fa-stop"></i></button>
+      <button type="button" data-apolo="ctl" data-cmd="next" title="${t("Next")}"><i class="fa-solid fa-forward-step"></i></button>
+    </div>` : ""}
   `;
 
 /** Click and slider handling shared by the floating button and the row in the sidebar. */
@@ -259,6 +278,10 @@ function wireControls(el) {
       updateUi();
     } else if (action === "call") {
       game.socket.emit(`module.${MODULE_ID}`, { type: "listen" });
+    } else if (action === "pick") {
+      chooseControllers();
+    } else if (action === "ctl") {
+      sendControl(target.dataset.cmd);
     }
   });
 }
@@ -359,8 +382,176 @@ function updateUi() {
     if (icon) icon.className = muted ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
     const slider = el.querySelector(".apolo-vol");
     if (slider && document.activeElement !== slider) slider.value = Math.round(currentVolume() * 100);
+
+    // what is playing (only in the sidebar row, the natural Foundry interface)
+    const nowEl = el.querySelector(".apolo-now");
+    if (nowEl) {
+      const n = state.now;
+      const text = n?.playing ? [n.title, n.artist].filter(Boolean).join(" - ") || n.list || "" : "";
+      nowEl.hidden = !text;
+      nowEl.textContent = text ? `\u266A ${text}${n.paused ? ` (${t("Paused")})` : ""}` : "";
+      nowEl.title = n?.list ? `${n.list}` : "";
+    }
+    // controls for the player chosen by the GM
+    const transport = el.querySelector(".apolo-transport");
+    if (transport) {
+      transport.hidden = !iAmController();
+      const pauseIcon = transport.querySelector("[data-cmd='pause'] i");
+      if (pauseIcon) pauseIcon.className = state.now?.playing && state.now?.paused ? "fa-solid fa-play" : "fa-solid fa-pause";
+    }
   }
 }
+
+/* ---------------------------------------------------------------- what is playing + remote control (through the GM) */
+
+function controllerIds() {
+  const value = game.settings.get(MODULE_ID, "controllers");
+  return Array.isArray(value) ? value : [];
+}
+
+function iAmController() {
+  return !game.user.isGM && controllerIds().includes(game.user.id);
+}
+
+function isActiveGM() {
+  return game.user.isGM && game.users.activeGM?.id === game.user.id;
+}
+
+/** The GM's browser talks to the Apolo on the same computer (http://localhost); the players only talk to the GM through Foundry. */
+async function bridgeFetch(path, options = {}) {
+  const id = getStreamId();
+  if (!id) throw new Error("no stream id");
+  const ports = state.bridge.port ? [state.bridge.port] : Array.from({ length: 10 }, (_, i) => 8791 + i);
+  let lastError = new Error("Apolo not reachable");
+  for (const port of ports) {
+    try {
+      const response = await fetch(`http://localhost:${port}${path}`, {
+        ...options,
+        headers: { ...(options.headers ?? {}), "X-Apolo": id }
+      });
+      if (!response.ok) {
+        lastError = new Error(`HTTP ${response.status}`);
+        continue;
+      }
+      state.bridge.port = port;
+      return response;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  state.bridge.port = null;
+  throw lastError;
+}
+
+function broadcastNow(now) {
+  state.bridge.lastNow = now;
+  state.bridge.lastSent = JSON.stringify(now);
+  state.bridge.lastTime = Date.now();
+  game.socket.emit(`module.${MODULE_ID}`, { type: "now", now });
+}
+
+async function pollBridge() {
+  if (!isActiveGM() || !getStreamId()) return;
+  try {
+    const response = await bridgeFetch("/foundry/state");
+    const data = await response.json();
+    state.bridge.fails = 0;
+    const now = data && data.playing
+      ? { playing: true, paused: !!data.paused, title: data.title || "", artist: data.artist || "", list: data.list || "" }
+      : { playing: false };
+    state.now = now;
+    updateUi();
+    // send when it changes, and now and then for players who just arrived
+    if (JSON.stringify(now) !== state.bridge.lastSent || Date.now() - state.bridge.lastTime > 20000) broadcastNow(now);
+  } catch (err) {
+    if (++state.bridge.fails === 3) {
+      console.warn(`${MODULE_ID} | the GM browser could not reach Apolo on this computer (${err?.message ?? err}). Music name and remote buttons are off.`);
+    }
+  }
+}
+
+function startBridgePolling() {
+  clearInterval(state.bridge.timer);
+  state.bridge.timer = setInterval(pollBridge, 2000);
+  pollBridge();
+}
+
+function sendControl(cmd) {
+  if (!REMOTE_COMMANDS.includes(cmd)) return;
+  if (!iAmController()) return;
+  game.socket.emit(`module.${MODULE_ID}`, { type: "control", cmd, userId: game.user.id });
+}
+
+async function runControl(data) {
+  if (!isActiveGM()) return;
+  if (!REMOTE_COMMANDS.includes(data.cmd) || !controllerIds().includes(data.userId)) return;
+  try {
+    await bridgeFetch("/foundry/cmd", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `cmd=${encodeURIComponent(data.cmd)}`
+    });
+    setTimeout(pollBridge, 400);
+  } catch (err) {
+    console.warn(`${MODULE_ID} | could not send "${data.cmd}" to Apolo`, err);
+  }
+}
+
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+}
+
+/** The GM chooses which player(s) get the pause / previous / next buttons. */
+async function chooseControllers() {
+  if (!game.user.isGM) return;
+  const current = new Set(controllerIds());
+  const users = game.users.filter((u) => !u.isGM);
+  if (!users.length) {
+    ui.notifications.info(t("NoPlayers"));
+    return;
+  }
+  const content = `<form class="apolo-pick-form"><p>${t("PickIntro")}</p>${users
+    .map((u) => `<label style="display:flex;gap:6px;align-items:center;margin:4px 0"><input type="checkbox" name="u" value="${u.id}" ${current.has(u.id) ? "checked" : ""}> ${escapeHtml(u.name)}</label>`)
+    .join("")}</form>`;
+  let ids = null;
+  const DialogV2 = foundry.applications?.api?.DialogV2;
+  if (DialogV2) {
+    ids = await DialogV2.prompt({
+      window: { title: t("PickTitle") },
+      content,
+      ok: {
+        label: t("Save"),
+        callback: (event, button) => Array.from(button.form.querySelectorAll("input[name='u']:checked")).map((i) => i.value)
+      },
+      rejectClose: false
+    });
+  } else {
+    ids = await new Promise((resolve) => {
+      new Dialog({
+        title: t("PickTitle"),
+        content,
+        buttons: { ok: { label: t("Save"), callback: (html) => resolve(Array.from(html[0].querySelectorAll("input[name='u']:checked")).map((i) => i.value)) } },
+        default: "ok",
+        close: () => resolve(null)
+      }).render(true);
+    });
+  }
+  if (Array.isArray(ids)) await game.settings.set(MODULE_ID, "controllers", ids);
+}
+
+// a button under "Apolo stream ID" in the module settings
+Hooks.on("renderSettingsConfig", (app, element) => {
+  if (!game.user.isGM) return;
+  const root = element instanceof HTMLElement ? element : element?.[0];
+  if (!root || root.querySelector(".apolo-pick-setting")) return;
+  const group = root.querySelector(`[name="${MODULE_ID}.streamId"]`)?.closest(".form-group");
+  if (!group) return;
+  const div = document.createElement("div");
+  div.className = "form-group apolo-pick-setting";
+  div.innerHTML = `<label>${t("Settings.Controllers.Name")}</label><div class="form-fields"><button type="button">${t("Settings.Controllers.Button")}</button></div><p class="hint">${t("Settings.Controllers.Hint")}</p>`;
+  div.querySelector("button").addEventListener("click", () => chooseControllers());
+  group.after(div);
+});
 
 function placeWidget() {
   const widget = state.widget;
@@ -435,9 +626,26 @@ Hooks.once("ready", () => {
   };
   document.addEventListener("pointerdown", firstClick, { once: true, capture: true });
 
+  if (game.user.isGM) startBridgePolling();
+  else game.socket.emit(`module.${MODULE_ID}`, { type: "hello" });
+
   // the GM asked everybody to listen
   game.socket.on(`module.${MODULE_ID}`, (data) => {
-    if (!data || data.type !== "listen") return;
+    if (!data) return;
+    if (data.type === "now") {
+      state.now = data.now ?? { playing: false };
+      updateUi();
+      return;
+    }
+    if (data.type === "hello") {
+      if (isActiveGM() && state.bridge.lastNow) broadcastNow(state.bridge.lastNow);
+      return;
+    }
+    if (data.type === "control") {
+      runControl(data);
+      return;
+    }
+    if (data.type !== "listen") return;
     if (game.user.isGM && !game.settings.get(MODULE_ID, "gmListens")) return;
     if (!getStreamId()) return;
     ui.notifications.info(t("CalledByGM"));

@@ -21,5 +21,17 @@
   "APOLO.Settings.UiMode.Hint": "Sidebar: inside the Playlists tab, next to the Foundry volume sliders. Floating: a draggable button over the game.",
   "APOLO.Settings.UiMode.Sidebar": "Playlists tab volume section (default)",
   "APOLO.Settings.UiMode.Floating": "Floating button",
-  "APOLO.Settings.UiMode.Both": "Both"
+  "APOLO.Settings.UiMode.Both": "Both",
+  "APOLO.Prev": "Previous",
+  "APOLO.Pause": "Pause / resume",
+  "APOLO.Stop": "Stop",
+  "APOLO.Next": "Next",
+  "APOLO.Paused": "paused",
+  "APOLO.PickTitle": "Who controls the music?",
+  "APOLO.PickIntro": "Players checked here get the pause, previous, next and stop buttons.",
+  "APOLO.Save": "Save",
+  "APOLO.NoPlayers": "There are no players in this world yet.",
+  "APOLO.Settings.Controllers.Name": "Players who control the music",
+  "APOLO.Settings.Controllers.Button": "Choose players...",
+  "APOLO.Settings.Controllers.Hint": "The chosen players see pause / previous / next / stop in the Apolo row of the Playlists tab. It works while the GM has Foundry open on the same computer as Apolo."
 }

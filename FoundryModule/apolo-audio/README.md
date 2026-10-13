@@ -35,6 +35,16 @@ Cada jogador pode trocar o local em *Configurações dos módulos > Onde mostrar
 seção de volume da aba Playlists (padrão), botão flutuante (arrastável pela alça) ou os dois.
 Se o módulo não achar a seção de volume na sua versão do Foundry, ele mostra o botão flutuante sozinho.
 
+## 4. Nome da música e controle por um jogador
+- **Nome da música**: todos os jogadores veem, na linha do Apolo da aba Playlists, o que está tocando.
+- **Jogador controlador**: em *Configurações dos módulos > Jogadores que controlam a música > Escolher jogadores...*
+  (ou pelo botão de engrenagem na linha do Apolo) o mestre marca quem pode controlar. Esses jogadores ganham os botões
+  anterior / pausar / parar / próxima. Os outros não veem os botões.
+- Como funciona: o navegador do **mestre** conversa com o Apolo no mesmo computador (endereço `localhost`, portas 8791 a 8800)
+  e repassa o nome da música e os comandos pelo próprio Foundry. Por isso o mestre precisa estar com o Foundry aberto no
+  computador do Apolo. O Apolo só responde quando a chave certa (o ID da transmissão) é enviada.
+- Se o navegador do mestre perguntar se o site pode acessar dispositivos da rede local / este computador, permita.
+
 ## Observações
 - O VDO.Ninja liga cada jogador diretamente ao computador do mestre. Para mesas grandes (mais de 8 pessoas), reduza a "Qualidade (kbps)" no Apolo.
 - O atraso é de uma fração de segundo: ótimo para música e ambiente, mas não use para efeitos que precisam bater com uma ação na tela.

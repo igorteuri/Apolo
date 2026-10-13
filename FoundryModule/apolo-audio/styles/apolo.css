@@ -57,8 +57,30 @@
 #apolo-audio-widget.apolo-connecting .apolo-controls { display: inline-flex; }
 #apolo-audio-widget.apolo-called { animation: apolo-attention 1.2s ease-in-out 3; }
 
+.apolo-now {
+  order: 10;
+  flex: 1 0 100%;
+  padding: 0 6px;
+  font-size: 12px;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.apolo-now[hidden], .apolo-transport[hidden] { display: none; }
+.apolo-transport {
+  order: 11;
+  flex: 1 0 100%;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.apolo-transport button { padding: 4px 12px; border-radius: 4px; }
+.apolo-inline .apolo-pick { padding: 4px 6px; border-radius: 4px; flex: none; opacity: 0.7; }
+
 /* row inside the Playlists tab, next to the Foundry volume sliders */
 .apolo-inline {
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   gap: 4px;

@@ -33,6 +33,12 @@ namespace Ares.Player
         public Func<string, string, string> Execute;
         /// <summary>Returns the modes and elements of the project as JSON (used by the Stream Deck plugin).</summary>
         public Func<string> Project;
+        /// <summary>Bridge mode (Foundry VTT module): this computer only, answers browser (CORS) requests, key in the X-Apolo header.</summary>
+        public bool Bridge;
+        public Func<string> BridgeKey;
+        public Func<string, bool> BridgeAllows;
+        /// <summary>Last time a client asked for the state (the state is only built while somebody asks).</summary>
+        public DateTime LastUse = DateTime.MinValue;
 
         public bool Running
         {
@@ -185,12 +191,74 @@ namespace Ares.Player
             response.ContentLength64 = bytes.Length;
             response.Headers.Add("Cache-Control", "no-store");
             response.Headers.Add("X-Content-Type-Options", "nosniff");
+            if (Bridge)
+                AddCors(response);
             response.OutputStream.Write(bytes, 0, bytes.Length);
             response.OutputStream.Close();
         }
 
+        private static void AddCors(HttpListenerResponse response)
+        {
+            response.Headers.Set("Access-Control-Allow-Origin", "*");
+            response.Headers.Set("Access-Control-Allow-Headers", "X-Apolo, Content-Type");
+            response.Headers.Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            response.Headers.Set("Access-Control-Allow-Private-Network", "true");
+            response.Headers.Set("Access-Control-Max-Age", "600");
+        }
+
+        // requests of the Foundry VTT module (sent by the browser of the game master on this computer)
+        private void HandleBridge(HttpListenerContext context)
+        {
+            HttpListenerRequest request = context.Request;
+            string path = request.Url.AbsolutePath.ToLowerInvariant();
+            if (request.HttpMethod == "OPTIONS")
+            {
+                AddCors(context.Response);
+                context.Response.StatusCode = 204;
+                context.Response.ContentLength64 = 0;
+                context.Response.OutputStream.Close();
+                return;
+            }
+            string key = BridgeKey != null ? BridgeKey() : "";
+            string given = request.Headers["X-Apolo"];
+            if (string.IsNullOrEmpty(key) || key.Length < 4 || !SameText(given, key))
+            {
+                Reply(context, 401, "text/plain; charset=utf-8", "key");
+                return;
+            }
+            if (path == "/foundry/ping")
+            {
+                Reply(context, 200, "text/plain; charset=utf-8", "apolo");
+                return;
+            }
+            if (path == "/foundry/state" && request.HttpMethod == "GET")
+            {
+                LastUse = DateTime.UtcNow;
+                Reply(context, 200, "application/json; charset=utf-8", m_State);
+                return;
+            }
+            if (path == "/foundry/cmd" && request.HttpMethod == "POST")
+            {
+                Dictionary<string, string> form = ParseForm(ReadBody(request));
+                string cmd, arg;
+                form.TryGetValue("cmd", out cmd);
+                form.TryGetValue("arg", out arg);
+                Func<string, string, string> exec = Execute;
+                Func<string, bool> allowed = BridgeAllows;
+                string result = (exec != null && !string.IsNullOrEmpty(cmd) && (allowed == null || allowed(cmd))) ? exec(cmd, arg ?? "") : "no";
+                Reply(context, 200, "text/plain; charset=utf-8", result);
+                return;
+            }
+            Reply(context, 404, "text/plain; charset=utf-8", "Not found");
+        }
+
         private void Handle(HttpListenerContext context)
         {
+            if (Bridge)
+            {
+                HandleBridge(context);
+                return;
+            }
             HttpListenerRequest request = context.Request;
             string path = request.Url.AbsolutePath.ToLowerInvariant();
             if (request.HttpMethod == "GET" && (path == "/" || path == "/index.html"))
@@ -427,6 +495,13 @@ namespace Ares.Player
             {
                 m_Remote = new RemoteServer();
                 m_Remote.Execute = RemoteExecute;
+                // bridge for the Foundry VTT module (shows the playing music, lets a chosen player pause / skip)
+                m_Bridge = new RemoteServer();
+                m_Bridge.Bridge = true;
+                m_Bridge.Execute = RemoteExecute;
+                m_Bridge.BridgeKey = () => ShareDialog.CleanStreamId(Ares.CommonGUI.Preferences.Get("VdoId", ""));
+                m_Bridge.BridgeAllows = (c) => c == "pause" || c == "stop" || c == "prev" || c == "next" || c == "repeat";
+                m_Bridge.Start(8791, "");
                 m_Tunnel = new CloudflareTunnel();
                 m_RemoteTimer = new Timer();
                 m_RemoteTimer.Interval = 450;
@@ -441,6 +516,7 @@ namespace Ares.Player
                     m_RemoteTimer.Stop();
                     m_Tunnel.Stop();
                     m_Remote.Stop();
+                    m_Bridge.Stop();
                 };
             }
             catch (Exception ex)
@@ -449,11 +525,14 @@ namespace Ares.Player
             }
         }
 
+        private RemoteServer m_Bridge;
+
         private void UpdateRemoteState()
         {
             bool remoteOn = m_Remote != null && m_Remote.Running;
             bool deckOn = m_Deck != null && m_Deck.Running;
-            if (!remoteOn && !deckOn)
+            bool bridgeOn = m_Bridge != null && m_Bridge.Running && (DateTime.UtcNow - m_Bridge.LastUse).TotalSeconds < 20;
+            if (!remoteOn && !deckOn && !bridgeOn)
                 return;
             PlayingControl control = m_PlayingControl;
             if (control == null)
@@ -552,6 +631,8 @@ namespace Ares.Player
                     m_Remote.SetState(stateText);
                 if (deckOn)
                     m_Deck.SetState(stateText);
+                if (bridgeOn)
+                    m_Bridge.SetState(stateText);
             }
             catch (Exception)
             {

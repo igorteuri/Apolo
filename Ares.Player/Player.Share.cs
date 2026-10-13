@@ -238,6 +238,11 @@ namespace Ares.Player
             return sb.ToString();
         }
 
+        public static string CleanStreamId(string s)
+        {
+            return CleanId(s ?? "");
+        }
+
         private static string CleanId(string s)
         {
             StringBuilder sb = new StringBuilder();
@@ -280,6 +285,9 @@ namespace Ares.Player
             StringBuilder push = new StringBuilder("https://vdo.ninja/?push=" + id + "&vd=0&autostart");
             if (label.Length > 0)
                 push.Append("&l=").Append(Uri.EscapeDataString(label));
+            // the virtual microphone of Apolo is found by its first word; other devices by their whole name
+            if (device == VirtualMic.DeviceName)
+                device = "Apolo";
             device = device.Replace(' ', '_');
             if (device.Length > 0)
                 push.Append("&ad=").Append(Uri.EscapeDataString(device));

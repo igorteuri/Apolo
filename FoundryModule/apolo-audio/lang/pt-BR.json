@@ -21,5 +21,17 @@
   "APOLO.Settings.UiMode.Hint": "Barra lateral: dentro da aba Playlists, junto dos controles de volume do Foundry. Flutuante: um botão que pode ser arrastado sobre o jogo.",
   "APOLO.Settings.UiMode.Sidebar": "Seção de volume da aba Playlists (padrão)",
   "APOLO.Settings.UiMode.Floating": "Botão flutuante",
-  "APOLO.Settings.UiMode.Both": "Os dois"
+  "APOLO.Settings.UiMode.Both": "Os dois",
+  "APOLO.Prev": "Anterior",
+  "APOLO.Pause": "Pausar / continuar",
+  "APOLO.Stop": "Parar",
+  "APOLO.Next": "Próxima",
+  "APOLO.Paused": "pausada",
+  "APOLO.PickTitle": "Quem controla a música?",
+  "APOLO.PickIntro": "Os jogadores marcados aqui recebem os botões de pausar, anterior, próxima e parar.",
+  "APOLO.Save": "Salvar",
+  "APOLO.NoPlayers": "Ainda não há jogadores neste mundo.",
+  "APOLO.Settings.Controllers.Name": "Jogadores que controlam a música",
+  "APOLO.Settings.Controllers.Button": "Escolher jogadores...",
+  "APOLO.Settings.Controllers.Hint": "Os jogadores escolhidos veem pausar / anterior / próxima / parar na linha do Apolo, na aba Playlists. Funciona enquanto o mestre estiver com o Foundry aberto no mesmo computador do Apolo."
 }

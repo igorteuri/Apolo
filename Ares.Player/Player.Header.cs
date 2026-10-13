@@ -23,36 +23,56 @@ namespace Ares.Player
         {
             try
             {
-                // 1. one row for menus and toolbar: the useful toolbar items move to the right end of the menu bar,
-                //    the others (open, messages, editor, settings, about) are already in the menus
+                // 1. one row for menus and toolbar: the useful toolbar items move into the menu bar,
+                //    the others (open, messages, editor, settings, about) are already in the menus.
+                //    Layout: menus | (space) [Discord] [VDO] [network] [edit mode] (space) | audio output (right end)
+                menuStrip1.ShowItemToolTips = true;
                 if (m_OutputButton != null)
                 {
                     toolStrip1.Items.Remove(m_OutputButton);
+                    m_OutputButton.Alignment = ToolStripItemAlignment.Right;
+                    if (string.IsNullOrEmpty(m_OutputButton.ToolTipText) || m_OutputButton.ToolTipText == m_OutputButton.Text)
+                        m_OutputButton.ToolTipText = T("Dispositivo de saída de áudio (onde o Apolo toca)", "Audio output device (where Apolo plays)");
                     menuStrip1.Items.Add(m_OutputButton);
                 }
-                if (m_AddButton != null)
-                {
-                    toolStrip1.Items.Remove(m_AddButton);
-                    m_AddButton.Alignment = ToolStripItemAlignment.Right;
-                    menuStrip1.Items.Add(m_AddButton);
-                }
-                if (m_EditButton != null)
-                {
-                    toolStrip1.Items.Remove(m_EditButton);
-                    m_EditButton.Alignment = ToolStripItemAlignment.Right;
-                    menuStrip1.Items.Add(m_EditButton);
-                }
-                // quick access to the sharing options (left of the edit buttons)
-                menuStrip1.Items.Add(new ToolStripSeparator { Alignment = ToolStripItemAlignment.Right });
-                m_NetButton = MakeQuickButton("netButton", T("Controle remoto / compartilhamento em rede...", "Remote control / network sharing..."), () => ShowRemoteDialog());
-                m_VdoButton = MakeQuickButton("vdoButton", T("Enviar áudio por VDO.Ninja...", "Send audio through VDO.Ninja..."), () => ShowWebWindow(true));
-                m_DiscordButton = MakeQuickButton("discordButton", T("Conectar ao Discord (tocar num canal de voz)...", "Connect to Discord (play in a voice channel)..."), () => ShowDiscordDialog());
+                m_HeaderSpacer = new ToolStripLabel();
+                m_HeaderSpacer.Name = "headerSpacer";
+                m_HeaderSpacer.AutoSize = false;
+                m_HeaderSpacer.Width = 60;
+                m_HeaderSpacer.Margin = new Padding(0);
+                m_HeaderSpacer.Enabled = false;
+                menuStrip1.Items.Add(m_HeaderSpacer);
+                m_DiscordButton = MakeQuickButton("discordButton", T("Discord: conectar o Apolo a um canal de voz", "Discord: connect Apolo to a voice channel"), () => ShowDiscordDialog());
+                m_VdoButton = MakeQuickButton("vdoButton", T("VDO.Ninja: enviar o áudio do Apolo pela internet (Foundry, jogadores)", "VDO.Ninja: send the Apolo audio over the internet (Foundry, players)"), () => ShowWebWindow(true));
+                m_NetButton = MakeQuickButton("netButton", T("Controle remoto e compartilhamento em rede (celular / internet)", "Remote control and network sharing (phone / internet)"), () => ShowRemoteDialog());
                 Ares.CommonGUI.IconLibrary.Bind(menuStrip1, new Dictionary<ToolStripItem, string>
                 {
                     { m_NetButton, "globe" },
                     { m_VdoButton, "send" },
                     { m_DiscordButton, "headphones" }
                 });
+                // own pictures (for example the official logos) put in %APPDATA%\Ares\Icons\discord.png / vdo.png / net.png win over the built-in icons
+                ApplyCustomIcon(m_DiscordButton, "discord");
+                ApplyCustomIcon(m_VdoButton, "vdo");
+                ApplyCustomIcon(m_NetButton, "net");
+                if (m_EditButton != null)
+                {
+                    toolStrip1.Items.Remove(m_EditButton);
+                    m_EditButton.Alignment = ToolStripItemAlignment.Left;
+                    m_EditButton.Margin = new Padding(14, 0, 14, 0);
+                    if (string.IsNullOrEmpty(m_EditButton.ToolTipText) || m_EditButton.ToolTipText == m_EditButton.Text)
+                        m_EditButton.ToolTipText = T("Modo de edição: criar e alterar playlists e elementos", "Edit mode: create and change playlists and elements");
+                    menuStrip1.Items.Add(m_EditButton);
+                }
+                if (m_AddButton != null)
+                {
+                    toolStrip1.Items.Remove(m_AddButton);
+                    m_AddButton.Alignment = ToolStripItemAlignment.Left;
+                    m_AddButton.Margin = new Padding(14, 0, 14, 0);
+                    menuStrip1.Items.Add(m_AddButton);
+                }
+                menuStrip1.Resize += (s2, e2) => CenterQuickButtons();
+                menuStrip1.Layout += (s2, e2) => CenterQuickButtons();
                 toolStrip1.Visible = false;
 
                 // 2. bigger transport buttons
@@ -104,6 +124,62 @@ namespace Ares.Player
         }
 
         private ToolStripButton m_NetButton, m_VdoButton, m_DiscordButton;
+        private ToolStripLabel m_HeaderSpacer;
+        private bool m_Centering;
+
+        // the spacer pushes the group of quick buttons towards the middle of the window
+        private void CenterQuickButtons()
+        {
+            if (m_HeaderSpacer == null || m_Centering)
+                return;
+            try
+            {
+                m_Centering = true;
+                int before = 0;
+                int groupWidth = 0;
+                bool afterSpacer = false;
+                foreach (ToolStripItem item in menuStrip1.Items)
+                {
+                    if (item == m_HeaderSpacer) { afterSpacer = true; continue; }
+                    if (!item.Visible || item.Alignment != ToolStripItemAlignment.Left)
+                        continue;
+                    int w = item.Width + item.Margin.Horizontal;
+                    if (afterSpacer) groupWidth += w; else before += w;
+                }
+                int wanted = menuStrip1.Width / 2 - groupWidth / 2 - before - menuStrip1.Padding.Left;
+                int width = Math.Max(10, wanted);
+                if (Math.Abs(m_HeaderSpacer.Width - width) > 1)
+                    m_HeaderSpacer.Width = width;
+            }
+            finally
+            {
+                m_Centering = false;
+            }
+        }
+
+        private void ApplyCustomIcon(ToolStripButton button, string name)
+        {
+            try
+            {
+                string file = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares", "Icons", name + ".png");
+                if (!System.IO.File.Exists(file) || button.Image == null)
+                    return;
+                Size size = button.Image.Size;
+                using (Image source = Image.FromFile(file))
+                {
+                    Bitmap bitmap = new Bitmap(size.Width, size.Height);
+                    using (Graphics g = Graphics.FromImage(bitmap))
+                    {
+                        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                        g.DrawImage(source, 0, 0, size.Width, size.Height);
+                    }
+                    button.Image = bitmap;
+                }
+            }
+            catch (Exception)
+            {
+            }
+        }
 
         private ToolStripButton MakeQuickButton(string name, string tip, Action click)
         {
@@ -112,7 +188,8 @@ namespace Ares.Player
             b.DisplayStyle = ToolStripItemDisplayStyle.Image;
             b.ImageScaling = ToolStripItemImageScaling.None;
             b.ToolTipText = tip;
-            b.Alignment = ToolStripItemAlignment.Right;
+            b.Alignment = ToolStripItemAlignment.Left;
+            b.Margin = new Padding(14, 0, 14, 0);
             b.Click += (s, e) => click();
             menuStrip1.Items.Add(b);
             return b;
