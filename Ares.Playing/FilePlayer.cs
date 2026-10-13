@@ -78,6 +78,7 @@ namespace Ares.Playing
                 double fadeOutSeconds = Math.Min(0.001 * effects.FadeOutTime, length);
                 double end = cueOutActive ? effects.CueOut.Position : length;
                 channel.FadeAt = Math.Max(0, end - fadeOutSeconds);
+                channel.FadeOutMs = (int)(fadeOutSeconds * 1000);
                 if (!loop)
                 {
                     info.CrossFade = effects.CrossFading;
@@ -197,12 +198,18 @@ namespace Ares.Playing
 
         public List<PlayingFileInfo> GetRunningSounds()
         {
+            return GetRunningSounds(0);
+        }
+
+        /// <summary>The running sound effects; the handle of the current music is left out.</summary>
+        public List<PlayingFileInfo> GetRunningSounds(int excludeHandle)
+        {
             List<KeyValuePair<int, ISoundFile>> running = new List<KeyValuePair<int, ISoundFile>>();
             lock (m_Mutex)
             {
                 foreach (KeyValuePair<int, RunningFileInfo> pair in m_RunningFiles)
                 {
-                    if (pair.Value.File != null && pair.Value.File.SoundFileType == SoundFileType.SoundEffect)
+                    if (pair.Key != excludeHandle && pair.Value.File != null && pair.Value.File.SoundFileType == SoundFileType.SoundEffect)
                         running.Add(new KeyValuePair<int, ISoundFile>(pair.Key, pair.Value.File));
                 }
             }
@@ -573,8 +580,7 @@ namespace Ares.Playing
         // the position where the fade out begins was reached
         private void OnFadeStart(AudioChannel channel, ISoundFile file, RunningFileInfo info)
         {
-            if (file.Effects != null)
-                channel.SlideVolume(0.0f, file.Effects.FadeOutTime);
+            // the fade out itself is started inside the mixer (sample accurate)
             if (info.CrossFade)
             {
                 CallEndAction(channel.Handle);

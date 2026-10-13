@@ -964,7 +964,9 @@ namespace Ares.Playing
 
         public List<PlayingFileInfo> GetRunningSounds()
         {
-            return ((FilePlayer)PlayingModule.FilePlayer).GetRunningSounds();
+            IMusicPlayer active = ActiveMusicPlayer;
+            int musicHandle = active != null ? active.CurrentMusicHandle : 0;
+            return ((FilePlayer)PlayingModule.FilePlayer).GetRunningSounds(musicHandle);
         }
 
         public bool StopSound(int handle)

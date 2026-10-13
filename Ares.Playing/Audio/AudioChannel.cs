@@ -202,6 +202,9 @@ namespace Ares.Playing.Audio
         }
 
         /// <summary>At this position (seconds) FadeStarted is called, negative for never.</summary>
+        /// <summary>Length (ms) of the fade out which starts inside the mixer when FadeAt is reached (0 for none).</summary>
+        public int FadeOutMs { get; set; }
+
         public double FadeAt
         {
             get { lock (m_Lock) { return m_FadeAt; } }
@@ -436,6 +439,8 @@ namespace Ares.Playing.Audio
                         {
                             m_Fired = true;
                             fadeNow = true;
+                            if (FadeOutMs > 0 && !m_StopAtSilence)
+                                Volume.Slide(0f, FadeOutMs * 0.001 * AudioEngine.SampleRate);
                         }
                         if (Volume.TakeFinished() && m_StopAtSilence)
                         {

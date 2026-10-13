@@ -277,7 +277,24 @@ namespace Ares.Player
         public static string BuildViewUrl()
         {
             BuildPushUrl();
-            return "https://vdo.ninja/?view=" + CleanId(Ares.CommonGUI.Preferences.Get("VdoId", ""));
+            return BuildView(CleanId(Ares.CommonGUI.Preferences.Get("VdoId", "")), Ares.CommonGUI.Preferences.Get("VdoLabel", T("Música", "Music")).Trim(), ReadKbps());
+        }
+
+        private static int ReadKbps()
+        {
+            int kbps;
+            if (!int.TryParse(Ares.CommonGUI.Preferences.Get("VdoBitrate", "128"), out kbps) || kbps < 32 || kbps > 510)
+                kbps = 128;
+            return kbps;
+        }
+
+        private static string BuildView(string id, string label, int kbps)
+        {
+            StringBuilder view = new StringBuilder("https://vdo.ninja/?view=" + id + "&vd=0&style=2&meterstyle=1");
+            if (label.Length > 0)
+                view.Append("&l=").Append(Uri.EscapeDataString(label));
+            view.Append("&proaudio=1&volumecontrols&audiobitrate=").Append(kbps.ToString());
+            return view.ToString();
         }
 
         private static string BuildPush(string id, string label, string device, int kbps, bool pro)
@@ -307,7 +324,7 @@ namespace Ares.Player
                 return;
             }
             m_PushBox.Text = BuildPush(id, m_LabelBox.Text.Trim(), m_DeviceBox.Text.Trim(), (int)m_BitrateBox.Value, m_ProBox.Checked);
-            m_ViewBox.Text = "https://vdo.ninja/?view=" + id;
+            m_ViewBox.Text = BuildView(id, m_LabelBox.Text.Trim(), (int)m_BitrateBox.Value);
             if (!m_Loading)
                 SavePrefs(id);
         }
