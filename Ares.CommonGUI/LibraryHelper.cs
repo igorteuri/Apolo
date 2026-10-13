@@ -105,6 +105,15 @@ namespace Ares.CommonGUI
             if (list.Count == 0)
                 return result;
             SoundFileType type = options.Sounds ? SoundFileType.SoundEffect : SoundFileType.Music;
+            Func<string, IFileElement> makeFile = f =>
+            {
+                IFileElement fe = DataModule.ElementFactory.CreateFileElement(f, type);
+                fe.Effects.Volume = Math.Max(0, Math.Min(100, options.Volume));
+                fe.Effects.FadeInTime = Math.Max(0, options.FadeInMs);
+                fe.Effects.FadeOutTime = Math.Max(0, options.FadeOutMs);
+                fe.Effects.CrossFading = !options.Sounds && options.CrossFade;
+                return fe;
+            };
             string name = group.IsLoose ? TitleOf(list[0]) : group.Name;
             if (options.OneElement && !(group.IsLoose && list.Count == 1))
             {
@@ -113,16 +122,42 @@ namespace Ares.CommonGUI
                 IElement container;
                 if (options.Sounds)
                 {
-                    var choice = DataModule.ElementFactory.CreateChoiceContainer(name);
+                    if (options.Kind == PlaylistKind.Sequential)
+                    {
+                        var seq = DataModule.ElementFactory.CreateSequentialContainer(name);
+                        foreach (string f in list)
+                            seq.AddElement(makeFile(f));
+                        container = seq;
+                    }
+                    else if (options.Kind == PlaylistKind.Parallel)
+                    {
+                        var par = DataModule.ElementFactory.CreateParallelContainer(name);
+                        foreach (string f in list)
+                            par.AddElement(makeFile(f));
+                        container = par;
+                    }
+                    else
+                    {
+                        var choice = DataModule.ElementFactory.CreateChoiceContainer(name);
+                        foreach (string f in list)
+                            choice.AddElement(makeFile(f));
+                        container = choice;
+                    }
+                }
+                else if (options.Kind == PlaylistKind.Sequential)
+                {
+                    var playlist = DataModule.ElementFactory.CreateSequentialBackgroundMusicList(name);
                     foreach (string f in list)
-                        choice.AddElement(DataModule.ElementFactory.CreateFileElement(f, type));
-                    container = choice;
+                        playlist.AddElement(makeFile(f));
+                    playlist.RepeatCount = options.Repeat ? -1 : 1;
+                    container = playlist;
                 }
                 else
                 {
                     var playlist = DataModule.ElementFactory.CreateRandomBackgroundMusicList(name);
                     foreach (string f in list)
-                        playlist.AddElement(DataModule.ElementFactory.CreateFileElement(f, type));
+                        playlist.AddElement(makeFile(f));
+                    playlist.RepeatCount = options.Repeat ? -1 : 1;
                     container = playlist;
                 }
                 result.Add(DataModule.ElementFactory.CreateModeElement(name, container));
@@ -131,7 +166,7 @@ namespace Ares.CommonGUI
             {
                 foreach (string f in list)
                 {
-                    IFileElement fe = DataModule.ElementFactory.CreateFileElement(f, type);
+                    IFileElement fe = makeFile(f);
                     result.Add(DataModule.ElementFactory.CreateModeElement(TitleOf(f), fe));
                 }
             }

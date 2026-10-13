@@ -26,6 +26,9 @@ namespace Ares.CommonGUI
 {
     public partial class AboutDialog : Form
     {
+        /// <summary>Link of the author's channel (Dados Críticos).</summary>
+        public const string ChannelUrl = "https://igorteuri.itch.io/";
+
         public AboutDialog()
         {
             InitializeComponent();
@@ -36,7 +39,7 @@ namespace Ares.CommonGUI
             Controls.Clear();
             Text = pt ? "Sobre o Apolo" : "About Apolo";
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(520, 420);
+            ClientSize = new Size(520, 480);
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
@@ -70,19 +73,39 @@ namespace Ares.CommonGUI
             credits.BorderStyle = BorderStyle.FixedSingle;
             credits.TabStop = false;
             credits.Text = pt
-                ? "O Apolo é um fork do Ares, criado por Jörg Ruedenauer e colaboradores, e é distribuído sob a licença GNU GPL (versão 2 ou posterior), como o projeto original. Todo o crédito pela base do programa pertence ao Ares e a seu autor.\r\n\r\n"
+                ? "O Apolo foi criado por Igor Teuri, do canal Dados Críticos, como uma modernização do Ares.\r\n\r\nO Apolo é um fork do Ares, criado por Jörg Ruedenauer e colaboradores, e é distribuído sob a licença GNU GPL (versão 2 ou posterior), como o projeto original. Todo o crédito pela base do programa pertence ao Ares e a seu autor.\r\n\r\n"
                   + "Áudio: BASS, da un4seen developments (www.un4seen.com). A BASS é gratuita apenas para uso não comercial; para uso comercial é necessária uma licença própria da un4seen.\r\n\r\n"
                   + "Ícones: Lucide (licença ISC). Páginas web embutidas: Microsoft WebView2."
-                : "Apolo is a fork of Ares, created by Jörg Ruedenauer and contributors, and is distributed under the GNU GPL (version 2 or later), like the original project. All credit for the foundation of this program belongs to Ares and its author.\r\n\r\n"
+                : "Apolo was created by Igor Teuri, of the Dados Críticos channel, as a modernization of Ares.\r\n\r\nApolo is a fork of Ares, created by Jörg Ruedenauer and contributors, and is distributed under the GNU GPL (version 2 or later), like the original project. All credit for the foundation of this program belongs to Ares and its author.\r\n\r\n"
                   + "Audio: BASS by un4seen developments (www.un4seen.com). BASS is free for non-commercial use only; commercial use requires a license from un4seen.\r\n\r\n"
                   + "Icons: Lucide (ISC license). Embedded web pages: Microsoft WebView2.";
-            credits.SetBounds(24, 140, 472, 220);
+            credits.SetBounds(24, 140, 472, 230);
             Controls.Add(credits);
+
+            LinkLabel channel = new LinkLabel();
+            channel.Text = pt ? "Apolo por Igor Teuri — canal Dados Críticos" : "Apolo by Igor Teuri — Dados Críticos channel";
+            channel.AutoSize = true;
+            channel.Location = new Point(24, 382);
+            channel.LinkClicked += (s, e) =>
+            {
+                try { System.Diagnostics.Process.Start(ChannelUrl); } catch (Exception) { }
+            };
+            Controls.Add(channel);
+
+            LinkLabel original = new LinkLabel();
+            original.Text = pt ? "Projeto original: Ares, de Jörg Ruedenauer" : "Original project: Ares, by Jörg Ruedenauer";
+            original.AutoSize = true;
+            original.Location = new Point(24, 406);
+            original.LinkClicked += (s, e) =>
+            {
+                try { System.Diagnostics.Process.Start("http://aresrpg.sourceforge.net/"); } catch (Exception) { }
+            };
+            Controls.Add(original);
 
             Button ok = new Button();
             ok.Text = "OK";
             ok.DialogResult = DialogResult.OK;
-            ok.SetBounds(496 - 100, 374, 100, 30);
+            ok.SetBounds(496 - 100, 434, 100, 30);
             Icon = ApoloBrand.GetIcon(32, ApoloState.Playing, 0);
             Controls.Add(ok);
             AcceptButton = ok;

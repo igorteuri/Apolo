@@ -114,6 +114,7 @@ namespace Ares.Player
             InitRemote();
             InitDiscord();
             InitDeck();
+            InitShortcuts();
         }
 
         private void FitMusicBar()
@@ -552,6 +553,7 @@ namespace Ares.Player
             {
                 m_MessagesForm = new MessagesForm();
                 m_MessagesForm.Location = new Point(Location.X + Size.Width, Location.Y);
+                m_MessagesForm.FindMissingRequested += (s, e) => ShowMissingFiles();
                 m_MessagesForm.FormClosed += new FormClosedEventHandler(m_MessagesForm_FormClosed);
                 m_MessagesForm.Show(this);
             }
@@ -1176,16 +1178,8 @@ namespace Ares.Player
 
         protected override bool ProcessCmdKey(ref System.Windows.Forms.Message msg, System.Windows.Forms.Keys keyData)
         {
-            if (keyData == System.Windows.Forms.Keys.F9)
-            {
-                ToggleTrackPanel();
+            if (HandleProgramShortcut(keyData))
                 return true;
-            }
-            if (keyData == System.Windows.Forms.Keys.F8)
-            {
-                SetLeftOpen(!m_LeftOpen);
-                return true;
-            }
 #if MONO
             const int WM_KEYDOWN = 0x100;
             if (msg.Msg == WM_KEYDOWN && !tagFadeUpDown.ContainsFocus)
@@ -2121,6 +2115,9 @@ namespace Ares.Player
                 return;
             if (IsFoldClick())
                 return; // click on the arrow of a folder: no change of the mode
+            if (m_EditMode && modesList.SelectedIndices.Count > 1)
+                return; // several folders selected (to delete them): the shown folder stays
+            ClearElementSelection();
             if (SelectedModeIndex >= 0 && m_Project != null)
             {
                 m_PlayingControl.SetMode(m_Project.GetModes()[SelectedModeIndex]);

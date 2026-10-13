@@ -17,6 +17,9 @@ namespace Ares.Player
         private ContextMenuStrip m_ModeMenu;
         private ContextMenuStrip m_ElementMenu;
         private int m_MenuElementId = -1;
+        private ToolStripItem m_ElementDeleteItem;
+        private readonly HashSet<int> m_SelectedElements = new HashSet<int>();
+        private int m_SelectAnchor = -1;
 
         private static string T(string pt, string en)
         {
@@ -152,11 +155,16 @@ namespace Ares.Player
                 if (!m_EditMode || e.Button != MouseButtons.Right)
                     return;
                 int index = modesList.IndexFromPoint(e.Location);
-                if (index >= 0)
+                bool inSelection = index >= 0 && modesList.SelectedIndices.Contains(index) && modesList.SelectedIndices.Count > 1;
+                if (index >= 0 && !inSelection)
                     modesList.SelectedIndex = index;
                 bool real = index >= 0 && SelectedModeIndex >= 0;
+                int many = modesList.SelectedIndices.Count;
                 for (int i = 1; i < m_ModeMenu.Items.Count; i++)
-                    m_ModeMenu.Items[i].Enabled = real;
+                    m_ModeMenu.Items[i].Enabled = real && many <= 1;
+                m_ModeMenu.Items[0].Enabled = many <= 1;
+                m_ModeMenu.Items[4].Text = many > 1 ? T("Excluir " + many + " pastas selecionadas", "Delete " + many + " selected folders") : T("Excluir pasta", "Delete folder");
+                m_ModeMenu.Items[4].Enabled = real;
                 m_ModeMenu.Show(modesList, e.Location);
             };
 
@@ -165,7 +173,7 @@ namespace Ares.Player
             m_ElementMenu.Items.Add(T("Ver lista de músicas", "View track list"), null, (s, e) => ShowTrackPanel(m_MenuElementId));
             m_ElementMenu.Items.Add(new ToolStripSeparator());
             m_ElementMenu.Items.Add(T("Renomear...", "Rename..."), null, (s, e) => RenameElementButton());
-            m_ElementMenu.Items.Add(T("Excluir", "Delete"), null, (s, e) => DeleteElementButton());
+            m_ElementDeleteItem = m_ElementMenu.Items.Add(T("Excluir", "Delete"), null, (s, e) => DeleteElementButton());
             m_ElementMenu.Items.Add(new ToolStripSeparator());
             m_ElementMenu.Items.Add(T("Escolher imagem...", "Choose picture..."), null, (s, e) => ChooseButtonPicture());
             m_ElementMenu.Items.Add(T("Escolher ícone...", "Choose icon..."), null, (s, e) => ChooseButtonIcon());
@@ -214,6 +222,8 @@ namespace Ares.Player
             {
                 if (m_EditMode && e.KeyCode == System.Windows.Forms.Keys.F2)
                     RenameCurrentMode();
+                else if (m_EditMode && e.KeyCode == System.Windows.Forms.Keys.Delete)
+                    DeleteCurrentMode();
             };
         }
 
@@ -414,6 +424,21 @@ namespace Ares.Player
         {
             m_EditMode = on;
             m_AddButton.Visible = on;
+            ClearElementSelection();
+            // Ctrl / Shift select several folders (to delete them together)
+            bool oldListen = m_Listen;
+            m_Listen = false;
+            try
+            {
+                int keep = modesList.SelectedIndex;
+                modesList.SelectionMode = on ? SelectionMode.MultiExtended : SelectionMode.One;
+                if (keep >= 0 && keep < modesList.Items.Count)
+                    modesList.SelectedIndex = keep;
+            }
+            finally
+            {
+                m_Listen = oldListen;
+            }
             if (on && m_Toast == null)
             {
                 // reuse the toast to explain how it works
@@ -429,10 +454,39 @@ namespace Ares.Player
             box.Tag = elementId;
             Point down = Point.Empty;
             bool tracking = false;
+            ElementButton card = box as ElementButton;
+            if (card != null)
+                card.MultiSelected = m_SelectedElements.Contains(elementId);
             box.MouseDown += (s, e) =>
             {
                 tracking = m_EditMode && e.Button == MouseButtons.Left;
                 down = e.Location;
+                if (m_EditMode && e.Button == MouseButtons.Left)
+                {
+                    bool ctrl = (Control.ModifierKeys & System.Windows.Forms.Keys.Control) != 0;
+                    bool shift = (Control.ModifierKeys & System.Windows.Forms.Keys.Shift) != 0;
+                    if (ctrl || shift)
+                    {
+                        // select instead of play
+                        tracking = false;
+                        if (card != null)
+                            card.SwallowClick = true;
+                        ToggleElementSelection(elementId, shift);
+                        box.Focus();
+                    }
+                    else if (m_SelectedElements.Count > 0)
+                    {
+                        ClearElementSelection();
+                    }
+                }
+            };
+            box.KeyDown += (s, e) =>
+            {
+                if (m_EditMode && e.KeyCode == System.Windows.Forms.Keys.Delete && m_SelectedElements.Count > 0)
+                {
+                    e.Handled = true;
+                    DeleteSelectedElements();
+                }
             };
             box.MouseUp += (s, e) =>
             {
@@ -440,6 +494,11 @@ namespace Ares.Player
                 if (e.Button != MouseButtons.Right)
                     return;
                 m_MenuElementId = elementId;
+                if (m_SelectedElements.Count > 0 && !m_SelectedElements.Contains(elementId))
+                    ClearElementSelection();
+                int selectedCount = m_SelectedElements.Count;
+                if (m_ElementDeleteItem != null)
+                    m_ElementDeleteItem.Text = selectedCount > 1 ? T("Excluir " + selectedCount + " selecionadas", "Delete " + selectedCount + " selected") : T("Excluir", "Delete");
                 // outside edit mode only "View tracks" is offered
                 for (int i = 1; i < m_ElementMenu.Items.Count; i++)
                     m_ElementMenu.Items[i].Visible = m_EditMode;
@@ -459,6 +518,105 @@ namespace Ares.Player
             box.DragOver += ElementsDragOver;
             box.DragDrop += ElementsDragDrop;
             box.DragLeave += (s, e) => HideDropMarker();
+        }
+
+        // ---- selecting several buttons ----
+
+        private void ToggleElementSelection(int id, bool range)
+        {
+            IMode mode = CurrentMode();
+            if (range && m_SelectAnchor >= 0 && mode != null)
+            {
+                List<int> ids = mode.GetElements().Select(x => x.Id).ToList();
+                int a = ids.IndexOf(m_SelectAnchor);
+                int b = ids.IndexOf(id);
+                if (a >= 0 && b >= 0)
+                {
+                    for (int i = Math.Min(a, b); i <= Math.Max(a, b); i++)
+                        m_SelectedElements.Add(ids[i]);
+                    RefreshElementSelection();
+                    return;
+                }
+            }
+            if (!m_SelectedElements.Remove(id))
+                m_SelectedElements.Add(id);
+            m_SelectAnchor = id;
+            RefreshElementSelection();
+        }
+
+        private void ClearElementSelection()
+        {
+            if (m_SelectedElements.Count == 0 && m_SelectAnchor < 0)
+                return;
+            m_SelectedElements.Clear();
+            m_SelectAnchor = -1;
+            RefreshElementSelection();
+        }
+
+        private void RefreshElementSelection()
+        {
+            foreach (Control c in elementsPanel.Controls)
+            {
+                ElementButton card = c as ElementButton;
+                if (card != null && card.Tag is int)
+                    card.MultiSelected = m_SelectedElements.Contains((int)card.Tag);
+            }
+        }
+
+        private void DeleteSelectedElements()
+        {
+            IMode mode = CurrentMode();
+            if (mode == null || m_SelectedElements.Count == 0)
+                return;
+            List<int> ids = m_SelectedElements.ToList();
+            if (MessageBox.Show(this, T("Excluir as " + ids.Count + " playlists selecionadas?\n(Os arquivos de áudio não são apagados.)",
+                    "Delete the " + ids.Count + " selected playlists?\n(Audio files are not deleted.)"),
+                    StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                return;
+            int modeIndex = SelectedModeIndex;
+            string modeTitle = mode.Title;
+            m_SelectedElements.Clear();
+            m_SelectAnchor = -1;
+            ApplyProjectEdit(() =>
+            {
+                IMode m = m_Project.GetModes()[modeIndex];
+                foreach (int id in ids)
+                {
+                    IModeElement e = m.GetElements().FirstOrDefault(x => x.Id == id);
+                    if (e == null)
+                        continue;
+                    m.RemoveElement(e);
+                    DataModule.ElementRepository.DeleteElement(e.Id);
+                }
+            }, modeTitle);
+        }
+
+        private void DeleteSelectedModes()
+        {
+            List<string> titles = new List<string>();
+            foreach (int row in modesList.SelectedIndices)
+            {
+                if (row >= 0 && row < m_ModeRows.Count && !titles.Contains(m_ModeRows[row].Title))
+                    titles.Add(m_ModeRows[row].Title);
+            }
+            if (titles.Count == 0)
+                return;
+            if (MessageBox.Show(this, T("Excluir as " + titles.Count + " pastas selecionadas e todas as playlists delas?\n(Os arquivos de áudio não são apagados.)",
+                    "Delete the " + titles.Count + " selected folders and all their playlists?\n(Audio files are not deleted.)"),
+                    StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                return;
+            ApplyProjectEdit(() =>
+            {
+                foreach (string title in titles)
+                {
+                    IMode m = m_Project.GetModes().FirstOrDefault(x => x.Title == title);
+                    if (m == null)
+                        continue;
+                    foreach (IModeElement me in m.GetElements().ToList())
+                        DataModule.ElementRepository.DeleteElement(me.Id);
+                    m_Project.RemoveMode(m);
+                }
+            }, null);
         }
 
         // ---- helpers ----
@@ -611,6 +769,11 @@ namespace Ares.Player
 
         private void DeleteCurrentMode()
         {
+            if (modesList.SelectedIndices.Count > 1)
+            {
+                DeleteSelectedModes();
+                return;
+            }
             IMode mode = CurrentMode();
             if (mode == null)
                 return;
@@ -722,6 +885,11 @@ namespace Ares.Player
 
         private void DeleteElementButton()
         {
+            if (m_SelectedElements.Count > 1 && m_SelectedElements.Contains(m_MenuElementId))
+            {
+                DeleteSelectedElements();
+                return;
+            }
             IMode mode; int index;
             IModeElement me = MenuElement(out mode, out index);
             if (me == null)

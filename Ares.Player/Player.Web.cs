@@ -63,24 +63,8 @@ namespace Ares.Player
             RefreshTabBar();
             Shown += (s, e) => MakeRoomForTabBar();
 
-            Ares.CommonGUI.ThemeManager.AfterAppearanceMenu = (form, menu) =>
-            {
-                if (form != this || menu != menuStrip1)
-                    return;
-                foreach (ToolStripItem existing in menu.Items)
-                {
-                    if (existing.Name == "webMenuItem")
-                        return;
-                }
-                ToolStripMenuItem web = new ToolStripMenuItem(T("Páginas web", "Web pages"));
-                web.Name = "webMenuItem";
-                web.Click += (s, e) => ShowWebWindow(false);
-                ToolStripMenuItem vdo = new ToolStripMenuItem(T("Enviar VDO", "Send VDO"));
-                vdo.Name = "vdoMenuItem";
-                vdo.Click += (s, e) => ShowWebWindow(true);
-                menu.Items.Add(web);
-                menu.Items.Add(vdo);
-            };
+            // the pages are reached through the tab bar; the old "Tocando" menu is replaced by the buttons below the lists
+            menuStrip1.Items.Remove(playToolStripMenuItem);
             FormClosed += (s, e) =>
             {
                 if (m_WebWindow != null && !m_WebWindow.IsDisposed)

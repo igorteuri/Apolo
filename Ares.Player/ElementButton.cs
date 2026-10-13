@@ -20,6 +20,27 @@ namespace Ares.Player
         private Bitmap m_IconCache;
         private string m_IconCacheKey;
         private bool m_ListMode;
+        private bool m_MultiSelected;
+
+        /// <summary>Selected (with Ctrl / Shift) in edit mode, for deleting several buttons at once.</summary>
+        public bool MultiSelected
+        {
+            get { return m_MultiSelected; }
+            set { if (m_MultiSelected != value) { m_MultiSelected = value; Invalidate(); } }
+        }
+
+        /// <summary>When set, the next click only changes the selection and does not play the playlist.</summary>
+        public bool SwallowClick;
+
+        protected override void OnClick(EventArgs e)
+        {
+            if (SwallowClick)
+            {
+                SwallowClick = false;
+                return;
+            }
+            base.OnClick(e);
+        }
 
         public ElementButton()
         {
@@ -291,6 +312,28 @@ namespace Ares.Player
                 Color line = Checked ? accent : (m_Hover ? accent : border);
                 using (Pen pen = new Pen(line, Checked ? 2f : 1f))
                     g.DrawPath(pen, path);
+
+                if (m_MultiSelected)
+                {
+                    using (Pen pen = new Pen(accent, 3f))
+                    {
+                        pen.DashStyle = DashStyle.Dash;
+                        g.DrawPath(pen, path);
+                    }
+                    int d = Math.Max(14, (int)Math.Round(16 * Scale));
+                    Rectangle badge = new Rectangle(Width - d - 6, 6, d, d);
+                    using (SolidBrush b = new SolidBrush(accent))
+                        g.FillEllipse(b, badge);
+                    using (Pen tick = new Pen(Color.White, 2f))
+                    {
+                        g.DrawLines(tick, new Point[]
+                        {
+                            new Point(badge.X + d / 4, badge.Y + d / 2),
+                            new Point(badge.X + d * 2 / 5, badge.Y + d * 2 / 3 + 1),
+                            new Point(badge.X + d * 3 / 4, badge.Y + d / 3)
+                        });
+                    }
+                }
             }
         }
     }

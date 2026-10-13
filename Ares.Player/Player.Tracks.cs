@@ -71,12 +71,12 @@ namespace Ares.Player
                 m_TrackStrip = new EdgeHandle();
                 m_TrackStrip.Name = "trackStrip";
                 m_TrackStrip.Visible = false;
-                new ToolTip().SetToolTip(m_TrackStrip, T("Mostrar / esconder a lista de músicas (F9)", "Show / hide the track list (F9)"));
+                new ToolTip().SetToolTip(m_TrackStrip, T("Mostrar / esconder a lista de músicas" + KeyHint("tracks"), "Show / hide the track list" + KeyHint("tracks")));
 
                 m_TrackTitle = new Label();
                 m_TrackTitle.AutoEllipsis = true;
                 m_TrackTitle.TextAlign = ContentAlignment.MiddleLeft;
-                m_TrackCollapse = MakeSmallButton("▶", T("Recolher o painel para a lateral (F9)", "Collapse the panel to the side (F9)"));
+                m_TrackCollapse = MakeSmallButton("▶", T("Recolher o painel para a lateral" + KeyHint("tracks"), "Collapse the panel to the side" + KeyHint("tracks")));
                 m_TrackUp = MakeSmallButton("▲", T("Mover a música para cima (só em lista em sequência)", "Move the track up (sequential lists only)"));
                 m_TrackDown = MakeSmallButton("▼", T("Mover a música para baixo (só em lista em sequência)", "Move the track down (sequential lists only)"));
                 m_TrackKind = new ComboBox();
@@ -114,7 +114,7 @@ namespace Ares.Player
                 m_LeftStrip = new EdgeHandle();
                 m_LeftStrip.Name = "leftStrip";
                 m_LeftStrip.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-                new ToolTip().SetToolTip(m_LeftStrip, T("Mostrar / esconder o painel esquerdo (F8)", "Show / hide the left panel (F8)"));
+                new ToolTip().SetToolTip(m_LeftStrip, T("Mostrar / esconder o painel esquerdo" + KeyHint("left"), "Show / hide the left panel" + KeyHint("left")));
                 m_LeftStrip.Click += (s2, e2) => SetLeftOpen(!m_LeftOpen);
                 host.Controls.Add(m_LeftStrip);
                 SizeChanged += (s, e) => LayoutMainColumns();
@@ -212,12 +212,12 @@ namespace Ares.Player
 
                 // menu entry (Extras) with the shortcut
                 ToolStripMenuItem item = new ToolStripMenuItem(T("Lista de músicas", "Track list"));
-                item.ShortcutKeyDisplayString = "F9";
+                item.Tag = "tracks";
                 item.Click += (s, e) => ToggleTrackPanel();
                 extrasToolStripMenuItem.DropDownItems.Insert(0, item);
 
                 ToolStripMenuItem leftItem = new ToolStripMenuItem(T("Painel esquerdo", "Left panel"));
-                leftItem.ShortcutKeyDisplayString = "F8";
+                leftItem.Tag = "left";
                 leftItem.Click += (s, e) => SetLeftOpen(!m_LeftOpen);
                 extrasToolStripMenuItem.DropDownItems.Insert(1, leftItem);
 
@@ -233,6 +233,12 @@ namespace Ares.Player
             {
                 System.Diagnostics.Debug.WriteLine(ex.Message);
             }
+        }
+
+        private static string KeyHint(string id)
+        {
+            string text = ShortcutText(id);
+            return text.Length == 0 ? "" : " (" + text + ")";
         }
 
         private static Button MakeSmallButton(string text, string tip)
