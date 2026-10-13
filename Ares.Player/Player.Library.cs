@@ -151,9 +151,9 @@ namespace Ares.Player
                 // loose files go into the mode that is currently selected (if it is a real mode)
                 string looseModeTitle = null;
                 if (m_Project != null && string.Equals(m_Project.FileName, target, StringComparison.OrdinalIgnoreCase)
-                    && modesList.SelectedIndex >= 2 && modesList.SelectedIndex - 2 < m_Project.GetModes().Count)
+                    && modesList.SelectedIndex >= 0 && modesList.SelectedIndex < m_Project.GetModes().Count)
                 {
-                    looseModeTitle = m_Project.GetModes()[modesList.SelectedIndex - 2].Title;
+                    looseModeTitle = m_Project.GetModes()[modesList.SelectedIndex].Title;
                 }
                 if (looseModeTitle == null)
                     looseModeTitle = IsPt ? "Músicas soltas" : "Loose music";
@@ -229,12 +229,12 @@ namespace Ares.Player
             try
             {
                 int found = -1;
-                for (int i = 2; i < modesList.Items.Count && found < 0; i++)
+                for (int i = 0; i < modesList.Items.Count && found < 0; i++)
                 {
                     if (string.Equals(modesList.Items[i] as string, title, StringComparison.Ordinal))
                         found = i;
                 }
-                for (int i = 2; i < modesList.Items.Count && found < 0; i++)
+                for (int i = 0; i < modesList.Items.Count && found < 0; i++)
                 {
                     string t = modesList.Items[i] as string;
                     if (t != null && t.StartsWith(title))

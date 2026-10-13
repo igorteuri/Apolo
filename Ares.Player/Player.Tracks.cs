@@ -6,9 +6,9 @@ using Ares.Data;
 
 namespace Ares.Player
 {
-    // Side panel with the list of files of a button's playlist: play by double click, search, reorder,
-    // change the playlist type. The panel is always there; it can be collapsed to a thin strip at the
-    // right edge (button, menu "Extras" or F9) and resized with the splitter in front of it.
+    // Panel with the list of files of a button's playlist: play by double click, search, reorder,
+    // change the playlist type. The panel sits below the element buttons; it can be collapsed to a thin strip at the
+    // bottom (button, menu "Extras" or F9) and resized with the splitter above it.
     public partial class Player
     {
         private class TrackRow
@@ -35,12 +35,13 @@ namespace Ares.Player
         private TextBox m_TrackSearch;
         private ListBox m_TrackList;
         private int m_TrackState = 0; // 0 = not placed yet, 1 = collapsed, 2 = open
-        private int m_TrackWidth = 300;
+        private int m_TrackHeight = 230;
         private int m_TrackElementId = -1;
         private string m_TrackModeTitle;
         private string m_TrackElementTitle;
         private bool m_LeftOpen = true;
         private int m_ModesLeftOriginal;
+        private int m_ElementsTopOriginal;
         private EdgeHandle m_LeftStrip;
         private List<TrackRow> m_TrackRows = new List<TrackRow>();
         private List<TrackRow> m_TrackShown = new List<TrackRow>();
@@ -53,8 +54,8 @@ namespace Ares.Player
             {
                 Control host = this;
                 int saved;
-                if (int.TryParse(Ares.CommonGUI.Preferences.Get("TracksWidth", "300"), out saved))
-                    m_TrackWidth = Math.Max(200, Math.Min(900, saved));
+                if (int.TryParse(Ares.CommonGUI.Preferences.Get("TracksHeight", "230"), out saved))
+                    m_TrackHeight = Math.Max(110, Math.Min(900, saved));
 
                 m_TrackPanel = new GroupBox();
                 m_TrackPanel.Name = "trackPanel";
@@ -65,7 +66,7 @@ namespace Ares.Player
                 m_TrackPanel.Controls.Add(m_TrackBody);
                 m_TrackSplit = new Panel();
                 m_TrackSplit.Name = "trackSplit";
-                m_TrackSplit.Cursor = Cursors.VSplit;
+                m_TrackSplit.Cursor = Cursors.HSplit;
                 m_TrackSplit.Visible = false;
                 m_TrackStrip = new EdgeHandle();
                 m_TrackStrip.Name = "trackStrip";
@@ -103,10 +104,12 @@ namespace Ares.Player
 
                 // everything on the right of the left column is positioned by code
                 m_ModesLeftOriginal = groupBox4.Left;
-                groupBox5.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-                m_TrackPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-                m_TrackSplit.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-                m_TrackStrip.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+                m_ElementsTopOriginal = groupBox5.Top;
+                groupBox5.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                m_TrackPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                m_TrackSplit.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                m_TrackStrip.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                m_TrackStrip.Horizontal = true;
                 m_LeftOpen = Ares.CommonGUI.Preferences.GetBool("LeftOpen", true);
                 m_LeftStrip = new EdgeHandle();
                 m_LeftStrip.Name = "leftStrip";
@@ -173,30 +176,30 @@ namespace Ares.Player
                 };
                 m_TrackList.SelectedIndexChanged += (s, e) => UpdateTrackButtons();
 
-                // splitter: drag to change the width of the panel
-                int startX = 0;
-                int startWidth = 0;
+                // splitter: drag to change the height of the panel
+                int startY = 0;
+                int startHeight = 0;
                 bool dragging = false;
                 m_TrackSplit.MouseDown += (s, e) =>
                 {
                     if (e.Button != MouseButtons.Left)
                         return;
                     dragging = true;
-                    startX = Cursor.Position.X;
-                    startWidth = m_TrackPanel.Width;
+                    startY = Cursor.Position.Y;
+                    startHeight = m_TrackPanel.Height;
                 };
                 m_TrackSplit.MouseMove += (s, e) =>
                 {
                     if (!dragging)
                         return;
-                    ResizeTrackPanel(startWidth - (Cursor.Position.X - startX));
+                    ResizeTrackPanel(startHeight - (Cursor.Position.Y - startY));
                 };
                 m_TrackSplit.MouseUp += (s, e) =>
                 {
                     if (!dragging)
                         return;
                     dragging = false;
-                    Ares.CommonGUI.Preferences.Set("TracksWidth", m_TrackWidth.ToString());
+                    Ares.CommonGUI.Preferences.Set("TracksHeight", m_TrackHeight.ToString());
                 };
 
                 m_TrackPlayTimer = new Timer();
@@ -251,18 +254,24 @@ namespace Ares.Player
         {
             if (m_TrackPanel == null)
                 return;
+            // one header row (title | list type | search | up | down) and the wide list below it
             int h = Math.Max(26, m_TrackSearch.PreferredHeight + 2);
             int w = m_TrackBody.ClientSize.Width;
             int bw = h;
-            m_TrackCollapse.SetBounds(w - bw, 0, bw, h);
-            m_TrackDown.SetBounds(w - 2 * bw - 2, 0, bw, h);
-            m_TrackUp.SetBounds(w - 3 * bw - 4, 0, bw, h);
-            m_TrackTitle.SetBounds(0, 0, Math.Max(20, w - 3 * bw - 8), h);
+            m_TrackCollapse.SetBounds(0, 0, 0, 0);
+            m_TrackDown.SetBounds(w - bw, 0, bw, h);
+            m_TrackUp.SetBounds(w - 2 * bw - 2, 0, bw, h);
+            int rest = w - 2 * bw - 2 - 8; // room for title, type and search
+            int kindW = Math.Max(120, Math.Min(230, rest / 3));
+            int titleW = Math.Max(60, Math.Min(170, rest / 4));
+            int searchW = Math.Max(60, rest - kindW - titleW - 8);
+            int x = 0;
+            m_TrackTitle.SetBounds(x, 0, titleW, h);
+            x += titleW + 4;
+            m_TrackKind.SetBounds(x, (h - m_TrackKind.Height) / 2, kindW, m_TrackKind.Height);
+            x += kindW + 4;
+            m_TrackSearch.SetBounds(x, (h - m_TrackSearch.Height) / 2, searchW, m_TrackSearch.Height);
             int y = h + 4;
-            m_TrackKind.SetBounds(0, y, w, m_TrackKind.Height);
-            y += m_TrackKind.Height + 4;
-            m_TrackSearch.SetBounds(0, y, w, m_TrackSearch.Height);
-            y += m_TrackSearch.Height + 4;
             m_TrackList.SetBounds(0, y, w, Math.Max(20, m_TrackBody.ClientSize.Height - y));
         }
 
@@ -281,8 +290,6 @@ namespace Ares.Player
                 return;
             m_TrackState = state;
             Ares.CommonGUI.Preferences.SetBool("TracksOpen", state == 2);
-            if (state == 2 && WindowState == FormWindowState.Normal)
-                GrowForTrackPanel();
             UpdateTrackVisibility();
             LayoutMainColumns();
             if (state == 2)
@@ -293,27 +300,9 @@ namespace Ares.Player
         }
 
         private const int MainRightMargin = 14;
-        private const int ElementsMinWidth = 300;
+        private const int ElementsMinHeight = 150;
+        private const int TrackStripHeight = 12;
         private const int LeftStripWidth = 30;
-
-        // makes the window wider (as far as the screen allows) so the elements box keeps its size
-        private void GrowForTrackPanel()
-        {
-            int have = (ClientSize.Width - MainRightMargin - groupBox5.Left) - 395;
-            int deficit = m_TrackWidth + TrackGap - have;
-            if (deficit <= 0)
-                return;
-            Rectangle area = Screen.FromControl(this).WorkingArea;
-            int g = Math.Max(0, Math.Min(deficit, area.Right - Right));
-            if (g > 0)
-                Width += g;
-            int rest = deficit - g;
-            if (rest > 0 && Left - area.Left >= rest)
-            {
-                Left -= rest;
-                Width += rest;
-            }
-        }
 
         private bool m_LayoutingColumns;
 
@@ -342,19 +331,22 @@ namespace Ares.Player
                 if (leftOpen)
                     FitLeftColumn();
 
-                // elements box, track panel / strip on the right
+                // right column: elements box on top, track list below it, handle at the bottom
                 int right = clientWidth - MainRightMargin;
-                int top = groupBox5.Top;
-                int height = groupBox5.Height;
-                int panelWidth = 0;
+                int colLeft = groupBox5.Left;
+                int colWidth = Math.Max(100, right - colLeft);
+                int top = m_ElementsTopOriginal;
+                int bottom = groupBox4.Bottom - TrackStripHeight - 2;
+                int total = Math.Max(100, bottom - top);
+                int panelHeight = 0;
                 if (m_TrackState == 2)
-                    panelWidth = Math.Max(160, Math.Min(m_TrackWidth, right - groupBox5.Left - ElementsMinWidth - TrackGap));
-                int reserved = panelWidth > 0 ? panelWidth + TrackGap : 0;
-                groupBox5.Width = Math.Max(100, right - reserved - groupBox5.Left);
-                int left = right - panelWidth;
-                m_TrackPanel.SetBounds(left, top, panelWidth, height);
-                m_TrackSplit.SetBounds(left - TrackGap, top, TrackGap, height);
-                m_TrackStrip.SetBounds(clientWidth - 12, top, 12, height);
+                    panelHeight = Math.Max(90, Math.Min(m_TrackHeight, total - ElementsMinHeight - TrackGap));
+                int elementsHeight = total - (panelHeight > 0 ? panelHeight + TrackGap : 0);
+                groupBox5.SetBounds(colLeft, top, colWidth, elementsHeight);
+                int panelTop = top + elementsHeight + TrackGap;
+                m_TrackPanel.SetBounds(colLeft, panelTop, colWidth, panelHeight);
+                m_TrackSplit.SetBounds(colLeft, panelTop - TrackGap, colWidth, TrackGap);
+                m_TrackStrip.SetBounds(colLeft, bottom + 2, colWidth, TrackStripHeight);
                 if (m_TrackState == 2)
                     LayoutTrackPanel();
             }
@@ -391,15 +383,16 @@ namespace Ares.Player
             LayoutMainColumns();
         }
 
-        private void ResizeTrackPanel(int newWidth)
+        private void ResizeTrackPanel(int newHeight)
         {
             if (m_TrackState != 2)
                 return;
-            int max = ClientSize.Width - MainRightMargin - groupBox5.Left - ElementsMinWidth - TrackGap;
-            newWidth = Math.Max(200, Math.Min(newWidth, max));
-            if (newWidth == m_TrackWidth)
+            int total = groupBox4.Bottom - TrackStripHeight - 2 - m_ElementsTopOriginal;
+            int max = total - ElementsMinHeight - TrackGap;
+            newHeight = Math.Max(90, Math.Min(newHeight, max));
+            if (newHeight == m_TrackHeight)
                 return;
-            m_TrackWidth = newWidth;
+            m_TrackHeight = newHeight;
             LayoutMainColumns();
         }
 

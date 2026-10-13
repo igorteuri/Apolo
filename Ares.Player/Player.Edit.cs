@@ -145,9 +145,9 @@ namespace Ares.Player
                 if (!m_EditMode || e.Button != MouseButtons.Right)
                     return;
                 int index = modesList.IndexFromPoint(e.Location);
-                if (index >= 2)
+                if (index >= 0)
                     modesList.SelectedIndex = index;
-                bool real = modesList.SelectedIndex >= 2;
+                bool real = modesList.SelectedIndex >= 0;
                 for (int i = 1; i < m_ModeMenu.Items.Count; i++)
                     m_ModeMenu.Items[i].Enabled = real;
                 m_ModeMenu.Show(modesList, e.Location);
@@ -179,7 +179,7 @@ namespace Ares.Player
             bool modeTracking = false;
             modesList.MouseDown += (s, e) =>
             {
-                modeTracking = m_EditMode && e.Button == MouseButtons.Left && modesList.IndexFromPoint(e.Location) >= 2;
+                modeTracking = m_EditMode && e.Button == MouseButtons.Left && modesList.IndexFromPoint(e.Location) >= 0;
                 modeDown = e.Location;
             };
             modesList.MouseUp += (s, e) => modeTracking = false;
@@ -192,8 +192,8 @@ namespace Ares.Player
                     return;
                 modeTracking = false;
                 int index = modesList.IndexFromPoint(modeDown);
-                if (index >= 2)
-                    modesList.DoDragDrop(new DragInfo { IsMode = true, ModeIndex = index - 2 }, DragDropEffects.Move);
+                if (index >= 0)
+                    modesList.DoDragDrop(new DragInfo { IsMode = true, ModeIndex = index }, DragDropEffects.Move);
             };
             modesList.DoubleClick += (s, e) =>
             {
@@ -311,7 +311,7 @@ namespace Ares.Player
             IMode mode = CurrentMode();
             if (mode == null)
                 return;
-            int modeIndex = modesList.SelectedIndex - 2;
+            int modeIndex = modesList.SelectedIndex;
             string modeTitle = mode.Title;
             BeginInvoke(new MethodInvoker(() => ApplyProjectEdit(() =>
             {
@@ -334,7 +334,7 @@ namespace Ares.Player
             if (!m_EditMode || info == null)
                 return;
             int index = modesList.IndexFromPoint(modesList.PointToClient(new Point(e.X, e.Y)));
-            e.Effect = index >= 2 ? DragDropEffects.Move : DragDropEffects.None;
+            e.Effect = index >= 0 ? DragDropEffects.Move : DragDropEffects.None;
         }
 
         private void ModesDragDrop(object sender, DragEventArgs e)
@@ -342,7 +342,7 @@ namespace Ares.Player
             DragInfo info = e.Data.GetData(typeof(DragInfo)) as DragInfo;
             if (!m_EditMode || info == null || m_Project == null)
                 return;
-            int dropIndex = modesList.IndexFromPoint(modesList.PointToClient(new Point(e.X, e.Y))) - 2;
+            int dropIndex = modesList.IndexFromPoint(modesList.PointToClient(new Point(e.X, e.Y)));
             if (dropIndex < 0 || dropIndex >= m_Project.GetModes().Count)
                 return;
             if (info.IsMode)
@@ -360,7 +360,7 @@ namespace Ares.Player
             }
             else
             {
-                int fromMode = modesList.SelectedIndex - 2;
+                int fromMode = modesList.SelectedIndex;
                 if (fromMode == dropIndex)
                     return;
                 int movedId = info.ElementId;
@@ -433,7 +433,7 @@ namespace Ares.Player
 
         private IMode CurrentMode()
         {
-            int index = modesList.SelectedIndex - 2;
+            int index = modesList.SelectedIndex;
             if (m_Project == null || index < 0 || index >= m_Project.GetModes().Count)
                 return null;
             return m_Project.GetModes()[index];
@@ -549,7 +549,7 @@ namespace Ares.Player
             string name = Prompt(this, T("Renomear modo", "Rename mode"), T("Novo nome:", "New name:"), mode.Title);
             if (name == null)
                 return;
-            int index = modesList.SelectedIndex - 2;
+            int index = modesList.SelectedIndex;
             Ares.CommonGUI.ButtonImageStore.RenameMode(m_CurrentProjectPath, mode.Title, name);
             ApplyProjectEdit(() => m_Project.GetModes()[index].Title = name, name);
         }
@@ -563,7 +563,7 @@ namespace Ares.Player
                     "Delete mode \"" + mode.Title + "\" and all its buttons?\n(Audio files are not deleted.)"),
                     StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
-            int index = modesList.SelectedIndex - 2;
+            int index = modesList.SelectedIndex;
             ApplyProjectEdit(() =>
             {
                 IMode m = m_Project.GetModes()[index];
@@ -576,7 +576,7 @@ namespace Ares.Player
         private void MoveCurrentMode(int delta)
         {
             IMode mode = CurrentMode();
-            int index = modesList.SelectedIndex - 2;
+            int index = modesList.SelectedIndex;
             if (mode == null)
                 return;
             int target = index + delta;
@@ -620,7 +620,7 @@ namespace Ares.Player
             string name = Prompt(this, T("Renomear botão", "Rename button"), T("Novo nome:", "New name:"), me.Title);
             if (name == null)
                 return;
-            int modeIndex = modesList.SelectedIndex - 2;
+            int modeIndex = modesList.SelectedIndex;
             string modeTitle = mode.Title;
             Ares.CommonGUI.ButtonImageStore.RenameElement(m_CurrentProjectPath, modeTitle, me.Title, name);
             ApplyProjectEdit(() => m_Project.GetModes()[modeIndex].GetElements()[index].Title = name, modeTitle);
@@ -683,7 +683,7 @@ namespace Ares.Player
             if (MessageBox.Show(this, T("Excluir o botão \"" + me.Title + "\"?", "Delete button \"" + me.Title + "\"?"),
                     StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
-            int modeIndex = modesList.SelectedIndex - 2;
+            int modeIndex = modesList.SelectedIndex;
             string modeTitle = mode.Title;
             ApplyProjectEdit(() =>
             {
@@ -703,7 +703,7 @@ namespace Ares.Player
             int target = index + delta;
             if (target < 0 || target >= mode.GetElements().Count)
                 return;
-            int modeIndex = modesList.SelectedIndex - 2;
+            int modeIndex = modesList.SelectedIndex;
             string modeTitle = mode.Title;
             ApplyProjectEdit(() =>
             {

@@ -16,6 +16,7 @@ namespace Ares.Player
     {
         private bool m_Hover;
         private bool m_PointsLeft;
+        private bool m_Horizontal;
 
         public EdgeHandle()
         {
@@ -27,7 +28,21 @@ namespace Ares.Player
             Width = 12;
         }
 
-        /// <summary>Direction of the chevron: true points to the left.</summary>
+        /// <summary>True for a bar lying at the bottom edge (the chevron then points up / down).</summary>
+        public bool Horizontal
+        {
+            get { return m_Horizontal; }
+            set
+            {
+                if (m_Horizontal != value)
+                {
+                    m_Horizontal = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        /// <summary>Direction of the chevron: true points to the left (up for a horizontal bar).</summary>
         public bool PointsLeft
         {
             get { return m_PointsLeft; }
@@ -73,6 +88,12 @@ namespace Ares.Player
             g.SmoothingMode = SmoothingMode.AntiAlias;
             int w = Math.Max(4, Width - 3);
             Rectangle r = new Rectangle((Width - w) / 2, 0, w, Height - 1);
+            if (m_Horizontal)
+            {
+                int hh = Math.Max(4, Height - 3);
+                r = new Rectangle(0, (Height - hh) / 2, Width - 1, hh);
+                w = hh;
+            }
             using (GraphicsPath path = RoundRect(r, w))
             using (SolidBrush b = new SolidBrush(m_Hover ? Color.FromArgb(70, accent) : Color.FromArgb(90, bar)))
                 g.FillPath(b, path);
@@ -84,7 +105,10 @@ namespace Ares.Player
             {
                 pen.StartCap = LineCap.Round;
                 pen.EndCap = LineCap.Round;
-                g.DrawLines(pen, new PointF[] { new PointF(cx - dx, cy - 5), new PointF(cx + dx, cy), new PointF(cx - dx, cy + 5) });
+                if (m_Horizontal)
+                    g.DrawLines(pen, new PointF[] { new PointF(cx - 6, cy - dx), new PointF(cx, cy + dx), new PointF(cx + 6, cy - dx) });
+                else
+                    g.DrawLines(pen, new PointF[] { new PointF(cx - dx, cy - 5), new PointF(cx + dx, cy), new PointF(cx - dx, cy + 5) });
             }
         }
 

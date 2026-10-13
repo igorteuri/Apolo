@@ -810,9 +810,7 @@ namespace Ares.Player
                     m_Listen = true;
                     return;
                 }
-                modesList.Items.Add(StringResources.MusicList);
-                modesList.Items.Add(StringResources.MusicTags);
-                int i = 2;
+                int i = 0;
                 int currentMode = 0;
                 bool showKeys = Settings.Settings.Instance.ShowKeysInButtons;
                 KeysConverter converter = new KeysConverter();
@@ -860,7 +858,7 @@ namespace Ares.Player
             int modeIndex = modesList.SelectedIndex;
             if (modeIndex == -1)
                 return;
-            if (modeIndex == 0)
+            if (SpecialViews && modeIndex == 0)
             {
                 musicList.BeginUpdate();
                 musicList.Items.Clear();
@@ -886,7 +884,7 @@ namespace Ares.Player
                 m_TagsControlsActive = false;
                 musicList.Visible = true;
             }
-            else if (modeIndex == 1)
+            else if (SpecialViews && modeIndex == 1)
             {
                 foreach (CheckBox box in m_CurrentTagButtons.Keys)
                 {
@@ -1074,11 +1072,11 @@ namespace Ares.Player
                 m_ButtonsForIds.Clear();
                 elementsPanel.Controls.Clear();
 
-                if (m_Project != null && m_Project.GetModes().Count > modeIndex - 2)
+                if (m_Project != null && m_Project.GetModes().Count > modeIndex)
                 {
                     bool showKeys = Settings.Settings.Instance.ShowKeysInButtons;
                     KeysConverter converter = new KeysConverter();
-                    Ares.Data.IMode shownMode = m_Project.GetModes()[modeIndex - 2];
+                    Ares.Data.IMode shownMode = m_Project.GetModes()[modeIndex];
                     IList<Ares.Data.IModeElement> elements = shownMode.GetElements();
                     string shownModeTitle = shownMode.Title;
                     // text, picture / icon of every visible button
@@ -1212,6 +1210,8 @@ namespace Ares.Player
 
         private int lastMusicElementId = -1;
         private String lastMode = String.Empty;
+        /// <summary>The old "music list" / "music tags" pseudo modes were removed from the modes list.</summary>
+        private const bool SpecialViews = false;
         private int lastMusicListId = -1;
         private HashSet<int> lastTagIds = null;
 
@@ -1227,7 +1227,7 @@ namespace Ares.Player
                 {
                     if (m_Project.GetModes()[i].Title == mode.Title)
                     {
-                        modesList.SelectedIndex = i + 2;
+                        modesList.SelectedIndex = i;
                         break;
                     }
                 }
@@ -1303,11 +1303,11 @@ namespace Ares.Player
                 settingsChanged = true;
             }
             repeatCurrentMusicToolStripMenuItem.Checked = repeat;
-            if (control.CurrentMusicList != lastMusicListId && modesList.SelectedIndex == 0)
+            if (control.CurrentMusicList != lastMusicListId && SpecialViews && modesList.SelectedIndex == 0)
             {
                 UpdateElementsPanel();
             }
-            else if (modesList.SelectedIndex == 1)
+            else if (SpecialViews && modesList.SelectedIndex == 1)
             {
                 HashSet<int> tags = lastTagIds != null ? new HashSet<int>(lastTagIds) : new HashSet<int>();
                 HashSet<int> currentTags = control.GetCurrentMusicTags();
@@ -2124,9 +2124,9 @@ namespace Ares.Player
         {
             if (!m_Listen)
                 return;
-            if (modesList.SelectedIndex > 1 && m_Project != null && (modesList.SelectedIndex - 2) < m_Project.GetModes().Count)
+            if (modesList.SelectedIndex >= 0 && m_Project != null && modesList.SelectedIndex < m_Project.GetModes().Count)
             {
-                m_PlayingControl.SetMode(m_Project.GetModes()[modesList.SelectedIndex - 2]);
+                m_PlayingControl.SetMode(m_Project.GetModes()[modesList.SelectedIndex]);
             }
             m_Listen = false;
             UpdateElementsPanel();
