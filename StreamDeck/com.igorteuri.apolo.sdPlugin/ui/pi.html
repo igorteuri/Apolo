@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Apolo</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 10px 12px; background: #2d2d2d; color: #d8d8d8; font: 12px "Segoe UI", sans-serif; }
+  h3 { margin: 14px 0 6px; font-size: 12px; color: #ffb627; font-weight: 600; }
+  h3:first-child { margin-top: 0; }
+  .row { display: flex; align-items: center; margin: 5px 0; }
+  .row > label { width: 90px; flex: none; color: #b0b0b0; }
+  input[type=text], input[type=password], input[type=number], select { flex: 1; min-width: 0; background: #1e1e1e; color: #e8e8e8; border: 1px solid #555; border-radius: 3px; padding: 4px 6px; font: inherit; }
+  button { background: #ffb627; color: #1b1405; border: 0; border-radius: 3px; padding: 5px 12px; font: inherit; font-weight: 600; cursor: pointer; }
+  #status { margin-top: 6px; color: #b0b0b0; }
+  #status.ok { color: #6fcf7f; }
+  #status.bad { color: #ff7b72; }
+  .hide { display: none; }
+  details { margin-top: 12px; }
+  summary { cursor: pointer; color: #ffb627; }
+</style>
+</head>
+<body>
+<div id="sec-playpause" class="hide">
+  <div class="row"><label id="t-showTitle"></label><input type="checkbox" id="showTitle"></div>
+</div>
+
+<div id="sec-volume" class="hide">
+  <h3 id="t-volume"></h3>
+  <div class="row"><label id="t-target"></label><select id="target"></select></div>
+  <div class="row" id="row-kind"><label id="t-kind"></label><select id="kind"></select></div>
+  <div class="row"><label id="t-step"></label><input type="number" id="step" min="1" max="50"></div>
+  <div class="row" id="row-value"><label id="t-value"></label><input type="number" id="value" min="0" max="100"></div>
+</div>
+
+<div id="sec-mode" class="hide">
+  <h3 id="t-mode"></h3>
+  <div class="row"><label id="t-modeSel"></label><select id="modeSel"></select></div>
+</div>
+
+<div id="sec-element" class="hide">
+  <h3 id="t-element"></h3>
+  <div class="row"><label id="t-elMode"></label><select id="elMode"></select></div>
+  <div class="row"><label id="t-elSel"></label><select id="elSel"></select></div>
+</div>
+
+<details id="conn">
+  <summary id="t-conn"></summary>
+  <div class="row"><label id="t-port"></label><input type="text" id="port"></div>
+  <div class="row"><label id="t-key"></label><input type="password" id="key"></div>
+  <div class="row"><label></label><button id="save"></button></div>
+</details>
+<div id="status"></div>
+
+<script>
+var T = {
+  pt: {
+    showTitle: 'Mostrar a música', volume: 'Volume', target: 'Volume de', kind: 'Botão', step: 'Passo', value: 'Valor',
+    overall: 'Geral', music: 'Música', sound: 'Efeitos sonoros', up: 'Aumentar', down: 'Diminuir', set: 'Definir valor', mute: 'Mudo (liga/desliga)',
+    mode: 'Modo', modeSel: 'Modo', element: 'Elemento', elMode: 'Do modo', elSel: 'Elemento',
+    conn: 'Conexão com o Apolo', port: 'Porta', key: 'Chave', save: 'Salvar', keyHint: '(já salva — digite para trocar)',
+    ok: 'Conectado ao Apolo.', offline: 'Não encontrei o Apolo. Ele está aberto e com o Stream Deck ativado (menu Extras)?',
+    badkey: 'Chave incorreta. Copie de novo no Apolo (Extras > Stream Deck).', nokey: 'Cole a chave do Apolo abaixo (Extras > Stream Deck).',
+    locked: 'Muitas tentativas erradas. Espere 1 minuto.', start: 'Conectando...', error: 'Erro ao falar com o Apolo.',
+    none: '(abra o Apolo com um projeto)'
+  },
+  en: {
+    showTitle: 'Show the track', volume: 'Volume', target: 'Volume of', kind: 'Button', step: 'Step', value: 'Value',
+    overall: 'Master', music: 'Music', sound: 'Sound effects', up: 'Raise', down: 'Lower', set: 'Set value', mute: 'Mute (toggle)',
+    mode: 'Mode', modeSel: 'Mode', element: 'Element', elMode: 'From mode', elSel: 'Element',
+    conn: 'Connection to Apolo', port: 'Port', key: 'Key', save: 'Save', keyHint: '(saved - type to change)',
+    ok: 'Connected to Apolo.', offline: 'Apolo not found. Is it open with Stream Deck enabled (menu Extras)?',
+    badkey: 'Wrong key. Copy it again from Apolo (Extras > Stream Deck).', nokey: 'Paste the Apolo key below (Extras > Stream Deck).',
+    locked: 'Too many wrong tries. Wait 1 minute.', start: 'Connecting...', error: 'Error talking to Apolo.',
+    none: '(open Apolo with a project)'
+  }
+};
+var L = T.pt, ws, uuid, action = '', settings = {}, project = [];
+var $ = function (id) { return document.getElementById(id); };
+
+function fill(select, items, selected) {
+  select.innerHTML = '';
+  items.forEach(function (it) {
+    var o = document.createElement('option');
+    o.value = it[0]; o.textContent = it[1];
+    select.appendChild(o);
+  });
+  if (selected !== undefined && selected !== null) select.value = selected;
+}
+
+function save() {
+  ws.send(JSON.stringify({ event: 'setSettings', context: uuid, payload: settings }));
+}
+
+function applyTexts() {
+  ['showTitle', 'volume', 'target', 'kind', 'step', 'value', 'mode', 'modeSel', 'element', 'elMode', 'elSel', 'conn', 'port', 'key']
+    .forEach(function (k) { var e = $('t-' + k); if (e) e.textContent = L[k]; });
+  $('save').textContent = L.save;
+  fill($('target'), [['overall', L.overall], ['music', L.music], ['sound', L.sound]], settings.target || 'overall');
+}
+
+function render() {
+  var name = action.replace('com.igorteuri.apolo.', '');
+  ['playpause', 'volume', 'mode', 'element'].forEach(function (n) { $('sec-' + n).className = n === name ? '' : 'hide'; });
+  applyTexts();
+  if (name === 'playpause') $('showTitle').checked = !!settings.showTitle;
+  if (name === 'volume') {
+    var kinds = [['up', L.up], ['down', L.down], ['set', L.set], ['mute', L.mute]];
+    fill($('kind'), kinds, settings.kind || 'up');
+    $('step').value = settings.step || '';
+    $('step').placeholder = '5';
+    $('value').value = settings.value === undefined ? '' : settings.value;
+    $('row-value').className = 'row' + ((settings.kind || 'up') === 'set' ? '' : ' hide');
+  }
+  if (name === 'mode') {
+    var modes = project.map(function (m) { return [m.title, m.title]; });
+    if (!modes.length) modes = [['', L.none]];
+    fill($('modeSel'), modes, settings.modeTitle);
+    if (!settings.modeTitle && project.length) { settings.modeTitle = project[0].title; $('modeSel').value = settings.modeTitle; save(); }
+  }
+  if (name === 'element') {
+    var ms = project.map(function (m) { return [m.title, m.title]; });
+    if (!ms.length) ms = [['', L.none]];
+    fill($('elMode'), ms, settings.modeTitle);
+    if (!settings.modeTitle && project.length) settings.modeTitle = project[0].title;
+    renderElements();
+  }
+}
+
+function renderElements() {
+  var mode = project.filter(function (m) { return m.title === settings.modeTitle; })[0];
+  var els = mode ? mode.elements.map(function (e) { return [String(e.id), e.title]; }) : [];
+  fill($('elSel'), els, settings.elementId !== undefined ? String(settings.elementId) : null);
+  if (els.length && ($('elSel').value !== String(settings.elementId))) {
+    settings.elementId = parseInt($('elSel').value, 10);
+    settings.elementTitle = mode.elements.filter(function (e) { return e.id === settings.elementId; })[0].title;
+    save();
+  }
+}
+
+function showStatus(status) {
+  var e = $('status');
+  e.textContent = L[status] || status;
+  e.className = status === 'ok' ? 'ok' : (status === 'start' ? '' : 'bad');
+  if (status !== 'ok') $('conn').open = true;
+}
+
+function connectElgatoStreamDeckSocket(port, inUUID, registerEvent, info, actionInfo) {
+  uuid = inUUID;
+  try { L = /^pt/i.test(JSON.parse(info).application.language) ? T.pt : T.en; } catch (e) { }
+  var ai = JSON.parse(actionInfo);
+  action = ai.action;
+  settings = (ai.payload && ai.payload.settings) || {};
+  ws = new WebSocket('ws://127.0.0.1:' + port);
+  ws.onopen = function () {
+    ws.send(JSON.stringify({ event: registerEvent, uuid: uuid }));
+    render();
+    ws.send(JSON.stringify({ event: 'sendToPlugin', context: uuid, action: action, payload: { event: 'getInfo' } }));
+  };
+  ws.onmessage = function (m) {
+    var msg = JSON.parse(m.data);
+    if (msg.event === 'sendToPropertyInspector') {
+      var p = msg.payload || {};
+      project = p.project || [];
+      $('port').value = p.port || '8767';
+      $('key').placeholder = p.hasKey ? L.keyHint : '';
+      showStatus(p.status);
+      render();
+    } else if (msg.event === 'didReceiveSettings') {
+      settings = (msg.payload && msg.payload.settings) || settings;
+    }
+  };
+}
+
+$('showTitle').onchange = function () { settings.showTitle = $('showTitle').checked; save(); };
+$('target').onchange = function () { settings.target = $('target').value; save(); };
+$('kind').onchange = function () { settings.kind = $('kind').value; $('row-value').className = 'row' + (settings.kind === 'set' ? '' : ' hide'); save(); };
+$('step').onchange = function () { settings.step = parseInt($('step').value, 10) || undefined; save(); };
+$('value').onchange = function () { settings.value = parseInt($('value').value, 10) || 0; save(); };
+$('modeSel').onchange = function () { settings.modeTitle = $('modeSel').value; save(); };
+$('elMode').onchange = function () { settings.modeTitle = $('elMode').value; settings.elementId = undefined; renderElements(); save(); };
+$('elSel').onchange = function () {
+  var mode = project.filter(function (m) { return m.title === settings.modeTitle; })[0];
+  settings.elementId = parseInt($('elSel').value, 10);
+  var el = mode && mode.elements.filter(function (e) { return e.id === settings.elementId; })[0];
+  settings.elementTitle = el ? el.title : '';
+  save();
+};
+$('save').onclick = function () {
+  $('status').textContent = L.start;
+  ws.send(JSON.stringify({ event: 'sendToPlugin', context: uuid, action: action,
+    payload: { event: 'saveConnection', port: $('port').value.trim(), key: $('key').value.trim() } }));
+  $('key').value = '';
+};
+</script>
+</body>
+</html>

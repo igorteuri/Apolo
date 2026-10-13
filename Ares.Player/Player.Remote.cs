@@ -31,6 +31,8 @@ namespace Ares.Player
         public int Port { get; private set; }
         public string LastError { get; private set; }
         public Func<string, string, string> Execute;
+        /// <summary>Returns the modes and elements of the project as JSON (used by the Stream Deck plugin).</summary>
+        public Func<string> Project;
 
         public bool Running
         {
@@ -240,6 +242,17 @@ namespace Ares.Player
                 Reply(context, 200, "application/json; charset=utf-8", m_State);
                 return;
             }
+            if (path == "/api/project" && request.HttpMethod == "GET")
+            {
+                if (!Authorized(request))
+                {
+                    Reply(context, 401, "text/plain; charset=utf-8", "login");
+                    return;
+                }
+                Func<string> provider = Project;
+                Reply(context, 200, "application/json; charset=utf-8", provider != null ? provider() : "[]");
+                return;
+            }
             if (path == "/api/cmd" && request.HttpMethod == "POST")
             {
                 if (!Authorized(request))
@@ -416,7 +429,7 @@ namespace Ares.Player
                 m_Remote.Execute = RemoteExecute;
                 m_Tunnel = new CloudflareTunnel();
                 m_RemoteTimer = new Timer();
-                m_RemoteTimer.Interval = 700;
+                m_RemoteTimer.Interval = 450;
                 m_RemoteTimer.Tick += (s, e) => UpdateRemoteState();
                 m_RemoteTimer.Start();
                 ToolStripMenuItem item = new ToolStripMenuItem(T("Controle remoto (celular / internet)...", "Remote control (phone / internet)..."));
@@ -437,7 +450,9 @@ namespace Ares.Player
 
         private void UpdateRemoteState()
         {
-            if (m_Remote == null || !m_Remote.Running)
+            bool remoteOn = m_Remote != null && m_Remote.Running;
+            bool deckOn = m_Deck != null && m_Deck.Running;
+            if (!remoteOn && !deckOn)
                 return;
             PlayingControl control = m_PlayingControl;
             if (control == null)
@@ -518,7 +533,11 @@ namespace Ares.Player
                     }
                 }
                 json.Append("]}");
-                m_Remote.SetState(json.ToString());
+                string stateText = json.ToString();
+                if (remoteOn)
+                    m_Remote.SetState(stateText);
+                if (deckOn)
+                    m_Deck.SetState(stateText);
             }
             catch (Exception)
             {

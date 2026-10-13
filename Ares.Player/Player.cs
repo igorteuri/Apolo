@@ -112,6 +112,7 @@ namespace Ares.Player
             InitOverlay();
             InitRemote();
             InitDiscord();
+            InitDeck();
         }
 
         private void FitMusicBar()

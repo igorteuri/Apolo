@@ -1,0 +1,106 @@
+{
+  "SDKVersion": 2,
+  "UUID": "com.igorteuri.apolo",
+  "Name": "Apolo",
+  "Author": "Igor",
+  "Version": "1.0.0.0",
+  "Description": "Controle o Apolo (player de áudio para RPG): tocar/pausar, volumes, modos e elementos. / Control Apolo, the RPG audio player.",
+  "Category": "Apolo",
+  "Icon": "assets/plugin-icon",
+  "CategoryIcon": "assets/category-icon",
+  "CodePath": "bin/plugin.js",
+  "PropertyInspectorPath": "ui/pi.html",
+  "Nodejs": { "Version": "20" },
+  "Software": { "MinimumVersion": "6.4" },
+  "OS": [ { "Platform": "windows", "MinimumVersion": "10" } ],
+  "Actions": [
+    {
+      "UUID": "com.igorteuri.apolo.playpause",
+      "Name": "Tocar / Pausar",
+      "Icon": "assets/playpause",
+      "Tooltip": "Pausa ou retoma a música.",
+      "PropertyInspectorPath": "ui/pi.html",
+      "Controllers": [ "Keypad" ],
+      "States": [
+        { "Image": "assets/play", "ShowTitle": false },
+        { "Image": "assets/pause", "ShowTitle": false }
+      ]
+    },
+    {
+      "UUID": "com.igorteuri.apolo.stop",
+      "Name": "Parar tudo",
+      "Icon": "assets/stop",
+      "Tooltip": "Para a música e os efeitos.",
+      "PropertyInspectorPath": "ui/pi.html",
+      "Controllers": [ "Keypad" ],
+      "States": [ { "Image": "assets/stop", "ShowTitle": false } ]
+    },
+    {
+      "UUID": "com.igorteuri.apolo.prev",
+      "Name": "Música anterior",
+      "Icon": "assets/prev",
+      "PropertyInspectorPath": "ui/pi.html",
+      "Controllers": [ "Keypad" ],
+      "States": [ { "Image": "assets/prev", "ShowTitle": false } ]
+    },
+    {
+      "UUID": "com.igorteuri.apolo.next",
+      "Name": "Próxima música",
+      "Icon": "assets/next",
+      "PropertyInspectorPath": "ui/pi.html",
+      "Controllers": [ "Keypad" ],
+      "States": [ { "Image": "assets/next", "ShowTitle": false } ]
+    },
+    {
+      "UUID": "com.igorteuri.apolo.repeat",
+      "Name": "Repetir música",
+      "Icon": "assets/repeat",
+      "Tooltip": "Liga / desliga a repetição.",
+      "PropertyInspectorPath": "ui/pi.html",
+      "Controllers": [ "Keypad" ],
+      "States": [
+        { "Image": "assets/repeat-off", "ShowTitle": false },
+        { "Image": "assets/repeat-on", "ShowTitle": false }
+      ]
+    },
+    {
+      "UUID": "com.igorteuri.apolo.volume",
+      "Name": "Volume",
+      "Icon": "assets/volume",
+      "Tooltip": "Botão: aumentar, diminuir, definir ou mudo. Dial: gire para ajustar, aperte para mudo.",
+      "PropertyInspectorPath": "ui/pi.html",
+      "Controllers": [ "Keypad", "Encoder" ],
+      "States": [ { "Image": "assets/volume-key", "ShowTitle": true, "TitleAlignment": "bottom", "FontSize": 11 } ],
+      "Encoder": {
+        "layout": "$B1",
+        "Icon": "assets/volume-dial",
+        "StackColor": "#FFB627",
+        "TriggerDescription": { "Rotate": "Ajustar volume", "Push": "Mudo", "Touch": "Mudo" }
+      }
+    },
+    {
+      "UUID": "com.igorteuri.apolo.mode",
+      "Name": "Trocar de modo",
+      "Icon": "assets/mode",
+      "Tooltip": "Muda para o modo escolhido.",
+      "PropertyInspectorPath": "ui/pi.html",
+      "Controllers": [ "Keypad" ],
+      "States": [
+        { "Image": "assets/mode-off", "ShowTitle": true, "TitleAlignment": "bottom", "FontSize": 11 },
+        { "Image": "assets/mode-on", "ShowTitle": true, "TitleAlignment": "bottom", "FontSize": 11 }
+      ]
+    },
+    {
+      "UUID": "com.igorteuri.apolo.element",
+      "Name": "Tocar elemento",
+      "Icon": "assets/element",
+      "Tooltip": "Toca (ou para) um elemento de um modo.",
+      "PropertyInspectorPath": "ui/pi.html",
+      "Controllers": [ "Keypad" ],
+      "States": [
+        { "Image": "assets/element-off", "ShowTitle": true, "TitleAlignment": "bottom", "FontSize": 11 },
+        { "Image": "assets/element-on", "ShowTitle": true, "TitleAlignment": "bottom", "FontSize": 11 }
+      ]
+    }
+  ]
+}
