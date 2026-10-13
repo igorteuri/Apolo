@@ -1408,7 +1408,7 @@ namespace Ares.CommonGUI
         // menu texts without the trailing "..." (also for items which are added later)
         // --------------------------------------------------------------------------------
 
-        private static readonly ConditionalWeakTable<object, object> s_Hooked = new ConditionalWeakTable<object, object>();
+        private static readonly ConditionalWeakTable<object, object> s_MenuHooked = new ConditionalWeakTable<object, object>();
 
         private static void HookMenus(Control c)
         {
@@ -1428,9 +1428,9 @@ namespace Ares.CommonGUI
         private static void HookStrip(ToolStrip strip)
         {
             object dummy;
-            if (s_Hooked.TryGetValue(strip, out dummy))
+            if (s_MenuHooked.TryGetValue(strip, out dummy))
                 return;
-            s_Hooked.Add(strip, new object());
+            s_MenuHooked.Add(strip, new object());
             StripEllipsis(strip.Items);
             ContextMenuStrip cms = strip as ContextMenuStrip;
             if (cms != null)
@@ -1456,9 +1456,9 @@ namespace Ares.CommonGUI
                 if (dd != null && dd.HasDropDownItems)
                 {
                     object dummy;
-                    if (!s_Hooked.TryGetValue(dd, out dummy))
+                    if (!s_MenuHooked.TryGetValue(dd, out dummy))
                     {
-                        s_Hooked.Add(dd, new object());
+                        s_MenuHooked.Add(dd, new object());
                         ToolStripDropDownItem captured = dd;
                         dd.DropDownOpening += delegate { StripEllipsis(captured.DropDownItems); };
                     }
