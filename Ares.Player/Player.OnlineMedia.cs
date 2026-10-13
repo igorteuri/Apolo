@@ -141,7 +141,7 @@ namespace Ares.Player
                 m_Query.Text = title;
                 m_Query.KeyDown += (s, e) =>
                 {
-                    if (e.KeyCode == Keys.Enter)
+                    if (e.KeyCode == System.Windows.Forms.Keys.Enter)
                     {
                         e.SuppressKeyPress = true;
                         RunSearch();
@@ -338,7 +338,7 @@ namespace Ares.Player
                 Place(m_Query, 76, 12, 400, 24, TopLR);
                 m_Query.KeyDown += (s, e) =>
                 {
-                    if (e.KeyCode == Keys.Enter)
+                    if (e.KeyCode == System.Windows.Forms.Keys.Enter)
                     {
                         e.SuppressKeyPress = true;
                         RunSearch();
