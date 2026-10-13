@@ -86,6 +86,7 @@ namespace Ares.Player
 
                 // option in the Extras menu
                 m_CloseToTrayItem = new ToolStripMenuItem(T("Fechar minimiza para a bandeja", "Closing minimizes to the tray"));
+                m_CloseToTrayItem.Name = "closeToTrayItem";
                 m_CloseToTrayItem.CheckOnClick = true;
                 m_CloseToTrayItem.Checked = CloseToTrayEnabled;
                 m_CloseToTrayItem.CheckedChanged += (s, e) =>

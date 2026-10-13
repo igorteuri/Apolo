@@ -15,24 +15,50 @@ namespace Ares.Player
         {
             public string FullPath;                       // where the project expects the file
             public string FileName;
-            public List<IFileElement> Elements = new List<IFileElement>();
+            public List<FileRef> Refs = new List<FileRef>();
+            public bool Remove;                           // to be taken out of the project
             public HashSet<string> Places = new HashSet<string>();
             public string NewPath;                        // where it was found (null = not yet)
             public ListViewItem Item;
         }
 
+        // where a file element sits: in which container (null = it is the start element of the button itself)
+        private class FileRef
+        {
+            public IFileElement File;
+            public IGeneralElementContainer Parent;
+            public IMode Mode;
+            public IModeElement ModeElement;
+            public string Place;
+        }
+
         private class FileCollector : IElementVisitor
         {
-            public readonly List<KeyValuePair<IFileElement, string>> Files = new List<KeyValuePair<IFileElement, string>>();
+            public readonly List<FileRef> Files = new List<FileRef>();
+            public IMode Mode;
+            public IModeElement ModeElement;
             public string Place = "";
+            private IGeneralElementContainer m_Parent;
 
-            public void VisitFileElement(IFileElement fileElement) { Files.Add(new KeyValuePair<IFileElement, string>(fileElement, Place)); }
+            private void VisitChildren(IGeneralElementContainer container, System.Collections.IEnumerable children)
+            {
+                IGeneralElementContainer old = m_Parent;
+                m_Parent = container;
+                foreach (IElement e in children)
+                    e.Visit(this);
+                m_Parent = old;
+            }
+
+            public void VisitFileElement(IFileElement fileElement)
+            {
+                Files.Add(new FileRef { File = fileElement, Parent = m_Parent, Mode = Mode, ModeElement = ModeElement, Place = Place });
+            }
             public void VisitWebRadioElement(IWebRadioElement webRadioElement) { }
-            public void VisitSequentialContainer(ISequentialContainer c) { foreach (IElement e in c.GetElements()) e.Visit(this); }
-            public void VisitParallelContainer(IElementContainer<IParallelElement> c) { foreach (IElement e in c.GetElements()) e.Visit(this); }
-            public void VisitChoiceContainer(IElementContainer<IChoiceElement> c) { foreach (IElement e in c.GetElements()) e.Visit(this); }
-            public void VisitSequentialMusicList(ISequentialBackgroundMusicList l) { foreach (IElement e in l.GetElements()) e.Visit(this); }
-            public void VisitRandomMusicList(IRandomBackgroundMusicList l) { foreach (IElement e in l.GetElements()) e.Visit(this); }
+            public void VisitSequentialContainer(ISequentialContainer c) { VisitChildren(c, c.GetElements()); }
+            public void VisitParallelContainer(IElementContainer<IParallelElement> c) { VisitChildren(c, c.GetElements()); }
+            public void VisitChoiceContainer(IElementContainer<IChoiceElement> c) { VisitChildren(c, c.GetElements()); }
+            public void VisitSequentialMusicList(ISequentialBackgroundMusicList l) { VisitChildren(l, l.GetElements()); }
+            public void VisitRandomMusicList(IRandomBackgroundMusicList l) { VisitChildren(l, l.GetElements()); }
             public void VisitMacro(IMacro macro) { }
             public void VisitMacroCommand(IMacroCommand macroCommand) { }
             public void VisitReference(IReferenceElement reference) { }
@@ -67,14 +93,16 @@ namespace Ares.Player
             {
                 foreach (IModeElement me in mode.GetElements())
                 {
+                    collector.Mode = mode;
+                    collector.ModeElement = me;
                     collector.Place = mode.Title + " / " + me.Title;
                     me.Visit(collector);
                 }
             }
             Dictionary<string, bool> exists = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-            foreach (KeyValuePair<IFileElement, string> pair in collector.Files)
+            foreach (FileRef pair in collector.Files)
             {
-                string full = FullPathOf(pair.Key);
+                string full = FullPathOf(pair.File);
                 bool ok;
                 if (!exists.TryGetValue(full, out ok))
                 {
@@ -89,8 +117,8 @@ namespace Ares.Player
                     entry = new MissingEntry { FullPath = full, FileName = Path.GetFileName(full) };
                     byPath[full] = entry;
                 }
-                entry.Elements.Add(pair.Key);
-                entry.Places.Add(pair.Value);
+                entry.Refs.Add(pair);
+                entry.Places.Add(pair.Place);
             }
             return byPath.Values.OrderBy(m => m.FileName, StringComparer.CurrentCultureIgnoreCase).ToList();
         }
@@ -119,23 +147,69 @@ namespace Ares.Player
                 if (dlg.ShowDialog(this) != DialogResult.OK)
                     return;
             }
-            List<MissingEntry> fixedEntries = missing.Where(m => m.NewPath != null).ToList();
-            if (fixedEntries.Count == 0)
+            List<MissingEntry> fixedEntries = missing.Where(m => !m.Remove && m.NewPath != null).ToList();
+            List<MissingEntry> removedEntries = missing.Where(m => m.Remove).ToList();
+            if (fixedEntries.Count == 0 && removedEntries.Count == 0)
                 return;
             string keep = SelectedModeNode != null ? SelectedModeNode.Title : null;
-            int relinked = 0;
+            int relinked = 0, removed = 0, emptied = 0;
             ApplyProjectEdit(() =>
             {
                 foreach (MissingEntry entry in fixedEntries)
                 {
-                    foreach (IFileElement fe in entry.Elements)
+                    foreach (FileRef r in entry.Refs)
                     {
-                        fe.FilePath = ToStoredPath(fe, entry.NewPath);
+                        r.File.FilePath = ToStoredPath(r.File, entry.NewPath);
                         relinked++;
                     }
                 }
+                HashSet<IModeElement> touched = new HashSet<IModeElement>();
+                foreach (MissingEntry entry in removedEntries)
+                {
+                    foreach (FileRef r in entry.Refs)
+                    {
+                        if (r.Parent != null)
+                        {
+                            r.Parent.RemoveElement(r.File.Id);
+                            DataModule.ElementRepository.DeleteElement(r.File.Id);
+                            touched.Add(r.ModeElement);
+                        }
+                        else if (r.ModeElement != null)
+                        {
+                            // a button which is only this file
+                            r.Mode.RemoveElement(r.ModeElement);
+                            DataModule.ElementRepository.DeleteElement(r.ModeElement.Id);
+                        }
+                        removed++;
+                    }
+                }
+                // playlists which lost all their files are of no use
+                foreach (IModeElement me in touched)
+                {
+                    IGeneralElementContainer container = me.StartElement as IGeneralElementContainer;
+                    if (container != null && container.GetGeneralElements().Count == 0)
+                    {
+                        foreach (IMode mode in m_Project.GetModes())
+                        {
+                            if (mode.GetElements().Contains(me))
+                            {
+                                mode.RemoveElement(me);
+                                DataModule.ElementRepository.DeleteElement(me.Id);
+                                emptied++;
+                                break;
+                            }
+                        }
+                    }
+                }
             }, keep);
-            this.Text = this.Text + "  -  " + relinked + T(" arquivo(s) religado(s)", " file(s) relinked");
+            string note = "";
+            if (relinked > 0)
+                note += "  -  " + relinked + T(" arquivo(s) religado(s)", " file(s) relinked");
+            if (removed > 0)
+                note += "  -  " + removed + T(" arquivo(s) removido(s) do projeto", " file(s) removed from the project");
+            if (emptied > 0)
+                note += " (" + emptied + T(" playlist(s) vazia(s) removida(s))", " empty playlist(s) removed)");
+            this.Text = this.Text + note;
         }
 
         // inside the music / sound folder the path is stored relative to it (like the Editor does), otherwise as it is
@@ -163,7 +237,7 @@ namespace Ares.Player
             private readonly List<MissingEntry> m_Entries;
             private readonly ListView m_List;
             private readonly Label m_Summary;
-            private readonly Button m_Search, m_Locate, m_Apply;
+            private readonly Button m_Search, m_Locate, m_Apply, m_RemoveButton;
 
             public MissingFilesDialog(List<MissingEntry> entries)
             {
@@ -187,6 +261,7 @@ namespace Ares.Player
                 m_List.View = View.Details;
                 m_List.FullRowSelect = true;
                 m_List.HideSelection = false;
+                m_List.MultiSelect = true;
                 m_List.Columns.Add(T("Arquivo", "File"), 200);
                 m_List.Columns.Add(T("Estava em", "Was in"), 280);
                 m_List.Columns.Add(T("Usado em", "Used in"), 90);
@@ -216,17 +291,21 @@ namespace Ares.Player
 
                 m_Search = new Button { Text = T("Procurar numa pasta...", "Search in a folder...") };
                 m_Locate = new Button { Text = T("Localizar este arquivo...", "Locate this file...") };
+                m_RemoveButton = new Button { Text = T("Remover do projeto", "Remove from project") };
                 m_Apply = new Button { Text = T("Corrigir", "Fix"), DialogResult = DialogResult.OK };
                 Button cancel = new Button { Text = T("Fechar", "Close"), DialogResult = DialogResult.Cancel };
                 m_Search.SetBounds(12, 474, 190, 32);
                 m_Locate.SetBounds(210, 474, 190, 32);
-                m_Apply.SetBounds(600, 474, 100, 32);
-                cancel.SetBounds(708, 474, 100, 32);
+                m_RemoveButton.SetBounds(408, 474, 170, 32);
+                m_RemoveButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+                m_RemoveButton.Click += (s, e) => RemoveSelected();
+                m_Apply.SetBounds(690, 474, 56, 32);
+                cancel.SetBounds(750, 474, 58, 32);
                 m_Search.Anchor = m_Locate.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
                 m_Apply.Anchor = cancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
                 m_Search.Click += (s, e) => SearchInFolder();
                 m_Locate.Click += (s, e) => LocateSelected();
-                Controls.AddRange(new Control[] { m_Search, m_Locate, m_Apply, cancel });
+                Controls.AddRange(new Control[] { m_Search, m_Locate, m_RemoveButton, m_Apply, cancel });
                 CancelButton = cancel;
                 UpdateButtons();
                 UpdateSummary();
@@ -239,20 +318,45 @@ namespace Ares.Player
 
             private void UpdateButtons()
             {
-                m_Locate.Enabled = Selected() != null;
-                m_Apply.Enabled = m_Entries.Any(m => m.NewPath != null);
+                m_Locate.Enabled = m_List.SelectedItems.Count == 1;
+                m_RemoveButton.Enabled = m_List.SelectedItems.Count > 0;
+                m_Apply.Enabled = m_Entries.Any(m => m.Remove || m.NewPath != null);
             }
 
             private void UpdateSummary()
             {
-                int found = m_Entries.Count(m => m.NewPath != null);
-                m_Summary.Text = T(m_Entries.Count + " arquivo(s) ausente(s); " + found + " encontrado(s) em outro lugar.",
-                    m_Entries.Count + " missing file(s); " + found + " found elsewhere.");
+                int found = m_Entries.Count(m => m.NewPath != null && !m.Remove);
+                int removed = m_Entries.Count(m => m.Remove);
+                m_Summary.Text = T(m_Entries.Count + " arquivo(s) ausente(s); " + found + " encontrado(s) em outro lugar; " + removed + " para remover do projeto.",
+                    m_Entries.Count + " missing file(s); " + found + " found elsewhere; " + removed + " to remove from the project.");
                 UpdateButtons();
+            }
+
+            // marks the selected files to be taken out of the project (they stop giving errors)
+            private void RemoveSelected()
+            {
+                List<MissingEntry> chosen = m_List.SelectedItems.Cast<ListViewItem>().Select(i => (MissingEntry)i.Tag).ToList();
+                if (chosen.Count == 0)
+                    return;
+                int uses = chosen.Sum(c => c.Refs.Count);
+                if (MessageBox.Show(this,
+                        T("Remover " + chosen.Count + " arquivo(s) do projeto? Eles saem de " + uses + " lugar(es) nas playlists e deixam de dar erro.\n(Nada é apagado do computador. Vale ao clicar em \"Corrigir\".)",
+                          "Remove " + chosen.Count + " file(s) from the project? They are taken out of " + uses + " place(s) in the playlists and stop giving errors.\n(Nothing is deleted from the computer. Takes effect when you click \"Fix\".)"),
+                        StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                    return;
+                foreach (MissingEntry entry in chosen)
+                {
+                    entry.Remove = true;
+                    entry.NewPath = null;
+                    entry.Item.SubItems[3].Text = T("(será removido do projeto)", "(will be removed from the project)");
+                    entry.Item.ForeColor = Color.IndianRed;
+                }
+                UpdateSummary();
             }
 
             private void SetNewPath(MissingEntry entry, string path)
             {
+                entry.Remove = false;
                 entry.NewPath = path;
                 entry.Item.SubItems[3].Text = path ?? "";
                 entry.Item.ForeColor = path != null ? Color.ForestGreen : m_List.ForeColor;
@@ -270,7 +374,7 @@ namespace Ares.Player
                     root = dlg.SelectedPath;
                 }
                 Dictionary<string, List<MissingEntry>> wanted = new Dictionary<string, List<MissingEntry>>(StringComparer.OrdinalIgnoreCase);
-                foreach (MissingEntry entry in m_Entries.Where(m => m.NewPath == null))
+                foreach (MissingEntry entry in m_Entries.Where(m => m.NewPath == null && !m.Remove))
                 {
                     List<MissingEntry> list;
                     if (!wanted.TryGetValue(entry.FileName, out list))
@@ -340,7 +444,7 @@ namespace Ares.Player
                     string newDir = Path.GetDirectoryName(dlg.FileName) ?? "";
                     foreach (MissingEntry other in m_Entries)
                     {
-                        if (other == entry || other.NewPath != null)
+                        if (other == entry || other.NewPath != null || other.Remove)
                             continue;
                         if (string.Equals(Path.GetDirectoryName(other.FullPath) ?? "", oldDir, StringComparison.OrdinalIgnoreCase))
                         {

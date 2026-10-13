@@ -23,6 +23,7 @@ namespace Ares.Player
                 if (Ares.CommonGUI.Preferences.GetBool("DeckEnabled", true))
                     StartDeck();
                 ToolStripMenuItem item = new ToolStripMenuItem(T("Stream Deck...", "Stream Deck..."));
+                item.Name = "deckMenuItem";
                 item.Click += (s, e) => ShowDeckDialog();
                 extrasToolStripMenuItem.DropDownItems.Insert(3, item);
                 FormClosed += (s, e) =>

@@ -27,7 +27,7 @@ namespace Ares.CommonGUI
     public partial class AboutDialog : Form
     {
         /// <summary>Link of the author's channel (Dados Críticos).</summary>
-        public const string ChannelUrl = "https://igorteuri.itch.io/";
+        public const string ChannelUrl = "https://youtube.com/dadoscriticos?sub_confirmation=1";
 
         public AboutDialog()
         {

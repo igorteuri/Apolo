@@ -8,7 +8,7 @@ O Apolo é uma modernização do **[Ares](http://aresrpg.sourceforge.net/)** (*A
 
 ## Créditos
 
-- **Apolo** — criado e mantido por **Igor Teuri**, do canal **Dados Críticos** ([igorteuri.itch.io](https://igorteuri.itch.io/)).
+- **Apolo** — criado e mantido por **Igor Teuri**, do canal **Dados Críticos** ([YouTube](https://youtube.com/dadoscriticos?sub_confirmation=1) · [itch.io](https://igorteuri.itch.io/)).
 - **Ares** — o programa original é de **Jörg Ruedenauer** e colaboradores. Todo o crédito pela base do programa (motor de áudio, projetos, Editor, Player e controladores) pertence a eles. O Apolo é um *fork* e mantém os nomes internos `Ares.*` e a pasta de dados `%APPDATA%\Ares` para continuar compatível com projetos antigos.
 - **Áudio:** [BASS](https://www.un4seen.com/), da un4seen developments. A BASS é gratuita só para uso **não comercial**; uso comercial exige licença própria da un4seen.
 - **Ícones:** [Lucide](https://lucide.dev/) (licença ISC).

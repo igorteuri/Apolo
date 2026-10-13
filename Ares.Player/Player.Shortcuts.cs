@@ -91,15 +91,85 @@ namespace Ares.Player
             add("repeat", "Repetir a música atual", "Repeat the current track", () => repeatButton_Click(this, EventArgs.Empty));
 
             ToolStripMenuItem keysItem = new ToolStripMenuItem(T("Atalhos de teclado...", "Keyboard shortcuts..."));
+            keysItem.Name = "shortcutsMenuItem";
             keysItem.Click += (s, e) => ShowShortcutsDialog();
             ToolStripMenuItem missingItem = new ToolStripMenuItem(T("Arquivos de áudio ausentes...", "Missing audio files..."));
             missingItem.Click += (s, e) => ShowMissingFiles();
-            int at = Math.Min(2, extrasToolStripMenuItem.DropDownItems.Count);
-            extrasToolStripMenuItem.DropDownItems.Insert(at, new ToolStripSeparator());
-            extrasToolStripMenuItem.DropDownItems.Insert(at + 1, keysItem);
-            extrasToolStripMenuItem.DropDownItems.Insert(at + 2, missingItem);
+            extrasToolStripMenuItem.DropDownItems.Add(missingItem);
             extrasToolStripMenuItem.DropDownOpening += (s, e) => RefreshShortcutMenuTexts();
             RefreshShortcutMenuTexts();
+            BuildSettingsMenu(keysItem);
+        }
+
+        // "Configurações": everything which is a setting leaves the Extras menu and gets its own place
+        private void BuildSettingsMenu(ToolStripMenuItem keysItem)
+        {
+            ToolStripItemCollection extras = extrasToolStripMenuItem.DropDownItems;
+            Func<string, ToolStripItem> take = name =>
+            {
+                foreach (ToolStripItem item in extras)
+                {
+                    if (item.Name == name)
+                    {
+                        extras.Remove(item);
+                        return item;
+                    }
+                }
+                return null;
+            };
+            ToolStripMenuItem settings = new ToolStripMenuItem(T("Configurações", "Settings"));
+            settings.Name = "settingsMenuRoot";
+            List<ToolStripItem> general = new List<ToolStripItem>();
+            general.Add(settingsToolStripMenuItem1);
+            settingsToolStripMenuItem1.Text = T("Configurações gerais...", "General settings...");
+            general.Add(keysItem);
+            general.Add(showKeysMenuItem);
+            general.Add(globalKeyHookItem);
+            general.Add(take("closeToTrayItem"));
+            ToolStripItem language = null;
+            foreach (ToolStripItem item in extras)
+            {
+                if (item.Text != null && item.Text.StartsWith("Idioma"))
+                {
+                    language = item;
+                    break;
+                }
+            }
+            if (language != null)
+                extras.Remove(language);
+            general.Add(language);
+            List<ToolStripItem> integrations = new List<ToolStripItem>();
+            integrations.Add(take("remoteMenuItem"));
+            integrations.Add(take("deckMenuItem"));
+            integrations.Add(take("discordMenuItem"));
+            integrations.Add(take("overlayMenuItem"));
+
+            extras.Remove(settingsToolStripMenuItem1);
+            extras.Remove(showKeysMenuItem);
+            extras.Remove(globalKeyHookItem);
+            foreach (ToolStripItem item in general.Where(i => i != null))
+                settings.DropDownItems.Add(item);
+            if (integrations.Any(i => i != null))
+            {
+                settings.DropDownItems.Add(new ToolStripSeparator());
+                foreach (ToolStripItem item in integrations.Where(i => i != null))
+                    settings.DropDownItems.Add(item);
+            }
+            int at = menuStrip1.Items.IndexOf(extrasToolStripMenuItem) + 1;
+            menuStrip1.Items.Insert(Math.Max(at, 0), settings);
+
+            // tidy up the Extras menu: no double / leading / trailing separators
+            for (int i = extras.Count - 1; i >= 0; i--)
+            {
+                bool separator = extras[i] is ToolStripSeparator;
+                if (!separator)
+                    continue;
+                bool leading = i == 0;
+                bool trailing = i == extras.Count - 1;
+                bool doubled = i > 0 && extras[i - 1] is ToolStripSeparator;
+                if (leading || trailing || doubled)
+                    extras.RemoveAt(i);
+            }
         }
 
         private void RefreshShortcutMenuTexts()

@@ -433,6 +433,7 @@ namespace Ares.Player
                 m_RemoteTimer.Tick += (s, e) => UpdateRemoteState();
                 m_RemoteTimer.Start();
                 ToolStripMenuItem item = new ToolStripMenuItem(T("Controle remoto (celular / internet)...", "Remote control (phone / internet)..."));
+                item.Name = "remoteMenuItem";
                 item.Click += (s, e) => ShowRemoteDialog();
                 extrasToolStripMenuItem.DropDownItems.Insert(1, item);
                 FormClosed += (s, e) =>

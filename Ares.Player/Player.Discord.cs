@@ -17,6 +17,7 @@ namespace Ares.Player
             {
                 m_Discord = new DiscordBridge();
                 ToolStripMenuItem item = new ToolStripMenuItem(T("Discord (tocar num canal de voz)...", "Discord (play in a voice channel)..."));
+                item.Name = "discordMenuItem";
                 item.Click += (s, e) => ShowDiscordDialog();
                 extrasToolStripMenuItem.DropDownItems.Insert(2, item);
                 FormClosed += (s, e) =>

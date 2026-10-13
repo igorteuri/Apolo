@@ -188,6 +188,7 @@ namespace Ares.Player
                 m_OverlayTimer.Start();
 
                 ToolStripMenuItem item = new ToolStripMenuItem(T("Overlay para OBS...", "OBS overlay..."));
+                item.Name = "overlayMenuItem";
                 item.Click += (s, e) => ShowOverlayDialog();
                 extrasToolStripMenuItem.DropDownItems.Insert(1, item);
                 FormClosed += (s, e) =>
