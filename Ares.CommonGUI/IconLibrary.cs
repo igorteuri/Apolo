@@ -32,6 +32,28 @@ namespace Ares.CommonGUI
             return new Size(px, px);
         }
 
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ToolStrip, object> s_Factors =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<ToolStrip, object>();
+
+        /// <summary>Makes the icons of a managed toolbar bigger (or smaller) than the standard toolbar size, e.g. 1.4 for the player buttons.</summary>
+        public static void SetSizeFactor(ToolStrip strip, double factor)
+        {
+            try { s_Factors.Remove(strip); } catch (Exception) { }
+            s_Factors.Add(strip, factor);
+        }
+
+        private static Size SizeFor(ToolStrip strip)
+        {
+            Size size = ToolbarIconSize();
+            object f;
+            if (s_Factors.TryGetValue(strip, out f))
+            {
+                int px = (int)Math.Round(size.Width * (double)f);
+                size = new Size(px, px);
+            }
+            return size;
+        }
+
         /// <summary>Icon size for menus: 20 px at the default interface size.</summary>
         public static Size MenuIconSize()
         {
@@ -126,7 +148,7 @@ namespace Ares.CommonGUI
             try { s_Managed.Add(strip, strip); } catch (ArgumentException) { }
             Action apply = () =>
             {
-                Size size = ToolbarIconSize();
+                Size size = SizeFor(strip);
                 if (strip.ImageScalingSize != size)
                     strip.ImageScalingSize = size;
                 lastSize = size;
@@ -159,7 +181,7 @@ namespace Ares.CommonGUI
             {
                 try
                 {
-                    if (!strip.IsDisposed && (ToolbarIconSize() != lastSize || strip.ImageScalingSize != lastSize || ThemeColor() != lastColor))
+                    if (!strip.IsDisposed && (SizeFor(strip) != lastSize || strip.ImageScalingSize != lastSize || ThemeColor() != lastColor))
                         apply();
                 }
                 catch (Exception)

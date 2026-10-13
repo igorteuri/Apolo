@@ -62,6 +62,10 @@ namespace Ares.Editor
         public ProjectExplorer()
         {
             InitializeComponent();
+            // the tag system is not used any more: creating tag based music and editing tags is hidden
+            addMusicByTagsToolStripMenuItem.Visible = false;
+            musicByTagsToolStripItem.Visible = false;
+            tagsToolStripMenuItem.Visible = false;
             projectTree.ImageList = sImageList;
             ensureDefaultImageIndex(projectTree);
             RecreateTree();
@@ -1141,7 +1145,64 @@ namespace Ares.Editor
 
         private void projectTree_DoubleClick(object sender, EventArgs e)
         {
+            // a double click keeps the editor open (it is no longer replaced by the next selection)
+            m_PreviewElementId = -1;
             DefaultNodeAction();
+        }
+
+        // ---- the editor of the selected element is shown right away (docked in the middle) ----
+
+        private System.Windows.Forms.Timer m_PreviewTimer;
+        private int m_PreviewElementId = -1;
+
+        private void SchedulePreview()
+        {
+            if (m_PreviewTimer == null)
+            {
+                m_PreviewTimer = new System.Windows.Forms.Timer();
+                m_PreviewTimer.Interval = 250;
+                m_PreviewTimer.Tick += (s, e) =>
+                {
+                    m_PreviewTimer.Stop();
+                    ShowPreviewEditor();
+                };
+            }
+            m_PreviewTimer.Stop();
+            m_PreviewTimer.Start();
+        }
+
+        private void ShowPreviewEditor()
+        {
+            try
+            {
+                if (IsDisposed || DockPanel == null || SelectedNode == null)
+                    return;
+                IElement element = SelectedNode.Tag as IElement;
+                if (element == null || (SelectedNode.Tag is IModeElement && GetElement(SelectedNode) is IBackgroundSounds))
+                    return;
+                IElement inner = element is IModeElement ? (element as IModeElement).StartElement : element;
+                if (inner == null)
+                    return;
+                // the editor that was opened by the previous selection is replaced
+                int previous = m_PreviewElementId;
+                bool alreadyOpen = ElementEditors.EditorRegistry.Instance.GetEditor(inner.Id) != null;
+                EditElement(element);
+                if (!alreadyOpen)
+                {
+                    if (previous != -1 && previous != inner.Id)
+                    {
+                        var old = ElementEditors.EditorRegistry.Instance.GetEditor(previous);
+                        if (old != null)
+                            old.Close();
+                    }
+                    m_PreviewElementId = inner.Id;
+                }
+                // keep the keyboard in the tree so that the arrow keys keep working
+                projectTree.Focus();
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private void DefaultNodeAction()
@@ -1271,6 +1332,7 @@ namespace Ares.Editor
             playButton.Enabled = PlayingPossible;
             AdaptMoveButtons();
             AddChangeListener();
+            SchedulePreview();
         }
 
         private void projectTree_BeforeSelect(object sender, TreeViewCancelEventArgs e)
@@ -2270,6 +2332,18 @@ namespace Ares.Editor
                     e.Effect = DragDropEffects.None;
                     return;
                 }
+        }
+
+        /// <summary>Folders / audio files dropped anywhere on the Editor window (the selected mode receives loose files).</summary>
+        public void ImportDroppedPaths(string[] paths)
+        {
+            if (m_Project == null || projectTree.Nodes.Count == 0)
+            {
+                MessageBox.Show(this, "Abra ou crie um projeto antes de arrastar pastas. / Open or create a project first.",
+                    StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            ImportFromWindowsDrop(paths, SelectedNode);
         }
 
         // Folders / audio files dragged in from Windows Explorer:

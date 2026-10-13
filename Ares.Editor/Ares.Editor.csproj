@@ -318,6 +318,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>StringResources.resx</DependentUpon>
     </Compile>
+    <Compile Include="ApoloDockCaption.cs" />
     <Compile Include="EditorIcons.cs" />
     <Compile Include="TaskHelpers.cs" />
     <Compile Include="TipsOfTheDay.cs" />

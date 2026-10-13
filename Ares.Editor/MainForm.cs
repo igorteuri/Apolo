@@ -66,6 +66,20 @@ namespace Ares.Editor
             InitializeComponent();
             this.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0);
             EditorIcons.Toolbar(toolStrip1);
+            tagsMenuItem.Visible = false; // the tag system is not used any more
+            EnableFolderDrop(this);
+            // fixed panels like in the player: no pin / auto-hide button, no dragging windows around
+            dockPanel.Extender.DockPaneCaptionFactory = new ApoloDockCaptionFactory();
+            try
+            {
+                System.Reflection.PropertyInfo allow = dockPanel.GetType().GetProperty("AllowEndUserDocking");
+                if (allow != null && allow.CanWrite)
+                    allow.SetValue(dockPanel, false, null);
+            }
+            catch (Exception) { }
+            dockPanel.DockLeftPortion = 0.24;
+            dockPanel.DockRightPortion = 0.26;
+            dockPanel.DockBottomPortion = 0.22;
             dockPanel.ContentAdded += (s, e) => EditorIcons.Polish(e.Content as Form);
             Ares.CommonGUI.LanguageManager.AddMenu(extrasToolStripMenuItem, -1);
             EditorIcons.Menu(menuStrip1);
@@ -74,6 +88,50 @@ namespace Ares.Editor
             m_Instance.ProjectOpenAction = (projectName2, projectPath) => OpenProjectFromRequest(projectName2, projectPath);
 			#endif
             m_ProjectName = projectName;
+        }
+
+        // ---- folders / audio files dragged in from Windows work on the whole window, like in the player ----
+
+        private readonly HashSet<Control> m_DropHooked = new HashSet<Control>();
+
+        private void EnableFolderDrop(Control c)
+        {
+            // trees and lists have their own drag & drop handling
+            if (c is FileExplorer || c is TreeView || c is ListView || c is TextBoxBase)
+                return;
+            if (m_DropHooked.Add(c))
+            {
+                if (!c.AllowDrop)
+                    c.AllowDrop = true;
+                c.DragEnter += AnyDragEnter;
+                c.DragOver += AnyDragEnter;
+                c.DragDrop += AnyDragDrop;
+                c.ControlAdded += (s, e) => EnableFolderDrop(e.Control);
+            }
+            foreach (Control child in c.Controls)
+                EnableFolderDrop(child);
+        }
+
+        private void AnyDragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
+                e.Effect = DragDropEffects.Copy;
+        }
+
+        private void AnyDragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data == null || !e.Data.GetDataPresent(DataFormats.FileDrop))
+                return;
+            string[] paths = e.Data.GetData(DataFormats.FileDrop) as string[];
+            if (paths == null || paths.Length == 0)
+                return;
+            // do not block the Windows explorer that started the drag
+            BeginInvoke(new MethodInvoker(() =>
+            {
+                if (m_ProjectExplorer == null)
+                    ShowProjectExplorer();
+                m_ProjectExplorer.ImportDroppedPaths(paths);
+            }));
         }
 
         private void PrepareModelChecks()
@@ -280,7 +338,7 @@ namespace Ares.Editor
             if (m_VolumeWindow == null)
             {
                 m_VolumeWindow = new VolumeWindow();
-                m_VolumeWindow.ShowHint = WeifenLuo.WinFormsUI.Docking.DockState.Float;
+                m_VolumeWindow.ShowHint = WeifenLuo.WinFormsUI.Docking.DockState.DockRight;
                 m_VolumeWindow.Show(dockPanel);
             }
             else UpdateWindowState(m_VolumeWindow);
@@ -880,17 +938,6 @@ namespace Ares.Editor
                 ShowFileExplorer(FileType.Music);
                 ShowFileExplorer(FileType.Sound);
                 ShowAudioSourceSearch();
-            }
-            else if (!String.IsNullOrEmpty(Ares.Settings.Settings.Instance.WindowLayout))
-            {
-                LoadTagsDB();
-                System.IO.MemoryStream stream = new System.IO.MemoryStream(
-                    System.Text.Encoding.UTF8.GetBytes(Ares.Settings.Settings.Instance.WindowLayout));
-                dockPanel.LoadFromXml(stream, new WeifenLuo.WinFormsUI.Docking.DeserializeDockContent(DeserializeDockContent));
-                if (Settings.Settings.Instance.Version < 1)
-                {
-                    ShowVolumeWindow();
-                }
             }
             else
             {

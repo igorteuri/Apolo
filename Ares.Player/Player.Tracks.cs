@@ -326,26 +326,45 @@ namespace Ares.Player
             m_LayoutingColumns = true;
             try
             {
-                // left column (volume, state, network) or its strip
+                LayoutHeader();
+
+                // vertical limits of everything below the header: from the header down to the status bar
+                int margin = groupBox3.Left;
+                int headerBottom = m_VolumePanel != null ? m_VolumePanel.Bottom : menuStrip1.Bottom + 6;
+                int bodyTop = headerBottom + 8;
+                int statusHeight = m_StatusStrip != null && m_StatusStrip.Visible ? m_StatusStrip.Height : 0;
+                int bodyBottom = ClientSize.Height - statusHeight - 10;
+                int bodyHeight = Math.Max(150, bodyBottom - bodyTop);
+
+                // left column (state of the program) or its strip
                 bool leftOpen = m_LeftOpen;
                 groupBox1.Visible = false; // the network info lives in Extras > Network
-                groupBox2.Visible = leftOpen;
+                groupBox2.Visible = false; // the volume sliders live in the header
                 groupBox3.Visible = leftOpen;
                 m_LeftStrip.Visible = true;
                 m_LeftStrip.PointsLeft = leftOpen;
                 int modesLeft = leftOpen ? m_ModesLeftOriginal : LeftStripThickness;
-                groupBox4.Left = modesLeft;
-                groupBox5.Left = modesLeft + groupBox4.Width + TrackGap;
-                m_LeftStrip.SetBounds(0, groupBox4.Top, LeftStripThickness, groupBox4.Height);
                 if (leftOpen)
-                    FitLeftColumn();
+                {
+                    int lw = m_ModesLeftOriginal - TrackGap - margin;
+                    if (lw >= 200)
+                        groupBox3.SetBounds(margin, bodyTop, lw, bodyHeight);
+                }
+                groupBox4.SetBounds(modesLeft, bodyTop, groupBox4.Width, bodyHeight);
+                groupBox5.Left = modesLeft + groupBox4.Width + TrackGap;
+                m_LeftStrip.SetBounds(0, bodyTop, LeftStripThickness, bodyHeight);
+
+                // the list of folders fills its box down to the bottom
+                modesList.SetBounds(modesList.Left, modesList.Top,
+                    Math.Max(50, groupBox4.ClientSize.Width - 2 * modesList.Left),
+                    Math.Max(50, groupBox4.ClientSize.Height - modesList.Top - modesList.Left));
 
                 // right column: elements box on top, track list below it, handle at the bottom
                 int right = clientWidth - MainRightMargin;
                 int colLeft = groupBox5.Left;
                 int colWidth = Math.Max(100, right - colLeft);
-                int top = m_ElementsTopOriginal;
-                int bottom = groupBox4.Bottom - TrackStripHeight - 2;
+                int top = bodyTop;
+                int bottom = bodyBottom - TrackStripHeight - 2;
                 int total = Math.Max(100, bottom - top);
                 int panelHeight = 0;
                 if (m_TrackState == 2)
@@ -358,32 +377,18 @@ namespace Ares.Player
                 m_TrackStrip.SetBounds(colLeft, bottom + 2, colWidth, TrackStripHeight);
                 if (m_TrackState == 2)
                     LayoutTrackPanel();
+
+                // the buttons of the playlists use the whole width of their box
+                int inner = elementsPanel.Left;
+                int innerWidth = Math.Max(50, groupBox5.ClientSize.Width - 2 * inner);
+                if (m_ListBar != null)
+                    m_ListBar.SetBounds(inner, m_ListBar.Top, innerWidth, m_ListBar.Height);
+                elementsPanel.SetBounds(inner, elementsPanel.Top, innerWidth,
+                    Math.Max(40, groupBox5.ClientSize.Height - elementsPanel.Top - inner));
             }
             finally
             {
                 m_LayoutingColumns = false;
-            }
-        }
-
-        // keeps the volume and state boxes (and the sliders inside) exactly as wide as the left column
-        private void FitLeftColumn()
-        {
-            int lw = m_ModesLeftOriginal - TrackGap - groupBox2.Left;
-            if (lw < 200)
-                return;
-            if (groupBox2.Width != lw)
-                groupBox2.Width = lw;
-            if (groupBox3.Width != lw)
-                groupBox3.Width = lw;
-            // the network box is hidden, so the state box takes its place: all columns end on the same line
-            int h = groupBox4.Bottom - groupBox3.Top;
-            if (h > 120 && groupBox3.Height != h)
-                groupBox3.Height = h;
-            foreach (Ares.CommonGUI.ModernSlider bar in new Ares.CommonGUI.ModernSlider[] { overallVolumeBar, musicVolumeBar, soundVolumeBar })
-            {
-                int w = groupBox2.ClientSize.Width - bar.Left - 10;
-                if (w > 40 && bar.Width != w)
-                    bar.Width = w;
             }
         }
 
@@ -400,7 +405,7 @@ namespace Ares.Player
         {
             if (m_TrackState != 2)
                 return;
-            int total = groupBox4.Bottom - TrackStripHeight - 2 - m_ElementsTopOriginal;
+            int total = groupBox4.Bottom - TrackStripHeight - 2 - groupBox4.Top;
             int max = total - ElementsMinHeight - TrackGap;
             newHeight = Math.Max(90, Math.Min(newHeight, max));
             if (newHeight == m_TrackHeight)

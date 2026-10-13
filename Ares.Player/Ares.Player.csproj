@@ -136,6 +136,7 @@
     <Compile Include="IconPickerDialog.cs" />
     <Compile Include="Player.Share.cs" />
     <Compile Include="Player.List.cs" />
+    <Compile Include="Player.Header.cs" />
     <Compile Include="Player.Tracks.cs" />
     <Compile Include="Player.Overlay.cs" />
     <Compile Include="Player.Remote.cs" />

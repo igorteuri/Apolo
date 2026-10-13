@@ -51,6 +51,7 @@ namespace Ares.Editor.ElementEditors
         protected EditorBase() 
         { 
             ElementId = -1; 
+            DockAreas = WeifenLuo.WinFormsUI.Docking.DockAreas.Document;
         }
 
         protected override void Dispose(bool disposing)

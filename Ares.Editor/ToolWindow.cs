@@ -26,6 +26,9 @@ namespace Ares.Editor
         public ToolWindow()
         {
             HideOnClose = true;
+            // no floating windows: the panels stay inside the Editor
+            DockAreas = WeifenLuo.WinFormsUI.Docking.DockAreas.DockLeft | WeifenLuo.WinFormsUI.Docking.DockAreas.DockRight
+                | WeifenLuo.WinFormsUI.Docking.DockAreas.DockTop | WeifenLuo.WinFormsUI.Docking.DockAreas.DockBottom;
         }
     }
 }

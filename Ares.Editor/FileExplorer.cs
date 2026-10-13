@@ -79,13 +79,11 @@ namespace Ares.Editor
             this.Text = String.Format(StringResources.FileExplorerTitle, fileType == FileType.Music ? StringResources.Music : StringResources.Sounds);
             m_FileType = fileType;
             treeView1.ImageList = sImageList;
-            if (fileType != FileType.Music)
-            {
-                tagFilterButton.Enabled = false;
-                tagFilterButton.Visible = false;
-                tagButton.Enabled = false;
-                tagButton.Visible = false;
-            }
+            // the tag system is not used any more: its buttons and menu entries are hidden
+            tagFilterButton.Enabled = false;
+            tagFilterButton.Visible = false;
+            tagButton.Enabled = false;
+            tagButton.Visible = false;
             ReFillTree();
             if (fileType == FileType.Music)
             {
@@ -557,8 +555,8 @@ namespace Ares.Editor
             editToolStripMenuItem.Enabled = m_Parent != null && treeView1.SelectedNode != null && treeView1.SelectedNode.Tag != null &&
                 treeView1.SelectedNode.Tag is DraggedItem && ((DraggedItem)treeView1.SelectedNode.Tag).NodeType == DraggedItemType.File;
             pasteToolStripMenuItem.Enabled = Clipboard.ContainsFileDropList() || Clipboard.ContainsData(DataFormats.GetFormat("AresFilesList").Name);
-            editTagsMenuItem.Visible = m_FileType == FileType.Music;
-            editTagsMenuItem.Enabled = m_FileType == FileType.Music && treeView1.SelectedNodes.Count > 0;
+            editTagsMenuItem.Visible = false;
+            editTagsMenuItem.Enabled = false;
             if (editTagsMenuItem.Enabled)
             {
                 // Disable if called only on empty directories

@@ -299,8 +299,8 @@ namespace Ares.Editor
                 Bitmap bmp = IconLibrary.Get(spec.Name, size, ColorOf(spec.Color));
                 if (bmp == null)
                     bmp = new Bitmap(size.Width, size.Height);
+                // the list keeps a reference to the bitmap (it must not be disposed here)
                 list.Images.Add(bmp);
-                bmp.Dispose();
             }
         }
 

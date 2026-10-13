@@ -110,6 +110,7 @@ namespace Ares.Player
             InitListMode();
             InitTrackPanel();
             InitTransportRow();
+            InitHeader();
             InitOverlay();
             InitRemote();
             InitDiscord();
@@ -121,6 +122,11 @@ namespace Ares.Player
         {
             if (m_MusicProgressBar == null)
                 return;
+            if (m_VolumePanel != null)
+            {
+                LayoutHeader();
+                return;
+            }
             int margin = groupBox2.Left;
             int left = margin;
             if (m_TransportStrip != null)
@@ -326,6 +332,8 @@ namespace Ares.Player
             // keep the music bar between the (now taller) toolbar and the group boxes
             toolStrip1.SizeChanged += (sender, e) =>
             {
+                if (m_VolumePanel != null)
+                    return; // the header is placed by LayoutHeader
                 m_MusicProgressBar.Top = toolStrip1.Bottom + 3;
                 m_MusicProgressBar.Height = Math.Max(34, groupBox2.Top - m_MusicProgressBar.Top - 3);
             };
@@ -465,7 +473,7 @@ namespace Ares.Player
 
         private Image CreatePauseImage(bool showPlayTriangle)
         {
-            Image img = Ares.CommonGUI.IconLibrary.Get(showPlayTriangle ? "play" : "pause", toolStrip1.ImageScalingSize);
+            Image img = Ares.CommonGUI.IconLibrary.Get(showPlayTriangle ? "play" : "pause", (m_TransportStrip ?? toolStrip1).ImageScalingSize);
             return img ?? new Bitmap(20, 20);
         }
 
