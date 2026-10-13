@@ -359,6 +359,11 @@ namespace Ares.Players
             PlayingModule.ProjectPlayer.SetSoundRepeat(handle, repeat);
         }
 
+        public void ToggleSoundPause(int handle)
+        {
+            PlayingModule.ProjectPlayer.ToggleSoundPause(handle);
+        }
+
         public void SeekSound(int handle, double positionSeconds)
         {
             PlayingModule.ProjectPlayer.SetSoundPosition(handle, positionSeconds);

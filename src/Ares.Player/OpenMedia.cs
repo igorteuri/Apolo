@@ -95,6 +95,16 @@ namespace Ares.Player
             }
         }
 
+        private static string SafeName(string name)
+        {
+            StringBuilder sb = new StringBuilder();
+            char[] bad = Path.GetInvalidFileNameChars();
+            foreach (char c in name)
+                sb.Append(Array.IndexOf(bad, c) >= 0 ? '-' : c);
+            string s = Regex.Replace(sb.ToString(), "\\s+", " ").Trim().TrimEnd('.', ' ');
+            return s.Length == 0 ? "sem nome" : s;
+        }
+
         public static byte[] GetBytes(string url)
         {
             using (WebClient c = NewClient())
@@ -419,7 +429,7 @@ namespace Ares.Player
             ext = ext.ToLowerInvariant();
             if (ext == "mpeg") ext = "mp3";
             Directory.CreateDirectory(folder);
-            string name = MusicNames.SanitizeFileName(hit.Author.Length > 0 ? hit.Title + " - " + hit.Author : hit.Title);
+            string name = SafeName(hit.Author.Length > 0 ? hit.Title + " - " + hit.Author : hit.Title);
             if (name.Length > 120)
                 name = name.Substring(0, 120).TrimEnd();
             string path = Path.Combine(folder, name + "." + ext);
