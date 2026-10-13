@@ -137,6 +137,8 @@
     <Compile Include="Player.Edit.cs" />
     <Compile Include="Player.Export.cs" />
     <Compile Include="Player.MusicTools.cs" />
+    <Compile Include="Player.OnlineMedia.cs" />
+    <Compile Include="OpenMedia.cs" />
     <Compile Include="ElementButton.cs" />
     <Compile Include="IconPickerDialog.cs" />
     <Compile Include="Player.Share.cs" />

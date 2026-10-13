@@ -415,12 +415,47 @@ namespace Ares.Player
             private readonly CheckBox m_Clean = new CheckBox();
             private readonly CheckBox m_Online = new CheckBox();
             private readonly CheckBox m_Pattern = new CheckBox();
-            private readonly TextBox m_PatternBox = new TextBox();
+            private readonly ComboBox m_PatternBox = new ComboBox();
             private readonly Button m_Preview = new Button();
             private readonly Button m_Apply = new Button();
             private readonly Button m_Undo = new Button();
             private readonly Button m_Close = new Button();
             private bool m_HasPreview;
+
+            private static string PatternFile
+            {
+                get { return Path.Combine(Ares.Settings.AppFolders.Root, "rename-pattern.txt"); }
+            }
+
+            // the pattern is remembered between sessions; the first time it is "title - artist"
+            private static string LoadPattern()
+            {
+                try
+                {
+                    if (File.Exists(PatternFile))
+                    {
+                        string t = File.ReadAllText(PatternFile, Encoding.UTF8).Trim();
+                        if (t.Length > 0)
+                            return t;
+                    }
+                }
+                catch (Exception)
+                {
+                }
+                return "{titulo} - {artista}";
+            }
+
+            private static void SavePattern(string pattern)
+            {
+                try
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(PatternFile));
+                    File.WriteAllText(PatternFile, pattern.Trim(), Encoding.UTF8);
+                }
+                catch (Exception)
+                {
+                }
+            }
 
             private static string UndoFile
             {
@@ -449,10 +484,12 @@ namespace Ares.Player
                 m_Online.SetBounds(12, 46, 910, 22);
                 m_Pattern.Text = T("Renomear o arquivo pelas tags, no padrão:", "Rename the file by its tags, with the pattern:");
                 m_Pattern.SetBounds(12, 70, 330, 22);
-                m_PatternBox.Text = "{artista} - {titulo}";
+                m_PatternBox.DropDownStyle = ComboBoxStyle.DropDown;
+                m_PatternBox.Items.AddRange(new object[] { "{titulo} - {artista}", "{artista} - {titulo}", "{faixa} - {titulo}", "{titulo}", "{artista} - {album} - {titulo}", "{album} - {faixa} - {titulo}" });
+                m_PatternBox.Text = LoadPattern();
                 m_PatternBox.SetBounds(346, 68, 250, 24);
                 Label hint = new Label();
-                hint.Text = T("pode usar {artista} {titulo} {album} {faixa}", "you can use {artista} {titulo} {album} {faixa}");
+                hint.Text = T("escolha na lista ou escreva: {artista} {titulo} {album} {faixa}", "pick from the list or write: {artista} {titulo} {album} {faixa}");
                 hint.SetBounds(604, 72, 320, 20);
                 hint.ForeColor = SystemColors.GrayText;
                 options.Controls.Add(m_Clean);
@@ -548,6 +585,8 @@ namespace Ares.Player
                         StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
+                if (usePattern)
+                    SavePattern(pattern);
                 List<ToolItem> items = m_Items.ToList();
                 SetBusyUi(true);
                 m_Progress.Minimum = 0;
@@ -924,6 +963,7 @@ namespace Ares.Player
                             row.SubItems[3].Text = risk;
                             row.SubItems[4].Text = why;
                             row.BackColor = color;
+                            row.ForeColor = Color.Black;
                             m_Progress.Value = Math.Min(m_Progress.Maximum, n);
                         });
                     }

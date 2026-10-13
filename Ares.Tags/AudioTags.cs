@@ -58,6 +58,32 @@ namespace Ares.Tags
             }
         }
 
+        /// <summary>Writes the copyright and comment tags (author / licence of a downloaded file).</summary>
+        public static bool WriteCredit(String path, String copyright, String comment)
+        {
+            if (String.IsNullOrEmpty(path))
+                return false;
+            try
+            {
+                using (TagLib.File file = TagLib.File.Create(path))
+                {
+                    TagLib.Tag tag = file.Tag;
+                    if (tag == null)
+                        return false;
+                    if (!String.IsNullOrEmpty(copyright))
+                        tag.Copyright = copyright;
+                    if (!String.IsNullOrEmpty(comment))
+                        tag.Comment = comment;
+                    file.Save();
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         /// <summary>Sets title, artist and album exactly as given (empty clears the tag). Used to undo a change.</summary>
         public static bool WriteExact(String path, String title, String artist, String album)
         {

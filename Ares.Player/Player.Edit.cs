@@ -102,6 +102,7 @@ namespace Ares.Player
             InitSaveMenu();
             InitExportMenu();
             InitMusicToolsMenu();
+            InitOnlineMediaMenu();
             // toolbar: edit toggle + add menu (the add menu only shows in edit mode)
             m_EditButton = new ToolStripButton();
             m_EditButton.Name = "editModeButton";
@@ -178,6 +179,7 @@ namespace Ares.Player
             m_ElementDeleteItem = m_ElementMenu.Items.Add(T("Excluir", "Delete"), null, (s, e) => DeleteElementButton());
             m_ElementMenu.Items.Add(new ToolStripSeparator());
             m_ElementMenu.Items.Add(T("Escolher imagem...", "Choose picture..."), null, (s, e) => ChooseButtonPicture());
+            m_ElementMenu.Items.Add(T("Sugerir imagens na internet...", "Suggest pictures from the internet..."), null, (s, e) => SuggestButtonImages());
             m_ElementMenu.Items.Add(T("Escolher ícone...", "Choose icon..."), null, (s, e) => ChooseButtonIcon());
             m_ElementMenu.Items.Add(T("Remover imagem / ícone", "Remove picture / icon"), null, (s, e) => RemoveButtonImage());
             m_ElementMenu.Items.Add(new ToolStripSeparator());
