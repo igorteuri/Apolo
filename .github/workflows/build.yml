@@ -62,6 +62,17 @@ jobs:
           Pop-Location
           Copy-Item (Get-Command node).Source dist/discord/node.exe
 
+      - name: Package the Stream Deck plugin
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/StreamDeck | Out-Null
+          $src = (Resolve-Path "StreamDeck/com.igorteuri.apolo.sdPlugin").Path
+          $dest = Join-Path (Resolve-Path "dist/StreamDeck").Path "Apolo.streamDeckPlugin"
+          if (Test-Path $dest) { Remove-Item $dest }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [System.IO.Compression.ZipFile]::CreateFromDirectory($src, $dest, [System.IO.Compression.CompressionLevel]::Optimal, $true)
+
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
