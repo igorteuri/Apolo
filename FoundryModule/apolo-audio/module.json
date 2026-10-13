@@ -1,0 +1,37 @@
+{
+  "id": "apolo-audio",
+  "title": "Apolo - Áudio ao vivo",
+  "description": "Ouça a música e os efeitos do Apolo (player de áudio para RPG de mesa) direto no Foundry VTT. O Apolo transmite o áudio por VDO.Ninja e este módulo recebe a transmissão no navegador de cada jogador. / Listen to the Apolo audio player live inside Foundry VTT.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "12",
+    "verified": "14"
+  },
+  "authors": [
+    {
+      "name": "Igor Teuri (Dados Críticos)",
+      "url": "https://youtube.com/dadoscriticos"
+    }
+  ],
+  "esmodules": [
+    "scripts/apolo.mjs"
+  ],
+  "styles": [
+    "styles/apolo.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    },
+    {
+      "lang": "pt-BR",
+      "name": "Português (Brasil)",
+      "path": "lang/pt-BR.json"
+    }
+  ],
+  "socket": true,
+  "url": "https://github.com/igorteuri/Ares",
+  "license": "https://github.com/igorteuri/Ares/blob/master/LICENSE.txt"
+}

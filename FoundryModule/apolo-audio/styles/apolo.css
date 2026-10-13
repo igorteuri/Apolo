@@ -1,0 +1,66 @@
+#apolo-audio-widget {
+  position: fixed;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 999px;
+  background: rgba(20, 18, 16, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  color: #eee;
+  font-size: 13px;
+  line-height: 1;
+  user-select: none;
+}
+#apolo-audio-widget .apolo-grip {
+  cursor: grab;
+  opacity: 0.45;
+  padding: 0 2px 0 6px;
+}
+#apolo-audio-widget .apolo-grip:active { cursor: grabbing; }
+#apolo-audio-widget button {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: inherit;
+}
+#apolo-audio-widget button:hover { background: rgba(255, 255, 255, 0.12); }
+#apolo-audio-widget .apolo-main { font-weight: 600; }
+#apolo-audio-widget.apolo-live .apolo-main { color: #ffb300; }
+#apolo-audio-widget .apolo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #777;
+  flex: none;
+}
+#apolo-audio-widget.apolo-live .apolo-dot { background: #ffb300; }
+#apolo-audio-widget.apolo-live.apolo-sound .apolo-dot { animation: apolo-pulse 0.9s ease-in-out infinite; }
+#apolo-audio-widget .apolo-vol {
+  width: 90px;
+  accent-color: #ffb300;
+  margin: 0;
+}
+#apolo-audio-widget .apolo-controls { display: none; align-items: center; gap: 4px; }
+#apolo-audio-widget.apolo-live .apolo-controls,
+#apolo-audio-widget.apolo-connecting .apolo-controls { display: inline-flex; }
+#apolo-audio-widget .apolo-call { opacity: 0.8; }
+#apolo-audio-widget.apolo-called { animation: apolo-attention 1.2s ease-in-out 3; }
+#apolo-audio-frame {
+  position: fixed;
+  left: -10px;
+  top: -10px;
+  width: 2px;
+  height: 2px;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+@keyframes apolo-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.6); opacity: 0.55; } }
+@keyframes apolo-attention { 0%, 100% { box-shadow: 0 2px 10px rgba(0,0,0,.5); } 50% { box-shadow: 0 0 0 4px rgba(255,179,0,.55); } }

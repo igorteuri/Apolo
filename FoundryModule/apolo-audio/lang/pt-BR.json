@@ -1,0 +1,20 @@
+{
+  "APOLO.Listen": "Ouvir o Apolo",
+  "APOLO.Connecting": "Conectando...",
+  "APOLO.Live": "Ao vivo",
+  "APOLO.Disconnect": "Clique para parar de ouvir",
+  "APOLO.Connect": "Clique para ouvir o áudio do Apolo",
+  "APOLO.Mute": "Silenciar / ativar o som",
+  "APOLO.Volume": "Volume do Apolo (só para você)",
+  "APOLO.CallAll": "Pedir para todos ouvirem (Mestre)",
+  "APOLO.CalledByGM": "O mestre está tocando música com o Apolo.",
+  "APOLO.NoStream": "Apolo: o mestre ainda não informou o ID da transmissão (Configurações do módulo).",
+  "APOLO.Settings.StreamId.Name": "ID da transmissão do Apolo",
+  "APOLO.Settings.StreamId.Hint": "Cole o link do ouvinte ou o ID que aparece no Apolo (botão \"Compartilhar via VDO.Ninja\"). Exemplo: https://vdo.ninja/?view=meuid ou só meuid.",
+  "APOLO.Settings.AutoConnect.Name": "Conectar automaticamente",
+  "APOLO.Settings.AutoConnect.Hint": "Começa a ouvir sozinho depois do seu primeiro clique no Foundry (o navegador só libera o som depois de um clique).",
+  "APOLO.Settings.GMListens.Name": "O mestre também ouve pelo Foundry",
+  "APOLO.Settings.GMListens.Hint": "Deixe desligado no computador que roda o Apolo, senão você ouve tudo em dobro.",
+  "APOLO.Settings.ResetPosition.Name": "Restaurar a posição do botão",
+  "APOLO.Settings.ResetPosition.Hint": "Marque e salve para o botão do Apolo voltar ao lugar padrão."
+}

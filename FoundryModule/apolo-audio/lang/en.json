@@ -1,0 +1,20 @@
+{
+  "APOLO.Listen": "Listen to Apolo",
+  "APOLO.Connecting": "Connecting...",
+  "APOLO.Live": "Live",
+  "APOLO.Disconnect": "Click to stop listening",
+  "APOLO.Connect": "Click to listen to the Apolo audio",
+  "APOLO.Mute": "Mute / unmute",
+  "APOLO.Volume": "Apolo volume (only for you)",
+  "APOLO.CallAll": "Ask everyone to listen (GM)",
+  "APOLO.CalledByGM": "The GM is playing music with Apolo.",
+  "APOLO.NoStream": "Apolo: the GM has not set the stream ID yet (Module Settings).",
+  "APOLO.Settings.StreamId.Name": "Apolo stream ID",
+  "APOLO.Settings.StreamId.Hint": "Paste the listener link or the ID shown in Apolo (button \"Share via VDO.Ninja\"). Example: https://vdo.ninja/?view=myid or just myid.",
+  "APOLO.Settings.AutoConnect.Name": "Connect automatically",
+  "APOLO.Settings.AutoConnect.Hint": "Starts listening by itself after your first click in Foundry (browsers only allow sound after a click).",
+  "APOLO.Settings.GMListens.Name": "GM also listens through Foundry",
+  "APOLO.Settings.GMListens.Hint": "Keep this off on the computer that runs Apolo, otherwise you hear everything twice.",
+  "APOLO.Settings.ResetPosition.Name": "Reset button position",
+  "APOLO.Settings.ResetPosition.Hint": "Check and save to bring the Apolo button back to its default place."
+}

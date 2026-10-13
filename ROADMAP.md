@@ -13,7 +13,7 @@ Editor modernizado (tema, painéis acopláveis, ícones).
 - Ajustes finais de tema e de alinhamento da interface
 
 ## Ideias em estudo
-- **Foundry VTT 14**: integração para tocar o áudio do Apolo dentro do Foundry (módulo/ponte que recebe o que o Apolo toca ou controla as playlists).
+- **Foundry VTT 14**: fase 1 pronta (módulo `FoundryModule/apolo-audio`: os jogadores ouvem o áudio do Apolo, enviado por VDO.Ninja, dentro do Foundry). Próximas fases: painel de controle do Apolo dentro do Foundry e playlists nativas do Foundry criadas a partir de um projeto.
 - **Bibliotecas de áudio livres**: baixar músicas e efeitos sonoros de bibliotecas sem direitos autorais (Freesound, YouTube Audio Library e outras) direto do programa, já organizando na Biblioteca.
 - **Verificador de direitos autorais**: ferramenta para checar se uma música é segura para tocar no YouTube/Spotify (live, vídeos) ou se pode gerar bloqueio/claim.
 - **Renomeador de músicas**: limpar e embelezar nomes de arquivos (tirar "[Official Video]", números, underscores...), buscando título/artista/álbum na internet (MusicBrainz e similares) e gravando as tags.
