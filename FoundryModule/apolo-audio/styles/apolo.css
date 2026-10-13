@@ -1,3 +1,34 @@
+/* shared by the floating button and the row inside the Playlists sidebar */
+.apolo-ui button {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: inherit;
+  box-sizing: border-box;
+}
+.apolo-ui button:hover { background: rgba(255, 255, 255, 0.12); }
+.apolo-ui .apolo-main { font-weight: 600; }
+.apolo-ui.apolo-live .apolo-main { color: #ffb300; }
+.apolo-ui .apolo-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #777;
+  flex: none;
+}
+.apolo-ui.apolo-live .apolo-dot { background: #ffb300; }
+.apolo-ui.apolo-live.apolo-sound .apolo-dot { animation: apolo-pulse 0.9s ease-in-out infinite; }
+.apolo-ui .apolo-vol {
+  accent-color: #ffb300;
+  margin: 0;
+}
+.apolo-ui .apolo-call { opacity: 0.8; }
+
+/* floating button */
 #apolo-audio-widget {
   position: fixed;
   z-index: 70;
@@ -20,38 +51,30 @@
   padding: 0 2px 0 6px;
 }
 #apolo-audio-widget .apolo-grip:active { cursor: grabbing; }
-#apolo-audio-widget button {
-  all: unset;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 999px;
-  color: inherit;
-}
-#apolo-audio-widget button:hover { background: rgba(255, 255, 255, 0.12); }
-#apolo-audio-widget .apolo-main { font-weight: 600; }
-#apolo-audio-widget.apolo-live .apolo-main { color: #ffb300; }
-#apolo-audio-widget .apolo-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #777;
-  flex: none;
-}
-#apolo-audio-widget.apolo-live .apolo-dot { background: #ffb300; }
-#apolo-audio-widget.apolo-live.apolo-sound .apolo-dot { animation: apolo-pulse 0.9s ease-in-out infinite; }
-#apolo-audio-widget .apolo-vol {
-  width: 90px;
-  accent-color: #ffb300;
-  margin: 0;
-}
+#apolo-audio-widget .apolo-vol { width: 90px; }
 #apolo-audio-widget .apolo-controls { display: none; align-items: center; gap: 4px; }
 #apolo-audio-widget.apolo-live .apolo-controls,
 #apolo-audio-widget.apolo-connecting .apolo-controls { display: inline-flex; }
-#apolo-audio-widget .apolo-call { opacity: 0.8; }
 #apolo-audio-widget.apolo-called { animation: apolo-attention 1.2s ease-in-out 3; }
+
+/* row inside the Playlists tab, next to the Foundry volume sliders */
+.apolo-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0;
+  padding: 2px 0;
+  color: var(--color-text-primary, inherit);
+  font-size: var(--font-size-13, 13px);
+  line-height: 1.2;
+}
+.apolo-inline .apolo-main { padding: 4px 6px; border-radius: 4px; flex: none; }
+.apolo-inline .apolo-mute, .apolo-inline .apolo-call { padding: 4px 6px; border-radius: 4px; flex: none; }
+.apolo-inline button:hover { background: rgba(128, 128, 128, 0.25); }
+.apolo-inline .apolo-controls { display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0; }
+.apolo-inline .apolo-vol { flex: 1; min-width: 40px; }
+.apolo-inline.apolo-called { animation: apolo-attention 1.2s ease-in-out 3; }
+
 #apolo-audio-frame {
   position: fixed;
   left: -10px;

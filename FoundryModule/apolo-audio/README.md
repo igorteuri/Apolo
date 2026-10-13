@@ -7,11 +7,11 @@ O áudio vai direto do computador do mestre para os jogadores: nada é enviado p
 Testado em: Foundry VTT v14 (declarado compatível a partir da v12).
 
 ## 1. Preparar o Apolo (mestre)
-1. Instale um cabo de áudio virtual (por exemplo o [VB-CABLE](https://vb-audio.com/Cable/)).
-2. No Apolo, escolha esse cabo como saída de áudio (botão de saída no canto direito da barra de menus).
-3. Clique no ícone de envio (VDO.Ninja) na barra de menus, ajuste as opções e clique em **Aplicar**.
-   A transmissão começa sozinha.
-4. Copie o **link do ouvinte** (ou só o ID que aparece no campo "ID da transmissão").
+1. No Apolo, clique no ícone de envio (VDO.Ninja) na barra de menus, ajuste as opções e clique em **Aplicar**.
+   A entrada de áudio padrão é o **Apolo Audio**, o microfone virtual do próprio Apolo: ele leva para o VDO.Ninja
+   o som que o Apolo toca, qualquer que seja a saída escolhida. Não precisa instalar cabo virtual
+   (exige Windows 10 versão 2004 ou Windows 11).
+2. Copie o **link do ouvinte** (ou só o ID que aparece no campo "ID da transmissão").
 
 > Dica: para o mestre continuar ouvindo no próprio computador sem eco, deixe a opção
 > "O mestre também ouve pelo Foundry" desligada (é o padrão).
@@ -25,11 +25,15 @@ Testado em: Foundry VTT v14 (declarado compatível a partir da v12).
 Em *Configurações > Configurações dos módulos*:
 - **ID da transmissão do Apolo**: cole o link do ouvinte ou o ID.
 
-Pronto. Cada jogador vê um botão **Ouvir o Apolo** na tela:
+Pronto. Cada jogador encontra os controles do Apolo na aba **Playlists** da barra lateral, junto dos controles
+de volume do próprio Foundry (os jogadores já estão acostumados a ficar ali):
 - depois do primeiro clique em qualquer lugar do Foundry, ele conecta sozinho (os navegadores só liberam o som depois de um clique);
-- o botão tem volume e silenciar, só para aquele jogador;
-- o botão pode ser arrastado pela alça à esquerda;
-- o mestre tem o botão 📢 para pedir que todos comecem a ouvir.
+- o botão de fone liga/desliga a escuta; há silenciar e volume, só para aquele jogador;
+- o mestre tem o botão de megafone para pedir que todos comecem a ouvir.
+
+Cada jogador pode trocar o local em *Configurações dos módulos > Onde mostrar os controles do Apolo*:
+seção de volume da aba Playlists (padrão), botão flutuante (arrastável pela alça) ou os dois.
+Se o módulo não achar a seção de volume na sua versão do Foundry, ele mostra o botão flutuante sozinho.
 
 ## Observações
 - O VDO.Ninja liga cada jogador diretamente ao computador do mestre. Para mesas grandes (mais de 8 pessoas), reduza a "Qualidade (kbps)" no Apolo.

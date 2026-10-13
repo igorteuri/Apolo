@@ -58,12 +58,12 @@ namespace Ares.Player
             info.MaximumSize = new Size(560, 0);
             info.Margin = new Padding(0, 0, 0, 10);
             info.Text = T(
-                "Como funciona: o Ares toca em um cabo de áudio virtual (por exemplo o VB-CABLE) e a página do VDO.Ninja, dentro do Ares, captura esse cabo como se fosse um microfone e envia para quem abrir o link do ouvinte.\n\n"
-                + "1. Instale um cabo de áudio virtual (vb-audio.com/Cable) e escolha-o como dispositivo de saída do Ares (botão de saída na barra de ferramentas).\n"
+                "Como funciona: o Apolo tem um microfone virtual próprio, o \"Apolo Audio\". Ele leva para o VDO.Ninja (dentro do Apolo) exatamente o som que o Apolo está tocando, qualquer que seja o dispositivo de saída escolhido, e envia para quem abrir o link do ouvinte. Não precisa instalar nenhum cabo virtual (exige Windows 10 versão 2004 ou o Windows 11).\n\n"
+                + "1. Deixe a entrada de áudio como \"Apolo Audio\" (ou escolha outro microfone/cabo, se preferir).\n"
                 + "2. Ajuste as opções abaixo e clique em \"Aplicar\". A transmissão começa sozinha.\n"
                 + "3. Mande o link do ouvinte para seus jogadores.",
-                "How it works: Ares plays to a virtual audio cable (for example VB-CABLE) and the VDO.Ninja page, inside Ares, captures that cable like a microphone and sends it to everyone who opens the listener link.\n\n"
-                + "1. Install a virtual audio cable (vb-audio.com/Cable) and choose it as the Ares output device (output button in the toolbar).\n"
+                "How it works: Apolo has its own virtual microphone, \"Apolo Audio\". It carries exactly the sound Apolo is playing, whatever output device is chosen, to VDO.Ninja (inside Apolo) and sends it to everyone who opens the listener link. No virtual cable is needed (requires Windows 10 version 2004 or Windows 11).\n\n"
+                + "1. Leave the audio input as \"Apolo Audio\" (or choose another microphone/cable if you prefer).\n"
                 + "2. Adjust the options below and click \"Apply\". The broadcast starts by itself.\n"
                 + "3. Send the listener link to your players.");
             table.Controls.Add(info, 0, 0);
@@ -189,25 +189,15 @@ namespace Ares.Player
         /// <summary>Best guess for the device to send: a virtual cable output if there is one.</summary>
         public static string AutoDevice()
         {
-            List<string> devices = GetInputDevices();
-            foreach (string d in devices)
-            {
-                if (d.IndexOf("cable", StringComparison.OrdinalIgnoreCase) >= 0)
-                    return d;
-            }
-            foreach (string d in devices)
-            {
-                if (d.IndexOf("stereo mix", StringComparison.OrdinalIgnoreCase) >= 0
-                    || d.IndexOf("mix est", StringComparison.OrdinalIgnoreCase) >= 0)
-                    return d;
-            }
-            return devices.Count > 0 ? devices[0] : "CABLE Output";
+            // Apolo has its own virtual microphone; no cable is needed
+            return VirtualMic.DeviceName;
         }
 
         private void FillDevices()
         {
             string current = m_DeviceBox.Text;
             m_DeviceBox.Items.Clear();
+            m_DeviceBox.Items.Add(VirtualMic.DeviceName);
             foreach (string d in GetInputDevices())
                 m_DeviceBox.Items.Add(d);
             m_DeviceBox.Text = current;

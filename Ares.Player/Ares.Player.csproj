@@ -153,6 +153,7 @@
     <Compile Include="Player.ModeTree.cs" />
     <Compile Include="DiscordBridge.cs" />
     <Compile Include="ProcessLoopbackCapture.cs" />
+    <Compile Include="VirtualMic.cs" />
     <Compile Include="SoundProgressPanel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

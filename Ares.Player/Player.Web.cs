@@ -205,6 +205,7 @@ namespace Ares.Player
         public bool Playing;   // the page plays audio
         public bool Muted;     // muted by the user
         public bool Loaded;    // page loaded
+        public VirtualMic Mic; // the virtual microphone "Apolo Audio" (VDO tab)
     }
 
     internal class WebAudioInfo
@@ -302,12 +303,84 @@ namespace Ares.Player
  window.__aresMuted = false; var pcs = [], tracks = [];
  var Orig = window.RTCPeerConnection;
  if (Orig) { window.RTCPeerConnection = new Proxy(Orig, { construct: function(t, a, n) { var pc = Reflect.construct(t, a, n); pcs.push(pc); return pc; } }); }
- var md = navigator.mediaDevices; var gum = md && md.getUserMedia;
+ var md = navigator.mediaDevices; var gum = md && md.getUserMedia; var enumD = md && md.enumerateDevices;
+ var VID = 'apolo-virtual', VLABEL = 'Apolo Audio';
+ function post(o) { try { window.chrome.webview.postMessage(JSON.stringify(o)); } catch (e) {} }
  function reg(s) { s.getAudioTracks().forEach(function(t) { tracks.push(t); if (window.__aresMuted) t.enabled = false; }); return s; }
+ // ---- Apolo Audio: virtual microphone fed by the program with its own sound
+ var vctx = null, vdest = null, vq = [], vlen = 0, vprimed = false;
+ function vfeed(s) {
+   var bin = atob(s), n = bin.length >> 1, u8 = new Uint8Array(n * 2);
+   for (var i = 0; i < u8.length; i++) u8[i] = bin.charCodeAt(i);
+   var arr = new Int16Array(u8.buffer); vq.push(arr); vlen += arr.length >> 1;
+   while (vlen > 14400 && vq.length > 1) { vlen -= vq.shift().length >> 1; }
+ }
+ try { window.chrome.webview.addEventListener('message', function(e) { if (typeof e.data === 'string' && e.data.charAt(0) !== '!') vfeed(e.data); }); } catch (e) {}
+ function vstart() {
+   if (vctx) { if (vctx.state === 'suspended') vctx.resume(); return; }
+   var AC = window.AudioContext || window.webkitAudioContext;
+   vctx = new AC({ sampleRate: 48000, latencyHint: 'interactive' });
+   vdest = vctx.createMediaStreamDestination();
+   var node = vctx.createScriptProcessor(2048, 0, 2);
+   var pos = 0;
+   node.onaudioprocess = function(ev) {
+     var L = ev.outputBuffer.getChannelData(0), R = ev.outputBuffer.getChannelData(1), n = L.length;
+     if (!vprimed && vlen >= n * 2) vprimed = true;
+     if (!vprimed) { L.fill(0); R.fill(0); return; }
+     for (var i = 0; i < n; i++) {
+       if (!vq.length) { vprimed = false; for (; i < n; i++) { L[i] = 0; R[i] = 0; } break; }
+       var a = vq[0];
+       L[i] = a[pos * 2] / 32768; R[i] = a[pos * 2 + 1] / 32768;
+       pos++; vlen--;
+       if (pos * 2 >= a.length) { vq.shift(); pos = 0; }
+     }
+   };
+   node.connect(vdest);
+   window.__aresVNode = node;
+   vctx.resume();
+   post({ t: 'vmic', on: true });
+ }
+ function vstream() {
+   vstart();
+   var src = vdest.stream.getAudioTracks()[0].clone();
+   try { Object.defineProperty(src, 'label', { value: VLABEL }); } catch (e) {}
+   try { var gs = src.getSettings.bind(src); src.getSettings = function() { var o = gs(); o.deviceId = VID; return o; }; } catch (e) {}
+   return reg(new MediaStream([src]));
+ }
+ function wantedId(c) {
+   var a = c && c.audio; if (!a || a === true) return null;
+   var d = a.deviceId; if (!d) return null;
+   if (typeof d === 'string') return d;
+   if (Array.isArray(d)) return d[0] || null;
+   var v = d.exact || d.ideal; if (Array.isArray(v)) v = v[0];
+   return v || null;
+ }
+ if (enumD) { md.enumerateDevices = function() {
+   return enumD.apply(this, arguments).then(function(list) {
+     var out = list.slice();
+     for (var i = 0; i < out.length; i++) if (out[i].deviceId === VID) return out;
+     out.push({ deviceId: VID, groupId: 'apolo', kind: 'audioinput', label: VLABEL, toJSON: function() { return { deviceId: VID, groupId: 'apolo', kind: 'audioinput', label: VLABEL }; } });
+     return out;
+   });
+ }; }
  if (gum) { md.getUserMedia = function(c) {
    var self = this, args = arguments, w = (window.__aresMic || '').toLowerCase();
-   if (!w || !c || !c.audio) return gum.apply(self, args).then(reg);
-   return gum.call(self, { audio: true }).then(function(tmp) { tmp.getTracks().forEach(function(t) { t.stop(); }); return md.enumerateDevices(); }).then(function(list) {
+   if (!c || !c.audio) return gum.apply(self, args).then(reg);
+   var id = wantedId(c);
+   // the device which the user chose inside the VDO.Ninja page is always respected
+   if (id === VID) { post({ t: 'mic', label: VLABEL }); try { return Promise.resolve(vstream()); } catch (e) { return Promise.reject(e); } }
+   if (id) {
+     return gum.apply(self, args).then(function(s) {
+       reg(s);
+       if (enumD) enumD.call(md).then(function(list) {
+         for (var i = 0; i < list.length; i++) if (list[i].kind === 'audioinput' && list[i].deviceId === id && list[i].label) { post({ t: 'mic', label: list[i].label }); break; }
+       }).catch(function() {});
+       return s;
+     });
+   }
+   if (!w) return gum.apply(self, args).then(reg);
+   if (w.indexOf('apolo audio') >= 0) { try { return Promise.resolve(vstream()); } catch (e) { return gum.apply(self, args).then(reg); } }
+   return gum.call(self, { audio: true }).then(function(tmp) { tmp.getTracks().forEach(function(t) { t.stop(); }); return enumD.call(md); }).then(function(list) {
      var found = null, short = w.indexOf(' (') > 0 ? w.substring(0, w.indexOf(' (')) : w;
      list.forEach(function(d) { if (!found && d.kind === 'audioinput' && d.label.toLowerCase().indexOf(w) >= 0) found = d; });
      list.forEach(function(d) { if (!found && d.kind === 'audioinput' && d.label.toLowerCase().indexOf(short) >= 0) found = d; });
@@ -545,6 +618,13 @@ namespace Ares.Player
                 };
                 if (tab.Kind == "vdo")
                     await core.AddScriptToExecuteOnDocumentCreatedAsync(BuildInitScript());
+                if (tab.Kind == "vdo")
+                {
+                    VirtualMic vmic = new VirtualMic(this, core);
+                    tab.Mic = vmic;
+                    core.WebMessageReceived += (s, e) => HandleVdoMessage(tab, vmic, e);
+                    core.NavigationStarting += (s, e) => vmic.Stop();
+                }
                 core.IsMuted = tab.Kind != "vdo" && tab.Muted;
                 core.PermissionRequested += (s, e) =>
                 {
@@ -589,6 +669,37 @@ namespace Ares.Player
                 tab.Page.Controls.Add(error);
                 return;
             }
+            }
+        }
+
+        // messages from the VDO.Ninja page: virtual microphone requests and the input device chosen by the user
+        private void HandleVdoMessage(WebTab tab, VirtualMic vmic, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            try
+            {
+                string text = e.TryGetWebMessageAsString();
+                if (string.IsNullOrEmpty(text))
+                    return;
+                if (text.IndexOf("\"vmic\"", StringComparison.Ordinal) >= 0)
+                {
+                    vmic.StartAsync();
+                }
+                else if (text.IndexOf("\"mic\"", StringComparison.Ordinal) >= 0)
+                {
+                    int i = text.IndexOf("\"label\":\"", StringComparison.Ordinal);
+                    if (i < 0)
+                        return;
+                    i += 9;
+                    int j = text.LastIndexOf('"');
+                    if (j <= i)
+                        return;
+                    string label = text.Substring(i, j - i).Replace("\\\"", "\"").Replace("\\\\", "\\");
+                    if (label.Length > 0)
+                        Ares.CommonGUI.Preferences.Set("VdoDevice", label);
+                }
+            }
+            catch (Exception)
+            {
             }
         }
 
@@ -731,6 +842,8 @@ namespace Ares.Player
             bool wasSelected = (tab == m_Selected);
             m_Tabs.Remove(tab);
             m_Host.Controls.Remove(tab.Page);
+            if (tab.Mic != null)
+                tab.Mic.Dispose();
             tab.Page.Dispose();
             SaveTabs();
             if (wasSelected)

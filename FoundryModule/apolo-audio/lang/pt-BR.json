@@ -16,5 +16,10 @@
   "APOLO.Settings.GMListens.Name": "O mestre também ouve pelo Foundry",
   "APOLO.Settings.GMListens.Hint": "Deixe desligado no computador que roda o Apolo, senão você ouve tudo em dobro.",
   "APOLO.Settings.ResetPosition.Name": "Restaurar a posição do botão",
-  "APOLO.Settings.ResetPosition.Hint": "Marque e salve para o botão do Apolo voltar ao lugar padrão."
+  "APOLO.Settings.ResetPosition.Hint": "Marque e salve para o botão do Apolo voltar ao lugar padrão.",
+  "APOLO.Settings.UiMode.Name": "Onde mostrar os controles do Apolo",
+  "APOLO.Settings.UiMode.Hint": "Barra lateral: dentro da aba Playlists, junto dos controles de volume do Foundry. Flutuante: um botão que pode ser arrastado sobre o jogo.",
+  "APOLO.Settings.UiMode.Sidebar": "Seção de volume da aba Playlists (padrão)",
+  "APOLO.Settings.UiMode.Floating": "Botão flutuante",
+  "APOLO.Settings.UiMode.Both": "Os dois"
 }

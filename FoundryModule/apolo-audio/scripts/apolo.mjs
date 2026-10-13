@@ -2,8 +2,10 @@
  * Apolo - Áudio ao vivo (Foundry VTT)
  *
  * O Apolo (player de áudio para RPG de mesa) transmite o que está tocando por VDO.Ninja.
- * Este módulo mostra um botão discreto na tela de cada jogador; ao clicar, o navegador abre a
- * transmissão (num iframe invisível) e o jogador ouve a música e os efeitos junto com a mesa.
+ * Este módulo mostra os controles do Apolo dentro da aba de volume da barra lateral de Playlists
+ * (onde os jogadores já ajustam o volume) e, se preferirem, também como um botão flutuante.
+ * Ao clicar, o navegador abre a transmissão (num iframe invisível) e o jogador ouve a música
+ * e os efeitos junto com a mesa.
  *
  * Nada é enviado ao servidor do Foundry: o áudio vai direto do computador do mestre para os jogadores.
  */
@@ -17,6 +19,8 @@ const state = {
   mode: "idle",            // idle | connecting | live
   frame: null,
   widget: null,
+  row: null,
+  sidebarFailed: false,
   userInteracted: false,
   manuallyStopped: false,
   volumeTimer: null,
@@ -42,7 +46,7 @@ Hooks.once("init", () => {
         disconnect();
         connect();
       }
-      updateWidget();
+      updateUi();
     }
   });
   game.settings.register(MODULE_ID, "autoConnect", {
@@ -60,6 +64,23 @@ Hooks.once("init", () => {
     config: true,
     type: Boolean,
     default: false
+  });
+  game.settings.register(MODULE_ID, "uiMode", {
+    name: "APOLO.Settings.UiMode.Name",
+    hint: "APOLO.Settings.UiMode.Hint",
+    scope: "client",
+    config: true,
+    type: String,
+    default: "sidebar",
+    choices: {
+      sidebar: "APOLO.Settings.UiMode.Sidebar",
+      floating: "APOLO.Settings.UiMode.Floating",
+      both: "APOLO.Settings.UiMode.Both"
+    },
+    onChange: () => {
+      state.sidebarFailed = false;
+      refreshUi();
+    }
   });
   game.settings.register(MODULE_ID, "resetPosition", {
     name: "APOLO.Settings.ResetPosition.Name",
@@ -137,7 +158,7 @@ function connect() {
     sendToFrame({ volume: currentVolume() });
     sendToFrame({ mute: !!game.settings.get(MODULE_ID, "muted") });
     // no loudness message for a while -> quiet
-    if (state.widget) state.widget.classList.toggle("apolo-sound", Date.now() - state.loudnessSeen < 2500);
+    setSoundDot();
   }, 3000);
 }
 
@@ -174,22 +195,28 @@ window.addEventListener("message", (event) => {
     const level = values.reduce((max, v) => Math.max(max, Number(typeof v === "object" && v ? v.loudness ?? 0 : v) || 0), 0);
     if (level > 1) state.loudnessSeen = Date.now();
     if (state.mode === "connecting") setMode("live");
-    if (state.widget) state.widget.classList.toggle("apolo-sound", Date.now() - state.loudnessSeen < 2500);
+    setSoundDot();
   }
 });
 
+function uiElements() {
+  return [state.widget, state.row].filter((el) => el && el.isConnected);
+}
+
+function setSoundDot() {
+  const on = Date.now() - state.loudnessSeen < 2500;
+  for (const el of uiElements()) el.classList.toggle("apolo-sound", on);
+}
+
 function setMode(mode) {
   state.mode = mode;
-  updateWidget();
+  updateUi();
 }
 
 /* ---------------------------------------------------------------- widget */
 
-function buildWidget() {
-  const widget = document.createElement("div");
-  widget.id = WIDGET_ID;
-  widget.innerHTML = `
-    <span class="apolo-grip" title="" data-apolo="grip"><i class="fa-solid fa-grip-vertical"></i></span>
+const CONTROLS_HTML = (withGrip) => `
+    ${withGrip ? `<span class="apolo-grip" title="" data-apolo="grip"><i class="fa-solid fa-grip-vertical"></i></span>` : ""}
     <button type="button" class="apolo-main" data-apolo="main">
       <span class="apolo-dot"></span>
       <i class="fa-solid fa-headphones"></i>
@@ -201,10 +228,10 @@ function buildWidget() {
     </span>
     ${game.user.isGM ? `<button type="button" class="apolo-call" data-apolo="call" title="${t("CallAll")}"><i class="fa-solid fa-bullhorn"></i></button>` : ""}
   `;
-  document.body.appendChild(widget);
-  state.widget = widget;
 
-  const slider = widget.querySelector(".apolo-vol");
+/** Click and slider handling shared by the floating button and the row in the sidebar. */
+function wireControls(el) {
+  const slider = el.querySelector(".apolo-vol");
   slider.value = Math.round(currentVolume() * 100);
   slider.addEventListener("input", async () => {
     const v = Number(slider.value) / 100;
@@ -212,10 +239,10 @@ function buildWidget() {
     if (v > 0 && game.settings.get(MODULE_ID, "muted")) await game.settings.set(MODULE_ID, "muted", false);
     sendToFrame({ volume: v });
     sendToFrame({ mute: !!game.settings.get(MODULE_ID, "muted") });
-    updateWidget();
+    updateUi();
   });
 
-  widget.addEventListener("click", async (event) => {
+  el.addEventListener("click", async (event) => {
     const target = event.target.closest("[data-apolo]");
     if (!target) return;
     const action = target.dataset.apolo;
@@ -229,40 +256,110 @@ function buildWidget() {
     } else if (action === "mute") {
       await game.settings.set(MODULE_ID, "muted", !game.settings.get(MODULE_ID, "muted"));
       sendToFrame({ mute: !!game.settings.get(MODULE_ID, "muted") });
-      updateWidget();
+      updateUi();
     } else if (action === "call") {
       game.socket.emit(`module.${MODULE_ID}`, { type: "listen" });
     }
   });
-
-  enableDragging(widget);
-  placeWidget();
-  updateWidget();
 }
 
-function updateWidget() {
-  const widget = state.widget;
-  if (!widget) return;
-  const hasStream = !!getStreamId();
-  widget.style.display = hasStream || game.user.isGM ? "" : "none";
-  widget.classList.toggle("apolo-live", state.mode === "live");
-  widget.classList.toggle("apolo-connecting", state.mode === "connecting");
-  if (state.mode === "idle") widget.classList.remove("apolo-sound");
-  const label = widget.querySelector(".apolo-label");
-  const main = widget.querySelector(".apolo-main");
-  if (state.mode === "idle") {
-    label.textContent = t("Listen");
-    main.title = t("Connect");
-  } else if (state.mode === "connecting") {
-    label.textContent = t("Connecting");
-    main.title = t("Disconnect");
-  } else {
-    label.textContent = t("Live");
-    main.title = t("Disconnect");
+function buildWidget() {
+  if (state.widget?.isConnected) return;
+  const widget = document.createElement("div");
+  widget.id = WIDGET_ID;
+  widget.className = "apolo-ui apolo-floating";
+  widget.innerHTML = CONTROLS_HTML(true);
+  document.body.appendChild(widget);
+  state.widget = widget;
+  wireControls(widget);
+  enableDragging(widget);
+  placeWidget();
+  updateUi();
+}
+
+function removeWidget() {
+  state.widget?.remove();
+  state.widget = null;
+}
+
+/* ---------------------------------------------------------------- sidebar (Playlists > volume) */
+
+/** Finds the place where Foundry shows its own volume sliders (the structure changed between versions). */
+function findVolumeContainer(root) {
+  for (const selector of [".global-volume", "#global-volume", "[data-application-part='volume']", ".playlists-volume", ".volume-sliders"]) {
+    const el = root.querySelector(selector);
+    if (el) return el;
   }
+  const ranges = [...root.querySelectorAll("input[type='range'], range-picker")].filter(
+    (r) => !r.closest(".apolo-inline") && !r.closest(".sound, .playlist-sounds, li")
+  );
+  for (const range of ranges) {
+    const group = range.closest(".form-group, .volume-slider, label, div");
+    if (group?.parentElement && group.parentElement !== root) return group.parentElement;
+  }
+  return null;
+}
+
+function injectSidebar(app, element) {
+  const root = element instanceof HTMLElement ? element : element?.[0];
+  if (!root) return;
+  root.querySelectorAll(".apolo-inline").forEach((el) => el.remove());
+  state.row = null;
+  const container = findVolumeContainer(root);
+  if (!container) {
+    state.sidebarFailed = true;
+    console.warn(`${MODULE_ID} | could not find the volume section of the Playlists tab; using the floating button`);
+    refreshUi();
+    return;
+  }
+  const row = document.createElement("div");
+  row.className = "apolo-ui apolo-inline";
+  row.innerHTML = CONTROLS_HTML(false);
+  container.appendChild(row);
+  state.row = row;
+  state.sidebarFailed = false;
+  wireControls(row);
+  refreshUi();
+}
+
+function wantFloating() {
+  const mode = game.settings.get(MODULE_ID, "uiMode");
+  return mode === "floating" || mode === "both" || state.sidebarFailed;
+}
+
+function refreshUi() {
+  if (wantFloating()) buildWidget();
+  else removeWidget();
+  // the row in the sidebar can be hidden when only the floating button is wanted
+  if (state.row) state.row.style.display = game.settings.get(MODULE_ID, "uiMode") === "floating" ? "none" : "";
+  updateUi();
+}
+
+function updateUi() {
+  const hasStream = !!getStreamId();
   const muted = !!game.settings.get(MODULE_ID, "muted") || currentVolume() === 0;
-  const icon = widget.querySelector(".apolo-mute i");
-  if (icon) icon.className = muted ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
+  for (const el of uiElements()) {
+    if (el === state.widget) el.style.display = hasStream || game.user.isGM ? "" : "none";
+    el.classList.toggle("apolo-live", state.mode === "live");
+    el.classList.toggle("apolo-connecting", state.mode === "connecting");
+    if (state.mode === "idle") el.classList.remove("apolo-sound");
+    const label = el.querySelector(".apolo-label");
+    const main = el.querySelector(".apolo-main");
+    if (state.mode === "idle") {
+      label.textContent = t("Listen");
+      main.title = t("Connect");
+    } else if (state.mode === "connecting") {
+      label.textContent = t("Connecting");
+      main.title = t("Disconnect");
+    } else {
+      label.textContent = t("Live");
+      main.title = t("Disconnect");
+    }
+    const icon = el.querySelector(".apolo-mute i");
+    if (icon) icon.className = muted ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
+    const slider = el.querySelector(".apolo-vol");
+    if (slider && document.activeElement !== slider) slider.value = Math.round(currentVolume() * 100);
+  }
 }
 
 function placeWidget() {
@@ -309,8 +406,22 @@ function enableDragging(widget) {
 
 /* ---------------------------------------------------------------- start */
 
+// the Playlists tab is drawn again whenever it changes: put the Apolo row back each time
+Hooks.on("renderPlaylistDirectory", (app, element) => injectSidebar(app, element));
+
 Hooks.once("ready", () => {
-  buildWidget();
+  refreshUi();
+
+  // the tab may have been drawn before this module was ready
+  const existing = ui.playlists?.element;
+  if (existing) injectSidebar(ui.playlists, existing);
+  // if the sidebar never shows the volume section, fall back to the floating button
+  setTimeout(() => {
+    if (!state.row?.isConnected && game.settings.get(MODULE_ID, "uiMode") !== "floating") {
+      state.sidebarFailed = true;
+      refreshUi();
+    }
+  }, 6000);
 
   // the browser only allows sound after a click: the first click anywhere starts the listening
   const firstClick = () => {

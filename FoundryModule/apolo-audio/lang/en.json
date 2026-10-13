@@ -16,5 +16,10 @@
   "APOLO.Settings.GMListens.Name": "GM also listens through Foundry",
   "APOLO.Settings.GMListens.Hint": "Keep this off on the computer that runs Apolo, otherwise you hear everything twice.",
   "APOLO.Settings.ResetPosition.Name": "Reset button position",
-  "APOLO.Settings.ResetPosition.Hint": "Check and save to bring the Apolo button back to its default place."
+  "APOLO.Settings.ResetPosition.Hint": "Check and save to bring the Apolo button back to its default place.",
+  "APOLO.Settings.UiMode.Name": "Where to show the Apolo controls",
+  "APOLO.Settings.UiMode.Hint": "Sidebar: inside the Playlists tab, next to the Foundry volume sliders. Floating: a draggable button over the game.",
+  "APOLO.Settings.UiMode.Sidebar": "Playlists tab volume section (default)",
+  "APOLO.Settings.UiMode.Floating": "Floating button",
+  "APOLO.Settings.UiMode.Both": "Both"
 }
