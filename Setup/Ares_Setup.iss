@@ -55,8 +55,6 @@ Source: "..\build\Ares\Player_Editor\MouseKeyboardActivityMonitor.dll"; DestDir:
 Source: "..\build\Ares\Player_Editor\MouseKeyboardHooksLicence.txt"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
 Source: "..\build\Ares\Player_Editor\de\Ares.CmdLinePlayer.resources.dll"; DestDir: "{app}\Player_Editor\de\"; Flags: ignoreversion; Components: Player
 Source: "..\build\Ares\Player_Editor\de\Ares.Player.resources.dll"; DestDir: "{app}\Player_Editor\de\"; Flags: ignoreversion; Components: Player
-Source: "..\build\Ares\Player_Editor\oggenc2.exe"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
-Source: "..\build\Ares\Player_Editor\opusenc.exe"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
 Source: "..\build\Ares\Player_Editor\ServiceStack.Client.dll"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
 Source: "..\build\Ares\Player_Editor\ServiceStack.Common.dll"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player
 Source: "..\build\Ares\Player_Editor\ServiceStack.dll"; DestDir: "{app}\Player_Editor\"; Flags: ignoreversion; Components: Player

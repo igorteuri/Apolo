@@ -1,0 +1,3 @@
+Apague do seu repositorio:
+Libraries/oggenc2.exe
+Libraries/opusenc.exe

@@ -20,6 +20,7 @@
 using System;
 using System.Windows.Forms;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 
 using Ares.CommonGUI;
 
@@ -39,9 +40,12 @@ namespace Ares.Online
             }
         }
 
+        private const String RepositoryUrl = "https://github.com/igorteuri/Ares";
+        private const String LatestReleaseApi = "https://api.github.com/repos/igorteuri/Ares/releases/latest";
+
         public static void ShowHomepage(Form owner)
         {
-            String url = GetUrlBase();
+            String url = RepositoryUrl;
             try
             {
                 System.Diagnostics.Process.Start(url);
@@ -74,8 +78,114 @@ namespace Ares.Online
             downloader.Download(url, StringResources.SearchingNews, NewsDownloaded);
         }
 
+        private static bool IsPt
+        {
+            get { return System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt"; }
+        }
+
+        private static string Tx(string pt, string en)
+        {
+            return IsPt ? pt : en;
+        }
+
+        private static Version ParseVersion(string text)
+        {
+            if (String.IsNullOrEmpty(text))
+                return null;
+            Match m = Regex.Match(text, @"(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?");
+            if (!m.Success)
+                return null;
+            int[] parts = new int[4];
+            for (int i = 0; i < 4; ++i)
+            {
+                if (m.Groups[i + 1].Success)
+                    int.TryParse(m.Groups[i + 1].Value, out parts[i]);
+            }
+            return new Version(parts[0], parts[1], parts[2], parts[3]);
+        }
+
+        private static string JsonValue(string json, string name)
+        {
+            Match m = Regex.Match(json, "\"" + name + "\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
+            return m.Success ? m.Groups[1].Value.Replace("\\/", "/") : null;
+        }
+
+        /// <summary>Looks for a newer version among the releases of Apolo on GitHub (silent unless verbose).</summary>
+        private static void CheckApoloRelease(Form parent, bool verbose)
+        {
+            Version current = System.Reflection.Assembly.GetEntryAssembly() != null
+                ? System.Reflection.Assembly.GetEntryAssembly().GetName().Version : null;
+            System.Net.WebClient client = new System.Net.WebClient();
+            client.Headers.Add("User-Agent", "Apolo");
+            client.Encoding = System.Text.Encoding.UTF8;
+            try
+            {
+                System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
+            }
+            catch (Exception)
+            {
+            }
+            client.DownloadStringCompleted += (sender, e) =>
+            {
+                client.Dispose();
+                Action show = () =>
+                {
+                    try
+                    {
+                        if (e.Error != null || e.Cancelled)
+                        {
+                            if (verbose)
+                                MessageBox.Show(parent, Tx("Não consegui consultar as versões publicadas. Veja se há internet ou se já existe alguma versão publicada em ", "Could not look for new versions. Check the internet connection, or whether a version was published at ") + RepositoryUrl + "/releases",
+                                    StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            return;
+                        }
+                        string tag = JsonValue(e.Result, "tag_name");
+                        string page = JsonValue(e.Result, "html_url") ?? (RepositoryUrl + "/releases");
+                        Version latest = ParseVersion(tag);
+                        if (latest == null || current == null)
+                            return;
+                        if (latest > current)
+                        {
+                            if (MessageBox.Show(parent,
+                                Tx("Há uma nova versão do Apolo: " + tag + " (você tem " + current.ToString(3) + ").\r\n\r\nAbrir a página de download?",
+                                   "A new version of Apolo is available: " + tag + " (you have " + current.ToString(3) + ").\r\n\r\nOpen the download page?"),
+                                StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                            {
+                                System.Diagnostics.Process.Start(page);
+                            }
+                        }
+                        else if (verbose)
+                        {
+                            MessageBox.Show(parent, Tx("Você já está com a versão mais recente do Apolo (" + current.ToString(3) + ").",
+                                "You already have the latest version of Apolo (" + current.ToString(3) + ")."),
+                                StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // an update notice is never worth an error
+                    }
+                };
+                if (parent != null && !parent.IsDisposed && parent.IsHandleCreated)
+                    parent.BeginInvoke(show);
+            };
+            try
+            {
+                client.DownloadStringAsync(new Uri(LatestReleaseApi));
+            }
+            catch (Exception)
+            {
+                client.Dispose();
+            }
+        }
+
         private static void DoCheckForUpdate(Form parent, bool mainProgram, bool verbose, bool directDownload)
         {
+            if (mainProgram)
+            {
+                CheckApoloRelease(parent, verbose || directDownload);
+                return;
+            }
             String url = GetUrlBase() + "ares_version.txt";
             FileDownloader<bool> downloader = new FileDownloader<bool>(parent, verbose, verbose);
             if (mainProgram && directDownload)

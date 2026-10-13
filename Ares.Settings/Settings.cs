@@ -677,7 +677,7 @@ namespace Ares.Settings
                 }
                 else if (reader.IsStartElement("Streaming"))
                 {
-                    UseStreaming = reader.GetBooleanAttribute("Active");
+                    UseStreaming = false; // streaming to Icecast/Shoutcast was removed (VDO.Ninja replaces it)
                     StreamingServerAddress = reader.GetAttribute("Address");
                     StreamingServerPort = reader.GetIntegerAttribute("Port");
                     StreamingPassword = reader.GetAttribute("Password");

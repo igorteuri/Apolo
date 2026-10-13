@@ -622,7 +622,6 @@ namespace Ares.Player
 #endif
             Ares.Settings.Settings settings = Ares.Settings.Settings.Instance;
             Ares.CommonGUI.SettingsDialog dialog = new Ares.CommonGUI.SettingsDialog(Ares.Settings.Settings.Instance, m_BasicSettings);
-            dialog.AddPage(new StreamingPageHost());
             dialog.AddPage(new MusicPageHost());
             dialog.SetVisiblePage(pageIndex);
             if (dialog.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
@@ -1830,7 +1829,7 @@ namespace Ares.Player
 
         private void networkSettingsButton_Click(object sender, EventArgs e)
         {
-            ShowSettingsDialog(1);
+            ShowSettingsDialog(0);
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)

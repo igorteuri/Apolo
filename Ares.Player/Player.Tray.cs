@@ -42,7 +42,7 @@ namespace Ares.Player
                     if (active)
                         state = control.IsPaused() ? Ares.CommonGUI.ApoloState.Paused : Ares.CommonGUI.ApoloState.Playing;
                 }
-                int phase = state == Ares.CommonGUI.ApoloState.Playing ? (m_TrayPhase = 1 - m_TrayPhase) : 0;
+                int phase = state == Ares.CommonGUI.ApoloState.Playing ? (m_TrayPhase = (m_TrayPhase + 1) % 4) : 0;
                 if (state == m_TrayState && state != Ares.CommonGUI.ApoloState.Playing)
                     return;
                 m_TrayState = state;
@@ -64,7 +64,7 @@ namespace Ares.Player
                 notifyIcon.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(TrayIconSize, Ares.CommonGUI.ApoloState.Idle, 0);
                 notifyIcon.Text = "Apolo";
                 m_TrayTimer = new Timer();
-                m_TrayTimer.Interval = 500;
+                m_TrayTimer.Interval = 280;
                 m_TrayTimer.Tick += (s, e) => UpdateTrayIcon();
                 m_TrayTimer.Start();
                 notifyIcon.Visible = true; // always shown in the tray

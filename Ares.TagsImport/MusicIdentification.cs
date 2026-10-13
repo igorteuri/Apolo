@@ -416,8 +416,28 @@ namespace Ares.TagsImport
 
     class AcoustAPI : IDisposable
     {
-        private const String baseUrl = "http://api.acoustid.org";
-        private readonly String apiKey = "DBnkLPC9";
+        private const String baseUrl = "https://api.acoustid.org";
+        // The key of the Ares project. You can use your own free key (acoustid.org/new-application):
+        // put it alone in the text file  %APPDATA%\Apolo\acoustid.key
+        private readonly String apiKey = ReadOwnKey() ?? "DBnkLPC9";
+
+        private static String ReadOwnKey()
+        {
+            try
+            {
+                String file = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Apolo", "acoustid.key");
+                if (System.IO.File.Exists(file))
+                {
+                    String key = System.IO.File.ReadAllText(file).Trim();
+                    if (key.Length > 0)
+                        return key;
+                }
+            }
+            catch (Exception)
+            {
+            }
+            return null;
+        }
 
         private RateGate m_RateGate;
 
@@ -469,7 +489,7 @@ namespace Ares.TagsImport
 
     class MusicBrainzApi : IDisposable
     {
-        private const String baseURL = "http://musicbrainz.org";
+        private const String baseURL = "https://musicbrainz.org";
 
         private RateGate m_RateGate;
 
@@ -479,7 +499,7 @@ namespace Ares.TagsImport
         {
             m_RateGate = new RateGate(1, TimeSpan.FromSeconds(1.5));
             String assemblyVersion = (new System.Reflection.AssemblyName(System.Reflection.Assembly.GetExecutingAssembly().FullName)).Version.ToString();
-            m_UserAgent = "Ares/" + assemblyVersion + "(http://aresrpg.sourceforge.net)";
+            m_UserAgent = "Apolo/" + assemblyVersion + " (https://github.com/igorteuri/Ares)";
         }
 
         public void Dispose()
@@ -497,6 +517,75 @@ namespace Ares.TagsImport
             var response = client.Execute(request);
             m_RateGate.ResetTimeToProceed();
             return (response != null && response.Content != null) ? response.Content : String.Empty;
+        }
+
+        private String Get(String path)
+        {
+            var client = new RestSharp.RestClient();
+            client.BaseUrl = baseURL;
+            client.UserAgent = m_UserAgent;
+            var request = new RestSharp.RestRequest(path, RestSharp.Method.GET);
+            m_RateGate.WaitToProceed();
+            var response = client.Execute(request);
+            m_RateGate.ResetTimeToProceed();
+            return (response != null && response.Content != null) ? response.Content : String.Empty;
+        }
+
+        /// <summary>Title, artist, album, year, label and id of the first release of a recording (empty if unknown).</summary>
+        public bool RetrieveDetails(String musicBrainzId, out String title, out String artist, out String album, out String year, out String label)
+        {
+            title = artist = album = year = label = String.Empty;
+            String releaseId = String.Empty;
+            String response = Get("/ws/2/recording/" + musicBrainzId + "?inc=artists+releases&fmt=xml");
+            if (String.IsNullOrEmpty(response))
+                return false;
+            try
+            {
+                XmlDocument doc = new XmlDocument();
+                doc.LoadXml(response);
+                XmlNamespaceManager nsmgr = new XmlNamespaceManager(doc.NameTable);
+                nsmgr.AddNamespace("mb", doc.DocumentElement.NamespaceURI);
+                if (doc.SelectSingleNode(@"/error") != null)
+                    return false;
+                XmlNode n = doc.SelectSingleNode(@"/mb:metadata/mb:recording/mb:title", nsmgr);
+                if (n != null) title = n.InnerText;
+                n = doc.SelectSingleNode(@"/mb:metadata/mb:recording/mb:artist-credit/mb:name-credit/mb:artist/mb:name", nsmgr);
+                if (n != null) artist = n.InnerText;
+                XmlNode release = doc.SelectSingleNode(@"/mb:metadata/mb:recording/mb:release-list/mb:release", nsmgr);
+                if (release != null)
+                {
+                    n = release.SelectSingleNode("mb:title", nsmgr);
+                    if (n != null) album = n.InnerText;
+                    n = release.SelectSingleNode("mb:date", nsmgr);
+                    if (n != null && n.InnerText.Length >= 4) year = n.InnerText.Substring(0, 4);
+                    if (release.Attributes != null && release.Attributes["id"] != null)
+                        releaseId = release.Attributes["id"].Value;
+                }
+            }
+            catch (XmlException)
+            {
+                return false;
+            }
+            if (!String.IsNullOrEmpty(releaseId))
+            {
+                String releaseResponse = Get("/ws/2/release/" + releaseId + "?inc=labels&fmt=xml");
+                if (!String.IsNullOrEmpty(releaseResponse))
+                {
+                    try
+                    {
+                        XmlDocument doc = new XmlDocument();
+                        doc.LoadXml(releaseResponse);
+                        XmlNamespaceManager nsmgr = new XmlNamespaceManager(doc.NameTable);
+                        nsmgr.AddNamespace("mb", doc.DocumentElement.NamespaceURI);
+                        XmlNode n = doc.SelectSingleNode(@"/mb:metadata/mb:release/mb:label-info-list/mb:label-info/mb:label/mb:name", nsmgr);
+                        if (n != null) label = n.InnerText;
+                    }
+                    catch (XmlException)
+                    {
+                    }
+                }
+            }
+            return true;
         }
 
         public bool RetrieveMusicInfos(String musicBrainzId, out String title, out String album, out String artist)

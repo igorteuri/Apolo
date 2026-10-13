@@ -33,7 +33,8 @@ namespace Ares.CommonGUI
         {
             InitializeComponent();
             bool pt = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt";
-            string assemblyVersion = (new System.Reflection.AssemblyName(System.Reflection.Assembly.GetExecutingAssembly().FullName)).Version.ToString();
+            System.Reflection.Assembly mainAssembly = System.Reflection.Assembly.GetEntryAssembly() ?? System.Reflection.Assembly.GetExecutingAssembly();
+            string assemblyVersion = mainAssembly.GetName().Version.ToString(3);
 
             // the old designer layout is replaced by a simple modern one
             Controls.Clear();

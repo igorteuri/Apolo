@@ -48,6 +48,39 @@ namespace Ares.Player
         private Timer m_TrackPlayTimer;
         private int m_TrackPlayId;
 
+        /// <summary>Opens the Explorer with the file selected (or the folder, if the file is gone).</summary>
+        private void ShowInFolder(string fullPath)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(fullPath) && System.IO.File.Exists(fullPath))
+                {
+                    System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + System.IO.Path.GetFullPath(fullPath) + "\"");
+                    return;
+                }
+                string dir = string.IsNullOrEmpty(fullPath) ? null : System.IO.Path.GetDirectoryName(fullPath);
+                if (!string.IsNullOrEmpty(dir) && System.IO.Directory.Exists(dir))
+                {
+                    System.Diagnostics.Process.Start("explorer.exe", "\"" + dir + "\"");
+                    return;
+                }
+                ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Warning,
+                    T("Arquivo não encontrado: ", "File not found: ") + fullPath));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ShowSelectedTrackInFolder()
+        {
+            int idx = m_TrackList.SelectedIndex;
+            if (idx < 0 || idx >= m_TrackShown.Count)
+                return;
+            ShowInFolder(FullPathOf(m_TrackShown[idx].File));
+        }
+
         private void InitTrackPanel()
         {
             try
@@ -175,6 +208,30 @@ namespace Ares.Player
                     }
                 };
                 m_TrackList.SelectedIndexChanged += (s, e) => UpdateTrackButtons();
+
+                // right click: show the file in the Explorer
+                ContextMenuStrip trackMenu = new ContextMenuStrip();
+                ToolStripMenuItem playItem = new ToolStripMenuItem(T("Tocar", "Play"));
+                playItem.Click += (s, e) => PlaySelectedTrack();
+                ToolStripMenuItem showItem = new ToolStripMenuItem(T("Mostrar na pasta", "Show in folder"));
+                showItem.Click += (s, e) => ShowSelectedTrackInFolder();
+                trackMenu.Items.Add(playItem);
+                trackMenu.Items.Add(showItem);
+                m_TrackList.ContextMenuStrip = trackMenu;
+                m_TrackList.MouseDown += (s, e) =>
+                {
+                    if (e.Button == MouseButtons.Right)
+                    {
+                        int idx = m_TrackList.IndexFromPoint(e.Location);
+                        if (idx >= 0)
+                            m_TrackList.SelectedIndex = idx;
+                    }
+                };
+                trackMenu.Opening += (s, e) =>
+                {
+                    if (m_TrackList.SelectedIndex < 0 || m_TrackList.SelectedIndex >= m_TrackShown.Count)
+                        e.Cancel = true;
+                };
 
                 // splitter: drag to change the height of the panel
                 int startY = 0;

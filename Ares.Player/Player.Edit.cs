@@ -101,6 +101,7 @@ namespace Ares.Player
         {
             InitSaveMenu();
             InitExportMenu();
+            InitMusicToolsMenu();
             // toolbar: edit toggle + add menu (the add menu only shows in edit mode)
             m_EditButton = new ToolStripButton();
             m_EditButton.Name = "editModeButton";
