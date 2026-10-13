@@ -25,7 +25,7 @@ namespace Ares.Player
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
             Cursor = Cursors.Hand;
             TabStop = false;
-            Width = 12;
+            Width = 17;
         }
 
         /// <summary>True for a bar lying at the bottom edge (the chevron then points up / down).</summary>

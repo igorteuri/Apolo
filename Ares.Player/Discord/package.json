@@ -1,0 +1,13 @@
+{
+  "name": "apolo-discord-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sends the audio of Apolo to a Discord voice channel",
+  "main": "discord-bridge.js",
+  "dependencies": {
+    "@discordjs/voice": "latest",
+    "@snazzah/davey": "latest",
+    "discord.js": "latest",
+    "opusscript": "latest"
+  }
+}

@@ -98,6 +98,8 @@
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
@@ -142,6 +144,9 @@
     <Compile Include="EdgeHandle.cs" />
     <Compile Include="QrCode.cs" />
     <Compile Include="Player.Status.cs" />
+    <Compile Include="Player.Discord.cs" />
+    <Compile Include="DiscordBridge.cs" />
+    <Compile Include="ProcessLoopbackCapture.cs" />
     <Compile Include="SoundProgressPanel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

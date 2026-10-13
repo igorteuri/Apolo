@@ -10,7 +10,7 @@ namespace Ares.Player
     public partial class Player
     {
         private StatusStrip m_StatusStrip;
-        private ToolStripStatusLabel m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatProject;
+        private ToolStripStatusLabel m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatDiscord, m_StatProject;
         private Timer m_StatusTimer;
 
         private void InitStatusBar()
@@ -33,15 +33,18 @@ namespace Ares.Player
                 m_StatShare = new ToolStripStatusLabel();
                 m_StatShare.ToolTipText = T("Controle remoto / compartilhamento. Clique para abrir.", "Remote control / sharing. Click to open.");
                 m_StatShare.Click += (s, e) => ShowRemoteDialog();
+                m_StatDiscord = new ToolStripStatusLabel();
+                m_StatDiscord.ToolTipText = T("Discord: tocar o Apolo num canal de voz. Clique para abrir.", "Discord: play Apolo in a voice channel. Click to open.");
+                m_StatDiscord.Click += (s, e) => ShowDiscordDialog();
                 m_StatProject = new ToolStripStatusLabel();
                 m_StatProject.Spring = true;
                 m_StatProject.TextAlign = ContentAlignment.MiddleRight;
-                foreach (ToolStripStatusLabel l in new ToolStripStatusLabel[] { m_StatState, m_StatRepeat, m_StatOutput, m_StatShare })
+                foreach (ToolStripStatusLabel l in new ToolStripStatusLabel[] { m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatDiscord })
                 {
                     l.BorderSides = ToolStripStatusLabelBorderSides.Right;
                     l.Padding = new Padding(4, 0, 8, 0);
                 }
-                m_StatusStrip.Items.AddRange(new ToolStripItem[] { m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatProject });
+                m_StatusStrip.Items.AddRange(new ToolStripItem[] { m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatDiscord, m_StatProject });
                 Controls.Add(m_StatusStrip);
 
                 m_StatusTimer = new Timer();
@@ -124,6 +127,10 @@ namespace Ares.Player
                 {
                     SetStat(m_StatShare, "🔗 " + T("Compartilhamento: inativo", "Sharing: off"), p != null && !p.IsClassic ? p.TextDim : ForeColor);
                 }
+                bool discordActive;
+                string discordText = DiscordStatusText(out discordActive);
+                SetStat(m_StatDiscord, "🎧 " + discordText, discordActive && p != null && !p.IsClassic ? p.Accent
+                    : (m_Discord != null && m_Discord.State == DiscordState.Off && p != null && !p.IsClassic ? p.TextDim : ForeColor));
                 SetStat(m_StatProject, m_Project != null ? m_Project.Title : "", ForeColor);
             }
             catch (Exception)

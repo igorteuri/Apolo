@@ -211,11 +211,13 @@ namespace Ares.Player
                 };
 
                 // menu entry (Extras) with the shortcut
-                ToolStripMenuItem item = new ToolStripMenuItem(T("Lista de músicas\tF9", "Track list\tF9"));
+                ToolStripMenuItem item = new ToolStripMenuItem(T("Lista de músicas", "Track list"));
+                item.ShortcutKeyDisplayString = "F9";
                 item.Click += (s, e) => ToggleTrackPanel();
                 extrasToolStripMenuItem.DropDownItems.Insert(0, item);
 
-                ToolStripMenuItem leftItem = new ToolStripMenuItem(T("Painel esquerdo\tF8", "Left panel\tF8"));
+                ToolStripMenuItem leftItem = new ToolStripMenuItem(T("Painel esquerdo", "Left panel"));
+                leftItem.ShortcutKeyDisplayString = "F8";
                 leftItem.Click += (s, e) => SetLeftOpen(!m_LeftOpen);
                 extrasToolStripMenuItem.DropDownItems.Insert(1, leftItem);
 
@@ -301,7 +303,8 @@ namespace Ares.Player
 
         private const int MainRightMargin = 14;
         private const int ElementsMinHeight = 150;
-        private const int TrackStripHeight = 12;
+        private const int TrackStripHeight = 17;
+        private const int LeftStripThickness = 17;
         private const int LeftStripWidth = 30;
 
         private bool m_LayoutingColumns;
@@ -324,10 +327,10 @@ namespace Ares.Player
                 groupBox3.Visible = leftOpen;
                 m_LeftStrip.Visible = true;
                 m_LeftStrip.PointsLeft = leftOpen;
-                int modesLeft = leftOpen ? m_ModesLeftOriginal : 12;
+                int modesLeft = leftOpen ? m_ModesLeftOriginal : LeftStripThickness;
                 groupBox4.Left = modesLeft;
                 groupBox5.Left = modesLeft + groupBox4.Width + TrackGap;
-                m_LeftStrip.SetBounds(0, groupBox4.Top, 12, groupBox4.Height);
+                m_LeftStrip.SetBounds(0, groupBox4.Top, LeftStripThickness, groupBox4.Height);
                 if (leftOpen)
                     FitLeftColumn();
 

@@ -111,6 +111,7 @@ namespace Ares.Player
             InitTransportRow();
             InitOverlay();
             InitRemote();
+            InitDiscord();
         }
 
         private void FitMusicBar()
