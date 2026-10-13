@@ -112,7 +112,7 @@ namespace Ares.Player
             m_AddButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
             m_AddButton.Text = T("Adicionar", "Add");
             m_AddButton.Visible = false;
-            var addFolder = new ToolStripMenuItem(T("Importar pasta de áudio...", "Import audio folder..."));
+            var addFolder = new ToolStripMenuItem(T("Pasta de áudio como uma playlist por pasta...", "Audio folder as one playlist per folder..."));
             addFolder.Click += (s, e) => AddFolderDialog();
             var addFiles = new ToolStripMenuItem(T("Arquivos de áudio...", "Audio files..."));
             addFiles.Click += (s, e) => AddFilesDialog();
@@ -120,7 +120,9 @@ namespace Ares.Player
             addMode.Click += (s, e) => NewEmptyMode(false);
             var addSub = new ToolStripMenuItem(T("Nova subpasta na pasta selecionada...", "New subfolder in the selected folder..."));
             addSub.Click += (s, e) => NewEmptyMode(true);
-            m_AddButton.DropDownItems.AddRange(new ToolStripItem[] { addFolder, addFiles, new ToolStripSeparator(), addMode, addSub });
+            var addTree = new ToolStripMenuItem(T("Pasta do computador (cria pastas e playlists)...", "Folder of the computer (creates folders and playlists)..."));
+            addTree.Click += (s, e) => ImportFolderAsFolders(false);
+            m_AddButton.DropDownItems.AddRange(new ToolStripItem[] { addTree, addFolder, addFiles, new ToolStripSeparator(), addMode, addSub });
 
             int outIndex = toolStrip1.Items.IndexOf(m_OutputButton);
             if (outIndex < 0)
@@ -138,6 +140,7 @@ namespace Ares.Player
             m_ModeMenu = new ContextMenuStrip();
             m_ModeMenu.Items.Add(T("Nova pasta...", "New folder..."), null, (s, e) => NewEmptyMode(false));
             m_ModeMenu.Items.Add(T("Nova subpasta aqui...", "New subfolder here..."), null, (s, e) => NewEmptyMode(true));
+            m_ModeMenu.Items.Add(T("Importar pasta do computador aqui dentro...", "Import a folder of the computer in here..."), null, (s, e) => ImportFolderAsFolders(true));
             m_ModeMenu.Items.Add(T("Renomear pasta...", "Rename folder..."), null, (s, e) => RenameCurrentMode());
             m_ModeMenu.Items.Add(T("Excluir pasta", "Delete folder"), null, (s, e) => DeleteCurrentMode());
             m_ModeMenu.Items.Add(new ToolStripSeparator());

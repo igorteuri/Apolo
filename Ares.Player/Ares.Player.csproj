@@ -139,6 +139,7 @@
     <Compile Include="Player.Tracks.cs" />
     <Compile Include="Player.Overlay.cs" />
     <Compile Include="Player.Remote.cs" />
+    <Compile Include="AppTabBar.cs" />
     <Compile Include="Player.Web.cs" />
     <Compile Include="Player.Tray.cs" />
     <Compile Include="EdgeHandle.cs" />

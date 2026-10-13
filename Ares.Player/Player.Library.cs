@@ -222,6 +222,162 @@ namespace Ares.Player
             DataModule.ProjectManager.UnloadProject(created);
         }
 
+        // ---- a folder of the computer becomes a folder of Apolo, with its subfolders and a playlist per audio folder ----
+
+        private class DiskFolder
+        {
+            public string Name;
+            public List<string> Files = new List<string>();
+            public List<DiskFolder> Subfolders = new List<DiskFolder>();
+            public bool IsLeaf { get { return Subfolders.Count == 0; } }
+        }
+
+        // reads the folder; folders without any audio (also below them) are left out
+        private static DiskFolder ReadDiskFolder(string dir, ref int folders, ref int files)
+        {
+            DiskFolder result = new DiskFolder { Name = new DirectoryInfo(dir).Name };
+            try
+            {
+                result.Files.AddRange(Directory.GetFiles(dir).Where(Ares.CommonGUI.LibraryHelper.IsAudioFile));
+                result.Files.Sort(StringComparer.CurrentCultureIgnoreCase);
+                string[] subs = Directory.GetDirectories(dir);
+                Array.Sort(subs, StringComparer.CurrentCultureIgnoreCase);
+                foreach (string sub in subs)
+                {
+                    DiskFolder child = ReadDiskFolder(sub, ref folders, ref files);
+                    if (child != null)
+                        result.Subfolders.Add(child);
+                }
+            }
+            catch (Exception)
+            {
+            }
+            if (result.Files.Count == 0 && result.Subfolders.Count == 0)
+                return null;
+            folders++;
+            files += result.Files.Count;
+            return result;
+        }
+
+        private string UniqueModeTitle(string wanted, HashSet<string> used)
+        {
+            string title = wanted;
+            int n = 2;
+            while (used.Contains(title))
+                title = wanted + " (" + n++ + ")";
+            used.Add(title);
+            return title;
+        }
+
+        // creates the Apolo folder (mode) for a disk folder; "leaf" folders inside it become playlists, not folders
+        private void BuildFolderFromDisk(DiskFolder disk, string title, string parentTitle, Ares.CommonGUI.DropOptions options,
+            HashSet<string> used, List<KeyValuePair<string, string>> placement, ref int elements)
+        {
+            IMode mode = m_Project.AddMode(title);
+            placement.Add(new KeyValuePair<string, string>(title, parentTitle));
+            if (disk.Files.Count > 0)
+            {
+                Ares.CommonGUI.DroppedGroup group = new Ares.CommonGUI.DroppedGroup { Name = disk.Name, Files = disk.Files };
+                foreach (IModeElement me in Ares.CommonGUI.LibraryHelper.BuildModeElements(group, disk.Files, options))
+                {
+                    mode.AddElement(me);
+                    elements++;
+                }
+            }
+            foreach (DiskFolder child in disk.Subfolders)
+            {
+                if (child.IsLeaf)
+                {
+                    Ares.CommonGUI.DroppedGroup group = new Ares.CommonGUI.DroppedGroup { Name = child.Name, Files = child.Files };
+                    foreach (IModeElement me in Ares.CommonGUI.LibraryHelper.BuildModeElements(group, child.Files, options))
+                    {
+                        mode.AddElement(me);
+                        elements++;
+                    }
+                }
+                else
+                {
+                    BuildFolderFromDisk(child, UniqueModeTitle(child.Name, used), title, options, used, placement, ref elements);
+                }
+            }
+        }
+
+        /// <summary>Asks for a folder of the computer and creates the matching folders and playlists.</summary>
+        private void ImportFolderAsFolders(bool asChild)
+        {
+            string path;
+            using (FolderBrowserDialog dlg = new FolderBrowserDialog())
+            {
+                dlg.Description = IsPt ? "Escolha a pasta com os áudios. Cada subpasta vira uma playlist (ou uma pasta, se tiver outras subpastas)."
+                    : "Choose the folder with the audio. Each subfolder becomes a playlist (or a folder if it has subfolders of its own).";
+                if (dlg.ShowDialog(this) != DialogResult.OK)
+                    return;
+                path = dlg.SelectedPath;
+            }
+            int folders = 0, files = 0;
+            Cursor old = Cursor;
+            Cursor = Cursors.WaitCursor;
+            DiskFolder disk;
+            try { disk = ReadDiskFolder(path, ref folders, ref files); }
+            finally { Cursor = old; }
+            if (disk == null)
+            {
+                MessageBox.Show(this, IsPt ? "Nenhum arquivo de áudio encontrado nessa pasta." : "No audio files found in that folder.",
+                    StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            Ares.CommonGUI.DropOptions options = Ares.CommonGUI.DropOptionsDialog.Ask(this, folders, files);
+            if (options == null)
+                return;
+            if (m_Project == null)
+            {
+                string libPath = LibraryProjectPath;
+                EnsureProjectFile(libPath);
+                OpenProject(libPath, false);
+            }
+            if (m_Project == null)
+                return;
+            ModeNode selected = SelectedModeNode;
+            string anchorTitle = selected != null ? selected.Title : null;
+            string firstTitle = null;
+            int created = 0;
+            ApplyProjectEdit(() =>
+            {
+                HashSet<string> used = new HashSet<string>(m_Project.GetModes().Select(m => m.Title), StringComparer.Ordinal);
+                List<KeyValuePair<string, string>> placement = new List<KeyValuePair<string, string>>();
+                firstTitle = UniqueModeTitle(disk.Name, used);
+                int elements = 0;
+                BuildFolderFromDisk(disk, firstTitle, null, options, used, placement, ref elements);
+                created = elements;
+                EnsureModeTree();
+                ModeNode anchor = anchorTitle != null ? m_ModeTree.Find(anchorTitle) : null;
+                foreach (KeyValuePair<string, string> p in placement)
+                {
+                    ModeNode node = m_ModeTree.Find(p.Key);
+                    if (node == null)
+                        continue;
+                    if (p.Value != null)
+                    {
+                        ModeNode parent = m_ModeTree.Find(p.Value);
+                        if (parent != null)
+                            m_ModeTree.Attach(node, parent, -1);
+                    }
+                    else if (asChild && anchor != null)
+                    {
+                        m_ModeTree.Attach(node, anchor, -1);
+                        anchor.Collapsed = false;
+                    }
+                    else if (anchor != null && anchor.Parent != null)
+                    {
+                        m_ModeTree.Attach(node, anchor.Parent, anchor.Parent.Children.IndexOf(anchor) + 1);
+                    }
+                }
+                SaveModeTree();
+            }, null);
+            SelectModeByTitle(firstTitle);
+            this.Text = this.Text + "  -  " + (IsPt ? folders + " pasta(s), " + created + " item(ns) criados" : folders + " folder(s), " + created + " item(s) created");
+        }
+
         private void ShowLibraryMessage(int lists, int files)
         {
             this.Text = this.Text + "  -  " + (IsPt ? lists + " pasta(s), " + files + " música(s) adicionadas"

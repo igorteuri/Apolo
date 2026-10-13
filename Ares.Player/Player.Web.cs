@@ -40,6 +40,29 @@ namespace Ares.Player
             groupBox3.Controls.Add(m_WebAudioPanel);
             WebWindow.StateChanged += UpdateWebAudio;
 
+            // Kenku-style tab bar at the top: the first tab is the Apolo home, the others are web pages
+            m_TabBar = new AppTabBar();
+            m_WebWindow = new WebWindow(this);
+            m_WebWindow.Dock = DockStyle.Fill;
+            m_WebWindow.Visible = false;
+            Controls.Add(m_WebWindow);
+            Controls.Add(m_TabBar);
+            m_WebWindow.BringToFront();
+            m_TabBar.SendToBack();
+            m_TabBar.TabSelected += TabBar_TabSelected;
+            m_TabBar.TabClosed += TabBar_TabClosed;
+            m_TabBar.AddClicked += TabBar_AddClicked;
+            m_TabBar.TabContext += (i, pt) =>
+            {
+                if (i > 0 && i - 1 < m_WebWindow.Tabs.Count)
+                    m_WebWindow.ShowTabMenu(m_WebWindow.Tabs[i - 1], pt);
+            };
+            m_WebWindow.TabsChanged += RefreshTabBar;
+            m_WebWindow.SelectionChanged += RefreshTabBar;
+            WebWindow.StateChanged += RefreshTabBar;
+            RefreshTabBar();
+            Shown += (s, e) => MakeRoomForTabBar();
+
             Ares.CommonGUI.ThemeManager.AfterAppearanceMenu = (form, menu) =>
             {
                 if (form != this || menu != menuStrip1)
@@ -61,20 +84,128 @@ namespace Ares.Player
             FormClosed += (s, e) =>
             {
                 if (m_WebWindow != null && !m_WebWindow.IsDisposed)
-                    m_WebWindow.ForceClose();
+                    m_WebWindow.Dispose();
             };
+        }
+
+        private AppTabBar m_TabBar;
+        private bool m_ShowingWeb;
+
+        private void MakeRoomForTabBar()
+        {
+            int h = AppTabBar.BarHeight;
+            SuspendLayout();
+            m_ElementsTopOriginal += h;
+            if (WindowState == FormWindowState.Normal)
+            {
+                MinimumSize = new Size(MinimumSize.Width, MinimumSize.Height > 0 ? MinimumSize.Height + h : 0);
+                Height += h;
+            }
+            foreach (Control c in Controls)
+            {
+                if (c == m_TabBar || c == m_WebWindow || c.Dock != DockStyle.None)
+                    continue;
+                bool top = (c.Anchor & AnchorStyles.Top) != 0;
+                bool bottom = (c.Anchor & AnchorStyles.Bottom) != 0;
+                if (top && bottom)
+                    c.SetBounds(c.Left, c.Top + h, c.Width, c.Height - h);
+                else if (top)
+                    c.Top += h;
+            }
+            ResumeLayout(true);
+            LayoutMainColumns();
+        }
+
+        private void RefreshTabBar()
+        {
+            if (m_TabBar == null || m_WebWindow == null || m_WebWindow.IsDisposed)
+                return;
+            List<AppTabItem> items = new List<AppTabItem>();
+            items.Add(new AppTabItem { Text = "Apolo", Home = true, Closable = false });
+            foreach (WebTab t in m_WebWindow.Tabs)
+            {
+                items.Add(new AppTabItem
+                {
+                    Text = t.Name,
+                    Closable = true,
+                    Sound = t.Playing || (t.Kind == "vdo" && t.Loaded),
+                    Muted = t.Muted
+                });
+            }
+            int selected = 0;
+            if (m_ShowingWeb && m_WebWindow.Selected != null)
+                selected = 1 + m_WebWindow.Tabs.IndexOf(m_WebWindow.Selected);
+            m_TabBar.SetItems(items, selected);
+        }
+
+        private void ShowHome()
+        {
+            m_ShowingWeb = false;
+            if (m_WebWindow != null)
+                m_WebWindow.Visible = false;
+            RefreshTabBar();
+        }
+
+        private void ShowWebTab(WebTab tab)
+        {
+            if (tab == null)
+            {
+                ShowHome();
+                return;
+            }
+            m_ShowingWeb = true;
+            m_WebWindow.Visible = true;
+            m_WebWindow.BringToFront();
+            m_TabBar.SendToBack();
+            m_WebWindow.SelectTab(tab);
+            RefreshTabBar();
+        }
+
+        private void TabBar_TabSelected(int index)
+        {
+            if (index <= 0)
+                ShowHome();
+            else if (index - 1 < m_WebWindow.Tabs.Count)
+                ShowWebTab(m_WebWindow.Tabs[index - 1]);
+        }
+
+        private void TabBar_TabClosed(int index)
+        {
+            if (index <= 0 || index - 1 >= m_WebWindow.Tabs.Count)
+                return;
+            m_WebWindow.RemoveTab(m_WebWindow.Tabs[index - 1]);
+            if (m_WebWindow.Tabs.Count == 0)
+                ShowHome();
+            RefreshTabBar();
+        }
+
+        private void TabBar_AddClicked(Point screen)
+        {
+            ContextMenuStrip menu = new ContextMenuStrip();
+            menu.Items.Add(T("Adicionar página favorita...", "Add favorite page..."), null, (s, e) =>
+            {
+                WebTab t = m_WebWindow.AddFavorite();
+                if (t != null)
+                    ShowWebTab(t);
+            });
+            menu.Items.Add(T("Enviar áudio por VDO.Ninja", "Send audio through VDO.Ninja"), null, (s, e) => ShowWebWindow(true));
+            Ares.CommonGUI.ThemeManager.Apply(menu);
+            menu.Show(screen);
         }
 
         private void ShowWebWindow(bool vdo)
         {
-            if (m_WebWindow == null || m_WebWindow.IsDisposed)
-                m_WebWindow = new WebWindow(this);
-            m_WebWindow.Present(vdo);
+            WebTab tab = null;
+            if (vdo)
+                tab = m_WebWindow.EnsureVdoTab();
+            else if (m_WebWindow.Tabs.Count > 0)
+                tab = m_WebWindow.Selected ?? m_WebWindow.Tabs[0];
+            ShowWebTab(tab);
         }
 
         internal void BringToFrontFromWeb()
         {
-            RestoreFromTray();
+            ShowHome();
         }
     }
 
@@ -84,7 +215,6 @@ namespace Ares.Player
         public string Url;
         public string Kind;   // "web" or "vdo"
         public Panel Page;
-        public ToolStripButton Button;
         public WebView2 View;
         public bool Started;
         public bool Playing;   // the page plays audio
@@ -166,16 +296,20 @@ namespace Ares.Player
         }
     }
 
-    internal class WebWindow : Form
+    internal class WebWindow : Panel
     {
         private readonly Player m_Player;
         private readonly List<WebTab> m_Tabs = new List<WebTab>();
-        private ToolStrip m_Strip;
         private Panel m_Host;
         private WebTab m_Selected;
         private TextBox m_Address;
         private Button m_Back, m_Forward, m_Reload, m_Add, m_ToAres, m_VdoSettings, m_VdoCopy, m_Mute;
         public static event Action StateChanged;
+        public event Action TabsChanged;
+        public event Action SelectionChanged;
+
+        public List<WebTab> Tabs { get { return m_Tabs; } }
+        public WebTab Selected { get { return m_Selected; } }
 
         // Registers the audio of the page, so that the sent sound can be muted without leaving the stream.
         private const string MuteScript = @"(function(){
@@ -202,7 +336,6 @@ namespace Ares.Player
  MediaStreamTrack.prototype.clone = function() { var c = cl.apply(this, arguments); if (c.kind === 'audio') { tracks.push(c); if (window.__aresMuted) c.enabled = false; } return c; };
  window.__aresSetMuted = function(m) { window.__aresMuted = m; tracks.forEach(function(t) { if (t.readyState === 'live') t.enabled = !m; }); pcs.forEach(function(pc) { try { pc.getSenders().forEach(function(s) { if (s.track && s.track.kind === 'audio') s.track.enabled = !m; }); } catch (e) {} }); };
 })();";
-        private bool m_Force;
         private static Task<CoreWebView2Environment> s_Env;
 
         private static string T(string pt, string en)
@@ -223,11 +356,6 @@ namespace Ares.Player
         public WebWindow(Player player)
         {
             m_Player = player;
-            Text = T("Apolo - Páginas web", "Apolo - Web pages");
-            Icon = player.Icon;
-            StartPosition = FormStartPosition.CenterScreen;
-            Size = new Size(1150, 760);
-
             Panel bar = new Panel();
             bar.Dock = DockStyle.Top;
             bar.Height = 38;
@@ -255,25 +383,22 @@ namespace Ares.Player
             bar.Controls.AddRange(new Control[] { m_ToAres, m_Back, m_Forward, m_Reload, m_Address, m_Mute, m_VdoCopy, m_VdoSettings, m_Add });
             bar.Resize += (s, e) => LayoutBar(bar);
 
-            m_Strip = new ToolStrip();
-            m_Strip.Dock = DockStyle.Top;
-            m_Strip.GripStyle = ToolStripGripStyle.Hidden;
-            m_Strip.LayoutStyle = ToolStripLayoutStyle.Flow;
-            m_Strip.ImageScalingSize = new Size(1, 1);
-
             m_Host = new Panel();
             m_Host.Dock = DockStyle.Fill;
             m_Host.Padding = new Padding(0);
 
             Controls.Add(m_Host);
-            Controls.Add(m_Strip);
             Controls.Add(bar);
             LayoutBar(bar);
 
             LoadTabs();
             if (m_Tabs.Count > 0)
-                SelectTab(m_Tabs[0]);
-            Shown += (s, e) => OnTabSelected();
+                m_Selected = m_Tabs[0];
+            VisibleChanged += (s, e) =>
+            {
+                if (Visible)
+                    OnTabSelected();
+            };
         }
 
         private Button MakeBarButton(string text, int left, int width, EventHandler click)
@@ -307,16 +432,15 @@ namespace Ares.Player
             return m_Selected;
         }
 
-        private void SelectTab(WebTab tab)
+        public void SelectTab(WebTab tab)
         {
             m_Selected = tab;
             foreach (WebTab other in m_Tabs)
-            {
-                bool on = (other == tab);
-                other.Page.Visible = on;
-                other.Button.Checked = on;
-            }
+                other.Page.Visible = (other == tab);
             OnTabSelected();
+            Action h = SelectionChanged;
+            if (h != null)
+                h();
         }
 
         private WebTab AddTab(string name, string url, string kind, bool select)
@@ -326,19 +450,12 @@ namespace Ares.Player
             tab.Page.Dock = DockStyle.Fill;
             tab.Page.Visible = false;
             m_Host.Controls.Add(tab.Page);
-            tab.Button = new ToolStripButton(name);
-            tab.Button.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            tab.Button.Padding = new Padding(8, 4, 8, 4);
-            tab.Button.Click += (s, e) => SelectTab(tab);
-            tab.Button.MouseUp += (s, e) =>
-            {
-                if (e.Button == MouseButtons.Right)
-                    ShowTabMenu(tab, Cursor.Position);
-            };
-            m_Strip.Items.Add(tab.Button);
             m_Tabs.Add(tab);
             if (select)
                 SelectTab(tab);
+            Action changed = TabsChanged;
+            if (changed != null)
+                changed();
             return tab;
         }
 
@@ -501,14 +618,6 @@ namespace Ares.Player
 
         private void UpdateTabState(WebTab tab)
         {
-            string prefix = "";
-            if (tab.Muted)
-                prefix = T("[mudo] ", "[muted] ");
-            else if (tab.Kind == "vdo" && tab.Loaded)
-                prefix = "● ";
-            else if (tab.Playing)
-                prefix = "♪ ";
-            tab.Button.Text = prefix + tab.Name;
             if (tab == m_Selected)
                 m_Mute.Text = tab.Muted ? T("Ativar som", "Unmute") : T("Mutar aba", "Mute tab");
             Action h = StateChanged;
@@ -576,7 +685,7 @@ namespace Ares.Player
 
         // ------------------------------------------------------------------ favorites
 
-        private void AddFavorite()
+        public WebTab AddFavorite()
         {
             string name = "";
             string url = "https://";
@@ -587,14 +696,16 @@ namespace Ares.Player
                 if (t.View.CoreWebView2 != null)
                     name = t.View.CoreWebView2.DocumentTitle;
             }
-            if (WebTabDialog.Ask(this, T("Novo favorito", "New favorite"), ref name, ref url))
+            if (WebTabDialog.Ask(FindForm(), T("Novo favorito", "New favorite"), ref name, ref url))
             {
-                AddTab(name, url, "web", true);
+                WebTab added = AddTab(name, url, "web", false);
                 SaveTabs();
+                return added;
             }
+            return null;
         }
 
-        private void ShowTabMenu(WebTab tab, Point screenPoint)
+        public void ShowTabMenu(WebTab tab, Point screenPoint)
         {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Items.Add(T("Renomear / alterar endereço ...", "Rename / change address ..."), null, (s, e) =>
@@ -603,13 +714,16 @@ namespace Ares.Player
                 string url = tab.Kind == "vdo" ? "" : tab.Url;
                 if (tab.Kind == "web" && tab.View != null && tab.View.Source != null)
                     url = tab.View.Source.ToString();
-                if (WebTabDialog.Ask(this, tab.Name, ref name, ref url, tab.Kind == "vdo"))
+                if (WebTabDialog.Ask(FindForm(), tab.Name, ref name, ref url, tab.Kind == "vdo"))
                 {
                     tab.Name = name;
                     UpdateTabState(tab);
                     if (tab.Kind == "web")
                         tab.Url = url;
                     SaveTabs();
+                    Action changed = TabsChanged;
+                    if (changed != null)
+                        changed();
                 }
             });
             menu.Items.Add(tab.Muted ? T("Ativar som", "Unmute") : T("Mutar aba", "Mute tab"), null, (s, e) => SetTabMuted(tab, !tab.Muted));
@@ -619,49 +733,49 @@ namespace Ares.Player
                     tab.View.CoreWebView2.Reload();
             });
             menu.Items.Add(T("Remover aba", "Remove tab"), null, (s, e) => RemoveTab(tab));
+            Ares.CommonGUI.ThemeManager.Apply(menu);
             menu.Show(screenPoint);
         }
 
-        private void RemoveTab(WebTab tab)
+        public void RemoveTab(WebTab tab)
         {
-            if (MessageBox.Show(this, T("Remover a aba \"", "Remove the tab \"") + tab.Name + "\"?", "Apolo",
+            if (MessageBox.Show(FindForm(), T("Remover a aba \"", "Remove the tab \"") + tab.Name + "\"?", "Apolo",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
             int index = m_Tabs.IndexOf(tab);
+            bool wasSelected = (tab == m_Selected);
             m_Tabs.Remove(tab);
-            m_Strip.Items.Remove(tab.Button);
             m_Host.Controls.Remove(tab.Page);
             tab.Page.Dispose();
             SaveTabs();
-            m_Selected = null;
+            if (wasSelected)
+            {
+                m_Selected = null;
+                if (m_Tabs.Count > 0)
+                    SelectTab(m_Tabs[Math.Min(index, m_Tabs.Count - 1)]);
+                else
+                    OnTabSelected();
+            }
+            Action changed = TabsChanged;
+            if (changed != null)
+                changed();
             Action removed = StateChanged;
             if (removed != null)
                 removed();
-            if (m_Tabs.Count > 0)
-                SelectTab(m_Tabs[Math.Min(index, m_Tabs.Count - 1)]);
-            else
-                OnTabSelected();
         }
 
         // ------------------------------------------------------------------ VDO.Ninja
 
-        /// <summary>Shows the window; with vdo=true it selects (and if needed creates) the VDO.Ninja sender tab.</summary>
-        public void Present(bool vdo)
+        /// <summary>Returns the VDO.Ninja sender tab, creating it when needed.</summary>
+        public WebTab EnsureVdoTab()
         {
-            if (!Visible)
-                Show();
-            if (WindowState == FormWindowState.Minimized)
-                WindowState = FormWindowState.Normal;
-            Activate();
-            if (!vdo)
-                return;
             WebTab tab = m_Tabs.Find(t => t.Kind == "vdo");
             if (tab == null)
             {
-                tab = AddTab("VDO.Ninja", "", "vdo", true);
+                tab = AddTab("VDO.Ninja", "", "vdo", false);
                 SaveTabs();
             }
-            SelectTab(tab);
+            return tab;
         }
 
         private void ConfigureVdo()
@@ -669,7 +783,7 @@ namespace Ares.Player
             WebTab tab = Current();
             using (ShareDialog dlg = new ShareDialog())
             {
-                if (dlg.ShowDialog(this) == DialogResult.OK && tab != null && tab.Kind == "vdo"
+                if (dlg.ShowDialog(FindForm()) == DialogResult.OK && tab != null && tab.Kind == "vdo"
                     && tab.View != null && tab.View.CoreWebView2 != null)
                 {
                     tab.View.CoreWebView2.Navigate(ShareDialog.BuildPushUrl());
@@ -685,28 +799,8 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, ex.Message, "Apolo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(FindForm(), ex.Message, "Apolo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
-        }
-
-        // ------------------------------------------------------------------ closing
-
-        public void ForceClose()
-        {
-            m_Force = true;
-            Close();
-        }
-
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            // closing the window only hides it, so that pages (and the VDO.Ninja stream) keep running
-            if (!m_Force && e.CloseReason == CloseReason.UserClosing)
-            {
-                e.Cancel = true;
-                Hide();
-                return;
-            }
-            base.OnFormClosing(e);
         }
     }
 
