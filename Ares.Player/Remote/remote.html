@@ -27,8 +27,15 @@ button.on{background:rgba(255,182,39,.22);border-color:var(--accent)}
 .row button.big{flex:1.6;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#2a1c00;border:0;font-weight:700}
 .vol{display:grid;grid-template-columns:70px 1fr;align-items:center;gap:6px 10px}
 input[type=range]{width:100%;accent-color:var(--accent);height:34px}
-.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
-.chips button{white-space:nowrap;border-radius:20px;min-height:40px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;max-height:152px;overflow-y:auto;padding:2px 6px 6px 0;scrollbar-width:thin;scrollbar-color:var(--accent) var(--hover)}
+.chips::-webkit-scrollbar{width:8px}
+.chips::-webkit-scrollbar-track{background:var(--hover);border-radius:6px}
+.chips::-webkit-scrollbar-thumb{background:var(--accent);border-radius:6px}
+.chips button{border-radius:20px;min-height:40px}
+.chips button.up{background:transparent;border-style:dashed;color:var(--dim)}
+.chips button.path{border-color:var(--accent)}
+.crumb{margin:-4px 0 10px;font-size:13px}
+.more{display:none;text-align:center;color:var(--accent);font-size:13px;padding-top:6px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
 .grid button{min-height:64px;font-weight:600;word-break:break-word}
 h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:0 0 10px}
@@ -79,7 +86,7 @@ h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)
       <span>Sons</span><input type="range" min="0" max="100" id="v_sound">
     </div>
   </div>
-  <div class="card"><h2>Pastas</h2><div class="chips" id="modes"></div></div>
+  <div class="card"><h2>Pastas</h2><div class="dim crumb" id="crumb"></div><div class="chips" id="modes"></div><div class="more" id="more">&#9660; role para ver mais pastas</div></div>
   <div class="card"><h2 id="elTitle">Playlists</h2><div class="grid" id="els"></div></div>
 </div>
 
@@ -117,19 +124,56 @@ function render(s){
   ['overall','music','sound'].forEach(function(k){
     if(!busy[k]||Date.now()-busy[k]>1500)$('v_'+k).value=s.vol[k];
   });
-  var m=$('modes');var key=JSON.stringify(s.modes)+s.mode;
-  if(m.dataset.key!==key){m.dataset.key=key;m.innerHTML='';
-    s.modes.forEach(function(t,i){var b=document.createElement('button');b.textContent=t;if(i===s.mode)b.className='on';b.onclick=function(){send('mode',i)};m.appendChild(b)})}
+  renderFolders(s);
   $('elTitle').textContent=s.modes[s.mode]||'Playlists';
   var g=$('els');var ek=JSON.stringify(s.elements);
   if(g.dataset.key!==ek){g.dataset.key=ek;g.innerHTML='';
     s.elements.forEach(function(e){var b=document.createElement('button');b.textContent=e.title;if(e.active)b.className='on';b.onclick=function(){send('element',e.id)};g.appendChild(b)})}
 }
-var timer=null;
+var browse=-1,lastMode=-2,folderKey='';
+function renderFolders(s){
+  var tree=s.tree&&s.tree.length?s.tree:s.modes.map(function(t,i){return{i:i,p:-1,d:0}});
+  var kids={},node={};
+  tree.forEach(function(n){node[n.i]=n;(kids[n.p]=kids[n.p]||[]).push(n)});
+  // the folder was changed on the computer: show the level where it is
+  if(s.mode!==lastMode){lastMode=s.mode;if(node[s.mode])browse=node[s.mode].p}
+  if(browse!==-1&&!node[browse])browse=-1;
+  // folders on the way to the selected one are marked
+  var onPath={};
+  for(var c=node[s.mode];c;c=node[c.p])onPath[c.i]=true;
+  var m=$('modes');
+  var key=JSON.stringify(tree)+'|'+s.mode+'|'+browse+'|'+JSON.stringify(s.modes);
+  if(m.dataset.key===key)return;
+  m.dataset.key=key;m.innerHTML='';
+  var crumb=[];for(var q=node[browse];q;q=node[q.p])crumb.unshift(s.modes[q.i]);
+  $('crumb').textContent=crumb.length?crumb.join(' \u203A '):'';
+  $('crumb').style.display=crumb.length?'block':'none';
+  if(browse!==-1){
+    var up=document.createElement('button');up.className='up';up.textContent='\u2B06 voltar';
+    up.onclick=function(){browse=node[browse].p;renderFolders(lastState)};m.appendChild(up);
+  }
+  (kids[browse]||[]).forEach(function(n){
+    var has=!!(kids[n.i]&&kids[n.i].length);
+    var b=document.createElement('button');
+    b.textContent=s.modes[n.i]+(has?'  \u25B8':'');
+    if(n.i===s.mode)b.className='on';else if(onPath[n.i])b.className='path';
+    b.onclick=function(){if(has)browse=n.i;lastMode=n.i;send('mode',n.i)};
+    m.appendChild(b);
+  });
+  updateMore();
+}
+function updateMore(){
+  var m=$('modes'),more=$('more');
+  var overflow=m.scrollHeight>m.clientHeight+4;
+  var atEnd=m.scrollTop+m.clientHeight>=m.scrollHeight-4;
+  more.style.display=overflow&&!atEnd?'block':'none';
+}
+$('modes').addEventListener('scroll',updateMore);
+var lastState=null,timer=null;
 function poll(){
   return api('/api/state').then(function(r){
     if(r.status==401){logout();throw 0}
-    return r.json()}).then(function(s){$('conn').textContent='conectado';render(s)})
+    return r.json()}).then(function(s){$('conn').textContent='conectado';lastState=s;render(s)})
    .catch(function(e){if(e!==0)$('conn').textContent='sem conexão'});
 }
 function logout(){token=null;try{sessionStorage.removeItem('apoloToken')}catch(e){}clearInterval(timer);$('app').classList.add('hidden');$('login').classList.remove('hidden')}

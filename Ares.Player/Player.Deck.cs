@@ -1,6 +1,8 @@
 using System;
 using System.Drawing;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
@@ -53,6 +55,51 @@ namespace Ares.Player
             return m_Deck.Start(DeckFirstPort, DeckKey());
         }
 
+        private class FolderInfo
+        {
+            public int Index;      // index of the mode in the project
+            public int Parent;     // index of the parent folder, -1 for the top level
+            public int Depth;
+            public string Path;    // "Parent > Child"
+            public string Title;
+        }
+
+        // all folders in the order of the tree (parents before their subfolders)
+        private List<FolderInfo> FolderRows()
+        {
+            List<FolderInfo> rows = new List<FolderInfo>();
+            if (m_Project == null)
+                return rows;
+            HashSet<int> seen = new HashSet<int>();
+            Action<ModeNode, int, string, int> walk = null;
+            walk = (node, parent, parentPath, depth) =>
+            {
+                int index = ModeIndexByTitle(node.Title);
+                string path = parentPath.Length == 0 ? node.Title : parentPath + " \u203A " + node.Title;
+                int next = parent;
+                if (index >= 0 && seen.Add(index))
+                {
+                    rows.Add(new FolderInfo { Index = index, Parent = parent, Depth = depth, Path = path, Title = node.Title });
+                    next = index;
+                }
+                foreach (ModeNode child in node.Children)
+                    walk(child, next, index >= 0 ? path : parentPath, depth + (index >= 0 ? 1 : 0));
+            };
+            if (m_ModeTree != null)
+            {
+                foreach (ModeNode top in m_ModeTree.Root.Children)
+                    walk(top, -1, "", 0);
+            }
+            // folders which are not in the tree (should not happen) go to the top level
+            IList<Ares.Data.IMode> modes = m_Project.GetModes();
+            for (int i = 0; i < modes.Count; i++)
+            {
+                if (seen.Add(i))
+                    rows.Add(new FolderInfo { Index = i, Parent = -1, Depth = 0, Path = modes[i].Title, Title = modes[i].Title });
+            }
+            return rows;
+        }
+
         // modes and their visible elements, for the element / mode pickers of the plugin
         private string BuildProjectJson()
         {
@@ -65,12 +112,16 @@ namespace Ares.Player
                     if (m_Project != null)
                     {
                         bool firstMode = true;
-                        foreach (Ares.Data.IMode mode in m_Project.GetModes())
+                        IList<Ares.Data.IMode> projectModes = m_Project.GetModes();
+                        foreach (FolderInfo folder in FolderRows())
                         {
+                            Ares.Data.IMode mode = projectModes[folder.Index];
                             if (!firstMode)
                                 json.Append(",");
                             firstMode = false;
-                            json.Append("{\"title\":").Append(JsonString(mode.Title)).Append(",\"elements\":[");
+                            json.Append("{\"title\":").Append(JsonString(mode.Title));
+                            json.Append(",\"path\":").Append(JsonString(folder.Path)).Append(",\"depth\":").Append(folder.Depth);
+                            json.Append(",\"elements\":[");
                             bool first = true;
                             foreach (Ares.Data.IModeElement me in mode.GetElements())
                             {

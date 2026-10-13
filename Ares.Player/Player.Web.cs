@@ -116,8 +116,12 @@ namespace Ares.Player
                     Muted = t.Muted
                 });
             }
+            if (m_EditorHost != null && !m_EditorHost.IsDisposed)
+                items.Add(new AppTabItem { Text = "Editor", Closable = true });
             int selected = 0;
-            if (m_ShowingWeb && m_WebWindow.Selected != null)
+            if (m_ShowingEditor && EditorTabIndex > 0)
+                selected = EditorTabIndex;
+            else if (m_ShowingWeb && m_WebWindow.Selected != null)
                 selected = 1 + m_WebWindow.Tabs.IndexOf(m_WebWindow.Selected);
             m_TabBar.SetItems(items, selected);
         }
@@ -125,6 +129,7 @@ namespace Ares.Player
         private void ShowHome()
         {
             m_ShowingWeb = false;
+            HideEditorTab();
             if (m_WebWindow != null)
                 m_WebWindow.Visible = false;
             RefreshTabBar();
@@ -138,6 +143,7 @@ namespace Ares.Player
                 return;
             }
             m_ShowingWeb = true;
+            HideEditorTab();
             m_WebWindow.Visible = true;
             m_WebWindow.BringToFront();
             m_TabBar.SendToBack();
@@ -149,12 +155,20 @@ namespace Ares.Player
         {
             if (index <= 0)
                 ShowHome();
+            else if (index == EditorTabIndex)
+                ShowEditorTab();
             else if (index - 1 < m_WebWindow.Tabs.Count)
                 ShowWebTab(m_WebWindow.Tabs[index - 1]);
         }
 
         private void TabBar_TabClosed(int index)
         {
+            if (index > 0 && index == EditorTabIndex)
+            {
+                // the Editor asks about unsaved changes; the tab disappears when it has closed
+                m_EditorHost.RequestClose();
+                return;
+            }
             if (index <= 0 || index - 1 >= m_WebWindow.Tabs.Count)
                 return;
             m_WebWindow.RemoveTab(m_WebWindow.Tabs[index - 1]);
@@ -173,6 +187,8 @@ namespace Ares.Player
                     ShowWebTab(t);
             });
             menu.Items.Add(T("Enviar áudio por VDO.Ninja", "Send audio through VDO.Ninja"), null, (s, e) => ShowWebWindow(true));
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(T("Abrir o Editor (avançado)", "Open the Editor (advanced)"), null, (s, e) => ShowEditorTab());
             Ares.CommonGUI.ThemeManager.Apply(menu);
             menu.Show(screen);
         }

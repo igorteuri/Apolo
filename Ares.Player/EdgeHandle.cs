@@ -73,7 +73,7 @@ namespace Ares.Player
         protected override void OnPaint(PaintEventArgs e)
         {
             Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
-            Color back = Parent != null ? Parent.BackColor : SystemColors.Control;
+            Color back = Ares.CommonGUI.ThemeManager.EffectiveBack(this);
             Color bar = SystemColors.ControlDark;
             Color glyph = SystemColors.ControlDarkDark;
             Color accent = SystemColors.Highlight;

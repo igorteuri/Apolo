@@ -285,6 +285,23 @@ namespace Ares.CommonGUI
             }
         }
 
+        // every window gets the Apolo icon (windows of the original Ares code would show the old one)
+        private static void SetApoloIcon(Form f)
+        {
+            try
+            {
+                string name = f.GetType().FullName;
+                if (name == "Ares.Player.Player" || name == "Ares.Editor.MainForm")
+                    return; // these set their own (the Player's icon shows the playing state)
+                if (f.ShowIcon)
+                    f.Icon = ApoloBrand.GetIcon(32, ApoloState.Playing, 0);
+            }
+            catch (Exception ex)
+            {
+                Log("window icon", ex);
+            }
+        }
+
         private static void OnApplicationIdle(object sender, EventArgs e)
         {
             // pick up forms created since the last time (dialogs, tool windows ...)
@@ -299,6 +316,7 @@ namespace Ares.CommonGUI
                 if (!s_Hooked.TryGetValue(f, out dummy))
                 {
                     Apply(f);
+                    SetApoloIcon(f);
                 }
                 AddAppearanceMenu(f);
             }
@@ -1415,6 +1433,24 @@ namespace Ares.CommonGUI
             catch (Exception)
             {
             }
+        }
+
+        /// <summary>
+        /// The color which is really seen behind a control: the first opaque background above it. (Group boxes are
+        /// transparent and draw their own surface, so painting with their BackColor would give black in light themes.)
+        /// </summary>
+        public static Color EffectiveBack(Control c)
+        {
+            ThemePalette p = Current;
+            bool themed = p != null && !p.IsClassic;
+            for (Control x = c != null ? c.Parent : null; x != null; x = x.Parent)
+            {
+                if (x is GroupBox && themed)
+                    return p.Window;
+                if (x.BackColor.A == 255)
+                    return x.BackColor;
+            }
+            return themed ? p.Window : SystemColors.Control;
         }
 
         /// <summary>Called after the Appearance menu was added to a window, so that further top-level menu entries can follow it.</summary>

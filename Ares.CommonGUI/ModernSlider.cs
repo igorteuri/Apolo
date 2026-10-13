@@ -179,7 +179,7 @@ namespace Ares.CommonGUI
         protected override void OnPaint(PaintEventArgs e)
         {
             ThemePalette p = ThemeManager.Current;
-            Color back = Parent != null ? Parent.BackColor : SystemColors.Control;
+            Color back = ThemeManager.EffectiveBack(this);
             Color track = SystemColors.ControlDark;
             Color accent = SystemColors.Highlight;
             if (p != null && !p.IsClassic)

@@ -513,6 +513,19 @@ namespace Ares.Player
                         i++;
                     }
                 }
+                json.Append("],\"tree\":[");
+                if (m_Project != null)
+                {
+                    bool firstFolder = true;
+                    foreach (FolderInfo folder in FolderRows())
+                    {
+                        if (!firstFolder)
+                            json.Append(",");
+                        firstFolder = false;
+                        json.Append("{\"i\":").Append(folder.Index).Append(",\"p\":").Append(folder.Parent)
+                            .Append(",\"d\":").Append(folder.Depth).Append("}");
+                    }
+                }
                 json.Append("],\"mode\":").Append(modeIndex);
                 json.Append(",\"elements\":[");
                 if (m_Project != null && modeIndex >= 0)

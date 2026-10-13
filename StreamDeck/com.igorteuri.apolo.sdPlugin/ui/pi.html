@@ -113,13 +113,13 @@ function render() {
     $('row-value').className = 'row' + ((settings.kind || 'up') === 'set' ? '' : ' hide');
   }
   if (name === 'mode') {
-    var modes = project.map(function (m) { return [m.title, m.title]; });
+    var modes = project.map(function (m) { return [m.title, m.path || m.title]; });
     if (!modes.length) modes = [['', L.none]];
     fill($('modeSel'), modes, settings.modeTitle);
     if (!settings.modeTitle && project.length) { settings.modeTitle = project[0].title; $('modeSel').value = settings.modeTitle; save(); }
   }
   if (name === 'element') {
-    var ms = project.map(function (m) { return [m.title, m.title]; });
+    var ms = project.map(function (m) { return [m.title, m.path || m.title]; });
     if (!ms.length) ms = [['', L.none]];
     fill($('elMode'), ms, settings.modeTitle);
     if (!settings.modeTitle && project.length) settings.modeTitle = project[0].title;

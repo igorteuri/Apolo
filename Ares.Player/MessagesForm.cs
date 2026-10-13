@@ -62,6 +62,7 @@ namespace Ares.Player
             Controls.Clear();
             Text = T("Mensagens", "Messages");
             ClientSize = new Size(600, 460);
+            Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0);
             MinimumSize = new Size(420, 300);
             ShowInTaskbar = false;
 

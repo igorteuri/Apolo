@@ -251,7 +251,7 @@ namespace Ares.Player
             Color border = p != null && !p.IsClassic ? p.Border : SystemColors.ControlDark;
             Color text = p != null && !p.IsClassic ? p.Text : SystemColors.ControlText;
 
-            Color parentBack = Parent != null ? Parent.BackColor : window;
+            Color parentBack = Parent != null ? ThemeManager.EffectiveBack(this) : window;
             g.Clear(parentBack);
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
