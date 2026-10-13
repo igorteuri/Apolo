@@ -18,12 +18,14 @@ Set-Location -LiteralPath $PSScriptRoot
 function Titulo($t) { Write-Host ""; Write-Host $t -ForegroundColor Cyan }
 
 # ---------- verificacoes ----------
-if (-not (Test-Path 'Ares.sln') -or -not (Test-Path '.git')) {
-    throw "Rode este script na pasta do repositorio (onde estao o Ares.sln e a pasta .git)."
+if (-not (Test-Path 'Ares.sln')) {
+    throw "Rode este script na pasta do repositorio (onde esta o Ares.sln)."
 }
-if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    throw "O Git nao foi encontrado no PATH. Instale o Git for Windows."
-}
+# O Git na linha de comando e opcional: sem ele o script apaga e move os arquivos direto, e voce
+# confere e envia as mudancas pelo GitHub Desktop (ou outro programa de Git).
+$temGit = [bool](Get-Command git -ErrorAction SilentlyContinue) -and (Test-Path '.git')
+if ($temGit) { Write-Host "Git encontrado: o script usa o Git (e cria um branch de seguranca)." -ForegroundColor DarkGray }
+else { Write-Host "Git nao encontrado na linha de comando: o script mexe direto nos arquivos. Use o GitHub Desktop para conferir e enviar." -ForegroundColor DarkGray }
 
 # ---------- listas ----------
 # Pastas inteiras que saem
@@ -61,7 +63,13 @@ $arquivos = @(
 )
 
 # Projetos de Mono e Android dentro das pastas que ficam (nao fazem parte do Ares.sln)
-$extras = @(@(git ls-files "*_Mono.csproj" "*_Android.csproj") | Where-Object {
+if ($temGit) {
+    $achados = @(git ls-files "*_Mono.csproj" "*_Android.csproj")
+} else {
+    $achados = @(Get-ChildItem -Recurse -File -Include "*_Mono.csproj", "*_Android.csproj" -ErrorAction SilentlyContinue |
+        ForEach-Object { $_.FullName.Substring($PSScriptRoot.Length + 1).Replace('\', '/') })
+}
+$extras = @($achados | Where-Object {
     $p = $_
     -not ($pastas | Where-Object { $p -like "$_/*" })
 })
@@ -105,7 +113,8 @@ if (-not $Executar) {
 }
 
 # ---------- execucao ----------
-$sujo = git status --porcelain
+$sujo = $null
+if ($temGit) { $sujo = git status --porcelain }
 if ($sujo) {
     Write-Host ""
     Write-Host "Atencao: ha alteracoes ainda nao salvas no Git:" -ForegroundColor Yellow
@@ -119,36 +128,52 @@ $r = Read-Host "Digite SIM para remover os itens acima e organizar as licencas"
 if ($r -ne 'SIM') { Write-Host "Cancelado. Nada foi alterado."; return }
 
 $backup = "backup-antes-da-limpeza-" + (Get-Date -Format 'yyyyMMdd-HHmm')
-git branch $backup
-Write-Host "Copia de seguranca criada no branch: $backup" -ForegroundColor Green
+if ($temGit) {
+    git branch $backup
+    Write-Host "Copia de seguranca criada no branch: $backup" -ForegroundColor Green
+} else {
+    Write-Host "Sem Git na linha de comando, nao ha branch de seguranca. Tudo continua no historico do GitHub." -ForegroundColor Yellow
+}
 
 Titulo "Removendo..."
 foreach ($p in $pastas) {
-    git rm -r -q --ignore-unmatch -- $p
+    if ($temGit) { git rm -r -q --ignore-unmatch -- $p }
     if (Test-Path -LiteralPath $p) { Remove-Item -LiteralPath $p -Recurse -Force }   # sobras que o Git nao rastreava (bin, obj...)
 }
 foreach ($f in $arquivos) {
-    git rm -q -f --ignore-unmatch -- $f
+    if ($temGit) { git rm -q -f --ignore-unmatch -- $f }
     if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force }
 }
 foreach ($e in $extras) {
-    git rm -q -f --ignore-unmatch -- $e
+    if ($temGit) { git rm -q -f --ignore-unmatch -- $e }
+    if (Test-Path -LiteralPath $e) { Remove-Item -LiteralPath $e -Force }
+}
+# sobras desta limpeza e da etapa 37
+foreach ($f in @('APAGAR.txt')) {
+    if ($temGit) { git rm -q -f --ignore-unmatch -- $f }
+    if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force }
 }
 
 Titulo "Organizando as licencas..."
 New-Item -ItemType Directory -Force -Path 'Licencas' | Out-Null
 foreach ($l in $licencas) {
-    if (Test-Path -LiteralPath $l) { git mv -f -- $l "Licencas/$l" }
+    if (Test-Path -LiteralPath $l) {
+        if ($temGit) { git mv -f -- $l "Licencas/$l" } else { Move-Item -LiteralPath $l -Destination "Licencas/$l" -Force }
+    }
 }
 
-git add -A
+if ($temGit) { git add -A }
 
 Titulo "Pronto"
 if (-not (Test-Path 'docs/HowToBuild.md')) {
     Write-Host "Aviso: a pasta docs nao foi encontrada. Extraia primeiro o zip da etapa com os documentos novos." -ForegroundColor Yellow
 }
-Write-Host "As mudancas estao preparadas (git add), mas ainda NAO foi feito commit nem push."
-Write-Host "1) Compile no GitHub (ou localmente) para conferir que continua tudo certo."
-Write-Host "2) Faca o commit, por exemplo:  git commit -m 'Limpeza do repositorio: remove legado do Ares e organiza docs e licencas'"
-Write-Host "3) Para desfazer tudo antes do commit:  git reset --hard $backup"
-Write-Host "4) Depois de conferir, pode apagar este script (organizar-repositorio.ps1)."
+Write-Host "Ainda NAO foi feito commit nem push."
+if ($temGit) {
+    Write-Host "1) Faca o commit, por exemplo:  git commit -m 'Limpeza do repositorio: remove legado do Ares e organiza docs e licencas'"
+    Write-Host "2) Para desfazer tudo antes do commit:  git reset --hard $backup"
+} else {
+    Write-Host "1) Abra o GitHub Desktop: as remocoes e movimentacoes aparecem como alteracoes. Escreva uma mensagem, faca o commit e o push."
+    Write-Host "2) Para desfazer antes do commit: no GitHub Desktop, menu Branch > Discard all changes (descartar todas as alteracoes)."
+}
+Write-Host "3) Depois de conferir o build no GitHub, apague este script (organizar-repositorio.ps1)."
