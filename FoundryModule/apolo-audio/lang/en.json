@@ -33,5 +33,8 @@
   "APOLO.NoPlayers": "There are no players in this world yet.",
   "APOLO.Settings.Controllers.Name": "Players who control the music",
   "APOLO.Settings.Controllers.Button": "Choose players...",
-  "APOLO.Settings.Controllers.Hint": "The chosen players see pause / previous / next / stop in the Apolo row of the Playlists tab. It works while the GM has Foundry open on the same computer as Apolo."
+  "APOLO.Settings.Controllers.Hint": "The chosen players see pause / previous / next / stop in the Apolo row of the Playlists tab. It works while the GM has Foundry open on the same computer as Apolo.",
+  "APOLO.Library": "Folders and playlists",
+  "APOLO.Close": "Close",
+  "APOLO.LibraryEmpty": "No playlists in this folder."
 }

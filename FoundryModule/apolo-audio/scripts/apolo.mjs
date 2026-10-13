@@ -13,6 +13,7 @@
 const MODULE_ID = "apolo-audio";
 const FRAME_ID = "apolo-audio-frame";
 const WIDGET_ID = "apolo-audio-widget";
+const LIBRARY_ID = "apolo-audio-library";
 const VDO_ORIGIN = "https://vdo.ninja";
 
 const state = {
@@ -30,7 +31,7 @@ const state = {
   bridge: { port: null, timer: null, lastSent: "", lastTime: 0, lastNow: null, fails: 0 }
 };
 
-const REMOTE_COMMANDS = ["pause", "stop", "prev", "next"];
+const REMOTE_COMMANDS = ["pause", "stop", "prev", "next", "mode", "element"];
 
 const t = (key) => game.i18n.localize(`APOLO.${key}`);
 
@@ -245,6 +246,7 @@ const CONTROLS_HTML = (withGrip) => `
       <button type="button" data-apolo="ctl" data-cmd="pause" title="${t("Pause")}"><i class="fa-solid fa-pause"></i></button>
       <button type="button" data-apolo="ctl" data-cmd="stop" title="${t("Stop")}"><i class="fa-solid fa-stop"></i></button>
       <button type="button" data-apolo="ctl" data-cmd="next" title="${t("Next")}"><i class="fa-solid fa-forward-step"></i></button>
+      <button type="button" data-apolo="library" title="${t("Library")}"><i class="fa-solid fa-folder-tree"></i></button>
     </div>` : ""}
   `;
 
@@ -282,6 +284,8 @@ function wireControls(el) {
       chooseControllers();
     } else if (action === "ctl") {
       sendControl(target.dataset.cmd);
+    } else if (action === "library") {
+      openLibrary();
     }
   });
 }
@@ -456,6 +460,7 @@ async function pollBridge() {
     const response = await bridgeFetch("/foundry/state");
     const data = await response.json();
     state.bridge.fails = 0;
+    state.bridge.full = data;
     const now = data && data.playing
       ? { playing: true, paused: !!data.paused, title: data.title || "", artist: data.artist || "", list: data.list || "" }
       : { playing: false };
@@ -476,22 +481,96 @@ function startBridgePolling() {
   pollBridge();
 }
 
-function sendControl(cmd) {
+function sendControl(cmd, arg = "") {
   if (!REMOTE_COMMANDS.includes(cmd)) return;
   if (!iAmController()) return;
-  game.socket.emit(`module.${MODULE_ID}`, { type: "control", cmd, userId: game.user.id });
+  game.socket.emit(`module.${MODULE_ID}`, { type: "control", cmd, arg: String(arg), userId: game.user.id });
+}
+
+/* ---------------------------------------------------------------- music library for the controlling player */
+
+function sendLibrary(userId) {
+  const full = state.bridge.full;
+  if (!full) return;
+  const lib = {
+    modes: full.modes ?? [],
+    tree: full.tree ?? [],
+    mode: full.mode ?? -1,
+    elements: full.elements ?? []
+  };
+  game.socket.emit(`module.${MODULE_ID}`, { type: "libraryData", lib }, { recipients: [userId] });
+}
+
+function openLibrary() {
+  if (!iAmController()) return;
+  buildLibraryPanel();
+  game.socket.emit(`module.${MODULE_ID}`, { type: "library", userId: game.user.id });
+}
+
+function buildLibraryPanel() {
+  let panel = document.getElementById(LIBRARY_ID);
+  if (panel) return panel;
+  panel = document.createElement("div");
+  panel.id = LIBRARY_ID;
+  panel.innerHTML = `
+    <header><span><i class="fa-solid fa-folder-tree"></i> ${t("Library")}</span><button type="button" data-lib="close" title="${t("Close")}"><i class="fa-solid fa-xmark"></i></button></header>
+    <div class="apolo-lib-body">
+      <nav class="apolo-lib-folders"></nav>
+      <section class="apolo-lib-elements"></section>
+    </div>`;
+  panel.addEventListener("click", (event) => {
+    const el = event.target.closest("[data-lib]");
+    if (!el) return;
+    if (el.dataset.lib === "close") panel.remove();
+    else if (el.dataset.lib === "mode") sendControl("mode", el.dataset.index);
+    else if (el.dataset.lib === "element") sendControl("element", el.dataset.id);
+  });
+  document.body.appendChild(panel);
+  return panel;
+}
+
+function renderLibrary(lib) {
+  const panel = document.getElementById(LIBRARY_ID);
+  if (!panel || !lib) return;
+  const folders = panel.querySelector(".apolo-lib-folders");
+  const elements = panel.querySelector(".apolo-lib-elements");
+  // folders in tree order (depth first)
+  const tree = lib.tree?.length ? lib.tree : (lib.modes ?? []).map((_, i) => ({ i, p: -1, d: 0 }));
+  const kids = new Map();
+  for (const node of tree) {
+    if (!kids.has(node.p)) kids.set(node.p, []);
+    kids.get(node.p).push(node);
+  }
+  const rows = [];
+  const walk = (parent, depth) => {
+    for (const node of kids.get(parent) ?? []) {
+      rows.push({ index: node.i, depth });
+      walk(node.i, depth + 1);
+    }
+  };
+  walk(-1, 0);
+  folders.innerHTML = rows
+    .map((r) => `<button type="button" data-lib="mode" data-index="${r.index}" class="${r.index === lib.mode ? "on" : ""}" style="padding-left:${8 + r.depth * 14}px">${escapeHtml(lib.modes[r.index] ?? "")}</button>`)
+    .join("");
+  elements.innerHTML = (lib.elements ?? []).length
+    ? lib.elements.map((e) => `<button type="button" data-lib="element" data-id="${e.id}" class="${e.active ? "on" : ""}">${escapeHtml(e.title)}</button>`).join("")
+    : `<p class="apolo-lib-empty">${t("LibraryEmpty")}</p>`;
 }
 
 async function runControl(data) {
   if (!isActiveGM()) return;
   if (!REMOTE_COMMANDS.includes(data.cmd) || !controllerIds().includes(data.userId)) return;
+  if ((data.cmd === "mode" || data.cmd === "element") && !/^\d+$/.test(String(data.arg))) return;
   try {
     await bridgeFetch("/foundry/cmd", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `cmd=${encodeURIComponent(data.cmd)}`
+      body: `cmd=${encodeURIComponent(data.cmd)}&arg=${encodeURIComponent(data.arg ?? "")}`
     });
-    setTimeout(pollBridge, 400);
+    setTimeout(async () => {
+      await pollBridge();
+      if (data.cmd === "mode" || data.cmd === "element") sendLibrary(data.userId);
+    }, 500);
   } catch (err) {
     console.warn(`${MODULE_ID} | could not send "${data.cmd}" to Apolo`, err);
   }
@@ -635,6 +714,14 @@ Hooks.once("ready", () => {
     if (data.type === "now") {
       state.now = data.now ?? { playing: false };
       updateUi();
+      return;
+    }
+    if (data.type === "library") {
+      if (isActiveGM() && controllerIds().includes(data.userId)) sendLibrary(data.userId);
+      return;
+    }
+    if (data.type === "libraryData") {
+      renderLibrary(data.lib);
       return;
     }
     if (data.type === "hello") {

@@ -500,7 +500,7 @@ namespace Ares.Player
                 m_Bridge.Bridge = true;
                 m_Bridge.Execute = RemoteExecute;
                 m_Bridge.BridgeKey = () => ShareDialog.CleanStreamId(Ares.CommonGUI.Preferences.Get("VdoId", ""));
-                m_Bridge.BridgeAllows = (c) => c == "pause" || c == "stop" || c == "prev" || c == "next" || c == "repeat";
+                m_Bridge.BridgeAllows = (c) => c == "pause" || c == "stop" || c == "prev" || c == "next" || c == "repeat" || c == "mode" || c == "element";
                 m_Bridge.Start(8791, "");
                 m_Tunnel = new CloudflareTunnel();
                 m_RemoteTimer = new Timer();

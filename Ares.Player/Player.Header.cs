@@ -126,6 +126,7 @@ namespace Ares.Player
         private ToolStripButton m_NetButton, m_VdoButton, m_DiscordButton;
         private ToolStripLabel m_HeaderSpacer;
         private bool m_Centering;
+        private bool m_MovingAppearance;
 
         // the spacer pushes the group of quick buttons towards the middle of the window
         private void CenterQuickButtons()
@@ -138,13 +139,35 @@ namespace Ares.Player
                 int before = 0;
                 int groupWidth = 0;
                 bool afterSpacer = false;
+                ToolStripItem appearance = null;
                 foreach (ToolStripItem item in menuStrip1.Items)
                 {
                     if (item == m_HeaderSpacer) { afterSpacer = true; continue; }
+                    // the "Appearance" menu is added later by the theme: it belongs to the menus on the left
+                    if (afterSpacer && item is ToolStripMenuItem && (item.Text == "Aparência" || item.Text == "Appearance"))
+                        appearance = item;
                     if (!item.Visible || item.Alignment != ToolStripItemAlignment.Left)
                         continue;
                     int w = item.Width + item.Margin.Horizontal;
                     if (afterSpacer) groupWidth += w; else before += w;
+                }
+                if (appearance != null && !m_MovingAppearance)
+                {
+                    m_MovingAppearance = true;
+                    ToolStripItem moving = appearance;
+                    BeginInvoke(new MethodInvoker(() =>
+                    {
+                        try
+                        {
+                            menuStrip1.Items.Remove(moving);
+                            menuStrip1.Items.Insert(menuStrip1.Items.IndexOf(m_HeaderSpacer), moving);
+                        }
+                        finally
+                        {
+                            m_MovingAppearance = false;
+                        }
+                    }));
+                    return;
                 }
                 int wanted = menuStrip1.Width / 2 - groupWidth / 2 - before - menuStrip1.Padding.Left;
                 int width = Math.Max(10, wanted);

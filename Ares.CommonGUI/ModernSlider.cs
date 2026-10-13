@@ -28,6 +28,7 @@ namespace Ares.CommonGUI
                 | ControlStyles.ResizeRedraw | ControlStyles.Selectable | ControlStyles.SupportsTransparentBackColor, true);
             TabStop = true;
             Size = new Size(104, 31);
+            ShowValueTipEnabled = true;
             SmallChange = 1;
             LargeChange = 5;
             TickFrequency = 1;
@@ -38,7 +39,11 @@ namespace Ares.CommonGUI
         protected override void Dispose(bool disposing)
         {
             if (disposing)
+            {
                 ThemeManager.Changed -= m_ThemeHandler;
+                if (m_TipTimer != null) m_TipTimer.Dispose();
+                if (m_Tip != null) m_Tip.Dispose();
+            }
             base.Dispose(disposing);
         }
 
@@ -99,6 +104,55 @@ namespace Ares.CommonGUI
                 if (handler != null)
                     handler(this, EventArgs.Empty);
             }
+            ShowValueTip();
+        }
+
+        // balloon with the value in percent while the slider is being changed
+        private ToolTip m_Tip;
+        private Timer m_TipTimer;
+
+        /// <summary>Shows a balloon with the value (percent of the range) while the user changes the slider.</summary>
+        public bool ShowValueTipEnabled { get; set; }
+
+        private void ShowValueTip()
+        {
+            if (!ShowValueTipEnabled || !IsHandleCreated)
+                return;
+            try
+            {
+                if (m_Tip == null)
+                {
+                    m_Tip = new ToolTip();
+                    m_Tip.UseFading = false;
+                    m_Tip.UseAnimation = false;
+                    m_TipTimer = new Timer();
+                    m_TipTimer.Interval = 700;
+                    m_TipTimer.Tick += delegate { m_TipTimer.Stop(); if (!m_Dragging) HideValueTip(); };
+                }
+                int range = Math.Max(1, m_Maximum - m_Minimum);
+                int percent = (int)Math.Round(100.0 * (m_Value - m_Minimum) / range);
+                double ratio = (double)(m_Value - m_Minimum) / range;
+                int x = Pad + (int)Math.Round(ratio * Math.Max(1, Width - 2 * Pad)) - 12;
+                m_Tip.Show(percent + "%", this, x, -30);
+                m_TipTimer.Stop();
+                if (!m_Dragging)
+                    m_TipTimer.Start();
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private void HideValueTip()
+        {
+            try
+            {
+                if (m_Tip != null)
+                    m_Tip.Hide(this);
+            }
+            catch (Exception)
+            {
+            }
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -126,6 +180,11 @@ namespace Ares.CommonGUI
             m_Dragging = false;
             Capture = false;
             Invalidate();
+            if (m_TipTimer != null)
+            {
+                m_TipTimer.Stop();
+                m_TipTimer.Start();
+            }
         }
 
         protected override void OnMouseEnter(EventArgs e)

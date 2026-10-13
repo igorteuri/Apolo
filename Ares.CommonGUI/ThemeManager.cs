@@ -475,6 +475,7 @@ namespace Ares.CommonGUI
         {
             OriginalState orig = Capture(c);
             ThemePalette p = Current;
+            HookMenus(c);
 
             try
             {
@@ -1400,6 +1401,69 @@ namespace Ares.CommonGUI
                 // no border around menu strips / toolbars / status strips
                 if (e.ToolStrip is ToolStripDropDown)
                     base.OnRenderToolStripBorder(e);
+            }
+        }
+
+        // --------------------------------------------------------------------------------
+        // menu texts without the trailing "..." (also for items which are added later)
+        // --------------------------------------------------------------------------------
+
+        private static readonly ConditionalWeakTable<object, object> s_Hooked = new ConditionalWeakTable<object, object>();
+
+        private static void HookMenus(Control c)
+        {
+            try
+            {
+                ToolStrip ts = c as ToolStrip;
+                if (ts != null)
+                    HookStrip(ts);
+                if (c.ContextMenuStrip != null)
+                    HookStrip(c.ContextMenuStrip);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private static void HookStrip(ToolStrip strip)
+        {
+            object dummy;
+            if (s_Hooked.TryGetValue(strip, out dummy))
+                return;
+            s_Hooked.Add(strip, new object());
+            StripEllipsis(strip.Items);
+            ContextMenuStrip cms = strip as ContextMenuStrip;
+            if (cms != null)
+                cms.Opening += delegate { StripEllipsis(cms.Items); };
+        }
+
+        private static void StripEllipsis(ToolStripItemCollection items)
+        {
+            foreach (ToolStripItem item in items)
+            {
+                string text = item.Text;
+                if (!string.IsNullOrEmpty(text) && item is ToolStripMenuItem)
+                {
+                    string trimmed = text;
+                    if (trimmed.EndsWith("...", StringComparison.Ordinal))
+                        trimmed = trimmed.Substring(0, trimmed.Length - 3).TrimEnd();
+                    else if (trimmed.EndsWith("\u2026", StringComparison.Ordinal))
+                        trimmed = trimmed.Substring(0, trimmed.Length - 1).TrimEnd();
+                    if (trimmed != text && trimmed.Length > 0)
+                        item.Text = trimmed;
+                }
+                ToolStripDropDownItem dd = item as ToolStripDropDownItem;
+                if (dd != null && dd.HasDropDownItems)
+                {
+                    object dummy;
+                    if (!s_Hooked.TryGetValue(dd, out dummy))
+                    {
+                        s_Hooked.Add(dd, new object());
+                        ToolStripDropDownItem captured = dd;
+                        dd.DropDownOpening += delegate { StripEllipsis(captured.DropDownItems); };
+                    }
+                    StripEllipsis(dd.DropDownItems);
+                }
             }
         }
 

@@ -33,5 +33,8 @@
   "APOLO.NoPlayers": "Ainda não há jogadores neste mundo.",
   "APOLO.Settings.Controllers.Name": "Jogadores que controlam a música",
   "APOLO.Settings.Controllers.Button": "Escolher jogadores...",
-  "APOLO.Settings.Controllers.Hint": "Os jogadores escolhidos veem pausar / anterior / próxima / parar na linha do Apolo, na aba Playlists. Funciona enquanto o mestre estiver com o Foundry aberto no mesmo computador do Apolo."
+  "APOLO.Settings.Controllers.Hint": "Os jogadores escolhidos veem pausar / anterior / próxima / parar na linha do Apolo, na aba Playlists. Funciona enquanto o mestre estiver com o Foundry aberto no mesmo computador do Apolo.",
+  "APOLO.Library": "Pastas e playlists",
+  "APOLO.Close": "Fechar",
+  "APOLO.LibraryEmpty": "Nenhuma playlist nesta pasta."
 }

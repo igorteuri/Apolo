@@ -39,7 +39,8 @@ Se o módulo não achar a seção de volume na sua versão do Foundry, ele mostr
 - **Nome da música**: todos os jogadores veem, na linha do Apolo da aba Playlists, o que está tocando.
 - **Jogador controlador**: em *Configurações dos módulos > Jogadores que controlam a música > Escolher jogadores...*
   (ou pelo botão de engrenagem na linha do Apolo) o mestre marca quem pode controlar. Esses jogadores ganham os botões
-  anterior / pausar / parar / próxima. Os outros não veem os botões.
+  anterior / pausar / parar / próxima e um botão de **Pastas e playlists**, que abre um painel com as pastas do projeto
+  e as playlists da pasta escolhida (clicar numa playlist toca, como no Apolo). Os outros não veem os botões.
 - Como funciona: o navegador do **mestre** conversa com o Apolo no mesmo computador (endereço `localhost`, portas 8791 a 8800)
   e repassa o nome da música e os comandos pelo próprio Foundry. Por isso o mestre precisa estar com o Foundry aberto no
   computador do Apolo. O Apolo só responde quando a chave certa (o ID da transmissão) é enviada.
