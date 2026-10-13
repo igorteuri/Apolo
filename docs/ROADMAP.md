@@ -8,8 +8,10 @@ controle remoto + plugin Stream Deck com árvore de pastas, bandeja do Windows, 
 Editor modernizado (tema, painéis acopláveis, ícones), formato de projeto .apolo, exportação em 3 modos, novos logos, aviso de atualização (GitHub Releases), renomeador de músicas, verificador de direitos autorais, "Mostrar na pasta", Foundry VTT (controles) e controle web, imagens sugeridas para os botões e baixador de áudio livre.
 
 ## Próximos passos
-- Instalador atualizado para o Apolo (o script do Inno Setup ainda é o do Ares)
-- Polimento do motor de áudio (seek em Opus, WSOLA)
+- Instalador do Apolo (Inno Setup, gerado pelo build) — em teste
+- Polimento do motor de áudio (pular dentro de arquivos Opus longos, já com mudança de velocidade sem alterar o tom) — em teste
+- Player: pausa por som, ícones/emojis/cores também nas pastas, menu de contexto reorganizado, ícones guardados na pasta do Apolo e dentro do pacote — em teste
+- Editor: painéis fixos, um único editor no centro, visão geral da pasta, botão Adicionar, ferramentas de aparência (emoji, cor, ícone, imagem, imagens da internet), barra de ícones na linha dos menus — em teste
 - Ajustes finais de tema e de alinhamento da interface
 
 ## Ideias em estudo

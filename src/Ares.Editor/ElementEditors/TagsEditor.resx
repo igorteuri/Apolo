@@ -250,7 +250,7 @@
     <value>Tags Management</value>
   </data>
   <data name="addTagButton.Text" xml:space="preserve">
-    <value>Add ...</value>
+    <value>Add</value>
   </data>
   <data name="&gt;&gt;translationsLabel.Name" xml:space="preserve">
     <value>translationsLabel</value>
@@ -355,7 +355,7 @@
     <value>2</value>
   </data>
   <data name="addCategoryButton.Text" xml:space="preserve">
-    <value>Add ...</value>
+    <value>Add</value>
   </data>
   <data name="langColHeader.Text" xml:space="preserve">
     <value>Language</value>
@@ -370,7 +370,7 @@
     <value>$this</value>
   </data>
   <data name="deleteTranslationButton.Text" xml:space="preserve">
-    <value>Delete ...</value>
+    <value>Delete</value>
   </data>
   <data name="groupBox1.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -526,7 +526,7 @@
     <value>Top, Bottom, Left, Right</value>
   </data>
   <data name="renameCategoryButton.Text" xml:space="preserve">
-    <value>Rename ...</value>
+    <value>Rename</value>
   </data>
   <data name="renameLanguageButton.ToolTip" xml:space="preserve">
     <value />
@@ -646,7 +646,7 @@
     <value>0</value>
   </data>
   <data name="deleteTagButton.Text" xml:space="preserve">
-    <value>Delete ...</value>
+    <value>Delete</value>
   </data>
   <data name="&gt;&gt;languageSelectionBox.Parent" xml:space="preserve">
     <value>$this</value>
@@ -685,7 +685,7 @@
     <value>4</value>
   </data>
   <data name="deleteCategoryButton.Text" xml:space="preserve">
-    <value>Delete ...</value>
+    <value>Delete</value>
   </data>
   <data name="&gt;&gt;groupBox3.Type" xml:space="preserve">
     <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -700,7 +700,7 @@
     <value>WeifenLuo.WinFormsUI.Docking.DockContent, WeifenLuo.WinFormsUI.Docking, Version=2.3.2.18742, Culture=neutral, PublicKeyToken=9d390e07c24a1b09</value>
   </data>
   <data name="addLanguageButton.Text" xml:space="preserve">
-    <value>Add ...</value>
+    <value>Add</value>
   </data>
   <data name="&gt;&gt;addTranslationButton.ZOrder" xml:space="preserve">
     <value>4</value>
@@ -721,7 +721,7 @@
     <value>75, 23</value>
   </data>
   <data name="renameTagButton.Text" xml:space="preserve">
-    <value>Rename ...</value>
+    <value>Rename</value>
   </data>
   <data name="tagsList.TabIndex" type="System.Int32, mscorlib">
     <value>0</value>
@@ -871,7 +871,7 @@
     <value>Top, Right</value>
   </data>
   <data name="addTranslationButton.Text" xml:space="preserve">
-    <value>Add ...</value>
+    <value>Add</value>
   </data>
   <data name="&gt;&gt;languageSelectionBox.Name" xml:space="preserve">
     <value>languageSelectionBox</value>
@@ -904,7 +904,7 @@
     <value>75, 23</value>
   </data>
   <data name="renameTranslationButton.Text" xml:space="preserve">
-    <value>Rename ...</value>
+    <value>Rename</value>
   </data>
   <data name="&gt;&gt;deleteLanguageButton.ZOrder" xml:space="preserve">
     <value>0</value>
@@ -949,7 +949,7 @@
     <value>deleteTagButton</value>
   </data>
   <data name="deleteLanguageButton.Text" xml:space="preserve">
-    <value>Delete ...</value>
+    <value>Delete</value>
   </data>
   <data name="groupBox2.Size" type="System.Drawing.Size, System.Drawing">
     <value>324, 210</value>
@@ -958,7 +958,7 @@
     <value />
   </data>
   <data name="renameLanguageButton.Text" xml:space="preserve">
-    <value>Rename ...</value>
+    <value>Rename</value>
   </data>
   <data name="renameLanguageButton.Location" type="System.Drawing.Point, System.Drawing">
     <value>241, 48</value>

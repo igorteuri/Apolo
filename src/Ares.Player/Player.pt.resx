@@ -169,7 +169,7 @@
     <value>Recentes</value>
   </data>
   <data name="messagesToolStripMenuItem.Text" xml:space="preserve">
-    <value>Mensagens ...</value>
+    <value>Avisos</value>
   </data>
   <data name="label5.Text" xml:space="preserve">
     <value>Modo:</value>
@@ -178,7 +178,7 @@
     <value>Categorias</value>
   </data>
   <data name="messagesButton.Text" xml:space="preserve">
-    <value>Mensagens</value>
+    <value>Avisos</value>
   </data>
   <data name="saveFileDialog.Filter" xml:space="preserve">
     <value>Projetos do Apolo|*.apolo;*.ares|Todos os arquivos|*.*</value>

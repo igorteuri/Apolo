@@ -151,10 +151,10 @@
     <value>Parar</value>
   </data>
   <data name="editToolStripMenuItem.Text" xml:space="preserve">
-    <value>Editar ...</value>
+    <value>Editar</value>
   </data>
   <data name="editTagsMenuItem.Text" xml:space="preserve">
-    <value>Editar tags ...</value>
+    <value>Editar tags</value>
   </data>
   <data name="copyToolStripMenuItem.Text" xml:space="preserve">
     <value>Recortar</value>

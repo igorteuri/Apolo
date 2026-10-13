@@ -16,5 +16,5 @@ O arquivo `.github/workflows/build.yml` compila tudo a cada envio (`push`). Ele 
 ## Observações
 
 - A biblioteca BASS (que não é gratuita para uso comercial) **não** faz parte do Apolo e o workflow a remove da saída.
-- O script do instalador (`Setup/Ares_Setup.iss`, Inno Setup) ainda é o do Ares e precisa ser refeito para o Apolo.
+- O instalador é feito com o [Inno Setup](https://jrsoftware.org/isinfo.php) a partir de `Setup/Apolo.iss`. O workflow o gera sozinho depois do build e o publica como `Apolo-installer` (aba Actions). Para gerar na sua máquina, junte o resultado do build na pasta `dist` (como o workflow faz) e rode `iscc /DMyAppVersion=0.38.0 Setup\Apolo.iss`.
 - A assinatura digital (pasta `CodeSigning`) é opcional. Sem certificado, o projeto `Ares.WinSecurity` compila normalmente.

@@ -724,7 +724,7 @@
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="messagesToolStripMenuItem.Text" xml:space="preserve">
-    <value>Messages ...</value>
+    <value>Alerts</value>
   </data>
   <data name="&gt;&gt;soundVolumeBar.Type" xml:space="preserve">
     <value>System.Windows.Forms.TrackBar, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -757,7 +757,7 @@
     <value>63, 20</value>
   </data>
   <data name="messagesButton.Text" xml:space="preserve">
-    <value>Messages</value>
+    <value>Alerts</value>
   </data>
   <data name="saveFileDialog.Filter" xml:space="preserve">
     <value>Apolo projects|*.apolo;*.ares|All files|*.*</value>

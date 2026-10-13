@@ -542,13 +542,13 @@
     <value>201, 30</value>
   </data>
   <data name="editToolStripMenuItem.Text" xml:space="preserve">
-    <value>Edit ...</value>
+    <value>Edit</value>
   </data>
   <data name="editTagsMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>201, 30</value>
   </data>
   <data name="editTagsMenuItem.Text" xml:space="preserve">
-    <value>Edit Tags ...</value>
+    <value>Edit Tags</value>
   </data>
   <data name="toolStripSeparator1.Size" type="System.Drawing.Size, System.Drawing">
     <value>198, 6</value>

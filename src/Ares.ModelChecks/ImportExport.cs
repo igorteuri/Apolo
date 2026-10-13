@@ -89,6 +89,11 @@ namespace Ares.ModelInfo
                         ZipEntry entry = file[i];
                         if (entry.IsDirectory)
                             continue;
+                        if (entry.Name.StartsWith(Exporter.ICONS_DIR + "/", StringComparison.Ordinal))
+                        {
+                            overallSize += entry.Size;
+                            continue;
+                        }
                         bool isTagsDbFile;
                         String fileName = GetFileName(entry, out isTagsDbFile);
                         if (fileName == String.Empty)
@@ -194,8 +199,22 @@ namespace Ares.ModelInfo
                 String lastFile = String.Empty;
                 while ((entry = stream.GetNextEntry()) != null)
                 {
-                    bool isTagsDBFile;
-                    String fileName = GetFileName(entry, out isTagsDBFile);
+                    bool isTagsDBFile = false;
+                    String iconsFileName = GetIconsFileName(entry, data.TargetFile);
+                    String fileName = iconsFileName != null ? iconsFileName : GetFileName(entry, out isTagsDBFile);
+                    if (iconsFileName != null)
+                    {
+                        // pictures of the buttons: beside the project (they are moved to the Apolo folder when it is opened)
+                        if (!data.Overwrite && System.IO.File.Exists(iconsFileName))
+                            continue;
+                        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(iconsFileName));
+                        using (System.IO.FileStream iconStream = System.IO.File.Create(iconsFileName))
+                        {
+                            StreamUtils.Copy(stream, iconStream, buffer);
+                        }
+                        writtenSize += entry.Size;
+                        continue;
+                    }
                     if (fileName == String.Empty)
                     {
                         fileName = data.TargetFile;
@@ -254,6 +273,23 @@ namespace Ares.ModelInfo
             public long OverallSize { get; set; }
         }
 
+        // where an entry with a picture of a button goes (null if the entry is something else)
+        private static String GetIconsFileName(ZipEntry entry, String targetFile)
+        {
+            String prefix = Exporter.ICONS_DIR + "/";
+            if (!entry.Name.StartsWith(prefix, StringComparison.Ordinal) || String.IsNullOrEmpty(targetFile))
+                return null;
+            String relative = entry.Name.Substring(prefix.Length);
+            if (relative.Length == 0 || relative.Contains(".."))
+                return null;
+            if (relative.Equals("icons.txt", StringComparison.OrdinalIgnoreCase))
+                return targetFile + ".icons";
+            if (!relative.StartsWith("apolo_icons/", StringComparison.Ordinal))
+                return null;
+            String dir = System.IO.Path.GetDirectoryName(targetFile);
+            return System.IO.Path.Combine(dir ?? String.Empty, relative.Replace('/', '\\'));
+        }
+
         private String GetFileName(ZipEntry entry, out bool isTagsDBFile)
         {
             String fileName = String.Empty;
@@ -302,11 +338,22 @@ namespace Ares.ModelInfo
 
         public static void Export(IProgressMonitor monitor, Object data, String innerFileName, String exportFileName, Action<Exception> finishedAction)
         {
+            Export(monitor, data, innerFileName, exportFileName, finishedAction, null);
+        }
+
+        /// <summary>The names of the entries for the pictures of the buttons (importing puts them beside the project).</summary>
+        public static String ICONS_DIR = "Icons";
+
+        /// <param name="extraFiles">more files for the package: zip entry name, file on the disk (pictures of buttons)</param>
+        public static void Export(IProgressMonitor monitor, Object data, String innerFileName, String exportFileName, Action<Exception> finishedAction,
+            Dictionary<String, String> extraFiles)
+        {
             Exporter exporter = new Exporter();
             ExportData exportData = new ExportData();
             exportData.Data = data;
             exportData.InnerFileName = innerFileName;
             exportData.ExportFileName = exportFileName;
+            exportData.ExtraFiles = extraFiles;
             exporter.DoExport(monitor, exportData, finishedAction);
         }
 
@@ -342,6 +389,7 @@ namespace Ares.ModelInfo
             public String InnerFileName { get; set; }
             public String ExportFileName { get; set; }
             public Object Data { get; set; }
+            public Dictionary<String, String> ExtraFiles { get; set; }
         }
 
         private void DoExport(IProgressMonitor monitor, ExportData exportData, Action<Exception> finishedAction)
@@ -378,6 +426,21 @@ namespace Ares.ModelInfo
             zipEntries[entry] = data.InnerFileName;
             zipSizes[entry] = size;
             overallSize += size;
+
+            // pictures and emojis of the buttons
+            if (data.ExtraFiles != null)
+            {
+                foreach (KeyValuePair<String, String> extra in data.ExtraFiles)
+                {
+                    if (!System.IO.File.Exists(extra.Value))
+                        continue;
+                    ZipEntry extraEntry = new ZipEntry(ZipEntry.CleanName(extra.Key));
+                    SetZipEntryAttributes(extraEntry, extra.Value, out size);
+                    zipEntries[extraEntry] = extra.Value;
+                    zipSizes[extraEntry] = size;
+                    overallSize += size;
+                }
+            }
 
             List<String> musicFiles = new List<string>();
 

@@ -10,7 +10,10 @@ namespace Ares.CommonGUI
     /// <summary>
     /// Images and icons of the element buttons in the Player. They are saved beside the project file
     /// (&lt;project&gt;.apolo.icons), so that the .apolo file itself is not changed.
-    /// A setting is "lucide:name" (built-in icon) or "img:relative\\path.png" (a picture copied to the "apolo_icons" folder).
+    /// A setting is "lucide:name" (built-in icon), "lib:name.png" (a picture or emoji kept in the "icones" folder of
+    /// Apolo, %APPDATA%\\Apolo\\icones, so that it is not lost when a project is moved) or "img:relative\\path.png"
+    /// (the older way: a picture in the "apolo_icons" folder beside the project; it is moved to the Apolo folder when
+    /// the project is opened).
     /// </summary>
     public static class ButtonImageStore
     {
@@ -21,6 +24,94 @@ namespace Ares.CommonGUI
         private static string SidecarPath(string projectPath)
         {
             return projectPath + ".icons";
+        }
+
+        /// <summary>The folder of Apolo where the pictures and emojis of the buttons and folders are kept.</summary>
+        public static string IconsFolder
+        {
+            get
+            {
+                string dir = Path.Combine(Ares.Settings.AppFolders.Root, "icones");
+                try { Directory.CreateDirectory(dir); } catch (Exception) { }
+                return dir;
+            }
+        }
+
+        // the file of an "img:" or "lib:" setting (not checked for existence)
+        private static string ImagePath(string projectPath, string spec)
+        {
+            if (spec == null || spec.Length < 5)
+                return null;
+            if (spec.StartsWith("lib:"))
+                return Path.Combine(IconsFolder, spec.Substring(4));
+            if (spec.StartsWith("img:") && !string.IsNullOrEmpty(projectPath))
+                return Path.Combine(Path.GetDirectoryName(projectPath), spec.Substring(4));
+            return null;
+        }
+
+        // moves the pictures of the older "img:" settings to the Apolo folder; true if something changed
+        private static bool MigrateToLibrary(string projectPath, Dictionary<string, string> map)
+        {
+            List<string> keys = new List<string>();
+            foreach (KeyValuePair<string, string> pair in map)
+            {
+                if (pair.Value != null && pair.Value.StartsWith("img:"))
+                    keys.Add(pair.Key);
+            }
+            bool changed = false;
+            foreach (string key in keys)
+            {
+                try
+                {
+                    string source = ImagePath(projectPath, map[key]);
+                    if (source == null || !File.Exists(source))
+                        continue;
+                    string name = Path.GetFileName(source);
+                    string target = Path.Combine(IconsFolder, name);
+                    if (File.Exists(target) && new FileInfo(target).Length != new FileInfo(source).Length)
+                    {
+                        name = Guid.NewGuid().ToString("N").Substring(0, 8) + "-" + name;
+                        target = Path.Combine(IconsFolder, name);
+                    }
+                    if (!File.Exists(target))
+                        File.Copy(source, target);
+                    map[key] = "lib:" + name;
+                    changed = true;
+                }
+                catch (Exception)
+                {
+                }
+            }
+            return changed;
+        }
+
+        /// <summary>
+        /// For the export of a project: the settings of the pictures in the portable form (the pictures in an
+        /// "apolo_icons" folder beside the project) and the pictures to put into the package (zip entry name, file).
+        /// </summary>
+        public static string BuildPortable(string projectPath, Dictionary<string, string> files)
+        {
+            if (string.IsNullOrEmpty(projectPath))
+                return null;
+            Dictionary<string, string> map = Load(projectPath);
+            if (map.Count == 0)
+                return null;
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            foreach (KeyValuePair<string, string> pair in map)
+            {
+                string spec = pair.Value;
+                if (spec.StartsWith("lib:") || spec.StartsWith("img:"))
+                {
+                    string source = ImagePath(projectPath, spec);
+                    if (source == null || !File.Exists(source))
+                        continue;
+                    string name = Path.GetFileName(source);
+                    files["Icons/apolo_icons/" + name] = source;
+                    spec = "img:apolo_icons\\" + name;
+                }
+                sb.Append(pair.Key).Append('\t').Append(spec).Append("\r\n");
+            }
+            return sb.ToString();
         }
 
         /// <summary>Copies the files of a folder (what is already there stays).</summary>
@@ -50,17 +141,34 @@ namespace Ares.CommonGUI
                 List<string> lines = new List<string>();
                 foreach (KeyValuePair<string, string> pair in map)
                 {
-                    lines.Add(pair.Key + "\t" + pair.Value);
-                    if (pair.Value.StartsWith("img:"))
+                    string spec = pair.Value;
+                    if (spec.StartsWith("lib:"))
                     {
-                        string source = Path.Combine(from, pair.Value.Substring(4));
-                        string target = Path.Combine(to, pair.Value.Substring(4));
+                        // the pictures live in the Apolo folder: the copy gets them in "apolo_icons" beside it
+                        string source = ImagePath(projectPath, spec);
+                        string name = spec.Substring(4);
+                        string target = Path.Combine(Path.Combine(to, "apolo_icons"), name);
+                        if (source != null && File.Exists(source))
+                        {
+                            if (!File.Exists(target))
+                            {
+                                Directory.CreateDirectory(Path.GetDirectoryName(target));
+                                File.Copy(source, target);
+                            }
+                            spec = "img:apolo_icons\\" + name;
+                        }
+                    }
+                    else if (spec.StartsWith("img:"))
+                    {
+                        string source = Path.Combine(from, spec.Substring(4));
+                        string target = Path.Combine(to, spec.Substring(4));
                         if (File.Exists(source) && !File.Exists(target))
                         {
                             Directory.CreateDirectory(Path.GetDirectoryName(target));
                             File.Copy(source, target);
                         }
                     }
+                    lines.Add(pair.Key + "\t" + spec);
                 }
                 File.WriteAllLines(SidecarPath(newProjectPath), lines.ToArray());
             }
@@ -120,7 +228,8 @@ namespace Ares.CommonGUI
             {
             }
             s_Cache[projectPath] = map;
-            if (upgraded)
+            bool moved = MigrateToLibrary(projectPath, map);
+            if (upgraded || moved)
                 Save(projectPath);
             return map;
         }
@@ -232,16 +341,15 @@ namespace Ares.CommonGUI
             Save(projectPath);
         }
 
-        /// <summary>Copies the picture of an emoji into the "apolo_icons" folder beside the project; returns the setting for it.</summary>
+        /// <summary>Copies the picture of an emoji into the icons folder of Apolo; returns the setting for it.</summary>
         public static string ImportEmoji(string projectPath, string emojiFile, string code)
         {
-            string dir = Path.Combine(Path.GetDirectoryName(projectPath), "apolo_icons");
-            Directory.CreateDirectory(dir);
+            string dir = IconsFolder;
             string name = "emoji-" + code + ".png";
             string target = Path.Combine(dir, name);
             if (!File.Exists(target))
                 File.Copy(emojiFile, target);
-            return "img:apolo_icons\\" + name;
+            return "lib:" + name;
         }
 
         public static void RenameMode(string projectPath, string oldMode, string newMode)
@@ -266,11 +374,10 @@ namespace Ares.CommonGUI
             Save(projectPath);
         }
 
-        /// <summary>Copies a picture (scaled down) into the "apolo_icons" folder beside the project; returns the setting for it.</summary>
+        /// <summary>Copies a picture (scaled down) into the icons folder of Apolo; returns the setting for it.</summary>
         public static string ImportImage(string projectPath, string sourceFile)
         {
-            string dir = Path.Combine(Path.GetDirectoryName(projectPath), "apolo_icons");
-            Directory.CreateDirectory(dir);
+            string dir = IconsFolder;
             string name = Guid.NewGuid().ToString("N").Substring(0, 12) + ".png";
             using (FileStream fs = File.OpenRead(sourceFile))
             using (Image src = Image.FromStream(fs))
@@ -290,17 +397,19 @@ namespace Ares.CommonGUI
                     bmp.Save(Path.Combine(dir, name), ImageFormat.Png);
                 }
             }
-            return "img:apolo_icons\\" + name;
+            return "lib:" + name;
         }
 
-        /// <summary>The picture of an "img:" setting (cached, shared - do not dispose); null if missing.</summary>
+        /// <summary>The picture of an "img:" or "lib:" setting (cached, shared - do not dispose); null if missing.</summary>
         public static Bitmap LoadImage(string projectPath, string spec)
         {
-            if (string.IsNullOrEmpty(projectPath) || spec == null || !spec.StartsWith("img:"))
+            if (spec == null || !(spec.StartsWith("img:") || spec.StartsWith("lib:")))
                 return null;
             try
             {
-                string full = Path.Combine(Path.GetDirectoryName(projectPath), spec.Substring(4));
+                string full = ImagePath(projectPath, spec);
+                if (full == null)
+                    return null;
                 Bitmap bmp;
                 if (s_Images.TryGetValue(full, out bmp))
                     return bmp;

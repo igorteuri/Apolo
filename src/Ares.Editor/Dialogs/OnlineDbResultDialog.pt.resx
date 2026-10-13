@@ -121,12 +121,12 @@
     <value>O download das tags de rpgmusictags.org foi concluído com sucesso.</value>
   </data>
   <data name="showLogButton.Text" xml:space="preserve">
-    <value>Mostrar o registro do banco de dados ...</value>
+    <value>Mostrar o registro do banco de dados</value>
   </data>
   <data name="removeDialogBox.Text" xml:space="preserve">
     <value>Não mostrar esta janela novamente</value>
   </data>
   <data name="addIdsLabel.Text" xml:space="preserve">
-    <value>Como adicionar IDs ...</value>
+    <value>Como adicionar IDs</value>
   </data>
 </root>

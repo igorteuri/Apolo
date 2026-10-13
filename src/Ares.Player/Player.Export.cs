@@ -28,6 +28,44 @@ namespace Ares.Player
             projectToolStripMenuItem.DropDownItems.Insert(pos, export);
             projectToolStripMenuItem.DropDownItems.Insert(pos + 1, restore);
             projectToolStripMenuItem.DropDownItems.Insert(pos + 2, associate);
+            EnsureFileAssociation();
+        }
+
+        // When nothing opens .apolo files yet (or what did has been deleted or moved), Apolo registers itself for the
+        // current user, so that exported projects show the Apolo icon. Another working installation is left alone.
+        private static void EnsureFileAssociation()
+        {
+            try
+            {
+                string exe = Application.ExecutablePath;
+                string handler = null;
+                using (Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(".apolo"))
+                {
+                    if (key != null)
+                        handler = key.GetValue("") as string;
+                }
+                if (!string.IsNullOrEmpty(handler) && handler != "ApoloProject")
+                    return; // another program has been chosen for these files
+                string icon = null;
+                using (Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(@"ApoloProject\DefaultIcon"))
+                {
+                    if (key != null)
+                        icon = key.GetValue("") as string;
+                }
+                if (!string.IsNullOrEmpty(icon))
+                {
+                    string path = icon.Trim().Trim('"');
+                    int comma = path.LastIndexOf(',');
+                    if (comma > 0 && !File.Exists(path))
+                        path = path.Substring(0, comma).Trim('"');
+                    if (File.Exists(path))
+                        return; // an installation of Apolo is registered and still there
+                }
+                RegisterFileTypes(exe);
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private enum ExportKind
@@ -176,9 +214,30 @@ namespace Ares.Player
                     SaveProjectNow();
                     string target = dlg.FileName;
                     Ares.CommonGUI.ProgressMonitor monitor = new Ares.CommonGUI.ProgressMonitor(this, T("Exportando...", "Exporting..."));
+                    // the pictures, icons and emojis of the buttons go into the package too
+                    Dictionary<string, string> extras = new Dictionary<string, string>();
+                    string iconsTempFile = null;
+                    try
+                    {
+                        string sidecar = Ares.CommonGUI.ButtonImageStore.BuildPortable(m_Project.FileName, extras);
+                        if (!string.IsNullOrEmpty(sidecar))
+                        {
+                            iconsTempFile = Path.Combine(Path.GetTempPath(), "apolo-icons-" + Guid.NewGuid().ToString("N") + ".txt");
+                            File.WriteAllText(iconsTempFile, sidecar, new System.Text.UTF8Encoding(false));
+                            extras["Icons/icons.txt"] = iconsTempFile;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        extras.Clear();
+                    }
                     Ares.ModelInfo.Exporter.Export(monitor, m_Project, m_Project.FileName, target, error =>
                     {
                         monitor.Close();
+                        if (iconsTempFile != null)
+                        {
+                            try { File.Delete(iconsTempFile); } catch (Exception) { }
+                        }
                         if (error != null)
                         {
                             MessageBox.Show(T("Erro ao exportar: ", "Export error: ") + error.Message, StringResources.Ares,
@@ -189,7 +248,7 @@ namespace Ares.Player
                             ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
                                 T("Projeto completo exportado: ", "Complete project exported: ") + Path.GetFileName(target)));
                         }
-                    });
+                    }, extras);
                 }
                 catch (Exception ex)
                 {
@@ -329,16 +388,7 @@ namespace Ares.Player
         {
             try
             {
-                string exe = Application.ExecutablePath;
-                SetClassValue(@"Software\Classes\.apolo", "", "ApoloProject");
-                SetClassValue(@"Software\Classes\.apkg", "", "ApoloPackedProject");
-                foreach (string id in new[] { "ApoloProject", "ApoloPackedProject" })
-                {
-                    SetClassValue(@"Software\Classes\" + id, "", id == "ApoloProject" ? "Apolo Project" : "Apolo Packed Project");
-                    SetClassValue(@"Software\Classes\" + id + @"\DefaultIcon", "", "\"" + exe + "\",0");
-                    SetClassValue(@"Software\Classes\" + id + @"\shell\open\command", "", "\"" + exe + "\" \"%1\"");
-                }
-                SHChangeNotify(0x08000000, 0, IntPtr.Zero, IntPtr.Zero);
+                RegisterFileTypes(Application.ExecutablePath);
                 ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
                     T("Arquivos .apolo e .apkg agora abrem com o Apolo.", ".apolo and .apkg files now open with Apolo.")));
             }
@@ -346,6 +396,19 @@ namespace Ares.Player
             {
                 MessageBox.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private static void RegisterFileTypes(string exe)
+        {
+            SetClassValue(@"Software\Classes\.apolo", "", "ApoloProject");
+            SetClassValue(@"Software\Classes\.apkg", "", "ApoloPackedProject");
+            foreach (string id in new[] { "ApoloProject", "ApoloPackedProject" })
+            {
+                SetClassValue(@"Software\Classes\" + id, "", id == "ApoloProject" ? "Apolo Project" : "Apolo Packed Project");
+                SetClassValue(@"Software\Classes\" + id + @"\DefaultIcon", "", "\"" + exe + "\",0");
+                SetClassValue(@"Software\Classes\" + id + @"\shell\open\command", "", "\"" + exe + "\" \"%1\"");
+            }
+            SHChangeNotify(0x08000000, 0, IntPtr.Zero, IntPtr.Zero);
         }
 
         private static void SetClassValue(string path, string name, string value)

@@ -232,7 +232,7 @@
     <value>268, 30</value>
   </data>
   <data name="downloadToMenuItem.Text" xml:space="preserve">
-    <value>Download to ...</value>
+    <value>Download to</value>
   </data>
   <data name="searchSimilarItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>268, 30</value>

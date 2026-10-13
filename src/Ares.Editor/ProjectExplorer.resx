@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="selectElementKeyMenuItem.Text" xml:space="preserve">
-    <value>Select Key ...</value>
+    <value>Select Key</value>
   </data>
   <data name="&gt;&gt;toolStripMenuItem8.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -141,7 +141,7 @@
     <value>473, 372</value>
   </data>
   <data name="toolStripMenuItem2.Text" xml:space="preserve">
-    <value>Select Key ...</value>
+    <value>Select Key</value>
   </data>
   <data name="toolStripMenuItem16.Size" type="System.Drawing.Size, System.Drawing">
     <value>304, 30</value>
@@ -153,7 +153,7 @@
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="tagsToolStripMenuItem.Text" xml:space="preserve">
-    <value>Tags ...</value>
+    <value>Tags</value>
   </data>
   <data name="renameToolStripMenuItem2.Size" type="System.Drawing.Size, System.Drawing">
     <value>304, 30</value>
@@ -201,13 +201,13 @@
     <value>304, 30</value>
   </data>
   <data name="addMusicByTagsToolStripMenuItem.Text" xml:space="preserve">
-    <value>Add Music By Tags ...</value>
+    <value>Add Music By Tags</value>
   </data>
   <data name="moveUpButton.ImageTransparentColor" type="System.Drawing.Color, System.Drawing">
     <value>Magenta</value>
   </data>
   <data name="addBackgroundSoundsToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Add Background Sounds ...</value>
+    <value>Add Background Sounds</value>
   </data>
   <data name="&gt;&gt;addMusicByTagsToolStripMenuItem.Name" xml:space="preserve">
     <value>addMusicByTagsToolStripMenuItem</value>
@@ -237,7 +237,7 @@
     <value>Ascending by Key</value>
   </data>
   <data name="musicByTagsToolStripItem.Text" xml:space="preserve">
-    <value>Add Music By Tags ...</value>
+    <value>Add Music By Tags</value>
   </data>
   <data name="&gt;&gt;addRandomPlaylistToolStripMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -250,7 +250,7 @@
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="addSequentialElementToolStripMenuItem.Text" xml:space="preserve">
-    <value>Add Sequential List ...</value>
+    <value>Add Sequential List</value>
   </data>
   <data name="&gt;&gt;toolStrip1.Parent" xml:space="preserve">
     <value>$this</value>
@@ -274,7 +274,7 @@
     <value>304, 30</value>
   </data>
   <data name="addSequentialElementToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Add Sequential List ...</value>
+    <value>Add Sequential List</value>
   </data>
   <data name="projectTree.SelectedNodes" mimetype="application/x-microsoft.net.object.binary.base64">
     <value>
@@ -296,10 +296,10 @@
     <value>Control+X</value>
   </data>
   <data name="modeElementStartingToolStripMenuItem2.Text" xml:space="preserve">
-    <value>Starting ...</value>
+    <value>Starting</value>
   </data>
   <data name="exportToolStripMenuItem3.Text" xml:space="preserve">
-    <value>Export ...</value>
+    <value>Export</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>Project Explorer</value>
@@ -326,7 +326,7 @@
     <value>System.Windows.Forms.ToolStripButton, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="addSequentialPlaylistToolStripMenuItem.Text" xml:space="preserve">
-    <value>Add Sequential Music List ...</value>
+    <value>Add Sequential Music List</value>
   </data>
   <data name="addParallelElementToolStripMenuItem1.Size" type="System.Drawing.Size, System.Drawing">
     <value>304, 30</value>
@@ -425,7 +425,7 @@
     <value>Control+X</value>
   </data>
   <data name="exportToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Export ...</value>
+    <value>Export</value>
   </data>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>10, 20</value>
@@ -443,7 +443,7 @@
     <value>Cut</value>
   </data>
   <data name="toolStripMenuItem1.Text" xml:space="preserve">
-    <value>Add Mode ...</value>
+    <value>Add Folder</value>
   </data>
   <data name="&gt;&gt;selectBGSoundsKeyMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -503,7 +503,7 @@
     <value>5, 5, 5, 5</value>
   </data>
   <data name="selectBGSoundsKeyMenuItem.Text" xml:space="preserve">
-    <value>Select Key ...</value>
+    <value>Select Key</value>
   </data>
   <data name="&gt;&gt;importToolStripMenuItem4.Name" xml:space="preserve">
     <value>importToolStripMenuItem4</value>
@@ -512,7 +512,7 @@
     <value>301, 6</value>
   </data>
   <data name="modeElementStartingToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Starting ...</value>
+    <value>Starting</value>
   </data>
   <data name="moveDownButton.Size" type="System.Drawing.Size, System.Drawing">
     <value>28, 28</value>
@@ -560,7 +560,7 @@
     <value>301, 6</value>
   </data>
   <data name="editToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Edit ...</value>
+    <value>Edit</value>
   </data>
   <data name="toolStripMenuItem1.Size" type="System.Drawing.Size, System.Drawing">
     <value>187, 30</value>
@@ -602,7 +602,7 @@
     <value>False</value>
   </data>
   <data name="importToolStripMenuItem.Text" xml:space="preserve">
-    <value>Import ...</value>
+    <value>Import</value>
   </data>
   <data name="renameToolStripMenuItem.Text" xml:space="preserve">
     <value>Rename</value>
@@ -638,7 +638,7 @@
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="addBackgroundSoundsToolStripMenuItem.Text" xml:space="preserve">
-    <value>Add Background Sounds ...</value>
+    <value>Add Background Sounds</value>
   </data>
   <data name="sortModesByNameAscMenuItem.Text" xml:space="preserve">
     <value>Ascending by Name</value>
@@ -686,13 +686,13 @@
     <value>Ascending by Name</value>
   </data>
   <data name="importToolStripMenuItem4.Text" xml:space="preserve">
-    <value>Import ...</value>
+    <value>Import</value>
   </data>
   <data name="sortElementsByNameDescMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>266, 30</value>
   </data>
   <data name="exportToolStripMenuItem.Text" xml:space="preserve">
-    <value>Export ...</value>
+    <value>Export</value>
   </data>
   <data name="modeElementStartingToolStripMenuItem2.Size" type="System.Drawing.Size, System.Drawing">
     <value>233, 30</value>
@@ -737,7 +737,7 @@
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="addChoiceListToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Add Random List ...</value>
+    <value>Add Random List</value>
   </data>
   <data name="addSoundChoiceToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>233, 30</value>
@@ -746,7 +746,7 @@
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="exportToolStripMenuItem2.Text" xml:space="preserve">
-    <value>Export ...</value>
+    <value>Export</value>
   </data>
   <data name="&gt;&gt;sortModesByNameDescMenuItem.Name" xml:space="preserve">
     <value>sortModesByNameDescMenuItem</value>
@@ -821,7 +821,7 @@
     <value>187, 30</value>
   </data>
   <data name="toolStripMenuItem14.Text" xml:space="preserve">
-    <value>Add Macro ...</value>
+    <value>Add Macro</value>
   </data>
   <data name="&gt;&gt;toolStripSeparator10.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripSeparator, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -836,7 +836,7 @@
     <value>exportToolStripMenuItem1</value>
   </data>
   <data name="sortModesToolStripMenuItem.Text" xml:space="preserve">
-    <value>Sort Modes</value>
+    <value>Sort Folders</value>
   </data>
   <data name="&gt;&gt;webRadioMenuItem.Name" xml:space="preserve">
     <value>webRadioMenuItem</value>
@@ -860,7 +860,7 @@
     <value>304, 30</value>
   </data>
   <data name="importToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Import ...</value>
+    <value>Import</value>
   </data>
   <data name="toolStripMenuItem10.Text" xml:space="preserve">
     <value>Copy</value>
@@ -890,7 +890,7 @@
     <value>addChoiceListToolStripMenuItem1</value>
   </data>
   <data name="selectContainerKeyMenuItem.Text" xml:space="preserve">
-    <value>Select Key ...</value>
+    <value>Select Key</value>
   </data>
   <data name="&gt;&gt;selectContainerKeyMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -908,7 +908,7 @@
     <value>System.Windows.Forms.ContextMenuStrip, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="addRandomPlaylistToolStripMenuItem.Text" xml:space="preserve">
-    <value>Add Random Music List ...</value>
+    <value>Add Random Music List</value>
   </data>
   <data name="tagsToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>211, 30</value>
@@ -1025,13 +1025,13 @@
     <value>System.Windows.Forms.ContextMenuStrip, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="addScenarioToolStripMenuItem.Text" xml:space="preserve">
-    <value>Add Scenario ...</value>
+    <value>Add Scenario</value>
   </data>
   <data name="&gt;&gt;addParallelElementToolStripMenuItem.Name" xml:space="preserve">
     <value>addParallelElementToolStripMenuItem</value>
   </data>
   <data name="addChoiceListToolStripMenuItem.Text" xml:space="preserve">
-    <value>Add Random List ...</value>
+    <value>Add Random List</value>
   </data>
   <data name="&gt;&gt;webRadioItem2.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -1046,7 +1046,7 @@
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="addRandomPlaylistToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Add Random Music List ...</value>
+    <value>Add Random Music List</value>
   </data>
   <data name="&gt;&gt;toolStripSeparator2.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripSeparator, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -1058,7 +1058,7 @@
     <value>webRadioItem2</value>
   </data>
   <data name="addSequentialPlaylistToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Add Sequential Music List ...</value>
+    <value>Add Sequential Music List</value>
   </data>
   <data name="&gt;&gt;sortModesByNameAscMenuItem.Name" xml:space="preserve">
     <value>sortModesByNameAscMenuItem</value>
@@ -1079,16 +1079,16 @@
     <value>Segoe UI, 9pt, style=Bold</value>
   </data>
   <data name="editToolStripMenuItem.Text" xml:space="preserve">
-    <value>Edit ...</value>
+    <value>Edit</value>
   </data>
   <data name="addParallelElementToolStripMenuItem.Text" xml:space="preserve">
-    <value>Add Parallel List ...</value>
+    <value>Add Parallel List</value>
   </data>
   <data name="&gt;&gt;toolStripMenuItem5.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="addParallelElementToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Add Parallel List ...</value>
+    <value>Add Parallel List</value>
   </data>
   <data name="modeElementStartingToolStripMenuItem2.Font" type="System.Drawing.Font, System.Drawing">
     <value>Segoe UI, 9pt, style=Bold</value>
@@ -1151,7 +1151,7 @@
     <value>toolStripMenuItem3</value>
   </data>
   <data name="webRadioItem2.Text" xml:space="preserve">
-    <value>Add Web Radio ...</value>
+    <value>Add Web Radio</value>
   </data>
   <data name="toolStripMenuItem9.Text" xml:space="preserve">
     <value>Cut</value>
@@ -1187,7 +1187,7 @@
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="toolStripMenuItem17.Text" xml:space="preserve">
-    <value>Sort Elements</value>
+    <value>Sort Playlists</value>
   </data>
   <data name="sortElementsByNameAscMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>266, 30</value>
@@ -1211,7 +1211,7 @@
     <value>304, 30</value>
   </data>
   <data name="webRadioMenuItem.Text" xml:space="preserve">
-    <value>Add Web Radio ...</value>
+    <value>Add Web Radio</value>
   </data>
   <data name="&gt;&gt;editToolStripMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -1232,7 +1232,7 @@
     <value>exportDialog</value>
   </data>
   <data name="importToolStripMenuItem2.Text" xml:space="preserve">
-    <value>Import ...</value>
+    <value>Import</value>
   </data>
   <data name="&gt;&gt;toolStripSeparator7.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripSeparator, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -1412,7 +1412,7 @@
     <value>toolStripMenuItem11</value>
   </data>
   <data name="modeElementStartingToolStripMenuItem.Text" xml:space="preserve">
-    <value>Starting ...</value>
+    <value>Starting</value>
   </data>
   <data name="setKeyButton.ImageTransparentColor" type="System.Drawing.Color, System.Drawing">
     <value>Magenta</value>
@@ -1421,7 +1421,7 @@
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="setKeyButton.Text" xml:space="preserve">
-    <value>Select Key ...</value>
+    <value>Select Key</value>
   </data>
   <data name="&gt;&gt;toolStrip1.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStrip, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

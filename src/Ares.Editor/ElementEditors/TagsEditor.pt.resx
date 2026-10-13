@@ -130,16 +130,16 @@
     <value>Gerenciamento de tags</value>
   </data>
   <data name="addTagButton.Text" xml:space="preserve">
-    <value>Adicionar ...</value>
+    <value>Adicionar</value>
   </data>
   <data name="addCategoryButton.Text" xml:space="preserve">
-    <value>Adicionar ...</value>
+    <value>Adicionar</value>
   </data>
   <data name="langColHeader.Text" xml:space="preserve">
     <value>Idioma</value>
   </data>
   <data name="deleteTranslationButton.Text" xml:space="preserve">
-    <value>Excluir ...</value>
+    <value>Excluir</value>
   </data>
   <data name="groupBox2.Text" xml:space="preserve">
     <value>Tags</value>
@@ -148,19 +148,19 @@
     <value>Limpar banco</value>
   </data>
   <data name="renameCategoryButton.Text" xml:space="preserve">
-    <value>Renomear ...</value>
+    <value>Renomear</value>
   </data>
   <data name="deleteTagButton.Text" xml:space="preserve">
-    <value>Excluir ...</value>
+    <value>Excluir</value>
   </data>
   <data name="deleteCategoryButton.Text" xml:space="preserve">
-    <value>Excluir ...</value>
+    <value>Excluir</value>
   </data>
   <data name="addLanguageButton.Text" xml:space="preserve">
-    <value>Adicionar ...</value>
+    <value>Adicionar</value>
   </data>
   <data name="renameTagButton.Text" xml:space="preserve">
-    <value>Renomear ...</value>
+    <value>Renomear</value>
   </data>
   <data name="tagHiddenBox.Text" xml:space="preserve">
     <value>Oculto</value>
@@ -175,15 +175,15 @@
     <value>Categorias</value>
   </data>
   <data name="addTranslationButton.Text" xml:space="preserve">
-    <value>Adicionar ...</value>
+    <value>Adicionar</value>
   </data>
   <data name="renameTranslationButton.Text" xml:space="preserve">
-    <value>Renomear ...</value>
+    <value>Renomear</value>
   </data>
   <data name="deleteLanguageButton.Text" xml:space="preserve">
-    <value>Excluir ...</value>
+    <value>Excluir</value>
   </data>
   <data name="renameLanguageButton.Text" xml:space="preserve">
-    <value>Renomear ...</value>
+    <value>Renomear</value>
   </data>
 </root>

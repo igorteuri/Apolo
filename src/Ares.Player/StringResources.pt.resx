@@ -210,7 +210,7 @@ Você deve ajustar algumas configurações primeiro.</value>
     <value>Sobre o Apolo ...</value>
   </data>
   <data name="ShowMessages" xml:space="preserve">
-    <value>Mensagens ...</value>
+    <value>Avisos</value>
   </data>
   <data name="ShowSettings" xml:space="preserve">
     <value>Configurações ...</value>

@@ -307,7 +307,7 @@
 </value>
   </data>
   <data name="addTagButton.Text" xml:space="preserve">
-    <value>Add Tag ...</value>
+    <value>Add Tag</value>
   </data>
   <data name="cancelButton.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Right</value>

@@ -140,6 +140,8 @@
     <Compile Include="Player.OnlineMedia.cs" />
     <Compile Include="OpenMedia.cs" />
     <Compile Include="EmojiCatalog.cs" />
+    <Compile Include="AppearanceDialogs.cs" />
+    <Compile Include="ImageSearchDialog.cs" />
     <Compile Include="Player.Appearance.cs" />
     <Compile Include="ElementButton.cs" />
     <Compile Include="IconPickerDialog.cs" />

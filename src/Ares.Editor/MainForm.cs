@@ -65,7 +65,23 @@ namespace Ares.Editor
             PrepareModelChecks();
             InitializeComponent();
             this.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0);
-            EditorIcons.Toolbar(toolStrip1);
+            // toolbar in the same row as the menus (like in the Player); new / open are in the File menu already
+            newButton.Visible = false;
+            openButton.Visible = false;
+            toolStrip1.Items.Remove(saveButton);
+            toolStrip1.Items.Remove(undoButton);
+            toolStrip1.Items.Remove(redoButton);
+            toolStrip1.Items.Remove(stopButton);
+            menuStrip1.ImageScalingSize = new Size(20, 20);
+            menuStrip1.ShowItemToolTips = true;
+            menuStrip1.Items.Add(new ToolStripSeparator());
+            menuStrip1.Items.Add(saveButton);
+            menuStrip1.Items.Add(undoButton);
+            menuStrip1.Items.Add(redoButton);
+            menuStrip1.Items.Add(new ToolStripSeparator());
+            menuStrip1.Items.Add(stopButton);
+            toolStrip1.Visible = false;
+            EditorIcons.Toolbar(menuStrip1);
             tagsMenuItem.Visible = false; // the tag system is not used any more
             EnableFolderDrop(this);
             // fixed panels like in the player: no pin / auto-hide button, no dragging windows around
@@ -251,7 +267,6 @@ namespace Ares.Editor
         {
             CommonGUI.SettingsDialog dialog = new CommonGUI.SettingsDialog(Ares.Settings.Settings.Instance, m_BasicSettings);
             dialog.AddPage(new Dialogs.ToolsPageHost());
-            dialog.AddPage(new Dialogs.OnlineDbPageHost());
             dialog.SetVisiblePage(pageIndex);
             if (dialog.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
             {
@@ -629,10 +644,12 @@ namespace Ares.Editor
             DialogResult result = saveFileDialog.ShowDialog(this);
             if (result != System.Windows.Forms.DialogResult.OK)
                 return false;
+            string previousFileName = m_CurrentProject.FileName;
             m_CurrentProject.FileName = saveFileDialog.FileName;
             bool result2 = SaveProject();
             if (result2)
             {
+                ProjectIcons.CopyForSaveAs(previousFileName, m_CurrentProject.FileName);
                 Ares.Settings.Settings.Instance.RecentFiles.AddFile(new RecentFiles.ProjectEntry(m_CurrentProject.FileName, m_CurrentProject.Title));
             }
             return result2;
@@ -1168,15 +1185,18 @@ namespace Ares.Editor
                 return;
 
             Ares.CommonGUI.ProgressMonitor monitor = new Ares.CommonGUI.ProgressMonitor(this, StringResources.Exporting);
+            string iconsTempFile;
+            Dictionary<string, string> extras = ProjectIcons.PrepareExport(m_CurrentProject.FileName, out iconsTempFile);
             Ares.ModelInfo.Exporter.Export(monitor, m_CurrentProject, m_CurrentProject.FileName, exportFileDialog.FileName, error =>
             {
                 monitor.Close();
+                ProjectIcons.Cleanup(iconsTempFile);
                 if (error != null)
                 {
                     System.Windows.Forms.MessageBox.Show(String.Format(StringResources.ExportError, error.Message), StringResources.Ares,
                         System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
                 }
-            });
+            }, extras);
         }
 
         private void importToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1274,7 +1294,7 @@ namespace Ares.Editor
 
         public void SetOnlineUserId()
         {
-            ShowSettingsDialog(2);
+            ShowSettingsDialog(0);
         }
 
         private void tagsMenuItem_Click(object sender, EventArgs e)

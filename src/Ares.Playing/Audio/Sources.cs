@@ -169,6 +169,13 @@ namespace Ares.Playing.Audio
         private int m_PendingStart, m_PendingCount;
         private long m_Frames;
         private double m_Length;
+        // index of the Ogg pages (for fast seeking): offset, granule position and "continued packet" flag of every page
+        private List<long> m_PageOffset;
+        private List<long> m_PageGranule;
+        private List<bool> m_PageContinued;
+        private int m_FirstAudioPage;
+        private int m_PreSkip;
+        private bool m_IndexTried;
 
         public OpusSource(string path)
         {
@@ -256,7 +263,16 @@ namespace Ares.Playing.Audio
             {
                 if (m_Reader == null || !m_Reader.HasNextPacket)
                     return false;
-                short[] packet = m_Reader.DecodeNextPacket();
+                short[] packet;
+                try
+                {
+                    packet = m_Reader.DecodeNextPacket();
+                }
+                catch (Exception)
+                {
+                    // a damaged packet, or the end of a file that was started in the middle: stop here
+                    return false;
+                }
                 if (packet == null || packet.Length == 0)
                     continue;
                 if (m_Pending.Length < packet.Length)
@@ -277,9 +293,21 @@ namespace Ares.Playing.Audio
 
         public void Seek(double seconds)
         {
+            // far jumps: go straight to the right Ogg page instead of decoding everything before it
+            if (seconds > 2.0 && TrySeekFast(seconds))
+                return;
+            SeekSlow(seconds);
+        }
+
+        private void SeekSlow(double seconds)
+        {
             // Opus decodes much faster than real time: start again and skip
             Open();
-            long skip = (long)(Math.Max(0, seconds) * 48000);
+            SkipFrames((long)(Math.Max(0, seconds) * 48000));
+        }
+
+        private void SkipFrames(long skip)
+        {
             float[] discard = new float[8192];
             while (skip > 0)
             {
@@ -288,6 +316,138 @@ namespace Ares.Playing.Audio
                 if (got <= 0)
                     break;
                 skip -= got / 2;
+            }
+        }
+
+        // reads the position of every Ogg page (only the page headers, so it is fast, even for long files)
+        private void BuildIndex()
+        {
+            m_IndexTried = true;
+            try
+            {
+                List<long> offsets = new List<long>();
+                List<long> granules = new List<long>();
+                List<bool> continued = new List<bool>();
+                using (FileStream fs = new FileStream(m_Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    byte[] h = new byte[27];
+                    byte[] seg = new byte[255];
+                    long pos = 0;
+                    long len = fs.Length;
+                    while (pos + 27 <= len)
+                    {
+                        fs.Position = pos;
+                        if (fs.Read(h, 0, 27) < 27)
+                            break;
+                        if (h[0] != 'O' || h[1] != 'g' || h[2] != 'g' || h[3] != 'S')
+                            break;
+                        int nseg = h[26];
+                        if (nseg > 0 && fs.Read(seg, 0, nseg) < nseg)
+                            break;
+                        long payload = 0;
+                        for (int i = 0; i < nseg; i++)
+                            payload += seg[i];
+                        offsets.Add(pos);
+                        granules.Add(BitConverter.ToInt64(h, 6));
+                        continued.Add((h[5] & 1) != 0);
+                        pos += 27 + nseg + payload;
+                    }
+                    // the pre-skip from the OpusHead packet (first page)
+                    if (offsets.Count > 0)
+                    {
+                        byte[] head = new byte[64];
+                        fs.Position = 0;
+                        int n = fs.Read(head, 0, head.Length);
+                        for (int i = 0; i + 12 < n; i++)
+                        {
+                            if (head[i] == 'O' && head[i + 1] == 'p' && head[i + 2] == 'u' && head[i + 3] == 's' && head[i + 4] == 'H')
+                            {
+                                m_PreSkip = head[i + 10] | (head[i + 11] << 8);
+                                break;
+                            }
+                        }
+                    }
+                }
+                // the first audio page is the first one with a positive granule position (header pages have 0)
+                int first = -1;
+                for (int i = 0; i < granules.Count; i++)
+                {
+                    if (granules[i] > 0)
+                    {
+                        first = i;
+                        break;
+                    }
+                }
+                if (first < 2 || offsets.Count - first < 8)
+                    return;
+                m_PageOffset = offsets;
+                m_PageGranule = granules;
+                m_PageContinued = continued;
+                m_FirstAudioPage = first;
+            }
+            catch (Exception)
+            {
+                m_PageOffset = null;
+            }
+        }
+
+        private bool TrySeekFast(double seconds)
+        {
+            if (!m_IndexTried)
+                BuildIndex();
+            if (m_PageOffset == null)
+                return false;
+            try
+            {
+                long target = (long)(seconds * 48000) + m_PreSkip;     // in granule units (they include the pre-skip)
+                long wanted = target - 3840;                             // 80 ms of run-up for the decoder
+                // last page that ends at or before "wanted"; reading starts with the page after it
+                int prev = -1;
+                int lo = m_FirstAudioPage, hi = m_PageOffset.Count - 1;
+                while (lo <= hi)
+                {
+                    int mid = (lo + hi) / 2;
+                    if (m_PageGranule[mid] > 0 && m_PageGranule[mid] <= wanted)
+                    {
+                        prev = mid;
+                        lo = mid + 1;
+                    }
+                    else
+                        hi = mid - 1;
+                }
+                if (prev < 0)
+                    return false;
+                int start = prev + 1;
+                while (start < m_PageOffset.Count && m_PageContinued[start])
+                    start++;
+                if (start >= m_PageOffset.Count - 1)
+                    return false;
+                long startGranule = m_PageGranule[start - 1];
+                // after the first audio page the granule of the page before is the position of the first sample we get
+                long startFrame = m_PageGranule[start - 1] - m_PreSkip;
+                if (start - 1 < m_FirstAudioPage || startFrame < 0 || startGranule <= 0)
+                    return false;
+
+                Close();
+                m_File = new FileStream(m_Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                Stream spliced = new OggSpliceStream(m_File, m_PageOffset[m_FirstAudioPage], m_PageOffset[start]);
+                m_Decoder = Concentus.OpusCodecFactory.CreateDecoder(48000, 2);
+                m_Reader = new Concentus.Oggfile.OpusOggReadStream(m_Decoder, spliced);
+                m_PendingStart = 0;
+                m_PendingCount = 0;
+                m_Frames = startFrame;
+                long skip = (long)(seconds * 48000) - startFrame;
+                if (skip < 0)
+                    skip = 0;
+                SkipFrames(skip);
+                // if the data ended before the wanted position (or did not decode at all), do it the slow way
+                if (m_Frames < (long)(seconds * 48000) - 2 && !(m_Length > 0 && seconds >= m_Length - 0.5))
+                    return false;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
             }
         }
 
@@ -312,6 +472,171 @@ namespace Ares.Playing.Audio
         {
             Close();
         }
+    }
+
+    /// <summary>
+    /// An Ogg stream made of the header pages of a file followed by the pages from some later point on, with the
+    /// page numbers and checksums renewed. Lets the Opus decoder start in the middle of a file without reading
+    /// (and decoding) everything before. The pre-skip of the header is set to 0, because decoding starts mid-file.
+    /// </summary>
+    internal sealed class OggSpliceStream : Stream
+    {
+        private readonly FileStream m_File;
+        private byte[] m_Buf;
+        private int m_Pos;
+        private long m_Next;
+        private uint m_Seq;
+        private long m_Served;
+        private static readonly uint[] s_Crc = MakeCrcTable();
+
+        private static uint[] MakeCrcTable()
+        {
+            uint[] table = new uint[256];
+            for (uint i = 0; i < 256; i++)
+            {
+                uint r = i << 24;
+                for (int k = 0; k < 8; k++)
+                    r = (r & 0x80000000u) != 0 ? (r << 1) ^ 0x04C11DB7u : (r << 1);
+                table[i] = r;
+            }
+            return table;
+        }
+
+        private static void FixCrc(byte[] page)
+        {
+            page[22] = page[23] = page[24] = page[25] = 0;
+            uint crc = 0;
+            for (int i = 0; i < page.Length; i++)
+                crc = (crc << 8) ^ s_Crc[((crc >> 24) & 0xFF) ^ page[i]];
+            page[22] = (byte)crc;
+            page[23] = (byte)(crc >> 8);
+            page[24] = (byte)(crc >> 16);
+            page[25] = (byte)(crc >> 24);
+        }
+
+        private static byte[] ReadPage(FileStream fs, long offset)
+        {
+            fs.Position = offset;
+            byte[] h = new byte[27];
+            if (ReadFully(fs, h, 27) < 27 || h[0] != 'O' || h[1] != 'g' || h[2] != 'g' || h[3] != 'S')
+                return null;
+            int nseg = h[26];
+            byte[] seg = new byte[nseg];
+            if (nseg > 0 && ReadFully(fs, seg, nseg) < nseg)
+                return null;
+            int payload = 0;
+            for (int i = 0; i < nseg; i++)
+                payload += seg[i];
+            byte[] page = new byte[27 + nseg + payload];
+            Array.Copy(h, page, 27);
+            Array.Copy(seg, 0, page, 27, nseg);
+            if (payload > 0 && ReadFully(fs, page, payload, 27 + nseg) < payload)
+                return null;
+            return page;
+        }
+
+        private static int ReadFully(Stream s, byte[] buffer, int count)
+        {
+            return ReadFully(s, buffer, count, 0);
+        }
+
+        private static int ReadFully(Stream s, byte[] buffer, int count, int offset)
+        {
+            int total = 0;
+            while (total < count)
+            {
+                int n = s.Read(buffer, offset + total, count - total);
+                if (n <= 0)
+                    break;
+                total += n;
+            }
+            return total;
+        }
+
+        /// <param name="firstAudioOffset">file offset of the first audio page (everything before is header)</param>
+        /// <param name="resumeOffset">file offset of the page where the audio should continue</param>
+        public OggSpliceStream(FileStream file, long firstAudioOffset, long resumeOffset)
+        {
+            m_File = file;
+            // header pages, copied (the pre-skip in the first one is zeroed, and its checksum renewed)
+            MemoryStream header = new MemoryStream();
+            long pos = 0;
+            uint seq = 0;
+            bool first = true;
+            while (pos < firstAudioOffset)
+            {
+                byte[] page = ReadPage(file, pos);
+                if (page == null)
+                    throw new InvalidDataException("bad ogg page");
+                if (first)
+                {
+                    int nseg = page[26];
+                    int payloadStart = 27 + nseg;
+                    if (page.Length >= payloadStart + 12 && page[payloadStart] == 'O' && page[payloadStart + 1] == 'p'
+                        && page[payloadStart + 2] == 'u' && page[payloadStart + 3] == 's' && page[payloadStart + 4] == 'H')
+                    {
+                        page[payloadStart + 10] = 0;
+                        page[payloadStart + 11] = 0;
+                        FixCrc(page);
+                    }
+                    first = false;
+                }
+                header.Write(page, 0, page.Length);
+                pos += page.Length;
+                seq++;
+            }
+            m_Buf = header.ToArray();
+            m_Pos = 0;
+            m_Next = resumeOffset;
+            m_Seq = seq;
+        }
+
+        private bool LoadNext()
+        {
+            byte[] page = ReadPage(m_File, m_Next);
+            if (page == null)
+                return false;
+            m_Next += page.Length;
+            page[18] = (byte)m_Seq;
+            page[19] = (byte)(m_Seq >> 8);
+            page[20] = (byte)(m_Seq >> 16);
+            page[21] = (byte)(m_Seq >> 24);
+            m_Seq++;
+            FixCrc(page);
+            m_Buf = page;
+            m_Pos = 0;
+            return true;
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int total = 0;
+            while (total < count)
+            {
+                if (m_Pos >= m_Buf.Length && !LoadNext())
+                    break;
+                int n = Math.Min(count - total, m_Buf.Length - m_Pos);
+                Array.Copy(m_Buf, m_Pos, buffer, offset + total, n);
+                m_Pos += n;
+                total += n;
+            }
+            m_Served += total;
+            return total;
+        }
+
+        public override bool CanRead { get { return true; } }
+        public override bool CanSeek { get { return false; } }
+        public override bool CanWrite { get { return false; } }
+        public override long Length { get { throw new NotSupportedException(); } }
+        public override long Position
+        {
+            get { return m_Served; }
+            set { throw new NotSupportedException(); }
+        }
+        public override void Flush() { }
+        public override long Seek(long offset, SeekOrigin origin) { throw new NotSupportedException(); }
+        public override void SetLength(long value) { throw new NotSupportedException(); }
+        public override void Write(byte[] buffer, int offset, int count) { throw new NotSupportedException(); }
     }
 
     /// <summary>The stream of a web radio without the title information (ICY) which is mixed into the data.</summary>

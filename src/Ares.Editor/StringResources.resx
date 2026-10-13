@@ -136,7 +136,7 @@
     <value>There is already a category with this name.</value>
   </data>
   <data name="Copying" xml:space="preserve">
-    <value>Copying ...</value>
+    <value>Copying</value>
   </data>
   <data name="CopyOrMoveParentIntoChild" xml:space="preserve">
     <value>A parent directory can't be copied or moved into one of its child directories.</value>
@@ -157,16 +157,16 @@
     <value>Error exporting the project: {0}</value>
   </data>
   <data name="Exporting" xml:space="preserve">
-    <value>Exporting ...</value>
+    <value>Exporting</value>
   </data>
   <data name="ExternalPlayerStartFail" xml:space="preserve">
     <value>Couldn''t start external player. Error message: {0}</value>
   </data>
   <data name="ExtractingMusicIds" xml:space="preserve">
-    <value>Getting music ids ...</value>
+    <value>Getting music ids</value>
   </data>
   <data name="ExtractingTags" xml:space="preserve">
-    <value>Extracting tags ...</value>
+    <value>Extracting tags</value>
   </data>
   <data name="FileExplorerTitle" xml:space="preserve">
     <value>{0} Explorer</value>
@@ -197,7 +197,7 @@ Left      - Previous music title</value>
     <value>Error importing the project: {0}</value>
   </data>
   <data name="Importing" xml:space="preserve">
-    <value>Importing ...</value>
+    <value>Importing</value>
   </data>
   <data name="InsufficientCommandData" xml:space="preserve">
     <value>The command still needs some data. Please select the necessary element(s).</value>
@@ -236,7 +236,7 @@ Left      - Previous music title</value>
     <value>Mode '{0}': </value>
   </data>
   <data name="Moving" xml:space="preserve">
-    <value>Moving ...</value>
+    <value>Moving</value>
   </data>
   <data name="Music" xml:space="preserve">
     <value>Music</value>
@@ -462,10 +462,10 @@ You should adapt some settings first.</value>
     <value>Error downloading tags: {0}</value>
   </data>
   <data name="DownloadingTags" xml:space="preserve">
-    <value>Downloading tags ...</value>
+    <value>Downloading tags</value>
   </data>
   <data name="SharingTags" xml:space="preserve">
-    <value>Sharing tags ...</value>
+    <value>Sharing tags</value>
   </data>
   <data name="UploadError" xml:space="preserve">
     <value>Error sharing tags: {0}</value>
@@ -480,10 +480,10 @@ You should adapt some settings first.</value>
     <value>The file doesn't contain a valid Ares project. If it contains a project element (e.g. a szenario), import the file at a mode in the Project Explorer.</value>
   </data>
   <data name="AddingFiles" xml:space="preserve">
-    <value>Adding files ...</value>
+    <value>Adding files</value>
   </data>
   <data name="GettingTitles" xml:space="preserve">
-    <value>Getting titles from ID3 tags ...</value>
+    <value>Getting titles from ID3 tags</value>
   </data>
   <data name="TagsCleanedUp" xml:space="preserve">
     <value>Tags database has been cleaned up. Show log?</value>
@@ -495,7 +495,7 @@ You should adapt some settings first.</value>
     <value>TipsOfTheDay.xml</value>
   </data>
   <data name="FindingFilesInDB" xml:space="preserve">
-    <value>Searching files in DB ...</value>
+    <value>Searching files in DB</value>
   </data>
   <data name="MultiFileTagQuestion" xml:space="preserve">
     <value>You have selected {0} files from {1} directories. Set tags for all those files?</value>
@@ -507,10 +507,10 @@ You should adapt some settings first.</value>
     <value>Online Audio Sources</value>
   </data>
   <data name="DownloadingAudio" xml:space="preserve">
-    <value>Downloading audio files ...</value>
+    <value>Downloading audio files</value>
   </data>
   <data name="SearchingForAudio" xml:space="preserve">
-    <value>Searching for audio files...</value>
+    <value>Searching for audio files</value>
   </data>
   <data name="SearchError" xml:space="preserve">
     <value>Error searching for audio: {0}</value>

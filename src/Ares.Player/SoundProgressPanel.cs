@@ -28,6 +28,7 @@ namespace Ares.Player
     public class SoundProgressPanel : FlowLayoutPanel
     {
         public event EventHandler<SoundEventArgs> StopRequested;
+        public event EventHandler<SoundEventArgs> PauseRequested;
         public event EventHandler<SoundSeekEventArgs> SeekRequested;
         public event EventHandler<SoundRepeatEventArgs> RepeatRequested;
 
@@ -55,6 +56,7 @@ namespace Ares.Player
             public Label TitleLabel;
             public MusicProgressBar Bar;
             public Button StopButton;
+            public Button PauseButton;
             public CheckBox RepeatBox;
             public bool Updating;
 
@@ -71,6 +73,9 @@ namespace Ares.Player
                 StopButton = new Button();
                 StopButton.Text = "■"; // black square
                 StopButton.TabStop = false;
+                PauseButton = new Button();
+                PauseButton.Text = "\u275A\u275A"; // two bars
+                PauseButton.TabStop = false;
                 RepeatBox = new CheckBox();
                 RepeatBox.Appearance = Appearance.Button;
                 RepeatBox.TextAlign = ContentAlignment.MiddleCenter;
@@ -79,6 +84,7 @@ namespace Ares.Player
                 Controls.Add(TitleLabel);
                 Controls.Add(Bar);
                 Controls.Add(StopButton);
+                Controls.Add(PauseButton);
                 Controls.Add(RepeatBox);
                 Height = 50;
                 DoLayoutRow();
@@ -88,18 +94,19 @@ namespace Ares.Player
             {
                 int buttonSize = 28;
                 int titleHeight = Math.Max(16, TitleLabel.Font.Height + 2);
-                int barWidth = Math.Max(20, Width - 2 * buttonSize - 10);
+                int barWidth = Math.Max(20, Width - 3 * buttonSize - 14);
                 TitleLabel.SetBounds(2, 0, barWidth, titleHeight);
                 Bar.SetBounds(0, titleHeight, barWidth, Math.Max(30, Bar.Font.Height * 2 + 4));
                 StopButton.SetBounds(Width - buttonSize, titleHeight + 2, buttonSize, buttonSize);
                 RepeatBox.SetBounds(Width - 2 * buttonSize - 4, titleHeight + 2, buttonSize, buttonSize);
+                PauseButton.SetBounds(Width - 3 * buttonSize - 8, titleHeight + 2, buttonSize, buttonSize);
                 Height = titleHeight + Bar.Height + 2;
             }
 
             protected override void OnResize(EventArgs eventargs)
             {
                 base.OnResize(eventargs);
-                if (TitleLabel != null && StopButton != null && Bar != null && RepeatBox != null)
+                if (TitleLabel != null && StopButton != null && Bar != null && RepeatBox != null && PauseButton != null)
                     DoLayoutRow();
             }
         }
@@ -162,6 +169,9 @@ namespace Ares.Player
                 if (row.TitleLabel.Text != sound.Title)
                     row.TitleLabel.Text = sound.Title;
                 row.Bar.SetProgress(sound.Position, sound.Length);
+                string pauseText = sound.Paused ? "\u25B6" : "\u275A\u275A";
+                if (row.PauseButton.Text != pauseText)
+                    row.PauseButton.Text = pauseText;
                 if (row.RepeatBox.Checked != sound.Repeat)
                 {
                     row.Updating = true;
@@ -187,6 +197,12 @@ namespace Ares.Player
             row.StopButton.Click += (sender, e) =>
             {
                 EventHandler<SoundEventArgs> handler = StopRequested;
+                if (handler != null)
+                    handler(this, new SoundEventArgs(handle));
+            };
+            row.PauseButton.Click += (sender, e) =>
+            {
+                EventHandler<SoundEventArgs> handler = PauseRequested;
                 if (handler != null)
                     handler(this, new SoundEventArgs(handle));
             };

@@ -216,7 +216,7 @@ You should adapt some settings first.</value>
     <value>About Apolo ...</value>
   </data>
   <data name="ShowMessages" xml:space="preserve">
-    <value>Messages ...</value>
+    <value>Alerts</value>
   </data>
   <data name="ShowSettings" xml:space="preserve">
     <value>Settings ...</value>

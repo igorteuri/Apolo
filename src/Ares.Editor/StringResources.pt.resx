@@ -133,7 +133,7 @@
     <value>Já existe uma categoria com este nome.</value>
   </data>
   <data name="Copying" xml:space="preserve">
-    <value>Copiando ...</value>
+    <value>Copiando</value>
   </data>
   <data name="CopyOrMoveParentIntoChild" xml:space="preserve">
     <value>Uma pasta não pode ser copiada ou movida para dentro de uma de suas subpastas.</value>
@@ -154,16 +154,16 @@
     <value>Erro ao exportar o projeto: {0}</value>
   </data>
   <data name="Exporting" xml:space="preserve">
-    <value>Exportando ...</value>
+    <value>Exportando</value>
   </data>
   <data name="ExternalPlayerStartFail" xml:space="preserve">
     <value>Não foi possível iniciar o player externo. Mensagem de erro: {0}</value>
   </data>
   <data name="ExtractingMusicIds" xml:space="preserve">
-    <value>Obtendo IDs das músicas ...</value>
+    <value>Obtendo IDs das músicas</value>
   </data>
   <data name="ExtractingTags" xml:space="preserve">
-    <value>Extraindo tags ...</value>
+    <value>Extraindo tags</value>
   </data>
   <data name="FileExplorerTitle" xml:space="preserve">
     <value>Explorador de {0}</value>
@@ -191,7 +191,7 @@ Esquerda  - Música anterior</value>
     <value>Erro ao importar o projeto: {0}</value>
   </data>
   <data name="Importing" xml:space="preserve">
-    <value>Importando ...</value>
+    <value>Importando</value>
   </data>
   <data name="InsufficientCommandData" xml:space="preserve">
     <value>O comando ainda precisa de dados. Selecione o(s) elemento(s) necessário(s).</value>
@@ -224,10 +224,10 @@ Esquerda  - Música anterior</value>
     <value>Erro ao abrir o projeto: {0}</value>
   </data>
   <data name="ModeIntro" xml:space="preserve">
-    <value>Modo '{0}': </value>
+    <value>Pasta '{0}': </value>
   </data>
   <data name="Moving" xml:space="preserve">
-    <value>Movendo ...</value>
+    <value>Movendo</value>
   </data>
   <data name="Music" xml:space="preserve">
     <value>Música</value>
@@ -453,10 +453,10 @@ Você deve ajustar algumas configurações primeiro.</value>
     <value>Erro ao baixar tags: {0}</value>
   </data>
   <data name="DownloadingTags" xml:space="preserve">
-    <value>Baixando tags ...</value>
+    <value>Baixando tags</value>
   </data>
   <data name="SharingTags" xml:space="preserve">
-    <value>Compartilhando tags ...</value>
+    <value>Compartilhando tags</value>
   </data>
   <data name="UploadError" xml:space="preserve">
     <value>Erro ao compartilhar tags: {0}</value>
@@ -465,22 +465,22 @@ Você deve ajustar algumas configurações primeiro.</value>
     <value>Foram encontrados IDs para {0} de {1} arquivos.</value>
   </data>
   <data name="ImportNoProject" xml:space="preserve">
-    <value>O arquivo não contém um projeto do Ares. Se ele contiver um elemento de projeto (por exemplo, um cenário), importe o arquivo em um modo no Explorador de Projeto.</value>
+    <value>O arquivo não contém um projeto do Ares. Se ele contiver um elemento de projeto (por exemplo, um cenário), importe o arquivo em uma pasta no Explorador de Projeto.</value>
   </data>
   <data name="OpenProjectError" xml:space="preserve">
-    <value>O arquivo não contém um projeto válido do Ares. Se ele contiver um elemento de projeto (por exemplo, um cenário), importe o arquivo em um modo no Explorador de Projeto.</value>
+    <value>O arquivo não contém um projeto válido do Ares. Se ele contiver um elemento de projeto (por exemplo, um cenário), importe o arquivo em uma pasta no Explorador de Projeto.</value>
   </data>
   <data name="AddingFiles" xml:space="preserve">
-    <value>Adicionando arquivos ...</value>
+    <value>Adicionando arquivos</value>
   </data>
   <data name="GettingTitles" xml:space="preserve">
-    <value>Obtendo títulos das tags ID3 ...</value>
+    <value>Obtendo títulos das tags ID3</value>
   </data>
   <data name="TagsCleanedUp" xml:space="preserve">
     <value>O banco de dados de tags foi limpo. Mostrar o registro?</value>
   </data>
   <data name="FindingFilesInDB" xml:space="preserve">
-    <value>Procurando arquivos no banco de dados ...</value>
+    <value>Procurando arquivos no banco de dados</value>
   </data>
   <data name="MultiFileTagQuestion" xml:space="preserve">
     <value>Você selecionou {0} arquivos de {1} pastas. Definir tags para todos esses arquivos?</value>
@@ -492,10 +492,10 @@ Você deve ajustar algumas configurações primeiro.</value>
     <value>Fontes de áudio online</value>
   </data>
   <data name="DownloadingAudio" xml:space="preserve">
-    <value>Baixando arquivos de áudio ...</value>
+    <value>Baixando arquivos de áudio</value>
   </data>
   <data name="SearchingForAudio" xml:space="preserve">
-    <value>Procurando arquivos de áudio ...</value>
+    <value>Procurando arquivos de áudio</value>
   </data>
   <data name="SearchError" xml:space="preserve">
     <value>Erro ao buscar áudio: {0}</value>

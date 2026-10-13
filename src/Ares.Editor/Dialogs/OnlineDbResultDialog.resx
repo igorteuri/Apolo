@@ -169,7 +169,7 @@
     <value>2</value>
   </data>
   <data name="showLogButton.Text" xml:space="preserve">
-    <value>Show database log ...</value>
+    <value>Show database log</value>
   </data>
   <data name="&gt;&gt;showLogButton.Name" xml:space="preserve">
     <value>showLogButton</value>
@@ -340,7 +340,7 @@
     <value>6</value>
   </data>
   <data name="addIdsLabel.Text" xml:space="preserve">
-    <value>How to add IDs ...</value>
+    <value>How to add IDs</value>
   </data>
   <data name="&gt;&gt;addIdsLabel.Name" xml:space="preserve">
     <value>addIdsLabel</value>

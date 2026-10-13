@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="usedFilesToolStripMenuItem.Text" xml:space="preserve">
-    <value>Arquivos usados ...</value>
+    <value>Arquivos usados</value>
   </data>
   <data name="importFileDialog.Filter" xml:space="preserve">
     <value>Projetos compactados do Apolo|*.apkg|Todos os arquivos|*.*</value>
@@ -166,7 +166,7 @@
     <value>Refazer</value>
   </data>
   <data name="helpOnlineToolStripMenuItem.Text" xml:space="preserve">
-    <value>Ajuda (online) ...</value>
+    <value>Ajuda (online)</value>
   </data>
   <data name="toolStripMenuItem1.Text" xml:space="preserve">
     <value>Mostrar novidades</value>
@@ -190,7 +190,7 @@
     <value>Salvar projeto</value>
   </data>
   <data name="settingsToolStripMenuItem.Text" xml:space="preserve">
-    <value>Configurações ...</value>
+    <value>Configurações</value>
   </data>
   <data name="saveFileDialog.Filter" xml:space="preserve">
     <value>Projetos do Apolo|*.apolo;*.ares|Todos os arquivos|*.*</value>
@@ -202,7 +202,7 @@
     <value>Sair</value>
   </data>
   <data name="projectErrorsToolStripMenuItem.Text" xml:space="preserve">
-    <value>Erros do projeto</value>
+    <value>Avisos</value>
   </data>
   <data name="showTipsMenuItem.Text" xml:space="preserve">
     <value>Mostrar dicas</value>
@@ -211,25 +211,25 @@
     <value>Exibir</value>
   </data>
   <data name="importToolStripMenuItem.Text" xml:space="preserve">
-    <value>Importar ...</value>
+    <value>Importar</value>
   </data>
   <data name="newToolStripMenuItem.Text" xml:space="preserve">
-    <value>Novo ...</value>
+    <value>Novo</value>
   </data>
   <data name="fileToolStripMenuItem.Text" xml:space="preserve">
     <value>Projeto</value>
   </data>
   <data name="usedKeysToolStripMenuItem.Text" xml:space="preserve">
-    <value>Teclas usadas ...</value>
+    <value>Teclas usadas</value>
   </data>
   <data name="newButton.Text" xml:space="preserve">
     <value>Novo projeto</value>
   </data>
   <data name="saveAsToolStripMenuItem.Text" xml:space="preserve">
-    <value>Salvar como ...</value>
+    <value>Salvar como</value>
   </data>
   <data name="toolStripMenuItem2.Text" xml:space="preserve">
-    <value>Fóruns (online) ...</value>
+    <value>Fóruns (online)</value>
   </data>
   <data name="soundFileExplorerToolStripMenuItem.Text" xml:space="preserve">
     <value>Explorador de sons</value>
@@ -238,15 +238,15 @@
     <value>Explorador de músicas</value>
   </data>
   <data name="exportToolStripMenuItem.Text" xml:space="preserve">
-    <value>Exportar ...</value>
+    <value>Exportar</value>
   </data>
   <data name="startPlayerToolStripMenuItem.Text" xml:space="preserve">
     <value>Abrir o Player</value>
   </data>
   <data name="openToolStripMenuItem.Text" xml:space="preserve">
-    <value>Abrir ...</value>
+    <value>Abrir</value>
   </data>
   <data name="aboutToolStripMenuItem.Text" xml:space="preserve">
-    <value>Sobre ...</value>
+    <value>Sobre</value>
   </data>
 </root>

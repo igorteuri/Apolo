@@ -127,7 +127,7 @@
     <value>Categorias</value>
   </data>
   <data name="addTagButton.Text" xml:space="preserve">
-    <value>Adicionar tag ...</value>
+    <value>Adicionar tag</value>
   </data>
   <data name="cancelButton.Text" xml:space="preserve">
     <value>Cancelar</value>

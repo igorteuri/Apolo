@@ -56,7 +56,7 @@ namespace Ares.Editor
             // keys, sorting, starting
             { "toolStripMenuItem2", "keyboard" }, { "selectContainerKeyMenuItem", "keyboard" },
             { "selectElementKeyMenuItem", "keyboard" }, { "selectBGSoundsKeyMenuItem", "keyboard" },
-            { "setKeyButton", "keyboard" },
+            { "setKeyButton", "keyboard" }, { "addButton", "plus" },
             { "sortModesToolStripMenuItem", "arrow-up-down" }, { "toolStripMenuItem17", "arrow-up-down" },
             { "sortModesByNameAscMenuItem", "arrow-down" }, { "sortModesByNameDescMenuItem", "arrow-up" },
             { "sortModesByKeyAscMenuItem", "arrow-down" }, { "sortModesByKeyDescMenuItem", "arrow-up" },

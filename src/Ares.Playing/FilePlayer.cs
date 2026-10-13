@@ -250,7 +250,9 @@ namespace Ares.Playing
                 }
                 if (query != null)
                     repeat = query();
-                result.Add(new PlayingFileInfo { Handle = item.Key, FileId = item.Value.Id, Title = title, Position = pos, Length = length, Repeat = repeat });
+                AudioChannel soundChannel = GetChannel(item.Key);
+                bool paused = soundChannel != null && soundChannel.State == ChannelState.Paused;
+                result.Add(new PlayingFileInfo { Handle = item.Key, FileId = item.Value.Id, Title = title, Position = pos, Length = length, Repeat = repeat, Paused = paused });
             }
             return result;
         }
@@ -269,6 +271,21 @@ namespace Ares.Playing
             else
                 StopFile(handle);
             return true;
+        }
+
+        /// <summary>Pauses or resumes one single sound.</summary>
+        /// <returns>whether the sound is paused afterwards</returns>
+        public bool ToggleSoundPause(int handle)
+        {
+            AudioChannel channel = GetChannel(handle);
+            if (channel == null)
+                return false;
+            if (channel.State == ChannelState.Paused)
+            {
+                channel.Resume();
+                return false;
+            }
+            return channel.Pause();
         }
 
         public bool IsAnyPaused()

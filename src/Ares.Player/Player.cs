@@ -223,6 +223,12 @@ namespace Ares.Player
                 if (control != null)
                     control.StopSound(e.Handle);
             };
+            m_SoundPanel.PauseRequested += (sender, e) =>
+            {
+                PlayingControl control = m_PlayingControl;
+                if (control != null)
+                    control.ToggleSoundPause(e.Handle);
+            };
             m_SoundPanel.SeekRequested += (sender, e) =>
             {
                 PlayingControl control = m_PlayingControl;
@@ -1109,7 +1115,7 @@ namespace Ares.Player
                         }
                         string spec = Ares.CommonGUI.ButtonImageStore.Get(m_CurrentProjectPath, shownModeTitle, elements[i].Title);
                         int kind = 0;
-                        if (spec != null && spec.StartsWith("img:") && Ares.CommonGUI.ButtonImageStore.LoadImage(m_CurrentProjectPath, spec) != null)
+                        if (spec != null && (spec.StartsWith("img:") || spec.StartsWith("lib:")) && Ares.CommonGUI.ButtonImageStore.LoadImage(m_CurrentProjectPath, spec) != null)
                             kind = 2;
                         else if (spec != null && spec.StartsWith("lucide:"))
                             kind = 1;

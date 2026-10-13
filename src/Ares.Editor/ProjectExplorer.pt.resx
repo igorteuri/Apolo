@@ -118,13 +118,13 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="selectElementKeyMenuItem.Text" xml:space="preserve">
-    <value>Selecionar tecla ...</value>
+    <value>Selecionar tecla</value>
   </data>
   <data name="toolStripMenuItem2.Text" xml:space="preserve">
-    <value>Selecionar tecla ...</value>
+    <value>Selecionar tecla</value>
   </data>
   <data name="tagsToolStripMenuItem.Text" xml:space="preserve">
-    <value>Tags ...</value>
+    <value>Tags</value>
   </data>
   <data name="sortModesByNameDescMenuItem.Text" xml:space="preserve">
     <value>Decrescente por nome</value>
@@ -136,10 +136,10 @@
     <value>Colar</value>
   </data>
   <data name="addMusicByTagsToolStripMenuItem.Text" xml:space="preserve">
-    <value>Adicionar música por tags ...</value>
+    <value>Adicionar música por tags</value>
   </data>
   <data name="addBackgroundSoundsToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Adicionar sons de fundo ...</value>
+    <value>Adicionar sons de fundo</value>
   </data>
   <data name="sortElementsByKeyDescMenuItem.Text" xml:space="preserve">
     <value>Decrescente por tecla</value>
@@ -148,55 +148,55 @@
     <value>Crescente por tecla</value>
   </data>
   <data name="musicByTagsToolStripItem.Text" xml:space="preserve">
-    <value>Adicionar música por tags ...</value>
+    <value>Adicionar música por tags</value>
   </data>
   <data name="addSequentialElementToolStripMenuItem.Text" xml:space="preserve">
-    <value>Adicionar lista sequencial ...</value>
+    <value>Adicionar lista sequencial</value>
   </data>
   <data name="addSequentialElementToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Adicionar lista sequencial ...</value>
+    <value>Adicionar lista sequencial</value>
   </data>
   <data name="modeElementStartingToolStripMenuItem2.Text" xml:space="preserve">
-    <value>Iniciando ...</value>
+    <value>Iniciando</value>
   </data>
   <data name="exportToolStripMenuItem3.Text" xml:space="preserve">
-    <value>Exportar ...</value>
+    <value>Exportar</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>Explorador do projeto</value>
   </data>
   <data name="addSequentialPlaylistToolStripMenuItem.Text" xml:space="preserve">
-    <value>Adicionar lista de músicas sequencial ...</value>
+    <value>Adicionar lista de músicas sequencial</value>
   </data>
   <data name="moveDownButton.Text" xml:space="preserve">
     <value>Mover para baixo</value>
   </data>
   <data name="exportToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Exportar ...</value>
+    <value>Exportar</value>
   </data>
   <data name="toolStripMenuItem6.Text" xml:space="preserve">
     <value>Recortar</value>
   </data>
   <data name="toolStripMenuItem1.Text" xml:space="preserve">
-    <value>Adicionar modo ...</value>
+    <value>Adicionar pasta</value>
   </data>
   <data name="playButton.Text" xml:space="preserve">
     <value>Tocar</value>
   </data>
   <data name="selectBGSoundsKeyMenuItem.Text" xml:space="preserve">
-    <value>Selecionar tecla ...</value>
+    <value>Selecionar tecla</value>
   </data>
   <data name="modeElementStartingToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Iniciando ...</value>
+    <value>Iniciando</value>
   </data>
   <data name="importDialog.Filter" xml:space="preserve">
     <value>Projetos do Apolo|*.apolo;*.ares|Projetos compactados do Apolo|*.apkg|Todos os arquivos|*.*</value>
   </data>
   <data name="editToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Editar ...</value>
+    <value>Editar</value>
   </data>
   <data name="importToolStripMenuItem.Text" xml:space="preserve">
-    <value>Importar ...</value>
+    <value>Importar</value>
   </data>
   <data name="renameToolStripMenuItem.Text" xml:space="preserve">
     <value>Renomear</value>
@@ -205,7 +205,7 @@
     <value>Colar como atalho</value>
   </data>
   <data name="addBackgroundSoundsToolStripMenuItem.Text" xml:space="preserve">
-    <value>Adicionar sons de fundo ...</value>
+    <value>Adicionar sons de fundo</value>
   </data>
   <data name="sortModesByNameAscMenuItem.Text" xml:space="preserve">
     <value>Crescente por nome</value>
@@ -220,25 +220,25 @@
     <value>Crescente por nome</value>
   </data>
   <data name="importToolStripMenuItem4.Text" xml:space="preserve">
-    <value>Importar ...</value>
+    <value>Importar</value>
   </data>
   <data name="exportToolStripMenuItem.Text" xml:space="preserve">
-    <value>Exportar ...</value>
+    <value>Exportar</value>
   </data>
   <data name="addChoiceListToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Adicionar lista aleatória ...</value>
+    <value>Adicionar lista aleatória</value>
   </data>
   <data name="exportToolStripMenuItem2.Text" xml:space="preserve">
-    <value>Exportar ...</value>
+    <value>Exportar</value>
   </data>
   <data name="toolStripMenuItem16.Text" xml:space="preserve">
     <value>Colar como atalho</value>
   </data>
   <data name="toolStripMenuItem14.Text" xml:space="preserve">
-    <value>Adicionar macro ...</value>
+    <value>Adicionar macro</value>
   </data>
   <data name="sortModesToolStripMenuItem.Text" xml:space="preserve">
-    <value>Ordenar modos</value>
+    <value>Ordenar pastas</value>
   </data>
   <data name="toolStripMenuItem5.Text" xml:space="preserve">
     <value>Copiar</value>
@@ -247,16 +247,16 @@
     <value>Crescente por tecla</value>
   </data>
   <data name="importToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Importar ...</value>
+    <value>Importar</value>
   </data>
   <data name="toolStripMenuItem10.Text" xml:space="preserve">
     <value>Copiar</value>
   </data>
   <data name="selectContainerKeyMenuItem.Text" xml:space="preserve">
-    <value>Selecionar tecla ...</value>
+    <value>Selecionar tecla</value>
   </data>
   <data name="addRandomPlaylistToolStripMenuItem.Text" xml:space="preserve">
-    <value>Adicionar lista de músicas aleatória ...</value>
+    <value>Adicionar lista de músicas aleatória</value>
   </data>
   <data name="renameToolStripMenuItem4.Text" xml:space="preserve">
     <value>Renomear</value>
@@ -271,28 +271,28 @@
     <value>Decrescente por nome</value>
   </data>
   <data name="addScenarioToolStripMenuItem.Text" xml:space="preserve">
-    <value>Adicionar cenário ...</value>
+    <value>Adicionar cenário</value>
   </data>
   <data name="addChoiceListToolStripMenuItem.Text" xml:space="preserve">
-    <value>Adicionar lista aleatória ...</value>
+    <value>Adicionar lista aleatória</value>
   </data>
   <data name="toolStripMenuItem3.Text" xml:space="preserve">
     <value>Colar</value>
   </data>
   <data name="addRandomPlaylistToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Adicionar lista de músicas aleatória ...</value>
+    <value>Adicionar lista de músicas aleatória</value>
   </data>
   <data name="addSequentialPlaylistToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Adicionar lista de músicas sequencial ...</value>
+    <value>Adicionar lista de músicas sequencial</value>
   </data>
   <data name="editToolStripMenuItem.Text" xml:space="preserve">
-    <value>Editar ...</value>
+    <value>Editar</value>
   </data>
   <data name="addParallelElementToolStripMenuItem.Text" xml:space="preserve">
-    <value>Adicionar lista paralela ...</value>
+    <value>Adicionar lista paralela</value>
   </data>
   <data name="addParallelElementToolStripMenuItem1.Text" xml:space="preserve">
-    <value>Adicionar lista paralela ...</value>
+    <value>Adicionar lista paralela</value>
   </data>
   <data name="toolStripMenuItem11.Text" xml:space="preserve">
     <value>Recortar</value>
@@ -304,7 +304,7 @@
     <value>Mover para cima</value>
   </data>
   <data name="webRadioItem2.Text" xml:space="preserve">
-    <value>Adicionar rádio web ...</value>
+    <value>Adicionar rádio web</value>
   </data>
   <data name="toolStripMenuItem9.Text" xml:space="preserve">
     <value>Recortar</value>
@@ -313,19 +313,19 @@
     <value>Excluir</value>
   </data>
   <data name="toolStripMenuItem17.Text" xml:space="preserve">
-    <value>Ordenar elementos</value>
+    <value>Ordenar playlists</value>
   </data>
   <data name="toolStripMenuItem4.Text" xml:space="preserve">
     <value>Recortar</value>
   </data>
   <data name="webRadioMenuItem.Text" xml:space="preserve">
-    <value>Adicionar rádio web ...</value>
+    <value>Adicionar rádio web</value>
   </data>
   <data name="deleteToolStripMenuItem3.Text" xml:space="preserve">
     <value>Excluir</value>
   </data>
   <data name="importToolStripMenuItem2.Text" xml:space="preserve">
-    <value>Importar ...</value>
+    <value>Importar</value>
   </data>
   <data name="toolStripMenuItem13.Text" xml:space="preserve">
     <value>Colar</value>
@@ -340,10 +340,10 @@
     <value>Decrescente por tecla</value>
   </data>
   <data name="modeElementStartingToolStripMenuItem.Text" xml:space="preserve">
-    <value>Iniciando ...</value>
+    <value>Iniciando</value>
   </data>
   <data name="setKeyButton.Text" xml:space="preserve">
-    <value>Selecionar tecla ...</value>
+    <value>Selecionar tecla</value>
   </data>
   <data name="toolStripMenuItem12.Text" xml:space="preserve">
     <value>Copiar</value>

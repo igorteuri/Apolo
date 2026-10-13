@@ -31,6 +31,38 @@ namespace Ares.Editor.ElementEditors
         {
             editor.ShowHint = WeifenLuo.WinFormsUI.Docking.DockState.Document;
             editor.Show(parent);
+            CloseOthers(editor, parent);
+        }
+
+        /// <summary>When true, opening an editor keeps the other editors open (otherwise the editor area shows just one thing).</summary>
+        public static bool KeepOthers = false;
+
+        /// <summary>Set by the project explorer: closes the folder overview.</summary>
+        public static System.Action CloseOverview;
+
+        private static void CloseOthers(EditorBase keep, WeifenLuo.WinFormsUI.Docking.DockPanel parent)
+        {
+            if (KeepOthers)
+                return;
+            if (CloseOverview != null)
+                CloseOverview();
+            List<EditorBase> others = new List<EditorBase>();
+            foreach (EditorBase other in EditorRegistry.Instance.GetAllEditors())
+            {
+                if (other != keep)
+                    others.Add(other);
+            }
+            if (others.Count == 0)
+                return;
+            // closed afterwards: the call can come from an event of one of the editors which are closed
+            parent.BeginInvoke(new System.Windows.Forms.MethodInvoker(() =>
+            {
+                foreach (EditorBase other in others)
+                {
+                    try { other.Close(); }
+                    catch (Exception) { }
+                }
+            }));
         }
 
         public static void ShowEditor(Ares.Data.IElement element, Ares.Data.IGeneralElementContainer container, Ares.Data.IProject project, WeifenLuo.WinFormsUI.Docking.DockPanel parent)
@@ -51,6 +83,7 @@ namespace Ares.Editor.ElementEditors
             if (existing != null)
             {
                 existing.Activate();
+                CloseOthers(existing, parent);
             }
             else
             {
@@ -143,6 +176,7 @@ namespace Ares.Editor.ElementEditors
             if (existing != null)
             {
                 existing.Activate();
+                CloseOthers(existing, parent);
             }
             else
             {

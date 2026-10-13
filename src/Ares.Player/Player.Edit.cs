@@ -16,6 +16,7 @@ namespace Ares.Player
         private ToolStripDropDownButton m_AddButton;
         private ContextMenuStrip m_ModeMenu;
         private ContextMenuStrip m_ElementMenu;
+        private ToolStripItem m_ModeDeleteItem;
         private int m_MenuElementId = -1;
         private ToolStripItem m_ElementDeleteItem;
         private readonly HashSet<int> m_SelectedElements = new HashSet<int>();
@@ -119,15 +120,15 @@ namespace Ares.Player
             m_AddButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
             m_AddButton.Text = T("Adicionar", "Add");
             m_AddButton.Visible = false;
-            var addFolder = new ToolStripMenuItem(T("Pasta de áudio como uma playlist por pasta...", "Audio folder as one playlist per folder..."));
+            var addFolder = new ToolStripMenuItem(T("Pasta de áudio como uma playlist por pasta", "Audio folder as one playlist per folder"));
             addFolder.Click += (s, e) => AddFolderDialog();
-            var addFiles = new ToolStripMenuItem(T("Arquivos de áudio...", "Audio files..."));
+            var addFiles = new ToolStripMenuItem(T("Arquivos de áudio", "Audio files"));
             addFiles.Click += (s, e) => AddFilesDialog();
-            var addMode = new ToolStripMenuItem(T("Nova pasta...", "New folder..."));
+            var addMode = new ToolStripMenuItem(T("Nova pasta", "New folder"));
             addMode.Click += (s, e) => NewEmptyMode(false);
-            var addSub = new ToolStripMenuItem(T("Nova subpasta na pasta selecionada...", "New subfolder in the selected folder..."));
+            var addSub = new ToolStripMenuItem(T("Nova subpasta na pasta selecionada", "New subfolder in the selected folder"));
             addSub.Click += (s, e) => NewEmptyMode(true);
-            var addTree = new ToolStripMenuItem(T("Pasta do computador (cria pastas e playlists)...", "Folder of the computer (creates folders and playlists)..."));
+            var addTree = new ToolStripMenuItem(T("Pasta do computador (cria pastas e playlists)", "Folder of the computer (creates folders and playlists)"));
             addTree.Click += (s, e) => ImportFolderAsFolders(false);
             m_AddButton.DropDownItems.AddRange(new ToolStripItem[] { addTree, addFolder, addFiles, new ToolStripSeparator(), addMode, addSub });
 
@@ -145,12 +146,19 @@ namespace Ares.Player
 
             // context menu for modes (list on the left)
             m_ModeMenu = new ContextMenuStrip();
-            m_ModeMenu.Items.Add(T("Nova pasta...", "New folder..."), null, (s, e) => NewEmptyMode(false));
-            m_ModeMenu.Items.Add(T("Nova subpasta aqui...", "New subfolder here..."), null, (s, e) => NewEmptyMode(true));
-            m_ModeMenu.Items.Add(T("Importar pasta do computador aqui dentro...", "Import a folder of the computer in here..."), null, (s, e) => ImportFolderAsFolders(true));
-            m_ModeMenu.Items.Add(T("Renomear pasta...", "Rename folder..."), null, (s, e) => RenameCurrentMode());
-            m_ModeMenu.Items.Add(T("Cor da pasta...", "Folder color..."), null, (s, e) => ChooseModeColor());
-            m_ModeMenu.Items.Add(T("Excluir pasta", "Delete folder"), null, (s, e) => DeleteCurrentMode());
+            m_ModeMenu.Items.Add(T("Nova pasta", "New folder"), null, (s, e) => NewEmptyMode(false));
+            m_ModeMenu.Items.Add(T("Nova subpasta aqui", "New subfolder here"), null, (s, e) => NewEmptyMode(true));
+            m_ModeMenu.Items.Add(T("Importar pasta do computador aqui dentro", "Import a folder of the computer in here"), null, (s, e) => ImportFolderAsFolders(true));
+            m_ModeMenu.Items.Add(T("Renomear", "Rename"), null, (s, e) => RenameCurrentMode());
+            ToolStripItem modeDelete = m_ModeMenu.Items.Add(T("Excluir", "Delete"), null, (s, e) => DeleteCurrentMode());
+            m_ModeDeleteItem = modeDelete;
+            m_ModeMenu.Items.Add(new ToolStripSeparator());
+            m_ModeMenu.Items.Add(T("Escolher emoji", "Choose emoji"), null, (s, e) => ChooseModeEmoji());
+            m_ModeMenu.Items.Add(T("Emoji automático (pelo nome)", "Automatic emoji (from the name)"), null, (s, e) => AutoEmojiForMode());
+            m_ModeMenu.Items.Add(T("Cor da pasta", "Folder color"), null, (s, e) => ChooseModeColor());
+            m_ModeMenu.Items.Add(T("Escolher ícone", "Choose icon"), null, (s, e) => ChooseModeIcon());
+            m_ModeMenu.Items.Add(T("Escolher imagem", "Choose picture"), null, (s, e) => ChooseModePicture());
+            m_ModeMenu.Items.Add(T("Remover imagem / ícone", "Remove picture / icon"), null, (s, e) => RemoveModeImage());
             m_ModeMenu.Items.Add(new ToolStripSeparator());
             m_ModeMenu.Items.Add(T("Mover para cima", "Move up"), null, (s, e) => MoveCurrentMode(-1));
             m_ModeMenu.Items.Add(T("Mover para baixo", "Move down"), null, (s, e) => MoveCurrentMode(1));
@@ -168,8 +176,8 @@ namespace Ares.Player
                 for (int i = 1; i < m_ModeMenu.Items.Count; i++)
                     m_ModeMenu.Items[i].Enabled = real && many <= 1;
                 m_ModeMenu.Items[0].Enabled = many <= 1;
-                m_ModeMenu.Items[4].Text = many > 1 ? T("Excluir " + many + " pastas selecionadas", "Delete " + many + " selected folders") : T("Excluir pasta", "Delete folder");
-                m_ModeMenu.Items[4].Enabled = real;
+                m_ModeDeleteItem.Text = many > 1 ? T("Excluir " + many + " pastas selecionadas", "Delete " + many + " selected folders") : T("Excluir", "Delete");
+                m_ModeDeleteItem.Enabled = real;
                 m_ModeMenu.Show(modesList, e.Location);
             };
 
@@ -177,15 +185,15 @@ namespace Ares.Player
             m_ElementMenu = new ContextMenuStrip();
             m_ElementMenu.Items.Add(T("Ver lista de músicas", "View track list"), null, (s, e) => ShowTrackPanel(m_MenuElementId));
             m_ElementMenu.Items.Add(new ToolStripSeparator());
-            m_ElementMenu.Items.Add(T("Renomear...", "Rename..."), null, (s, e) => RenameElementButton());
+            m_ElementMenu.Items.Add(T("Renomear", "Rename"), null, (s, e) => RenameElementButton());
             m_ElementDeleteItem = m_ElementMenu.Items.Add(T("Excluir", "Delete"), null, (s, e) => DeleteElementButton());
             m_ElementMenu.Items.Add(new ToolStripSeparator());
-            m_ElementMenu.Items.Add(T("Escolher imagem...", "Choose picture..."), null, (s, e) => ChooseButtonPicture());
-            m_ElementMenu.Items.Add(T("Sugerir imagens na internet...", "Suggest pictures from the internet..."), null, (s, e) => SuggestButtonImages());
-            m_ElementMenu.Items.Add(T("Escolher emoji...", "Choose emoji..."), null, (s, e) => ChooseButtonEmoji());
+            m_ElementMenu.Items.Add(T("Escolher emoji", "Choose emoji"), null, (s, e) => ChooseButtonEmoji());
             m_ElementMenu.Items.Add(T("Emoji automático (pelo nome)", "Automatic emoji (from the name)"), null, (s, e) => AutoIconForButton());
-            m_ElementMenu.Items.Add(T("Cor do botão...", "Button color..."), null, (s, e) => ChooseButtonColor());
-            m_ElementMenu.Items.Add(T("Escolher ícone...", "Choose icon..."), null, (s, e) => ChooseButtonIcon());
+            m_ElementMenu.Items.Add(T("Cor do botão", "Button color"), null, (s, e) => ChooseButtonColor());
+            m_ElementMenu.Items.Add(T("Escolher ícone", "Choose icon"), null, (s, e) => ChooseButtonIcon());
+            m_ElementMenu.Items.Add(T("Escolher imagem", "Choose picture"), null, (s, e) => ChooseButtonPicture());
+            m_ElementMenu.Items.Add(T("Sugerir imagens na internet", "Suggest pictures from the internet"), null, (s, e) => SuggestButtonImages());
             m_ElementMenu.Items.Add(T("Remover imagem / ícone", "Remove picture / icon"), null, (s, e) => RemoveButtonImage());
             m_ElementMenu.Items.Add(new ToolStripSeparator());
             m_ElementMenu.Items.Add(T("Mover para trás", "Move earlier"), null, (s, e) => MoveElementButton(-1));

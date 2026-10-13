@@ -286,7 +286,7 @@
     <value>6</value>
   </data>
   <data name="addTagButton.Text" xml:space="preserve">
-    <value>Add Tag ...</value>
+    <value>Add Tag</value>
   </data>
   <data name="&gt;&gt;addTagButton.Name" xml:space="preserve">
     <value>addTagButton</value>
@@ -313,7 +313,7 @@
     <value>7</value>
   </data>
   <data name="downloadButton.Text" xml:space="preserve">
-    <value>Download ...</value>
+    <value>Download</value>
   </data>
   <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
@@ -346,7 +346,7 @@
     <value>8</value>
   </data>
   <data name="shareButton.Text" xml:space="preserve">
-    <value>Share ...</value>
+    <value>Share</value>
   </data>
   <data name="shareButton.ToolTip" xml:space="preserve">
     <value>Upload tags to online database</value>
@@ -406,7 +406,7 @@
     <value>10</value>
   </data>
   <data name="id3Button.Text" xml:space="preserve">
-    <value>Get from ID3 ...</value>
+    <value>Get from ID3</value>
   </data>
   <data name="id3Button.ToolTip" xml:space="preserve">
     <value>Retrieve tags from ID3 information</value>
@@ -466,7 +466,7 @@
     <value>12</value>
   </data>
   <data name="musicBrainzButton.Text" xml:space="preserve">
-    <value>MusicBrainz ...</value>
+    <value>MusicBrainz</value>
   </data>
   <data name="musicBrainzButton.ToolTip" xml:space="preserve">
     <value>Retrieve tags from MusicBrainz DB</value>
@@ -499,7 +499,7 @@
     <value>13</value>
   </data>
   <data name="findInDBButton.Text" xml:space="preserve">
-    <value>Find in DB ...</value>
+    <value>Find in DB</value>
   </data>
   <data name="findInDBButton.ToolTip" xml:space="preserve">
     <value>Find file(s) in DB after they have been moved</value>

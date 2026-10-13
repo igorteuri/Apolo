@@ -87,6 +87,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml" />
     <Reference Include="WeifenLuo.WinFormsUI.Docking">
       <HintPath>..\..\Libraries\WeifenLuo.WinFormsUI.Docking.dll</HintPath>
@@ -298,6 +299,15 @@
     </Compile>
     <Compile Include="PluginManager.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="..\Ares.Player\AppearanceDialogs.cs"><Link>Shared\AppearanceDialogs.cs</Link></Compile>
+    <Compile Include="..\Ares.Player\EmojiCatalog.cs"><Link>Shared\EmojiCatalog.cs</Link></Compile>
+    <Compile Include="..\Ares.Player\IconPickerDialog.cs"><Link>Shared\IconPickerDialog.cs</Link></Compile>
+    <Compile Include="..\Ares.Player\ImageSearchDialog.cs"><Link>Shared\ImageSearchDialog.cs</Link></Compile>
+    <Compile Include="..\Ares.Player\OpenMedia.cs"><Link>Shared\OpenMedia.cs</Link></Compile>
+    <Compile Include="ModeOverviewWindow.cs" />
+    <Compile Include="ProjectIcons.cs" />
+    <Compile Include="ProjectExplorer.Appearance.cs" />
+    <Compile Include="ProjectExplorer.Add.cs" />
     <Compile Include="ProjectExplorer.cs">
       <SubType>Form</SubType>
     </Compile>

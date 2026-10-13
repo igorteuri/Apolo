@@ -979,6 +979,11 @@ namespace Ares.Playing
             return ((FilePlayer)PlayingModule.FilePlayer).SetSoundRepeat(handle, repeat);
         }
 
+        public bool ToggleSoundPause(int handle)
+        {
+            return ((FilePlayer)PlayingModule.FilePlayer).ToggleSoundPause(handle);
+        }
+
         public bool SetSoundPosition(int handle, double positionSeconds)
         {
             return ((FilePlayer)PlayingModule.FilePlayer).SetPlayPosition(handle, positionSeconds);

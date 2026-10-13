@@ -81,6 +81,8 @@ namespace Ares.Playing
         public double Length { get; set; }
         /// <summary>True if the sound will be repeated until it is stopped</summary>
         public bool Repeat { get; set; }
+        /// <summary>True if the sound is paused</summary>
+        public bool Paused { get; set; }
     }
 
     public enum MessageType

@@ -127,25 +127,25 @@
     <value>Categorias</value>
   </data>
   <data name="addTagButton.Text" xml:space="preserve">
-    <value>Adicionar tag ...</value>
+    <value>Adicionar tag</value>
   </data>
   <data name="downloadButton.Text" xml:space="preserve">
-    <value>Baixar ...</value>
+    <value>Baixar</value>
   </data>
   <data name="shareButton.Text" xml:space="preserve">
-    <value>Compartilhar ...</value>
+    <value>Compartilhar</value>
   </data>
   <data name="confirmButton.Text" xml:space="preserve">
     <value>Confirmar</value>
   </data>
   <data name="id3Button.Text" xml:space="preserve">
-    <value>Obter do ID3 ...</value>
+    <value>Obter do ID3</value>
   </data>
   <data name="titleLabel.Text" xml:space="preserve">
     <value>Tags de</value>
   </data>
   <data name="findInDBButton.Text" xml:space="preserve">
-    <value>Buscar no banco ...</value>
+    <value>Buscar no banco</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>Tags dos arquivos</value>

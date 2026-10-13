@@ -279,8 +279,51 @@ namespace Ares.Player
             }
             string text = e.Index < modesList.Items.Count ? Convert.ToString(modesList.Items[e.Index]) : node.Title;
             Rectangle r = new Rectangle(x + ModeGlyphWidth, e.Bounds.Y, Math.Max(10, e.Bounds.Right - x - ModeGlyphWidth - 2), e.Bounds.Height);
+            // emoji, picture or icon of the folder
+            int iconSize = Math.Min(20, e.Bounds.Height - 4);
+            if (iconSize >= 10 && DrawModeIcon(e.Graphics, node.Title, new Rectangle(r.X, e.Bounds.Y + (e.Bounds.Height - iconSize) / 2, iconSize, iconSize), fore))
+            {
+                r.X += iconSize + 5;
+                r.Width = Math.Max(10, r.Width - iconSize - 5);
+            }
             TextRenderer.DrawText(e.Graphics, text, modesList.Font, r, fore,
                 TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.Left);
+        }
+
+        // draws the emoji / picture / icon of a folder; false if it has none
+        private bool DrawModeIcon(Graphics g, string modeTitle, Rectangle bounds, Color color)
+        {
+            string spec = Ares.CommonGUI.ButtonImageStore.Get(m_CurrentProjectPath, modeTitle, "");
+            if (string.IsNullOrEmpty(spec))
+                return false;
+            try
+            {
+                if (spec.StartsWith("lucide:"))
+                {
+                    using (Bitmap icon = Ares.CommonGUI.IconLibrary.Get(spec.Substring(7), bounds.Size, color))
+                    {
+                        if (icon == null)
+                            return false;
+                        g.DrawImage(icon, bounds);
+                        return true;
+                    }
+                }
+                Bitmap picture = Ares.CommonGUI.ButtonImageStore.LoadImage(m_CurrentProjectPath, spec);
+                if (picture == null)
+                    return false;
+                float scale = Math.Min((float)bounds.Width / picture.Width, (float)bounds.Height / picture.Height);
+                int w = Math.Max(1, (int)(picture.Width * scale));
+                int h = Math.Max(1, (int)(picture.Height * scale));
+                System.Drawing.Drawing2D.InterpolationMode old = g.InterpolationMode;
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.DrawImage(picture, bounds.X + (bounds.Width - w) / 2, bounds.Y + (bounds.Height - h) / 2, w, h);
+                g.InterpolationMode = old;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         // ---- the tree of the open project ----

@@ -136,7 +136,7 @@
     <value>Baixar</value>
   </data>
   <data name="downloadToMenuItem.Text" xml:space="preserve">
-    <value>Baixar para ...</value>
+    <value>Baixar para</value>
   </data>
   <data name="searchSimilarItem.Text" xml:space="preserve">
     <value>Buscar sons parecidos</value>

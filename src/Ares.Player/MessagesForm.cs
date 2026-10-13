@@ -60,7 +60,7 @@ namespace Ares.Player
         private void BuildModernUi()
         {
             Controls.Clear();
-            Text = T("Mensagens", "Messages");
+            Text = T("Avisos", "Alerts");
             ClientSize = new Size(600, 460);
             Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0);
             MinimumSize = new Size(420, 300);

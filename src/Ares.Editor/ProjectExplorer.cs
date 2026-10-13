@@ -66,6 +66,8 @@ namespace Ares.Editor
             addMusicByTagsToolStripMenuItem.Visible = false;
             musicByTagsToolStripItem.Visible = false;
             tagsToolStripMenuItem.Visible = false;
+            InitAddButton();
+            InitAppearanceMenus();
             projectTree.ImageList = sImageList;
             ensureDefaultImageIndex(projectTree);
             RecreateTree();
@@ -486,6 +488,8 @@ namespace Ares.Editor
                 else
                 {
                     IMode mode = e.Node.Tag as IMode;
+                    if (m_Project != null && !String.IsNullOrEmpty(m_Project.FileName))
+                        Ares.CommonGUI.ButtonImageStore.RenameMode(m_Project.FileName, mode.Title, text);
                     Actions.Actions.Instance.AddNew(new RenameModeAction(e.Node, text), m_Project);
                     e.CancelEdit = true; // the text is already changed by the action
                 }
@@ -501,6 +505,9 @@ namespace Ares.Editor
                 else
                 {
                     IModeElement modeElement = e.Node.Tag as IModeElement;
+                    IMode ownerMode = e.Node.Parent != null ? e.Node.Parent.Tag as IMode : null;
+                    if (ownerMode != null && m_Project != null && !String.IsNullOrEmpty(m_Project.FileName))
+                        Ares.CommonGUI.ButtonImageStore.RenameElement(m_Project.FileName, ownerMode.Title, modeElement.Title, text);
                     Actions.Actions.Instance.AddNew(new RenameModeElementAction(e.Node, text), m_Project);
                     e.CancelEdit = true; // the text is already changed by the action
                 }
@@ -1175,8 +1182,14 @@ namespace Ares.Editor
         {
             try
             {
-                if (IsDisposed || DockPanel == null || SelectedNode == null)
+                if (IsDisposed || DockPanel == null || SelectedNode == null || m_NoPreview)
                     return;
+                if (SelectedNode.Tag is IMode)
+                {
+                    ShowModeOverview(SelectedNode);
+                    return;
+                }
+                CloseOverview();
                 IElement element = SelectedNode.Tag as IElement;
                 if (element == null || (SelectedNode.Tag is IModeElement && GetElement(SelectedNode) is IBackgroundSounds))
                     return;
@@ -1184,17 +1197,10 @@ namespace Ares.Editor
                 if (inner == null)
                     return;
                 // the editor that was opened by the previous selection is replaced
-                int previous = m_PreviewElementId;
                 bool alreadyOpen = ElementEditors.EditorRegistry.Instance.GetEditor(inner.Id) != null;
                 EditElement(element);
                 if (!alreadyOpen)
                 {
-                    if (previous != -1 && previous != inner.Id)
-                    {
-                        var old = ElementEditors.EditorRegistry.Instance.GetEditor(previous);
-                        if (old != null)
-                            old.Close();
-                    }
                     m_PreviewElementId = inner.Id;
                 }
                 // keep the keyboard in the tree so that the arrow keys keep working

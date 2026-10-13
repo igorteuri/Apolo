@@ -124,6 +124,6 @@
     <value>Mensagem</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
-    <value>Erros do projeto</value>
+    <value>Avisos</value>
   </data>
 </root>
