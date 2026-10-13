@@ -151,9 +151,9 @@ namespace Ares.Player
                 // loose files go into the mode that is currently selected (if it is a real mode)
                 string looseModeTitle = null;
                 if (m_Project != null && string.Equals(m_Project.FileName, target, StringComparison.OrdinalIgnoreCase)
-                    && modesList.SelectedIndex >= 0 && modesList.SelectedIndex < m_Project.GetModes().Count)
+                    && SelectedModeIndex >= 0 && SelectedModeIndex < m_Project.GetModes().Count)
                 {
-                    looseModeTitle = m_Project.GetModes()[modesList.SelectedIndex].Title;
+                    looseModeTitle = m_Project.GetModes()[SelectedModeIndex].Title;
                 }
                 if (looseModeTitle == null)
                     looseModeTitle = IsPt ? "Músicas soltas" : "Loose music";
@@ -222,36 +222,10 @@ namespace Ares.Player
             DataModule.ProjectManager.UnloadProject(created);
         }
 
-        private void SelectModeByTitle(string title)
-        {
-            if (title == null)
-                return;
-            try
-            {
-                int found = -1;
-                for (int i = 0; i < modesList.Items.Count && found < 0; i++)
-                {
-                    if (string.Equals(modesList.Items[i] as string, title, StringComparison.Ordinal))
-                        found = i;
-                }
-                for (int i = 0; i < modesList.Items.Count && found < 0; i++)
-                {
-                    string t = modesList.Items[i] as string;
-                    if (t != null && t.StartsWith(title))
-                        found = i;
-                }
-                if (found >= 0)
-                    modesList.SelectedIndex = found;
-            }
-            catch (Exception)
-            {
-            }
-        }
-
         private void ShowLibraryMessage(int lists, int files)
         {
-            this.Text = this.Text + "  -  " + (IsPt ? lists + " pasta(s)/modo(s), " + files + " música(s) adicionadas"
-                : lists + " mode(s), " + files + " track(s) added");
+            this.Text = this.Text + "  -  " + (IsPt ? lists + " pasta(s), " + files + " música(s) adicionadas"
+                : lists + " folder(s), " + files + " track(s) added");
         }
     }
 }

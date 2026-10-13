@@ -80,7 +80,7 @@ namespace Ares.Player
                     }
                 };
                 m_SearchBox.HandleCreated += (s, e) =>
-                    SendMessage(m_SearchBox.Handle, 0x1501, (IntPtr)1, T("Buscar elemento...", "Search element..."));
+                    SendMessage(m_SearchBox.Handle, 0x1501, (IntPtr)1, T("Buscar playlist...", "Search playlist..."));
 
                 elementsPanel.VisibleChanged += (s, e) => m_ListBar.Visible = elementsPanel.Visible;
                 elementsPanel.Resize += (s, e) =>

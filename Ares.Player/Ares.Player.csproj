@@ -146,6 +146,7 @@
     <Compile Include="Player.Status.cs" />
     <Compile Include="Player.Discord.cs" />
     <Compile Include="Player.Deck.cs" />
+    <Compile Include="Player.ModeTree.cs" />
     <Compile Include="DiscordBridge.cs" />
     <Compile Include="ProcessLoopbackCapture.cs" />
     <Compile Include="SoundProgressPanel.cs" />

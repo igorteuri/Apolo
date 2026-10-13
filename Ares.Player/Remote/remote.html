@@ -79,8 +79,8 @@ h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)
       <span>Sons</span><input type="range" min="0" max="100" id="v_sound">
     </div>
   </div>
-  <div class="card"><h2>Modos</h2><div class="chips" id="modes"></div></div>
-  <div class="card"><h2 id="elTitle">Botões</h2><div class="grid" id="els"></div></div>
+  <div class="card"><h2>Pastas</h2><div class="chips" id="modes"></div></div>
+  <div class="card"><h2 id="elTitle">Playlists</h2><div class="grid" id="els"></div></div>
 </div>
 
 <script>
@@ -120,7 +120,7 @@ function render(s){
   var m=$('modes');var key=JSON.stringify(s.modes)+s.mode;
   if(m.dataset.key!==key){m.dataset.key=key;m.innerHTML='';
     s.modes.forEach(function(t,i){var b=document.createElement('button');b.textContent=t;if(i===s.mode)b.className='on';b.onclick=function(){send('mode',i)};m.appendChild(b)})}
-  $('elTitle').textContent=s.modes[s.mode]||'Botões';
+  $('elTitle').textContent=s.modes[s.mode]||'Playlists';
   var g=$('els');var ek=JSON.stringify(s.elements);
   if(g.dataset.key!==ek){g.dataset.key=ek;g.innerHTML='';
     s.elements.forEach(function(e){var b=document.createElement('button');b.textContent=e.title;if(e.active)b.className='on';b.onclick=function(){send('element',e.id)};g.appendChild(b)})}

@@ -7,7 +7,7 @@ using Ares.Data;
 
 namespace Ares.Player
 {
-    // Simple "edit mode" inside the Player: add / rename / delete / reorder modes and buttons
+    // Simple "edit mode" inside the Player: add / rename / delete / reorder folders (modes) and playlists (buttons)
     // without opening the full Editor.
     public partial class Player
     {
@@ -103,8 +103,8 @@ namespace Ares.Player
             m_EditButton.CheckOnClick = true;
             m_EditButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
             m_EditButton.Text = T("Modo de Edição", "Edit mode");
-            m_EditButton.ToolTipText = T("Modo de edição: adicionar, renomear, excluir e reordenar modos e botões",
-                "Edit mode: add, rename, delete and reorder modes and buttons");
+            m_EditButton.ToolTipText = T("Modo de edição: adicionar, renomear, excluir e reordenar pastas e playlists",
+                "Edit mode: add, rename, delete and reorder folders and playlists");
             m_EditButton.CheckedChanged += (s, e) => SetEditMode(m_EditButton.Checked);
 
             m_AddButton = new ToolStripDropDownButton();
@@ -112,13 +112,15 @@ namespace Ares.Player
             m_AddButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
             m_AddButton.Text = T("Adicionar", "Add");
             m_AddButton.Visible = false;
-            var addFolder = new ToolStripMenuItem(T("Pasta...", "Folder..."));
+            var addFolder = new ToolStripMenuItem(T("Importar pasta de áudio...", "Import audio folder..."));
             addFolder.Click += (s, e) => AddFolderDialog();
             var addFiles = new ToolStripMenuItem(T("Arquivos de áudio...", "Audio files..."));
             addFiles.Click += (s, e) => AddFilesDialog();
-            var addMode = new ToolStripMenuItem(T("Modo vazio...", "Empty mode..."));
-            addMode.Click += (s, e) => NewEmptyMode();
-            m_AddButton.DropDownItems.AddRange(new ToolStripItem[] { addFolder, addFiles, new ToolStripSeparator(), addMode });
+            var addMode = new ToolStripMenuItem(T("Nova pasta...", "New folder..."));
+            addMode.Click += (s, e) => NewEmptyMode(false);
+            var addSub = new ToolStripMenuItem(T("Nova subpasta na pasta selecionada...", "New subfolder in the selected folder..."));
+            addSub.Click += (s, e) => NewEmptyMode(true);
+            m_AddButton.DropDownItems.AddRange(new ToolStripItem[] { addFolder, addFiles, new ToolStripSeparator(), addMode, addSub });
 
             int outIndex = toolStrip1.Items.IndexOf(m_OutputButton);
             if (outIndex < 0)
@@ -134,12 +136,14 @@ namespace Ares.Player
 
             // context menu for modes (list on the left)
             m_ModeMenu = new ContextMenuStrip();
-            m_ModeMenu.Items.Add(T("Novo modo vazio...", "New empty mode..."), null, (s, e) => NewEmptyMode());
-            m_ModeMenu.Items.Add(T("Renomear modo...", "Rename mode..."), null, (s, e) => RenameCurrentMode());
-            m_ModeMenu.Items.Add(T("Excluir modo", "Delete mode"), null, (s, e) => DeleteCurrentMode());
+            m_ModeMenu.Items.Add(T("Nova pasta...", "New folder..."), null, (s, e) => NewEmptyMode(false));
+            m_ModeMenu.Items.Add(T("Nova subpasta aqui...", "New subfolder here..."), null, (s, e) => NewEmptyMode(true));
+            m_ModeMenu.Items.Add(T("Renomear pasta...", "Rename folder..."), null, (s, e) => RenameCurrentMode());
+            m_ModeMenu.Items.Add(T("Excluir pasta", "Delete folder"), null, (s, e) => DeleteCurrentMode());
             m_ModeMenu.Items.Add(new ToolStripSeparator());
             m_ModeMenu.Items.Add(T("Mover para cima", "Move up"), null, (s, e) => MoveCurrentMode(-1));
             m_ModeMenu.Items.Add(T("Mover para baixo", "Move down"), null, (s, e) => MoveCurrentMode(1));
+            m_ModeMenu.Items.Add(T("Tirar da pasta (subir um nível)", "Move out of the folder (up one level)"), null, (s, e) => OutdentModeNode(SelectedModeNode));
             modesList.MouseUp += (s, e) =>
             {
                 if (!m_EditMode || e.Button != MouseButtons.Right)
@@ -147,7 +151,7 @@ namespace Ares.Player
                 int index = modesList.IndexFromPoint(e.Location);
                 if (index >= 0)
                     modesList.SelectedIndex = index;
-                bool real = modesList.SelectedIndex >= 0;
+                bool real = index >= 0 && SelectedModeIndex >= 0;
                 for (int i = 1; i < m_ModeMenu.Items.Count; i++)
                     m_ModeMenu.Items[i].Enabled = real;
                 m_ModeMenu.Show(modesList, e.Location);
@@ -193,7 +197,10 @@ namespace Ares.Player
                 modeTracking = false;
                 int index = modesList.IndexFromPoint(modeDown);
                 if (index >= 0)
-                    modesList.DoDragDrop(new DragInfo { IsMode = true, ModeIndex = index }, DragDropEffects.Move);
+                    {
+                    if (index < m_ModeRows.Count)
+                        modesList.DoDragDrop(new DragInfo { IsMode = true, ModeTitle = m_ModeRows[index].Title }, DragDropEffects.Move);
+                }
             };
             modesList.DoubleClick += (s, e) =>
             {
@@ -210,7 +217,7 @@ namespace Ares.Player
         private class DragInfo
         {
             public bool IsMode;
-            public int ModeIndex;
+            public string ModeTitle;
             public int ElementId;
         }
 
@@ -311,7 +318,7 @@ namespace Ares.Player
             IMode mode = CurrentMode();
             if (mode == null)
                 return;
-            int modeIndex = modesList.SelectedIndex;
+            int modeIndex = SelectedModeIndex;
             string modeTitle = mode.Title;
             BeginInvoke(new MethodInvoker(() => ApplyProjectEdit(() =>
             {
@@ -333,34 +340,56 @@ namespace Ares.Player
             DragInfo info = e.Data.GetData(typeof(DragInfo)) as DragInfo;
             if (!m_EditMode || info == null)
                 return;
-            int index = modesList.IndexFromPoint(modesList.PointToClient(new Point(e.X, e.Y)));
-            e.Effect = index >= 0 ? DragDropEffects.Move : DragDropEffects.None;
+            int row = modesList.IndexFromPoint(modesList.PointToClient(new Point(e.X, e.Y)));
+            // folders can also be dropped on the empty area (they go to the top level)
+            e.Effect = (row >= 0 || info.IsMode) ? DragDropEffects.Move : DragDropEffects.None;
         }
 
         private void ModesDragDrop(object sender, DragEventArgs e)
         {
             DragInfo info = e.Data.GetData(typeof(DragInfo)) as DragInfo;
-            if (!m_EditMode || info == null || m_Project == null)
+            if (!m_EditMode || info == null || m_Project == null || m_ModeTree == null)
                 return;
-            int dropIndex = modesList.IndexFromPoint(modesList.PointToClient(new Point(e.X, e.Y)));
-            if (dropIndex < 0 || dropIndex >= m_Project.GetModes().Count)
-                return;
+            Point pt = modesList.PointToClient(new Point(e.X, e.Y));
+            int row = modesList.IndexFromPoint(pt);
             if (info.IsMode)
             {
-                int from = info.ModeIndex;
-                if (from == dropIndex)
+                ModeNode moved = m_ModeTree.Find(info.ModeTitle);
+                if (moved == null)
                     return;
-                string title = m_Project.GetModes()[from].Title;
-                BeginInvoke(new MethodInvoker(() => ApplyProjectEdit(() =>
+                if (row < 0 || row >= m_ModeRows.Count)
                 {
-                    IMode m = m_Project.GetModes()[from];
-                    m_Project.RemoveMode(m);
-                    m_Project.InsertMode(dropIndex, m);
-                }, title)));
+                    m_ModeTree.Attach(moved, m_ModeTree.Root, -1);
+                    AfterTreeChange(moved.Title);
+                    return;
+                }
+                ModeNode target = m_ModeRows[row];
+                if (target == moved || target.IsDescendantOf(moved))
+                    return;
+                Rectangle rect = modesList.GetItemRectangle(row);
+                int rel = pt.Y - rect.Y;
+                if (rel < rect.Height / 4 || rel > rect.Height * 3 / 4)
+                {
+                    // between two rows: put it before / after the row, at the same level
+                    int after = rel > rect.Height / 2 ? 1 : 0;
+                    m_ModeTree.Detach(moved);
+                    int at = target.Parent.Children.IndexOf(target) + after;
+                    m_ModeTree.Attach(moved, target.Parent, at);
+                }
+                else
+                {
+                    // on a row: it goes inside that folder
+                    target.Collapsed = false;
+                    m_ModeTree.Attach(moved, target, -1);
+                }
+                AfterTreeChange(moved.Title);
             }
             else
             {
-                int fromMode = modesList.SelectedIndex;
+                int dropIndex = ModeIndexAtRow(row);
+                if (dropIndex < 0)
+                    return;
+                int fromMode = SelectedModeIndex;
                 if (fromMode == dropIndex)
                     return;
                 int movedId = info.ElementId;
@@ -386,8 +415,8 @@ namespace Ares.Player
             {
                 // reuse the toast to explain how it works
                 ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Warning,
-                    T("Modo de edição: arraste botões para reordenar ou soltar sobre outro modo; arraste modos para reordenar; duplo clique no modo renomeia.",
-                      "Edit mode: drag buttons to reorder or onto another mode; drag modes to reorder; double-click a mode to rename.")));
+                    T("Modo de edição: arraste playlists para reordenar ou soltar sobre outra pasta; arraste pastas para reordenar ou soltar sobre outra pasta (vira subpasta); duplo clique na pasta renomeia.",
+                      "Edit mode: drag playlists to reorder or onto another folder; drag folders to reorder or onto another folder (it becomes a subfolder); double-click a folder to rename.")));
             }
         }
 
@@ -433,7 +462,7 @@ namespace Ares.Player
 
         private IMode CurrentMode()
         {
-            int index = modesList.SelectedIndex;
+            int index = SelectedModeIndex;
             if (m_Project == null || index < 0 || index >= m_Project.GetModes().Count)
                 return null;
             return m_Project.GetModes()[index];
@@ -524,9 +553,10 @@ namespace Ares.Player
             }
         }
 
-        private void NewEmptyMode()
+        private void NewEmptyMode(bool asChild)
         {
-            string name = Prompt(this, T("Novo modo", "New mode"), T("Nome do modo:", "Mode name:"), "");
+            string name = Prompt(this, asChild ? T("Nova subpasta", "New subfolder") : T("Nova pasta", "New folder"),
+                T("Nome da pasta:", "Folder name:"), "");
             if (name == null)
                 return;
             if (m_Project == null)
@@ -536,22 +566,44 @@ namespace Ares.Player
                 EnsureProjectFile(path);
                 OpenProject(path, false);
             }
-            ApplyProjectEdit(() => m_Project.AddMode(name), name);
+            // the new folder goes into the selected one (subfolder) or beside it (same level)
+            ModeNode selected = SelectedModeNode;
+            ModeNode parent = asChild ? selected : (selected != null ? selected.Parent : null);
+            ApplyProjectEdit(() =>
+            {
+                m_Project.AddMode(name);
+                EnsureModeTree();
+                ModeNode node = m_ModeTree.Find(name);
+                if (node != null && parent != null && parent != m_ModeTree.Root && parent != node)
+                {
+                    m_ModeTree.Attach(node, parent, -1);
+                    parent.Collapsed = false;
+                }
+                SaveModeTree();
+            }, name);
         }
 
-        // ---- modes ----
+        // ---- folders (the modes of the project) ----
 
         private void RenameCurrentMode()
         {
             IMode mode = CurrentMode();
             if (mode == null)
                 return;
-            string name = Prompt(this, T("Renomear modo", "Rename mode"), T("Novo nome:", "New name:"), mode.Title);
+            string name = Prompt(this, T("Renomear pasta", "Rename folder"), T("Novo nome:", "New name:"), mode.Title);
             if (name == null)
                 return;
-            int index = modesList.SelectedIndex;
-            Ares.CommonGUI.ButtonImageStore.RenameMode(m_CurrentProjectPath, mode.Title, name);
-            ApplyProjectEdit(() => m_Project.GetModes()[index].Title = name, name);
+            int index = SelectedModeIndex;
+            string oldTitle = mode.Title;
+            Ares.CommonGUI.ButtonImageStore.RenameMode(m_CurrentProjectPath, oldTitle, name);
+            ApplyProjectEdit(() =>
+            {
+                m_Project.GetModes()[index].Title = name;
+                ModeNode node = m_ModeTree != null ? m_ModeTree.Find(oldTitle) : null;
+                if (node != null)
+                    node.Title = name;
+                SaveModeTree();
+            }, name);
         }
 
         private void DeleteCurrentMode()
@@ -559,11 +611,14 @@ namespace Ares.Player
             IMode mode = CurrentMode();
             if (mode == null)
                 return;
-            if (MessageBox.Show(this, T("Excluir o modo \"" + mode.Title + "\" e todos os seus botões?\n(Os arquivos de áudio não são apagados.)",
-                    "Delete mode \"" + mode.Title + "\" and all its buttons?\n(Audio files are not deleted.)"),
+            ModeNode node = SelectedModeNode;
+            string extra = node != null && node.Children.Count > 0
+                ? T("\n(As subpastas dela sobem um nível e continuam existindo.)", "\n(Its subfolders move up one level and stay.)") : "";
+            if (MessageBox.Show(this, T("Excluir a pasta \"" + mode.Title + "\" e todas as suas playlists?\n(Os arquivos de áudio não são apagados.)" + extra,
+                    "Delete folder \"" + mode.Title + "\" and all its playlists?\n(Audio files are not deleted.)" + extra),
                     StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
-            int index = modesList.SelectedIndex;
+            int index = SelectedModeIndex;
             ApplyProjectEdit(() =>
             {
                 IMode m = m_Project.GetModes()[index];
@@ -573,22 +628,10 @@ namespace Ares.Player
             }, null);
         }
 
+        // moving is only a change of the folder tree; the project file keeps its order
         private void MoveCurrentMode(int delta)
         {
-            IMode mode = CurrentMode();
-            int index = modesList.SelectedIndex;
-            if (mode == null)
-                return;
-            int target = index + delta;
-            if (target < 0 || target >= m_Project.GetModes().Count)
-                return;
-            string title = mode.Title;
-            ApplyProjectEdit(() =>
-            {
-                IMode m = m_Project.GetModes()[index];
-                m_Project.RemoveMode(m);
-                m_Project.InsertMode(target, m);
-            }, title);
+            MoveModeNode(SelectedModeNode, delta);
         }
 
         // ---- buttons ----
@@ -617,10 +660,10 @@ namespace Ares.Player
             IModeElement me = MenuElement(out mode, out index);
             if (me == null)
                 return;
-            string name = Prompt(this, T("Renomear botão", "Rename button"), T("Novo nome:", "New name:"), me.Title);
+            string name = Prompt(this, T("Renomear playlist", "Rename playlist"), T("Novo nome:", "New name:"), me.Title);
             if (name == null)
                 return;
-            int modeIndex = modesList.SelectedIndex;
+            int modeIndex = SelectedModeIndex;
             string modeTitle = mode.Title;
             Ares.CommonGUI.ButtonImageStore.RenameElement(m_CurrentProjectPath, modeTitle, me.Title, name);
             ApplyProjectEdit(() => m_Project.GetModes()[modeIndex].GetElements()[index].Title = name, modeTitle);
@@ -634,7 +677,7 @@ namespace Ares.Player
                 return;
             using (OpenFileDialog dlg = new OpenFileDialog())
             {
-                dlg.Title = T("Escolher imagem do botão", "Choose button picture");
+                dlg.Title = T("Escolher imagem da playlist", "Choose playlist picture");
                 dlg.Filter = T("Imagens|*.png;*.jpg;*.jpeg;*.bmp;*.gif|Todos os arquivos|*.*", "Pictures|*.png;*.jpg;*.jpeg;*.bmp;*.gif|All files|*.*");
                 if (dlg.ShowDialog(this) != DialogResult.OK)
                     return;
@@ -680,10 +723,10 @@ namespace Ares.Player
             IModeElement me = MenuElement(out mode, out index);
             if (me == null)
                 return;
-            if (MessageBox.Show(this, T("Excluir o botão \"" + me.Title + "\"?", "Delete button \"" + me.Title + "\"?"),
+            if (MessageBox.Show(this, T("Excluir a playlist \"" + me.Title + "\"?", "Delete playlist \"" + me.Title + "\"?"),
                     StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
-            int modeIndex = modesList.SelectedIndex;
+            int modeIndex = SelectedModeIndex;
             string modeTitle = mode.Title;
             ApplyProjectEdit(() =>
             {
@@ -703,7 +746,7 @@ namespace Ares.Player
             int target = index + delta;
             if (target < 0 || target >= mode.GetElements().Count)
                 return;
-            int modeIndex = modesList.SelectedIndex;
+            int modeIndex = SelectedModeIndex;
             string modeTitle = mode.Title;
             ApplyProjectEdit(() =>
             {

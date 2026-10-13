@@ -1807,7 +1807,7 @@
     <value>Currently selected tags:</value>
   </data>
   <data name="groupBox4.Text" xml:space="preserve">
-    <value>Modes</value>
+    <value>Folders</value>
   </data>
   <data name="&gt;&gt;projectToolStripMenuItem.Name" xml:space="preserve">
     <value>projectToolStripMenuItem</value>
@@ -1874,7 +1874,7 @@
     <value>43, 17</value>
   </data>
   <data name="groupBox5.Text" xml:space="preserve">
-    <value>Elements</value>
+    <value>Playlists</value>
   </data>
   <data name="&gt;&gt;label6.Type" xml:space="preserve">
     <value>System.Windows.Forms.Label, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

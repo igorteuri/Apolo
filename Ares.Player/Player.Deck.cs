@@ -116,8 +116,8 @@ namespace Ares.Player
                 Label intro = new Label();
                 intro.SetBounds(16, 12, 608, 64);
                 intro.Text = T(
-                    "Controle o Apolo com botões e dials do Stream Deck: tocar/pausar, parar, anterior/próxima, repetir, volumes, trocar de modo e tocar elementos. O Apolo abre uma porta que só responde neste computador e só aceita a chave abaixo.",
-                    "Control Apolo with Stream Deck keys and dials: play/pause, stop, previous/next, repeat, volumes, switching modes and playing elements. Apolo opens a port which only answers on this computer and only accepts the key below.");
+                    "Controle o Apolo com botões e dials do Stream Deck: tocar/pausar, parar, anterior/próxima, repetir, volumes, trocar de pasta e tocar playlists. O Apolo abre uma porta que só responde neste computador e só aceita a chave abaixo.",
+                    "Control Apolo with Stream Deck keys and dials: play/pause, stop, previous/next, repeat, volumes, switching folders and playing playlists. Apolo opens a port which only answers on this computer and only accepts the key below.");
 
                 CheckBox enabled = new CheckBox();
                 enabled.SetBounds(16, 86, 400, 26);

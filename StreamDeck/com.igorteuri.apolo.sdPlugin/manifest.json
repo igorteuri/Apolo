@@ -4,7 +4,7 @@
   "Name": "Apolo",
   "Author": "Igor",
   "Version": "1.0.0.0",
-  "Description": "Controle o Apolo (player de áudio para RPG): tocar/pausar, volumes, modos e elementos. / Control Apolo, the RPG audio player.",
+  "Description": "Controle o Apolo (player de áudio para RPG): tocar/pausar, volumes, pastas e playlists. / Control Apolo, the RPG audio player.",
   "Category": "Apolo",
   "Icon": "assets/plugin-icon",
   "CategoryIcon": "assets/category-icon",
@@ -80,9 +80,9 @@
     },
     {
       "UUID": "com.igorteuri.apolo.mode",
-      "Name": "Trocar de modo",
+      "Name": "Trocar de pasta",
       "Icon": "assets/mode",
-      "Tooltip": "Muda para o modo escolhido.",
+      "Tooltip": "Muda para a pasta escolhida.",
       "PropertyInspectorPath": "ui/pi.html",
       "Controllers": [ "Keypad" ],
       "States": [
@@ -92,9 +92,9 @@
     },
     {
       "UUID": "com.igorteuri.apolo.element",
-      "Name": "Tocar elemento",
+      "Name": "Tocar playlist",
       "Icon": "assets/element",
-      "Tooltip": "Toca (ou para) um elemento de um modo.",
+      "Tooltip": "Toca (ou para) uma playlist de uma pasta.",
       "PropertyInspectorPath": "ui/pi.html",
       "Controllers": [ "Keypad" ],
       "States": [

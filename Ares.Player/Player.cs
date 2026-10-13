@@ -102,6 +102,7 @@ namespace Ares.Player
             m_PlayingControl = new PlayingControl();
             InitMusicProgressBar();
             InitLibraryDrop();
+            InitModeTree();
             InitEditMode();
             InitTray();
             InitWeb();
@@ -802,6 +803,7 @@ namespace Ares.Player
 
             modesList.BeginUpdate();
             modesList.Items.Clear();
+            m_ModeRows.Clear();
             m_Listen = false;
             if (m_Project != null)
             {
@@ -812,25 +814,16 @@ namespace Ares.Player
                     m_Listen = true;
                     return;
                 }
-                int i = 0;
-                int currentMode = 0;
-                bool showKeys = Settings.Settings.Instance.ShowKeysInButtons;
-                KeysConverter converter = new KeysConverter();
-                foreach (Ares.Data.IMode mode in modes)
-                {
-                    String title = mode.Title;
-                    if (showKeys && mode.KeyCode != 0)
-                    {
-                        title += " (" + converter.ConvertToString((System.Windows.Forms.Keys)mode.KeyCode) + ")";
-                    }
-                    modesList.Items.Add(title);
-                    if (mode == m_PlayingControl.CurrentMode)
-                    {
-                        currentMode = i;
-                    }
-                    ++i;
-                }
-                modesList.SelectedIndex = currentMode;
+                EnsureModeTree();
+                string currentTitle = m_PlayingControl.CurrentMode != null ? m_PlayingControl.CurrentMode.Title : null;
+                ModeNode currentNode = m_ModeTree.Find(currentTitle);
+                if (currentNode != null && ExpandAncestors(currentNode))
+                    SaveModeTree();
+                RebuildModeRows();
+                int currentRow = RowOfNode(currentNode);
+                if (currentRow < 0 && m_ModeRows.Count > 0)
+                    currentRow = 0;
+                modesList.SelectedIndex = currentRow;
             }
             modesList.EndUpdate();
             UpdateElementsPanel();
@@ -857,7 +850,7 @@ namespace Ares.Player
 
         private void UpdateElementsPanel()
         {
-            int modeIndex = modesList.SelectedIndex;
+            int modeIndex = SelectedModeIndex;
             if (modeIndex == -1)
                 return;
             if (SpecialViews && modeIndex == 0)
@@ -1229,7 +1222,7 @@ namespace Ares.Player
                 {
                     if (m_Project.GetModes()[i].Title == mode.Title)
                     {
-                        modesList.SelectedIndex = i;
+                        SelectModeIndex(i);
                         break;
                     }
                 }
@@ -2126,9 +2119,11 @@ namespace Ares.Player
         {
             if (!m_Listen)
                 return;
-            if (modesList.SelectedIndex >= 0 && m_Project != null && modesList.SelectedIndex < m_Project.GetModes().Count)
+            if (IsFoldClick())
+                return; // click on the arrow of a folder: no change of the mode
+            if (SelectedModeIndex >= 0 && m_Project != null)
             {
-                m_PlayingControl.SetMode(m_Project.GetModes()[modesList.SelectedIndex]);
+                m_PlayingControl.SetMode(m_Project.GetModes()[SelectedModeIndex]);
             }
             m_Listen = false;
             UpdateElementsPanel();

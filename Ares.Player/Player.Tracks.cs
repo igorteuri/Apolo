@@ -84,7 +84,7 @@ namespace Ares.Player
                 m_TrackKind.Items.Add(T("Música — aleatória", "Music — random"));
                 m_TrackKind.Items.Add(T("Música — em sequência", "Music — sequential"));
                 m_TrackKind.Items.Add(T("Efeito sonoro — um aleatório", "Sound effect — one at random"));
-                new ToolTip().SetToolTip(m_TrackKind, T("Tipo da lista: muda como este botão toca os arquivos", "List type: changes how this button plays its files"));
+                new ToolTip().SetToolTip(m_TrackKind, T("Tipo da playlist: muda como ela toca os arquivos", "Playlist type: changes how it plays its files"));
                 m_TrackSearch = new TextBox();
                 m_TrackList = new ListBox();
                 m_TrackList.IntegralHeight = false;
@@ -484,7 +484,7 @@ namespace Ares.Player
             m_TrackRows.Clear();
             m_TrackShown.Clear();
             m_TrackList.Items.Clear();
-            m_TrackTitle.Text = T("Botão direito num botão > Ver músicas", "Right-click a button > View tracks");
+            m_TrackTitle.Text = T("Botão direito numa playlist > Ver músicas", "Right-click a playlist > View tracks");
             m_TrackKindLock = true;
             m_TrackKind.SelectedIndex = -1;
             m_TrackKindLock = false;
