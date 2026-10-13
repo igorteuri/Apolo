@@ -28,6 +28,75 @@ jobs:
           Copy-Item wv2/lib/net462/Microsoft.Web.WebView2.WinForms.dll Libraries/
           Copy-Item wv2/runtimes/win-x86/native/WebView2Loader.dll Libraries/
 
+      - name: Download audio libraries (NAudio, NLayer, NVorbis, Concentus, TagLib#)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          # .NET Framework builds first, then .NET Standard 2.0 (works on .NET Framework 4.8)
+          $pref = @("net48","net472","net471","net47","net462","net461","net46","net452","net451","net45","netstandard2.0")
+          $groupOf = @{
+            "net48"=".NETFramework4.8"; "net472"=".NETFramework4.7.2"; "net471"=".NETFramework4.7.1"; "net47"=".NETFramework4.7";
+            "net462"=".NETFramework4.6.2"; "net461"=".NETFramework4.6.1"; "net46"=".NETFramework4.6";
+            "net452"=".NETFramework4.5.2"; "net451"=".NETFramework4.5.1"; "net45"=".NETFramework4.5";
+            "netstandard2.0"=".NETStandard2.0"
+          }
+          $queue = New-Object System.Collections.Queue
+          foreach ($root in @(@("NAudio.Core","2.2.1"), @("NAudio.Wasapi","2.2.1"), @("NLayer","1.14.0"), @("NVorbis","0.10.5"),
+                              @("Concentus","2.2.2"), @("Concentus.OggFile","1.0.6"), @("TagLibSharp","2.3.0"))) {
+            $queue.Enqueue($root)
+          }
+          $done = @{}
+          New-Item -ItemType Directory -Force -Path nuget-tmp | Out-Null
+          while ($queue.Count -gt 0) {
+            $item = $queue.Dequeue()
+            $key = $item[0].ToLower()
+            $ver = $item[1].ToLower()
+            if ($done.ContainsKey($key)) { continue }
+            $done[$key] = $ver
+            $zip = "nuget-tmp/$key.zip"
+            $dir = "nuget-tmp/$key"
+            Invoke-WebRequest "https://api.nuget.org/v3-flatcontainer/$key/$ver/$key.$ver.nupkg" -OutFile $zip
+            Expand-Archive $zip -DestinationPath $dir -Force
+            $chosen = $null
+            $libRoot = Join-Path $dir "lib"
+            if (Test-Path $libRoot) {
+              foreach ($t in $pref) {
+                $p = Join-Path $libRoot $t
+                if ((Test-Path $p) -and (Get-ChildItem $p -Filter *.dll -ErrorAction SilentlyContinue)) { $chosen = $t; break }
+              }
+            }
+            if ($chosen) {
+              Get-ChildItem (Join-Path $libRoot $chosen) -Filter *.dll | Where-Object { $_.Name -notlike "*.resources.dll" } | ForEach-Object {
+                Copy-Item $_.FullName Libraries/ -Force
+                Write-Host "$key $ver ($chosen): $($_.Name)"
+              }
+            } else {
+              Write-Host "$key $ver: no library to copy"
+            }
+            $nuspec = Get-ChildItem $dir -Filter *.nuspec | Select-Object -First 1
+            [xml]$spec = Get-Content $nuspec.FullName
+            $deps = $spec.package.metadata.dependencies
+            if ($deps -ne $null) {
+              $wanted = @()
+              $groups = @($deps.group)
+              if ($chosen -and $groupOf.ContainsKey($chosen)) {
+                $g = $groups | Where-Object { $_.targetFramework -eq $groupOf[$chosen] } | Select-Object -First 1
+                if ($g -eq $null) { $g = $groups | Where-Object { $_.targetFramework -eq ".NETStandard2.0" } | Select-Object -First 1 }
+                if ($g -eq $null) { $g = $groups | Where-Object { [string]::IsNullOrEmpty($_.targetFramework) } | Select-Object -First 1 }
+                if ($g -ne $null) { $wanted += @($g.dependency) }
+              }
+              if ($deps.dependency) { $wanted += @($deps.dependency) }
+              foreach ($d in $wanted) {
+                if ($d -eq $null -or -not $d.id) { continue }
+                if ("$($d.version)" -match '(\d+(\.\d+){0,3})') { $queue.Enqueue(@($d.id, $Matches[1])) }
+              }
+            }
+          }
+          foreach ($need in @("NAudio.Core.dll","NAudio.Wasapi.dll","NLayer.dll","NVorbis.dll","Concentus.dll","Concentus.Oggfile.dll","TagLibSharp.dll")) {
+            if (-not (Test-Path "Libraries/$need")) { throw "Missing library: $need" }
+          }
+
       - name: Download cloudflared (tunnel for the remote control)
         shell: pwsh
         run: |
@@ -43,6 +112,8 @@ jobs:
           $dirs = Get-ChildItem -Recurse -Directory -Filter "Release" | Where-Object { $_.FullName -match "\\bin\\Release$" }
           foreach ($d in $dirs) { Copy-Item "$($d.FullName)\*" dist -Recurse -Force -ErrorAction SilentlyContinue }
           Copy-Item "Libraries\*" dist -Recurse -Force -ErrorAction SilentlyContinue
+          # the BASS library (not free for commercial use) must never be part of Apolo
+          Remove-Item dist\bass*.dll, dist\Bass*.dll -Force -ErrorAction SilentlyContinue
 
       - name: Setup Node.js (for the Discord bridge)
         uses: actions/setup-node@v4
@@ -72,6 +143,17 @@ jobs:
           if (Test-Path $dest) { Remove-Item $dest }
           Add-Type -AssemblyName System.IO.Compression.FileSystem
           [System.IO.Compression.ZipFile]::CreateFromDirectory($src, $dest, [System.IO.Compression.CompressionLevel]::Optimal, $true)
+
+      - name: Package the Foundry VTT module
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/FoundryModule | Out-Null
+          $src = (Resolve-Path "FoundryModule/apolo-audio").Path
+          $dest = Join-Path (Resolve-Path "dist/FoundryModule").Path "apolo-audio.zip"
+          if (Test-Path $dest) { Remove-Item $dest }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [System.IO.Compression.ZipFile]::CreateFromDirectory($src, $dest, [System.IO.Compression.CompressionLevel]::Optimal, $false)
 
       - name: Upload build
         uses: actions/upload-artifact@v4
