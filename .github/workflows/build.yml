@@ -69,10 +69,10 @@ jobs:
             if ($chosen) {
               Get-ChildItem (Join-Path $libRoot $chosen) -Filter *.dll | Where-Object { $_.Name -notlike "*.resources.dll" } | ForEach-Object {
                 Copy-Item $_.FullName Libraries/ -Force
-                Write-Host "$key $ver ($chosen): $($_.Name)"
+                Write-Host "${key} ${ver} (${chosen}): $($_.Name)"
               }
             } else {
-              Write-Host "$key $ver: no library to copy"
+              Write-Host "${key} ${ver}: no library to copy"
             }
             $nuspec = Get-ChildItem $dir -Filter *.nuspec | Select-Object -First 1
             [xml]$spec = Get-Content $nuspec.FullName
