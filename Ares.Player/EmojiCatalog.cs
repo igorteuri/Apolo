@@ -218,7 +218,187 @@ namespace Ares.Player
             return sb.ToString();
         }
 
-        /// <summary>The emojis that fit a search text (any word of the entry that starts with, or contains, the text).</summary>
+        // ---- the big dictionary: all emojis of the Unicode CLDR annotations (Portuguese and English) ----
+
+        private static volatile List<EmojiEntry> s_Extended;
+        private static int s_ExtendedStarted;
+
+        public static bool ExtendedReady { get { return s_Extended != null; } }
+
+        private static string AnnotationFile(string lang)
+        {
+            return Path.Combine(CacheFolder, "annotations-" + lang + ".json");
+        }
+
+        private static string LoadAnnotationText(string lang)
+        {
+            string file = AnnotationFile(lang);
+            try
+            {
+                if (File.Exists(file) && new FileInfo(file).Length > 1000)
+                    return File.ReadAllText(file, Encoding.UTF8);
+                byte[] data = OpenMedia.GetBytes("https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-annotations-full/annotations/"
+                    + lang + "/annotations.json");
+                if (data == null || data.Length < 1000)
+                    return null;
+                Directory.CreateDirectory(CacheFolder);
+                File.WriteAllBytes(file, data);
+                return Encoding.UTF8.GetString(data);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        // glyph -> code ("1f332"); null for sequences that are not used (flags, skin tones, joined emojis, keycaps)
+        private static string CodeOf(string glyph)
+        {
+            List<string> parts = new List<string>();
+            for (int i = 0; i < glyph.Length; i++)
+            {
+                int cp;
+                if (char.IsHighSurrogate(glyph[i]) && i + 1 < glyph.Length)
+                {
+                    cp = char.ConvertToUtf32(glyph[i], glyph[i + 1]);
+                    i++;
+                }
+                else
+                {
+                    cp = glyph[i];
+                }
+                if (cp == 0xfe0f)
+                    continue;
+                if (cp == 0x200d || cp == 0x20e3 || (cp >= 0x1f3fb && cp <= 0x1f3ff) || (cp >= 0x1f1e6 && cp <= 0x1f1ff) || cp >= 0xe0000 || cp < 0x80)
+                    return null;
+                parts.Add(cp.ToString("x"));
+            }
+            return parts.Count == 0 ? null : string.Join("-", parts.ToArray());
+        }
+
+        private static void AddAnnotations(string json, Dictionary<string, EmojiEntry> map, bool primary)
+        {
+            if (string.IsNullOrEmpty(json))
+                return;
+            System.Web.Script.Serialization.JavaScriptSerializer js = new System.Web.Script.Serialization.JavaScriptSerializer();
+            js.MaxJsonLength = int.MaxValue;
+            Dictionary<string, object> root = js.DeserializeObject(json) as Dictionary<string, object>;
+            object a1;
+            if (root == null || !root.TryGetValue("annotations", out a1))
+                return;
+            Dictionary<string, object> level1 = a1 as Dictionary<string, object>;
+            object a2;
+            if (level1 == null || !level1.TryGetValue("annotations", out a2))
+                return;
+            Dictionary<string, object> items = a2 as Dictionary<string, object>;
+            if (items == null)
+                return;
+            foreach (KeyValuePair<string, object> pair in items)
+            {
+                string code = CodeOf(pair.Key);
+                if (code == null)
+                    continue;
+                Dictionary<string, object> info = pair.Value as Dictionary<string, object>;
+                if (info == null)
+                    continue;
+                EmojiEntry entry;
+                if (!map.TryGetValue(code, out entry))
+                {
+                    entry = new EmojiEntry();
+                    entry.Code = code;
+                    entry.Words = new string[0];
+                    entry.Label = "";
+                    map[code] = entry;
+                }
+                List<string> words = new List<string>(entry.Words);
+                foreach (string key in new[] { "tts", "default" })
+                {
+                    object list;
+                    if (!info.TryGetValue(key, out list))
+                        continue;
+                    object[] arr = list as object[];
+                    if (arr == null)
+                    {
+                        System.Collections.ArrayList al = list as System.Collections.ArrayList;
+                        arr = al != null ? al.ToArray() : null;
+                    }
+                    if (arr == null)
+                        continue;
+                    foreach (object o in arr)
+                    {
+                        string text = Convert.ToString(o);
+                        if (key == "tts" && primary && entry.Label.Length == 0)
+                            entry.Label = text;
+                        string folded = Fold(text);
+                        if (folded.Length >= 3 && !words.Contains(folded))
+                            words.Add(folded);
+                        foreach (string w in folded.Split(' '))
+                        {
+                            if (w.Length >= 4 && !words.Contains(w))
+                                words.Add(w);
+                        }
+                    }
+                }
+                entry.Words = words.ToArray();
+            }
+        }
+
+        /// <summary>Loads (and, the first time, downloads) the big dictionary in the background; "ready" is called from a background thread.</summary>
+        public static void PrepareExtendedAsync(Action ready)
+        {
+            if (s_Extended != null)
+            {
+                if (ready != null)
+                    ready();
+                return;
+            }
+            if (System.Threading.Interlocked.Exchange(ref s_ExtendedStarted, 1) != 0)
+            {
+                // somebody else is loading: wait for the result
+                System.Threading.Tasks.Task.Factory.StartNew(() =>
+                {
+                    for (int i = 0; i < 300 && s_Extended == null && s_ExtendedStarted == 1; i++)
+                        System.Threading.Thread.Sleep(200);
+                    if (s_Extended != null && ready != null)
+                        ready();
+                });
+                return;
+            }
+            System.Threading.Tasks.Task.Factory.StartNew(() =>
+            {
+                try
+                {
+                    Dictionary<string, EmojiEntry> map = new Dictionary<string, EmojiEntry>();
+                    string pt = LoadAnnotationText("pt");
+                    string en = LoadAnnotationText("en");
+                    AddAnnotations(pt, map, true);
+                    AddAnnotations(en, map, pt == null);
+                    List<EmojiEntry> list = new List<EmojiEntry>();
+                    foreach (EmojiEntry e in map.Values)
+                    {
+                        if (Find(e.Code) != null || e.Words.Length == 0)
+                            continue;
+                        if (e.Label.Length == 0)
+                            e.Label = e.Words[0];
+                        list.Add(e);
+                    }
+                    if (list.Count > 0)
+                        s_Extended = list;
+                }
+                catch (Exception)
+                {
+                }
+                finally
+                {
+                    if (s_Extended == null)
+                        s_ExtendedStarted = 0;   // try again next time
+                }
+                if (s_Extended != null && ready != null)
+                    ready();
+            });
+        }
+
+        /// <summary>The emojis that fit a search text: the curated ones first, then (when loaded) any other emoji.</summary>
         public static List<EmojiEntry> Search(string query)
         {
             string q = Fold(query).Trim();
@@ -239,7 +419,52 @@ namespace Ares.Player
                     }
                 }
             }
+            List<EmojiEntry> ext = s_Extended;
+            if (ext != null && q.Length >= 3)
+            {
+                int extra = 0;
+                foreach (EmojiEntry e in ext)
+                {
+                    foreach (string w in e.Words)
+                    {
+                        if (w.IndexOf(q, StringComparison.Ordinal) >= 0)
+                        {
+                            result.Add(e);
+                            extra++;
+                            break;
+                        }
+                    }
+                    if (extra >= 80)
+                        break;
+                }
+            }
             return result;
+        }
+
+        private static void Score(EmojiEntry e, string t, string[] words, int bonus, bool exactOnly, ref EmojiEntry best, ref int bestScore)
+        {
+            foreach (string kw in e.Words)
+            {
+                if (kw.Length < 3)
+                    continue;
+                int score = 0;
+                foreach (string w in words)
+                {
+                    if (w == kw)
+                        score = Math.Max(score, 100 + kw.Length);
+                    else if (!exactOnly && kw.Length >= 4 && w.Length >= 4 && (w.StartsWith(kw, StringComparison.Ordinal) || kw.StartsWith(w, StringComparison.Ordinal)))
+                        score = Math.Max(score, 50 + Math.Min(kw.Length, w.Length));
+                }
+                if (kw.IndexOf(' ') >= 0 && t.IndexOf(kw, StringComparison.Ordinal) >= 0)
+                    score = Math.Max(score, 120 + kw.Length);
+                if (score > 0)
+                    score += bonus;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    best = e;
+                }
+            }
         }
 
         /// <summary>Guesses the emoji for the title of a button; null when nothing fits.</summary>
@@ -252,27 +477,13 @@ namespace Ares.Player
             EmojiEntry best = null;
             int bestScore = 0;
             foreach (EmojiEntry e in All)
+                Score(e, t, words, 25, false, ref best, ref bestScore);
+            List<EmojiEntry> ext = s_Extended;
+            if (ext != null)
             {
-                foreach (string kw in e.Words)
-                {
-                    if (kw.Length < 3)
-                        continue;
-                    int score = 0;
-                    foreach (string w in words)
-                    {
-                        if (w == kw)
-                            score = Math.Max(score, 100 + kw.Length);
-                        else if (kw.Length >= 4 && w.Length >= 4 && (w.StartsWith(kw, StringComparison.Ordinal) || kw.StartsWith(w, StringComparison.Ordinal)))
-                            score = Math.Max(score, 50 + Math.Min(kw.Length, w.Length));
-                    }
-                    if (kw.IndexOf(' ') >= 0 && t.IndexOf(kw, StringComparison.Ordinal) >= 0)
-                        score = Math.Max(score, 120 + kw.Length);
-                    if (score > bestScore)
-                    {
-                        bestScore = score;
-                        best = e;
-                    }
-                }
+                // the big dictionary has many loose words: only whole-word matches count
+                foreach (EmojiEntry e in ext)
+                    Score(e, t, words, 0, true, ref best, ref bestScore);
             }
             return best;
         }

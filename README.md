@@ -13,6 +13,7 @@ O Apolo é uma modernização do **[Ares](http://aresrpg.sourceforge.net/)** (*A
 - **Áudio:** motor de áudio próprio do Apolo, feito com [NAudio](https://github.com/naudio/NAudio), [NLayer](https://github.com/naudio/NLayer) e [NVorbis](https://github.com/NVorbis/NVorbis) (licença MIT), [Concentus](https://github.com/lostromb/concentus) (licença BSD) e [TagLib#](https://github.com/mono/taglib-sharp) (licença LGPL). Todas livres, inclusive para uso comercial.
 - **Ícones:** [Lucide](https://lucide.dev/) (licença ISC).
 - **Emojis dos botões:** [Noto Emoji](https://github.com/googlefonts/noto-emoji), do Google (licença Apache 2.0), com o [Twemoji](https://github.com/jdecked/twemoji) (CC-BY 4.0) como segunda fonte. Os desenhos são baixados na primeira vez que um emoji é escolhido.
+- **Palavras dos emojis:** [Unicode CLDR](https://github.com/unicode-org/cldr-json) (nomes e palavras-chave em português e inglês, licença Unicode), baixadas uma vez para o reconhecimento automático e a busca de emojis.
 - **Páginas web embutidas:** Microsoft WebView2.
 - **Túnel do controle remoto:** [cloudflared](https://github.com/cloudflare/cloudflared), da Cloudflare.
 - **Discord:** [discord.js/voice](https://github.com/discordjs/discord.js) e [@snazzah/davey](https://github.com/Snazzah/davey), rodando em um processo Node.js que acompanha o programa.

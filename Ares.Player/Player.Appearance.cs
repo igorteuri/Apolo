@@ -173,13 +173,9 @@ namespace Ares.Player
                 for (int i = 0; i < s_Colors.Length; i++)
                 {
                     Color c = s_Colors[i];
-                    Button b = new Button();
+                    // drawn by the control itself: the theme repaints real buttons and would hide the color
+                    Swatch b = new Swatch(c, !current.IsEmpty && current.ToArgb() == c.ToArgb());
                     b.SetBounds(12 + (i % 6) * 60, 54 + (i / 6) * 52, 54, 46);
-                    b.BackColor = c;
-                    b.FlatStyle = FlatStyle.Flat;
-                    b.FlatAppearance.BorderSize = !current.IsEmpty && current.ToArgb() == c.ToArgb() ? 3 : 1;
-                    b.FlatAppearance.BorderColor = !current.IsEmpty && current.ToArgb() == c.ToArgb() ? Color.White : Color.Gray;
-                    b.UseVisualStyleBackColor = false;
                     tip.SetToolTip(b, pt ? s_Names[i] : s_NamesEn[i]);
                     b.Click += (s, e) =>
                     {
@@ -230,6 +226,76 @@ namespace Ares.Player
             }
         }
 
+        private class Swatch : Control
+        {
+            private readonly Color m_Color;
+            private readonly bool m_Current;
+            private bool m_Hover;
+
+            public Swatch(Color color, bool current)
+            {
+                m_Color = color;
+                m_Current = current;
+                SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer
+                    | ControlStyles.ResizeRedraw | ControlStyles.Selectable, true);
+                Cursor = Cursors.Hand;
+                TabStop = true;
+            }
+
+            protected override void OnMouseEnter(EventArgs e)
+            {
+                m_Hover = true;
+                Invalidate();
+                base.OnMouseEnter(e);
+            }
+
+            protected override void OnMouseLeave(EventArgs e)
+            {
+                m_Hover = false;
+                Invalidate();
+                base.OnMouseLeave(e);
+            }
+
+            protected override bool IsInputKey(System.Windows.Forms.Keys keyData)
+            {
+                return keyData == System.Windows.Forms.Keys.Enter || keyData == System.Windows.Forms.Keys.Space || base.IsInputKey(keyData);
+            }
+
+            protected override void OnKeyDown(KeyEventArgs e)
+            {
+                if (e.KeyCode == System.Windows.Forms.Keys.Enter || e.KeyCode == System.Windows.Forms.Keys.Space)
+                {
+                    OnClick(EventArgs.Empty);
+                    e.Handled = true;
+                }
+                base.OnKeyDown(e);
+            }
+
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                Graphics g = e.Graphics;
+                Color back = Parent != null ? Parent.BackColor : SystemColors.Control;
+                g.Clear(back);
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                Rectangle r = new Rectangle(2, 2, Width - 5, Height - 5);
+                using (GraphicsPath path = new GraphicsPath())
+                {
+                    int d = 12;
+                    path.AddArc(r.X, r.Y, d, d, 180, 90);
+                    path.AddArc(r.Right - d, r.Y, d, d, 270, 90);
+                    path.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
+                    path.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
+                    path.CloseFigure();
+                    using (SolidBrush b = new SolidBrush(m_Color))
+                        g.FillPath(b, path);
+                    float w = m_Current ? 3f : (m_Hover || Focused ? 2.5f : 1f);
+                    Color line = m_Current || m_Hover || Focused ? Color.White : Color.FromArgb(120, 120, 120);
+                    using (Pen pen = new Pen(line, w))
+                        g.DrawPath(pen, path);
+                }
+            }
+        }
+
         // ---- choice of an emoji ----
 
         private class EmojiPickerDialog : Form
@@ -266,15 +332,33 @@ namespace Ares.Player
                 hint.AutoSize = false;
                 hint.Height = 24;
                 hint.TextAlign = ContentAlignment.MiddleLeft;
-                hint.Text = Player.T("Digite para filtrar (floresta, dragão, taverna, fogo, castelo...). Os desenhos são baixados na primeira vez.",
-                    "Type to filter (forest, dragon, tavern, fire, castle...). The pictures are downloaded the first time.");
+                hint.Text = Player.T("Digite para filtrar (floresta, dragão, taverna, fogo...). Com 3 letras ou mais, busca em todos os emojis. Os desenhos são baixados na primeira vez.",
+                    "Type to filter (forest, dragon, tavern, fire...). With 3 letters or more it searches all emojis. The pictures are downloaded the first time.");
                 m_Panel.Dock = DockStyle.Fill;
                 m_Panel.AutoScroll = true;
                 m_Panel.Padding = new Padding(6);
                 Controls.Add(m_Panel);
                 Controls.Add(hint);
                 Controls.Add(m_Search);
-                Shown += (s, e) => Fill();
+                Shown += (s, e) =>
+                {
+                    Fill();
+                    // the big dictionary (all emojis, in Portuguese and English) is loaded in the background
+                    EmojiCatalog.PrepareExtendedAsync(() =>
+                    {
+                        try
+                        {
+                            BeginInvoke(new Action(() =>
+                            {
+                                if (!m_Closed && m_Search.Text.Trim().Length >= 3)
+                                    Fill();
+                            }));
+                        }
+                        catch (InvalidOperationException)
+                        {
+                        }
+                    });
+                };
                 FormClosing += (s, e) => m_Closed = true;
                 FormClosed += (s, e) =>
                 {
@@ -456,6 +540,20 @@ namespace Ares.Player
                 Controls.Add(close);
 
                 Fill();
+                Shown += (s, e) => EmojiCatalog.PrepareExtendedAsync(() =>
+                {
+                    try
+                    {
+                        BeginInvoke(new Action(() =>
+                        {
+                            if (!m_Busy)
+                                Fill();
+                        }));
+                    }
+                    catch (InvalidOperationException)
+                    {
+                    }
+                });
             }
 
             private void Fill()
