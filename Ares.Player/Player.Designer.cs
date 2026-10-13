@@ -303,13 +303,13 @@ namespace Ares.Player
             // 
             // openFileDialog1
             // 
-            this.openFileDialog1.DefaultExt = "ares";
+            this.openFileDialog1.DefaultExt = "apolo";
             resources.ApplyResources(this.openFileDialog1, "openFileDialog1");
             // 
             // fileSystemWatcher1
             // 
             this.fileSystemWatcher1.EnableRaisingEvents = true;
-            this.fileSystemWatcher1.Filter = "*.ares";
+            this.fileSystemWatcher1.Filter = "*.apolo";
             this.fileSystemWatcher1.NotifyFilter = System.IO.NotifyFilters.LastWrite;
             this.fileSystemWatcher1.SynchronizingObject = this;
             // 
@@ -643,7 +643,7 @@ namespace Ares.Player
             // 
             // saveFileDialog
             // 
-            this.saveFileDialog.DefaultExt = "ares";
+            this.saveFileDialog.DefaultExt = "apolo";
             resources.ApplyResources(this.saveFileDialog, "saveFileDialog");
             // 
             // groupBox4

@@ -99,6 +99,8 @@
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Security" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
@@ -133,6 +135,7 @@
     <Compile Include="Player.Library.cs" />
     <Compile Include="ToastPanel.cs" />
     <Compile Include="Player.Edit.cs" />
+    <Compile Include="Player.Export.cs" />
     <Compile Include="ElementButton.cs" />
     <Compile Include="IconPickerDialog.cs" />
     <Compile Include="Player.Share.cs" />

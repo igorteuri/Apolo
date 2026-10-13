@@ -73,9 +73,9 @@ namespace Ares.Player
                 return;
             using (SaveFileDialog dlg = new SaveFileDialog())
             {
-                dlg.Filter = T("Projetos do Apolo/Ares|*.ares|Todos os arquivos|*.*", "Apolo/Ares projects|*.ares|All files|*.*");
-                dlg.DefaultExt = "ares";
-                dlg.FileName = !string.IsNullOrEmpty(m_Project.Title) ? m_Project.Title + ".ares" : "projeto.ares";
+                dlg.Filter = T("Projetos do Apolo|*.apolo|Todos os arquivos|*.*", "Apolo projects|*.apolo|All files|*.*");
+                dlg.DefaultExt = "apolo";
+                dlg.FileName = !string.IsNullOrEmpty(m_Project.Title) ? m_Project.Title + ".apolo" : "projeto.apolo";
                 if (!string.IsNullOrEmpty(m_Project.FileName))
                     dlg.InitialDirectory = System.IO.Path.GetDirectoryName(m_Project.FileName);
                 if (dlg.ShowDialog(this) != DialogResult.OK)
@@ -100,6 +100,7 @@ namespace Ares.Player
         private void InitEditMode()
         {
             InitSaveMenu();
+            InitExportMenu();
             // toolbar: edit toggle + add menu (the add menu only shows in edit mode)
             m_EditButton = new ToolStripButton();
             m_EditButton.Name = "editModeButton";

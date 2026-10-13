@@ -184,7 +184,7 @@ namespace Ares.Player
         {
             try
             {
-                string file = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares", "Icons", name + ".png");
+                string file = System.IO.Path.Combine(Ares.Settings.AppFolders.Root, "Icons", name + ".png");
                 if (!System.IO.File.Exists(file) || button.Image == null)
                     return;
                 Size size = button.Image.Size;

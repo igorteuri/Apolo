@@ -73,15 +73,25 @@ namespace Ares.Playing
             SetStartVolume(file, fadeInTime, channel, info);
             info.CrossFade = false;
             double length = channel.Length;
-            if (effects != null && effects.FadeOutTime != 0 && length > 0)
+            int fadeOutTime = effects != null ? effects.FadeOutTime : 0;
+            bool crossFading = effects != null && effects.CrossFading;
+            int settingTime;
+            if (!loop && file.SoundFileType == SoundFileType.Music && PlayingModule.ThePlayer.GetMusicCrossFade(out settingTime))
             {
-                double fadeOutSeconds = Math.Min(0.001 * effects.FadeOutTime, length);
+                // the crossfade of the music tab also applies when a song ends by itself
+                crossFading = true;
+                if (fadeOutTime == 0)
+                    fadeOutTime = settingTime;
+            }
+            if (fadeOutTime != 0 && length > 0)
+            {
+                double fadeOutSeconds = Math.Min(0.001 * fadeOutTime, length);
                 double end = cueOutActive ? effects.CueOut.Position : length;
                 channel.FadeAt = Math.Max(0, end - fadeOutSeconds);
                 channel.FadeOutMs = (int)(fadeOutSeconds * 1000);
                 if (!loop)
                 {
-                    info.CrossFade = effects.CrossFading;
+                    info.CrossFade = crossFading;
                 }
             }
             if (effects != null && (effects.Pitch.Active || effects.Tempo.Active))

@@ -1112,6 +1112,13 @@ namespace Ares.Playing
         private bool m_CrossFadeOnPreviousNext = false;
         private int m_FadeTimeOnPreviousNext = 0;
 
+        /// <summary>True (and the time in ms) if the music setting asks for a crossfade between songs.</summary>
+        internal bool GetMusicCrossFade(out int fadeTimeMs)
+        {
+            fadeTimeMs = m_FadeTimeOnPreviousNext;
+            return m_FadeOnPreviousNext && m_CrossFadeOnPreviousNext && m_FadeTimeOnPreviousNext > 0;
+        }
+
         public void SetFadingOnPreviousNext(bool fade, bool crossFade, int fadeTime)
         {
             m_FadeOnPreviousNext = fade;

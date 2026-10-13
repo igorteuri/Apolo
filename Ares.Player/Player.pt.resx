@@ -181,10 +181,10 @@
     <value>Mensagens</value>
   </data>
   <data name="saveFileDialog.Filter" xml:space="preserve">
-    <value>Projetos do Ares|*.ares|Todos os arquivos|*.*</value>
+    <value>Projetos do Apolo|*.apolo;*.ares|Todos os arquivos|*.*</value>
   </data>
   <data name="openFileDialog1.Filter" xml:space="preserve">
-    <value>Projetos do Ares|*.ares|Todos os arquivos|*.*</value>
+    <value>Projetos do Apolo|*.apolo;*.ares|Todos os arquivos|*.*</value>
   </data>
   <data name="label4.Text" xml:space="preserve">
     <value>Sons:</value>

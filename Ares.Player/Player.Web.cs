@@ -405,7 +405,7 @@ namespace Ares.Player
         {
             get
             {
-                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares");
+                string dir = Ares.Settings.AppFolders.Root;
                 Directory.CreateDirectory(dir);
                 return Path.Combine(dir, "webtabs.cfg");
             }
@@ -576,7 +576,7 @@ namespace Ares.Player
         {
             if (s_Env == null)
             {
-                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares", "WebView2");
+                string dir = Path.Combine(Ares.Settings.AppFolders.Root, "WebView2");
                 CoreWebView2EnvironmentOptions options = new CoreWebView2EnvironmentOptions("--autoplay-policy=no-user-gesture-required");
                 s_Env = CoreWebView2Environment.CreateAsync(null, dir, options);
             }

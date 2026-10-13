@@ -190,7 +190,7 @@
     <value>Iniciando ...</value>
   </data>
   <data name="importDialog.Filter" xml:space="preserve">
-    <value>Projetos do Ares|*.ares|Projetos compactados do Ares|*.apkg|Todos os arquivos|*.*</value>
+    <value>Projetos do Apolo|*.apolo;*.ares|Projetos compactados do Apolo|*.apkg|Todos os arquivos|*.*</value>
   </data>
   <data name="editToolStripMenuItem1.Text" xml:space="preserve">
     <value>Editar ...</value>
@@ -211,7 +211,7 @@
     <value>Crescente por nome</value>
   </data>
   <data name="exportDialog.Filter" xml:space="preserve">
-    <value>Projetos do Ares|*.ares|Projetos compactados do Ares|*.apkg|Todos os arquivos|*.*</value>
+    <value>Projetos do Apolo|*.apolo;*.ares|Projetos compactados do Apolo|*.apkg|Todos os arquivos|*.*</value>
   </data>
   <data name="toolStripMenuItem7.Text" xml:space="preserve">
     <value>Copiar</value>

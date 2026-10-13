@@ -1365,7 +1365,7 @@ namespace Ares.Players
 						var list2 = new List<String>();
 						foreach (var file in files)
 						{
-							if (file.DisplayName.EndsWith(".ares", StringComparison.InvariantCultureIgnoreCase))
+							if (Ares.Settings.ProjectFiles.IsProjectFile(file.DisplayName))
 								list1.Add(file.DisplayName);
 							else
 								list2.Add(file.DisplayName);
@@ -1391,7 +1391,7 @@ namespace Ares.Players
 		#else
 		private void GetProjectsFromFolder(String folderPath, out String[] files1, out String[] files2)
 		{
-			files1 = System.IO.Directory.GetFiles(folderPath, "*.ares");
+			files1 = Ares.Settings.ProjectFiles.GetProjectFiles(folderPath);
 			files2 = System.IO.Directory.GetFiles(folderPath, "*.apkg");
 		}
 		#endif

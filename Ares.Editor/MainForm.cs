@@ -624,7 +624,7 @@ namespace Ares.Editor
             }
             else if (!String.IsNullOrEmpty(m_CurrentProject.Title))
             {
-                saveFileDialog.FileName = m_CurrentProject.Title + ".ares";
+                saveFileDialog.FileName = m_CurrentProject.Title + Ares.Settings.ProjectFiles.Extension;
             }
             DialogResult result = saveFileDialog.ShowDialog(this);
             if (result != System.Windows.Forms.DialogResult.OK)
@@ -690,6 +690,7 @@ namespace Ares.Editor
             bool result = true;
             try
             {
+                filePath = Ares.Settings.ProjectFiles.Upgrade(filePath); // an old .ares project continues as .apolo
                 m_CurrentProject = Ares.Data.DataModule.ProjectManager.LoadProject(filePath);
                 Ares.Settings.Settings.Instance.RecentFiles.AddFile(new RecentFiles.ProjectEntry(m_CurrentProject.FileName, m_CurrentProject.Title));
             }
@@ -1155,9 +1156,9 @@ namespace Ares.Editor
                 return;
 
             String exportFileName = m_CurrentProject.FileName;
-            if (exportFileName.EndsWith(".ares", StringComparison.InvariantCultureIgnoreCase))
+            if (Ares.Settings.ProjectFiles.IsProjectFile(exportFileName))
             {
-                exportFileName = exportFileName.Substring(0, exportFileName.Length - 5);
+                exportFileName = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(exportFileName), System.IO.Path.GetFileNameWithoutExtension(exportFileName));
             }
             exportFileName = exportFileName + ".apkg";
             exportFileDialog.FileName = exportFileName;
@@ -1211,7 +1212,7 @@ namespace Ares.Editor
             {
                 defaultProjectName = defaultProjectName.Substring(0, defaultProjectName.Length - 5);
             }
-            defaultProjectName = defaultProjectName + ".ares";
+            defaultProjectName = defaultProjectName + Ares.Settings.ProjectFiles.Extension;
             saveFileDialog.FileName = defaultProjectName;
             DialogResult result = saveFileDialog.ShowDialog(this);
             if (result != System.Windows.Forms.DialogResult.OK)

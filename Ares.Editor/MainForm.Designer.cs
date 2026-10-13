@@ -474,12 +474,12 @@ namespace Ares.Editor
             // 
             // saveFileDialog
             // 
-            this.saveFileDialog.DefaultExt = "ares";
+            this.saveFileDialog.DefaultExt = "apolo";
             resources.ApplyResources(this.saveFileDialog, "saveFileDialog");
             // 
             // openFileDialog
             // 
-            this.openFileDialog.DefaultExt = "ares";
+            this.openFileDialog.DefaultExt = "apolo";
             resources.ApplyResources(this.openFileDialog, "openFileDialog");
             // 
             // toolStrip1

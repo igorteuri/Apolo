@@ -81,7 +81,7 @@ namespace Ares.Editor
             try
             {
                 String folder = System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData);
-                String path = System.IO.Path.Combine(folder, "Ares_Errors.log");
+                String path = System.IO.Path.Combine(folder, "Apolo_Errors.log");
                 using (System.IO.StreamWriter writer = new System.IO.StreamWriter(path, true))
                 {
                     writer.WriteLine(System.DateTime.Now.ToString(System.Globalization.CultureInfo.InvariantCulture));

@@ -146,7 +146,7 @@ namespace Ares.Player
                     settings.StreamingBitrate = 128;
                     break;
             }
-            settings.StreamingStreamName = String.IsNullOrEmpty(streamNameBox.Text) ? "Ares" : streamNameBox.Text;
+            settings.StreamingStreamName = String.IsNullOrEmpty(streamNameBox.Text) ? "Apolo" : streamNameBox.Text;
             settings.StreamingUserName = userNameBox.Text;
         }
 

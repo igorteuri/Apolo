@@ -170,7 +170,7 @@ namespace Ares.Settings
 				{
 					foreach (var file in System.IO.Directory.GetFiles(mPath))
 					{
-						if (file.EndsWith(".ares", StringComparison.InvariantCultureIgnoreCase) ||
+						if (Ares.Settings.ProjectFiles.IsProjectFile(file) ||
 						    file.EndsWith(".apkg", StringComparison.InvariantCultureIgnoreCase))
 						{
 							result.Add(new FileSystemFile(file));

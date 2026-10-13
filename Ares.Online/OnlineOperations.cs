@@ -196,7 +196,7 @@ namespace Ares.Online
                 return;
             bool hasNews = false;
             bool showDialog = false;
-            String fileName = System.IO.Path.Combine(System.Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares");
+            String fileName = Ares.CommonGUI.Preferences.DataFolder;
             fileName = System.IO.Path.Combine(fileName, "ares_news.html");
             if (!manual && System.IO.File.Exists(fileName))
             {

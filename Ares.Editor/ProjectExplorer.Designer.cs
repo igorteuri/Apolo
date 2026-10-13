@@ -866,12 +866,12 @@ namespace Ares.Editor
             // 
             // exportDialog
             // 
-            this.exportDialog.DefaultExt = "ares";
+            this.exportDialog.DefaultExt = "apolo";
             resources.ApplyResources(this.exportDialog, "exportDialog");
             // 
             // importDialog
             // 
-            this.importDialog.DefaultExt = "ares";
+            this.importDialog.DefaultExt = "apolo";
             resources.ApplyResources(this.importDialog, "importDialog");
             // 
             // ProjectExplorer

@@ -311,8 +311,8 @@ namespace Ares.Player
                 Label intro = new Label();
                 intro.SetBounds(14, 12, 532, 62);
                 intro.Text = T(
-                    "O Ares gera uma página com o título da música que está tocando. No OBS, adicione uma fonte \"Navegador\" e cole o link abaixo (largura 800, altura 200). O Ares precisa estar aberto; esta janela não.",
-                    "Ares serves a page with the title of the music that is playing. In OBS, add a \"Browser\" source and paste the link below (width 800, height 200). Ares must be running; this window does not.");
+                    "O Apolo gera uma página com o título da música que está tocando. No OBS, adicione uma fonte \"Navegador\" e cole o link abaixo (largura 800, altura 200). O Ares precisa estar aberto; esta janela não.",
+                    "Apolo serves a page with the title of the music that is playing. In OBS, add a \"Browser\" source and paste the link below (width 800, height 200). Ares must be running; this window does not.");
 
                 CheckBox enabled = new CheckBox();
                 enabled.SetBounds(14, 82, 400, 24);

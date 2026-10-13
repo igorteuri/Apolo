@@ -596,7 +596,7 @@ namespace Ares.CmdLinePlayer
             {
                 defaultProjectName = defaultProjectName.Substring(0, defaultProjectName.Length - 5);
             }
-            defaultProjectName = defaultProjectName + ".ares";
+            defaultProjectName = defaultProjectName + Ares.Settings.ProjectFiles.Extension;
             String projectFileName = defaultProjectName;
 
             Ares.ModelInfo.Importer.Import(new NetworkProgressMonitor(m_Network), fileName, projectFileName, true, null, (error, cancelled) =>

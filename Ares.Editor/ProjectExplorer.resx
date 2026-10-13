@@ -521,7 +521,7 @@
     <value>addSequentialElementToolStripMenuItem</value>
   </data>
   <data name="importDialog.Filter" xml:space="preserve">
-    <value>Ares projects|*.ares|Ares packed projects|*.apkg|All files|*.*</value>
+    <value>Apolo projects|*.apolo;*.ares|Apolo packed projects|*.apkg|All files|*.*</value>
   </data>
   <data name="&gt;&gt;projectTree.Type" xml:space="preserve">
     <value>MultiSelectTreeview.MultiSelectTreeview, Ares.Editor.Controls, Version=3.3.0.0, Culture=neutral, PublicKeyToken=null</value>
@@ -659,7 +659,7 @@
     <value>305, 598</value>
   </data>
   <data name="exportDialog.Filter" xml:space="preserve">
-    <value>Ares projects|*.ares|Ares packed projects|*.apkg|All files|*.*</value>
+    <value>Apolo projects|*.apolo;*.ares|Apolo packed projects|*.apkg|All files|*.*</value>
   </data>
   <data name="&gt;&gt;containerContextMenu.Type" xml:space="preserve">
     <value>System.Windows.Forms.ContextMenuStrip, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

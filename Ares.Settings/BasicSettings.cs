@@ -141,7 +141,7 @@ namespace Ares.Settings
             String settingsDir = String.Empty;
             if (location == SettingsLocation.AppDataDir)
             {
-                settingsDir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares");
+                settingsDir = Ares.Settings.AppFolders.Root;
             }
             else if (location == SettingsLocation.AppDir)
             {

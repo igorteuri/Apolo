@@ -182,7 +182,7 @@
     <value>Status</value>
   </data>
   <data name="openFileDialog1.Filter" xml:space="preserve">
-    <value>Ares Projekte|*.ares|Alle Dateien|*.*</value>
+    <value>Apolo Projekte|*.apolo;*.ares|Alle Dateien|*.*</value>
   </data>
   <data name="clearTagsButton.Location" type="System.Drawing.Point, System.Drawing">
     <value>226, 200</value>
@@ -762,9 +762,9 @@
 </value>
   </data>
   <data name="importFileDialog.Filter" xml:space="preserve">
-    <value>Gepackte Ares Projekte|*.apkg|Alle Dateien|*.*</value>
+    <value>Gepackte Apolo Projekte|*.apkg|Alle Dateien|*.*</value>
   </data>
   <data name="saveFileDialog.Filter" xml:space="preserve">
-    <value>Ares Projekte|*.ares|Alle Dateien|*.*</value>
+    <value>Apolo Projekte|*.apolo;*.ares|Alle Dateien|*.*</value>
   </data>
 </root>

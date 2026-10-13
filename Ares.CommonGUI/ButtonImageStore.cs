@@ -9,8 +9,8 @@ namespace Ares.CommonGUI
 {
     /// <summary>
     /// Images and icons of the element buttons in the Player. They are saved beside the project file
-    /// (&lt;project&gt;.ares.icons), so that the .ares file itself is not changed.
-    /// A setting is "lucide:name" (built-in icon) or "img:relative\\path.png" (a picture copied to the "ares_icons" folder).
+    /// (&lt;project&gt;.apolo.icons), so that the .apolo file itself is not changed.
+    /// A setting is "lucide:name" (built-in icon) or "img:relative\\path.png" (a picture copied to the "apolo_icons" folder).
     /// </summary>
     public static class ButtonImageStore
     {
@@ -21,6 +21,52 @@ namespace Ares.CommonGUI
         private static string SidecarPath(string projectPath)
         {
             return projectPath + ".icons";
+        }
+
+        /// <summary>Copies the files of a folder (what is already there stays).</summary>
+        public static void CopyFolder(string from, string to)
+        {
+            Directory.CreateDirectory(to);
+            foreach (string file in Directory.GetFiles(from))
+            {
+                string target = Path.Combine(to, Path.GetFileName(file));
+                if (!File.Exists(target))
+                    File.Copy(file, target);
+            }
+        }
+
+        /// <summary>Copies the button pictures of a project to the place of another project (for the export of a project).</summary>
+        public static void CopyTo(string projectPath, string newProjectPath)
+        {
+            if (string.IsNullOrEmpty(projectPath) || string.IsNullOrEmpty(newProjectPath))
+                return;
+            try
+            {
+                Dictionary<string, string> map = Load(projectPath);
+                if (map.Count == 0)
+                    return;
+                string from = Path.GetDirectoryName(projectPath);
+                string to = Path.GetDirectoryName(newProjectPath);
+                List<string> lines = new List<string>();
+                foreach (KeyValuePair<string, string> pair in map)
+                {
+                    lines.Add(pair.Key + "\t" + pair.Value);
+                    if (pair.Value.StartsWith("img:"))
+                    {
+                        string source = Path.Combine(from, pair.Value.Substring(4));
+                        string target = Path.Combine(to, pair.Value.Substring(4));
+                        if (File.Exists(source) && !File.Exists(target))
+                        {
+                            Directory.CreateDirectory(Path.GetDirectoryName(target));
+                            File.Copy(source, target);
+                        }
+                    }
+                }
+                File.WriteAllLines(SidecarPath(newProjectPath), lines.ToArray());
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private static string Key(string mode, string element)
@@ -34,23 +80,48 @@ namespace Ares.CommonGUI
             if (s_Cache.TryGetValue(projectPath, out map))
                 return map;
             map = new Dictionary<string, string>();
+            bool upgraded = false;
             try
             {
                 string file = SidecarPath(projectPath);
+                if (!File.Exists(file))
+                {
+                    // project of the old Ares names: <project>.ares.icons and the folder "ares_icons"
+                    string legacy = SidecarPath(Ares.Settings.ProjectFiles.ToLegacy(projectPath));
+                    if (legacy != file && File.Exists(legacy))
+                    {
+                        file = legacy;
+                        upgraded = true;
+                    }
+                }
                 if (File.Exists(file))
                 {
                     foreach (string line in File.ReadAllLines(file))
                     {
                         string[] parts = line.Split('\t');
                         if (parts.Length >= 3)
-                            map[Key(parts[0], parts[1])] = parts[2];
+                        {
+                            string spec = parts[2];
+                            if (upgraded && spec.StartsWith("img:ares_icons\\", StringComparison.OrdinalIgnoreCase))
+                                spec = "img:apolo_icons\\" + spec.Substring("img:ares_icons\\".Length);
+                            map[Key(parts[0], parts[1])] = spec;
+                        }
                     }
+                }
+                if (upgraded)
+                {
+                    string dir = Path.GetDirectoryName(projectPath);
+                    string old = Path.Combine(dir, "ares_icons");
+                    if (Directory.Exists(old))
+                        CopyFolder(old, Path.Combine(dir, "apolo_icons"));
                 }
             }
             catch (Exception)
             {
             }
             s_Cache[projectPath] = map;
+            if (upgraded)
+                Save(projectPath);
             return map;
         }
 
@@ -132,10 +203,10 @@ namespace Ares.CommonGUI
             Save(projectPath);
         }
 
-        /// <summary>Copies a picture (scaled down) into the "ares_icons" folder beside the project; returns the setting for it.</summary>
+        /// <summary>Copies a picture (scaled down) into the "apolo_icons" folder beside the project; returns the setting for it.</summary>
         public static string ImportImage(string projectPath, string sourceFile)
         {
-            string dir = Path.Combine(Path.GetDirectoryName(projectPath), "ares_icons");
+            string dir = Path.Combine(Path.GetDirectoryName(projectPath), "apolo_icons");
             Directory.CreateDirectory(dir);
             string name = Guid.NewGuid().ToString("N").Substring(0, 12) + ".png";
             using (FileStream fs = File.OpenRead(sourceFile))
@@ -156,7 +227,7 @@ namespace Ares.CommonGUI
                     bmp.Save(Path.Combine(dir, name), ImageFormat.Png);
                 }
             }
-            return "img:ares_icons\\" + name;
+            return "img:apolo_icons\\" + name;
         }
 
         /// <summary>The picture of an "img:" setting (cached, shared - do not dispose); null if missing.</summary>

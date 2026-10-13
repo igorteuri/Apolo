@@ -466,7 +466,7 @@ namespace Ares.Settings
             StreamingServerPort = 8000;
             StreamingPassword = "hackme";
             StreamingEncoder = 1;
-            StreamingStreamName = "Ares";
+            StreamingStreamName = "Apolo";
             StreamingBitrate = 128;
             StreamingUserName = String.Empty;
             ShowKeysInButtons = false;
@@ -684,7 +684,7 @@ namespace Ares.Settings
                     StreamingEncoder = reader.GetIntegerAttribute("Encoding");
                     StreamingStreamName = reader.GetAttribute("StreamName");
                     if (String.IsNullOrEmpty(StreamingStreamName))
-                        StreamingStreamName = "Ares";
+                        StreamingStreamName = "Apolo";
                     StreamingBitrate = reader.GetIntegerAttributeOrDefault("Bitrate", 128);
                     StreamingUserName = reader.GetAttribute("UserName");
                     if (StreamingUserName == null)

@@ -759,7 +759,7 @@ namespace Ares.Settings
 							try
 							{
 								if (element.IsFile && (
-									element.Name.EndsWith(".ares", StringComparison.InvariantCultureIgnoreCase) 
+									Ares.Settings.ProjectFiles.IsProjectFile(element.Name) 
 									|| element.Name.EndsWith(".apkg", StringComparison.InvariantCultureIgnoreCase)))
 								{
 									#if DEBUG_SAMBA

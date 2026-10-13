@@ -121,7 +121,7 @@
     <value>Arquivos usados ...</value>
   </data>
   <data name="importFileDialog.Filter" xml:space="preserve">
-    <value>Projetos compactados do Ares|*.apkg|Todos os arquivos|*.*</value>
+    <value>Projetos compactados do Apolo|*.apkg|Todos os arquivos|*.*</value>
   </data>
   <data name="redoButton.Text" xml:space="preserve">
     <value>Refazer</value>
@@ -181,7 +181,7 @@
     <value>Parar tudo</value>
   </data>
   <data name="exportFileDialog.Filter" xml:space="preserve">
-    <value>Projetos compactados do Ares|*.apkg|Todos os arquivos|*.*</value>
+    <value>Projetos compactados do Apolo|*.apkg|Todos os arquivos|*.*</value>
   </data>
   <data name="saveToolStripMenuItem.Text" xml:space="preserve">
     <value>Salvar</value>
@@ -193,10 +193,10 @@
     <value>Configurações ...</value>
   </data>
   <data name="saveFileDialog.Filter" xml:space="preserve">
-    <value>Projetos do Ares|*.ares|Todos os arquivos|*.*</value>
+    <value>Projetos do Apolo|*.apolo;*.ares|Todos os arquivos|*.*</value>
   </data>
   <data name="openFileDialog.Filter" xml:space="preserve">
-    <value>Projetos do Ares|*.ares|Todos os arquivos|*.*</value>
+    <value>Projetos do Apolo|*.apolo;*.ares|Todos os arquivos|*.*</value>
   </data>
   <data name="exitToolStripMenuItem.Text" xml:space="preserve">
     <value>Sair</value>

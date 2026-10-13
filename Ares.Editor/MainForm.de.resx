@@ -302,10 +302,10 @@
     <value>Hilfe</value>
   </data>
   <data name="saveFileDialog.Filter" xml:space="preserve">
-    <value>Ares Projekte|*.ares|Alle Dateien|*.*</value>
+    <value>Apolo Projekte|*.apolo;*.ares|Alle Dateien|*.*</value>
   </data>
   <data name="openFileDialog.Filter" xml:space="preserve">
-    <value>Ares Projekte|*.ares|Alle Dateien|*.*</value>
+    <value>Apolo Projekte|*.apolo;*.ares|Alle Dateien|*.*</value>
   </data>
   <data name="newButton.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -429,9 +429,9 @@
 </value>
   </data>
   <data name="exportFileDialog.Filter" xml:space="preserve">
-    <value>Gepackte Ares Projekte|*.apkg|Alle Dateien|*.*</value>
+    <value>Gepackte Apolo Projekte|*.apkg|Alle Dateien|*.*</value>
   </data>
   <data name="importFileDialog.Filter" xml:space="preserve">
-    <value>Gepackte Ares Projekte|*.apkg|Alle Dateien|*.*</value>
+    <value>Gepackte Apolo Projekte|*.apkg|Alle Dateien|*.*</value>
   </data>
 </root>

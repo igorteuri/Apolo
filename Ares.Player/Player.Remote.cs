@@ -363,7 +363,7 @@ namespace Ares.Player
                 string beside = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "cloudflared.exe");
                 if (File.Exists(beside))
                     return beside;
-                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares", "cloudflared.exe");
+                return Path.Combine(Ares.Settings.AppFolders.Root, "cloudflared.exe");
             }
         }
 

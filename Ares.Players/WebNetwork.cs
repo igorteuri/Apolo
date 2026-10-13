@@ -341,7 +341,7 @@ namespace Ares.Players.Web
         {
             String assemblyVersion = (new System.Reflection.AssemblyName(System.Reflection.Assembly.GetExecutingAssembly().FullName)).Version.ToString();
             String directory = NetworkClient.GetProjectsDirectory();
-            String[] files1 = System.IO.Directory.GetFiles(directory, "*.ares");
+            String[] files1 = Ares.Settings.ProjectFiles.GetProjectFiles(directory);
             String[] files2 = System.IO.Directory.GetFiles(directory, "*.apkg");
             String[] files = new String[files1.Length + files2.Length];
             String[] paths = new String[files1.Length + files2.Length];
@@ -703,7 +703,7 @@ namespace Ares.Players.Web
             {
 				#if !MONO
                 String folder = System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData);
-                String path = System.IO.Path.Combine(folder, "Ares_Errors.log");
+                String path = System.IO.Path.Combine(folder, "Apolo_Errors.log");
                 using (System.IO.StreamWriter writer = new System.IO.StreamWriter(path, true))
                 {
 				#else

@@ -173,19 +173,24 @@ namespace Ares.CommonGUI
             return result;
         }
 
-        // ---- Library folder (where Biblioteca.ares lives) ----
+        // ---- Library folder (where Biblioteca.apolo lives) ----
 
         private static string ConfigFile
         {
             get
             {
-                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares");
+                string dir = Ares.Settings.AppFolders.Root;
                 Directory.CreateDirectory(dir);
                 return Path.Combine(dir, "library.cfg");
             }
         }
 
         public static string DefaultLibraryFolder
+        {
+            get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Apolo Biblioteca"); }
+        }
+
+        private static string LegacyLibraryFolder
         {
             get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Ares Biblioteca"); }
         }
@@ -203,7 +208,8 @@ namespace Ares.CommonGUI
                 catch (Exception)
                 {
                 }
-                if (string.IsNullOrEmpty(folder))
+                if (string.IsNullOrEmpty(folder) ||
+                    string.Equals(folder.TrimEnd('\\'), LegacyLibraryFolder, StringComparison.OrdinalIgnoreCase))
                     folder = DefaultLibraryFolder;
                 try
                 {
@@ -225,7 +231,51 @@ namespace Ares.CommonGUI
 
         public static string LibraryProjectPath
         {
-            get { return Path.Combine(LibraryFolder, "Biblioteca.ares"); }
+            get
+            {
+                string folder = LibraryFolder;
+                string current = Path.Combine(folder, "Biblioteca" + Ares.Settings.ProjectFiles.Extension);
+                if (!File.Exists(current))
+                    CopyLegacyLibrary(folder, current);
+                return current;
+            }
+        }
+
+        // the library of the old Ares names (Biblioteca.ares, "Ares Biblioteca") is copied once; the old one stays
+        private static void CopyLegacyLibrary(string folder, string current)
+        {
+            try
+            {
+                string legacyName = "Biblioteca" + Ares.Settings.ProjectFiles.LegacyExtension;
+                string legacyFolder = File.Exists(Path.Combine(folder, legacyName)) ? folder : LegacyLibraryFolder;
+                string legacy = Path.Combine(legacyFolder, legacyName);
+                if (!File.Exists(legacy))
+                    return;
+                File.Copy(legacy, current, false);
+                if (!string.Equals(legacyFolder, folder, StringComparison.OrdinalIgnoreCase))
+                {
+                    // the pictures of the buttons (they are found by the old name of the project)
+                    string sidecar = legacy + ".icons";
+                    string tempSidecar = Path.Combine(folder, legacyName + ".icons");
+                    string pictures = Path.Combine(legacyFolder, "ares_icons");
+                    string tempPictures = Path.Combine(folder, "ares_icons");
+                    bool hadPictures = Directory.Exists(tempPictures);
+                    if (File.Exists(sidecar) && !File.Exists(tempSidecar))
+                    {
+                        File.Copy(sidecar, tempSidecar, false);
+                        if (Directory.Exists(pictures))
+                            ButtonImageStore.CopyFolder(pictures, tempPictures);
+                        // reading them makes the new files (<project>.apolo.icons, "apolo_icons")
+                        ButtonImageStore.Get(current, "", "");
+                        File.Delete(tempSidecar);
+                        if (!hadPictures && Directory.Exists(tempPictures))
+                            Directory.Delete(tempPictures, true);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 }

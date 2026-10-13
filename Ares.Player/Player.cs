@@ -735,6 +735,8 @@ namespace Ares.Player
 
         private void OpenProject(String filePath, bool onControllerRequest)
         {
+            if (!onControllerRequest)
+                filePath = Ares.Settings.ProjectFiles.Upgrade(filePath); // an old .ares project continues as .apolo
             StopAllPlaying();
             if (m_Project != null)
             {
@@ -2088,7 +2090,7 @@ namespace Ares.Player
             {
                 defaultProjectName = defaultProjectName.Substring(0, defaultProjectName.Length - 5);
             }
-            defaultProjectName = defaultProjectName + ".ares";
+            defaultProjectName = defaultProjectName + Ares.Settings.ProjectFiles.Extension;
             String projectFileName = defaultProjectName;
             if (!controllerRequest)
             {

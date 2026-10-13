@@ -760,7 +760,7 @@
     <value>Messages</value>
   </data>
   <data name="saveFileDialog.Filter" xml:space="preserve">
-    <value>Ares projects|*.ares|All files|*.*</value>
+    <value>Apolo projects|*.apolo;*.ares|All files|*.*</value>
   </data>
   <data name="&gt;&gt;overallVolumeBar.ZOrder" xml:space="preserve">
     <value>4</value>
@@ -778,7 +778,7 @@
     <value>Magenta</value>
   </data>
   <data name="openFileDialog1.Filter" xml:space="preserve">
-    <value>Ares projects|*.ares|All files|*.*</value>
+    <value>Apolo projects|*.apolo;*.ares|All files|*.*</value>
   </data>
   <data name="elementsPanel.Size" type="System.Drawing.Size, System.Drawing">
     <value>383, 481</value>
@@ -1701,7 +1701,7 @@
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="importFileDialog.Filter" xml:space="preserve">
-    <value>Ares packed projects|*.apkg|All files|*.*</value>
+    <value>Apolo packed projects|*.apkg|All files|*.*</value>
   </data>
   <data name="&gt;&gt;groupBox1.Name" xml:space="preserve">
     <value>groupBox1</value>

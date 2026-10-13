@@ -9,11 +9,17 @@ namespace Ares.CommonGUI
     {
         private static Dictionary<string, string> s_Values;
 
+        /// <summary>The data folder of Apolo (%APPDATA%\\Apolo).</summary>
+        public static string DataFolder
+        {
+            get { return Ares.Settings.AppFolders.Root; }
+        }
+
         private static string FilePath
         {
             get
             {
-                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares");
+                string dir = Ares.Settings.AppFolders.Root;
                 Directory.CreateDirectory(dir);
                 return Path.Combine(dir, "prefs.ini");
             }

@@ -17,11 +17,6 @@ Editor modernizado (tema, painéis acopláveis, ícones).
 - **Bibliotecas de áudio livres**: baixar músicas e efeitos sonoros de bibliotecas sem direitos autorais (Freesound, YouTube Audio Library e outras) direto do programa, já organizando na Biblioteca.
 - **Verificador de direitos autorais**: ferramenta para checar se uma música é segura para tocar no YouTube/Spotify (live, vídeos) ou se pode gerar bloqueio/claim.
 - **Renomeador de músicas**: limpar e embelezar nomes de arquivos (tirar "[Official Video]", números, underscores...), buscando título/artista/álbum na internet (MusicBrainz e similares) e gravando as tags.
-- **Novo formato de projeto**: trocar a extensão `.ares` por uma própria do Apolo (com compatibilidade para abrir os projetos antigos).
-- **Modos de exportação**:
-  - salvar apenas a lista de sons;
-  - compactar (zip) os arquivos de áudio e enviar junto com a lista, para compartilhar o projeto completo;
-  - exportar só as configurações do usuário (aparência, atalhos, preferências) como backup.
 - **Imagens para os botões**: ferramenta que sugere imagens bonitas para preencher os botões a partir do título (ex.: botão "Floresta" sugere fotos de floresta).
 
 ## Futuro (baixa prioridade)

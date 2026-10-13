@@ -142,7 +142,7 @@ namespace Ares.CommonGUI
         {
             try
             {
-                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares");
+                string dir = Ares.Settings.AppFolders.Root;
                 Directory.CreateDirectory(dir);
                 File.AppendAllText(Path.Combine(dir, "theme.log"),
                     DateTime.Now.ToString("HH:mm:ss") + " " + where + ": " + (ex == null ? "" : ex.GetType().Name + " " + ex.Message) + Environment.NewLine);
@@ -188,7 +188,7 @@ namespace Ares.CommonGUI
         {
             get
             {
-                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Ares");
+                string dir = Ares.Settings.AppFolders.Root;
                 return Path.Combine(dir, "appearance.ini");
             }
         }

@@ -232,7 +232,7 @@ namespace Ares.Player
         {
             const string chars = "abcdefghijkmnpqrstuvwxyz23456789";
             Random rnd = new Random();
-            StringBuilder sb = new StringBuilder("ares");
+            StringBuilder sb = new StringBuilder("apolo");
             for (int i = 0; i < 8; ++i)
                 sb.Append(chars[rnd.Next(chars.Length)]);
             return sb.ToString();
