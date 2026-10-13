@@ -42,7 +42,7 @@ jobs:
             "netstandard2.0"=".NETStandard2.0"
           }
           $queue = New-Object System.Collections.Queue
-          foreach ($root in @(@("NAudio.Core","2.2.1"), @("NAudio.Wasapi","2.2.1"), @("NLayer","1.14.0"), @("NVorbis","0.10.5"),
+          foreach ($root in @(@("NAudio.Core","2.2.1"), @("NAudio.Wasapi","2.2.1"), @("NLayer","1.16.0"), @("NVorbis","0.10.5"),
                               @("Concentus","2.2.2"), @("Concentus.OggFile","1.0.6"), @("TagLibSharp","2.3.0"))) {
             $queue.Enqueue($root)
           }
