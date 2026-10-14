@@ -299,7 +299,7 @@ namespace Ares.Player
 
         private static string BuildPush(string id, string label, string device, int kbps, bool pro)
         {
-            StringBuilder push = new StringBuilder("https://vdo.ninja/?push=" + id + "&vd=0&autostart");
+            StringBuilder push = new StringBuilder("https://vdo.ninja/?push=" + id + "&vd=0&webcam&autostart");
             if (label.Length > 0)
                 push.Append("&l=").Append(Uri.EscapeDataString(label));
             // the virtual microphone of Apolo is found by its first word; other devices by their whole name

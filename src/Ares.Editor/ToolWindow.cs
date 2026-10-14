@@ -18,6 +18,9 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 using System;
+using System.Drawing;
+using System.Windows.Forms;
+using Ares.CommonGUI;
 
 namespace Ares.Editor
 {
@@ -35,6 +38,20 @@ namespace Ares.Editor
             // no floating windows: the panels stay inside the Editor
             DockAreas = WeifenLuo.WinFormsUI.Docking.DockAreas.DockLeft | WeifenLuo.WinFormsUI.Docking.DockAreas.DockRight
                 | WeifenLuo.WinFormsUI.Docking.DockAreas.DockTop | WeifenLuo.WinFormsUI.Docking.DockAreas.DockBottom;
+            if (!Closable)
+                CloseButtonVisible = false;
+            // a thin border around the panel, like the panels of the Player
+            Padding = new Padding(1);
+            SetStyle(ControlStyles.ResizeRedraw, true);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            ThemePalette p = ThemeManager.Current;
+            Color line = p != null && !p.IsClassic ? p.Border : SystemColors.ControlDark;
+            using (Pen pen = new Pen(line))
+                e.Graphics.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
         }
     }
 }

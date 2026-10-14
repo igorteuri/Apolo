@@ -235,13 +235,13 @@ namespace Ares.Editor.Controls
                         onlyWarnings = false;
                 }
                 {
-                    grid.Rows[row].Cells[0].Style.ForeColor = onlyWarnings ? Color.Orange : Color.DarkRed;
+                    grid.Rows[row].Cells[0].Style.ForeColor = onlyWarnings ? Color.Orange : Color.FromArgb(0xE5, 0x5B, 0x5B);
                     grid.Rows[row].Cells[0].ErrorText = errorTexts;
                 }
             }
             else
             {
-                grid.Rows[row].Cells[0].Style.ForeColor = Color.Black;
+                grid.Rows[row].Cells[0].Style.ForeColor = Color.Empty; // the color of the theme
                 grid.Rows[row].Cells[0].ErrorText = String.Empty;
             }
         }

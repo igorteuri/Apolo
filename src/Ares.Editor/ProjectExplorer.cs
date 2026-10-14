@@ -199,6 +199,8 @@ namespace Ares.Editor
             projectTree.EndUpdate();
         }
 
+        private const bool ShowContainerSubNodes = false;
+
         private void AddModeNodes(TreeNode projectNode, IProject project)
         {
             KeysConverter converter = new KeysConverter();
@@ -234,7 +236,9 @@ namespace Ares.Editor
             }
             else if (element is IGeneralElementContainer)
             {
-                AddSubElements(node, (element as IGeneralElementContainer).GetGeneralElements());
+                // the content of a playlist is edited in the center of the window; it is not listed as sub-folders
+                if (ShowContainerSubNodes)
+                    AddSubElements(node, (element as IGeneralElementContainer).GetGeneralElements());
             }
             else if (element is IBackgroundSounds)
             {
@@ -969,7 +973,7 @@ namespace Ares.Editor
             else if (changeType == ElementChanges.ChangeType.Changed && listenForContainerChanges)
             {
                 TreeNode node = FindNodeForElement(elementId, projectTree.Nodes[0]);
-                if (node != null && GetElement(node) is IGeneralElementContainer && !(GetElement(node) is IMacro))
+                if (ShowContainerSubNodes && node != null && GetElement(node) is IGeneralElementContainer && !(GetElement(node) is IMacro))
                 {
                     node.Nodes.Clear();
                     AddSubElements(node, (GetElement(node) as IGeneralElementContainer).GetGeneralElements());
@@ -1184,6 +1188,7 @@ namespace Ares.Editor
             {
                 if (IsDisposed || DockPanel == null || SelectedNode == null || m_NoPreview)
                     return;
+                RaiseSelectionInfo();
                 if (SelectedNode.Tag is IMode)
                 {
                     ShowModeOverview(SelectedNode);

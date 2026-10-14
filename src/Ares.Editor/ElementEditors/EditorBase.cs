@@ -114,6 +114,9 @@ namespace Ares.Editor.ElementEditors
             ContainerControl.ElementsImported += new EventHandler<ElementImportEventArgs>(ContainerControl_ElementsImported);
             stopButton.Click += new System.EventHandler(this.stopButton_Click);
             playButton.Click += new System.EventHandler(this.playButton_Click);
+            // the playback panel at the top of the window replaces the "Test" group of the editors
+            if (playButton.Parent is GroupBox)
+                playButton.Parent.Visible = false;
             if (BigLabel != null)
             {
                 this.SizeChanged += new System.EventHandler(this.Editor_SizeChanged);

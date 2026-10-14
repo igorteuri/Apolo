@@ -378,6 +378,28 @@ namespace Ares.Playing
             get { return sPlayer; }
         }
 
+        // ---- the running files, for the playback panel of the Editor ----
+
+        public static List<PlayingFileInfo> GetRunningFiles()
+        {
+            return sFilePlayer.GetRunningFiles();
+        }
+
+        public static bool ToggleFilePause(int handle)
+        {
+            return sFilePlayer.ToggleSoundPause(handle);
+        }
+
+        public static bool SeekFile(int handle, double positionSeconds)
+        {
+            return sFilePlayer.SetPlayPosition(handle, positionSeconds);
+        }
+
+        public static bool StopRunningFile(int handle)
+        {
+            return sFilePlayer.StopSound(handle);
+        }
+
         internal static IFilePlayer FilePlayer
         {
             get { return sFilePlayer; }

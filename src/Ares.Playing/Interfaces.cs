@@ -83,6 +83,8 @@ namespace Ares.Playing
         public bool Repeat { get; set; }
         /// <summary>True if the sound is paused</summary>
         public bool Paused { get; set; }
+        /// <summary>True for music, false for a sound effect</summary>
+        public bool IsMusic { get; set; }
     }
 
     public enum MessageType

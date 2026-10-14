@@ -54,6 +54,26 @@ namespace Ares.Editor
             m_AddButton.ToolTipText = Tx("Adicionar pasta ou playlist", "Add a folder or a playlist");
             toolStrip1.Items.Insert(0, m_AddButton);
             toolStrip1.Items.Insert(1, new ToolStripSeparator());
+            ToolStripButton expandAll = new ToolStripButton();
+            expandAll.Name = "expandAllButton";
+            expandAll.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            expandAll.ToolTipText = Tx("Expandir todas as pastas", "Expand all folders");
+            expandAll.Click += (s, e) => { projectTree.BeginUpdate(); projectTree.ExpandAll(); projectTree.EndUpdate(); };
+            ToolStripButton collapseAll = new ToolStripButton();
+            collapseAll.Name = "collapseAllButton";
+            collapseAll.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            collapseAll.ToolTipText = Tx("Recolher todas as pastas", "Collapse all folders");
+            collapseAll.Click += (s, e) =>
+            {
+                projectTree.BeginUpdate();
+                projectTree.CollapseAll();
+                if (projectTree.Nodes.Count > 0)
+                    projectTree.Nodes[0].Expand();
+                projectTree.EndUpdate();
+            };
+            toolStrip1.Items.Insert(2, expandAll);
+            toolStrip1.Items.Insert(3, collapseAll);
+            toolStrip1.Items.Insert(4, new ToolStripSeparator());
             m_AddMenu.Opening += (s, e) =>
             {
                 bool folder = FolderNodeOfSelection() != null;
@@ -74,6 +94,19 @@ namespace Ares.Editor
             {
                 m_NoPreview = e.Button == MouseButtons.Right;
             };
+        }
+
+        /// <summary>Save / undo / redo buttons of the main window, shown beside the buttons of the explorer.</summary>
+        public void AdoptToolbarItems(params ToolStripItem[] items)
+        {
+            int index = 5;
+            foreach (ToolStripItem item in items)
+            {
+                if (item.Owner != null)
+                    item.Owner.Items.Remove(item);
+                toolStrip1.Items.Insert(index++, item);
+            }
+            toolStrip1.Items.Insert(index, new ToolStripSeparator());
         }
 
         private TreeNode FolderNodeOfSelection()

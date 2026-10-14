@@ -214,12 +214,23 @@ namespace Ares.Playing
         /// <summary>The running sound effects; the handle of the current music is left out.</summary>
         public List<PlayingFileInfo> GetRunningSounds(int excludeHandle)
         {
+            return GetRunning(excludeHandle, false);
+        }
+
+        /// <summary>All running files, music included (the Editor shows them in its playback panel).</summary>
+        public List<PlayingFileInfo> GetRunningFiles()
+        {
+            return GetRunning(0, true);
+        }
+
+        private List<PlayingFileInfo> GetRunning(int excludeHandle, bool includeMusic)
+        {
             List<KeyValuePair<int, ISoundFile>> running = new List<KeyValuePair<int, ISoundFile>>();
             lock (m_Mutex)
             {
                 foreach (KeyValuePair<int, RunningFileInfo> pair in m_RunningFiles)
                 {
-                    if (pair.Key != excludeHandle && pair.Value.File != null && pair.Value.File.SoundFileType == SoundFileType.SoundEffect)
+                    if (pair.Key != excludeHandle && pair.Value.File != null && (includeMusic || pair.Value.File.SoundFileType == SoundFileType.SoundEffect))
                         running.Add(new KeyValuePair<int, ISoundFile>(pair.Key, pair.Value.File));
                 }
             }
@@ -252,7 +263,7 @@ namespace Ares.Playing
                     repeat = query();
                 AudioChannel soundChannel = GetChannel(item.Key);
                 bool paused = soundChannel != null && soundChannel.State == ChannelState.Paused;
-                result.Add(new PlayingFileInfo { Handle = item.Key, FileId = item.Value.Id, Title = title, Position = pos, Length = length, Repeat = repeat, Paused = paused });
+                result.Add(new PlayingFileInfo { Handle = item.Key, FileId = item.Value.Id, Title = title, Position = pos, Length = length, Repeat = repeat, Paused = paused, IsMusic = item.Value.SoundFileType == SoundFileType.Music });
             }
             return result;
         }
@@ -288,8 +299,13 @@ namespace Ares.Playing
             return channel.Pause();
         }
 
+        // only the pause of the main button counts for the main button; a sound paused on its own does not
+        private bool m_GlobalPause;
+
         public bool IsAnyPaused()
         {
+            if (!m_GlobalPause)
+                return false;
             foreach (int handle in GetRunningHandles())
             {
                 AudioChannel channel = GetChannel(handle);
@@ -321,12 +337,13 @@ namespace Ares.Playing
                     break;
                 }
             }
-            if (anyPaused)
+            if (anyPaused && m_GlobalPause)
             {
                 foreach (AudioChannel channel in channels)
                 {
                     channel.Resume();
                 }
+                m_GlobalPause = false;
                 return false;
             }
             bool pausedSomething = false;
@@ -335,6 +352,7 @@ namespace Ares.Playing
                 if (channel.State == ChannelState.Playing && channel.Pause())
                     pausedSomething = true;
             }
+            m_GlobalPause = pausedSomething;
             return pausedSomething;
         }
 

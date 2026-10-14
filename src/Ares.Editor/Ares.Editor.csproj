@@ -304,6 +304,10 @@
     <Compile Include="..\Ares.Player\IconPickerDialog.cs"><Link>Shared\IconPickerDialog.cs</Link></Compile>
     <Compile Include="..\Ares.Player\ImageSearchDialog.cs"><Link>Shared\ImageSearchDialog.cs</Link></Compile>
     <Compile Include="..\Ares.Player\OpenMedia.cs"><Link>Shared\OpenMedia.cs</Link></Compile>
+    <Compile Include="..\Ares.Player\ElementButton.cs"><Link>Shared\ElementButton.cs</Link></Compile>
+    <Compile Include="..\Ares.Player\SoundProgressPanel.cs"><Link>Shared\SoundProgressPanel.cs</Link></Compile>
+    <Compile Include="..\Ares.Player\MusicProgressBar.cs"><Link>Shared\MusicProgressBar.cs</Link></Compile>
+    <Compile Include="PlaybackPanel.cs" />
     <Compile Include="ModeOverviewWindow.cs" />
     <Compile Include="ProjectIcons.cs" />
     <Compile Include="ProjectExplorer.Appearance.cs" />

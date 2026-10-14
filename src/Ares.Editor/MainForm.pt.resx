@@ -208,7 +208,7 @@
     <value>Mostrar dicas</value>
   </data>
   <data name="viewToolStripMenuItem.Text" xml:space="preserve">
-    <value>Exibir</value>
+    <value>Configurações</value>
   </data>
   <data name="importToolStripMenuItem.Text" xml:space="preserve">
     <value>Importar</value>

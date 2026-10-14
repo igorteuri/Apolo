@@ -92,8 +92,42 @@ namespace Ares.Editor
             return target;
         }
 
+        /// <summary>Raised when another folder or playlist is selected (null when nothing useful is selected).</summary>
+        public event System.Action<SelectionInfo> SelectionInfoChanged;
+
+        internal void PlaySelected()
+        {
+            if (playButton.Enabled)
+                playButton.PerformClick();
+        }
+
+        private void RaiseSelectionInfo()
+        {
+            if (SelectionInfoChanged == null)
+                return;
+            SelectionInfo info = null;
+            TreeNode node = SelectedNode;
+            if (node != null && m_Project != null)
+            {
+                IMode mode = node.Tag as IMode;
+                IModeElement modeElement = node.Tag as IModeElement;
+                IMode parentMode = node.Parent != null ? node.Parent.Tag as IMode : null;
+                if (mode != null)
+                {
+                    info = new SelectionInfo { Source = this, ProjectPath = m_Project.FileName, Mode = mode.Title, Element = "", Title = mode.Title, TypeName = "", IsFolder = true };
+                }
+                else if (modeElement != null && parentMode != null)
+                {
+                    info = new SelectionInfo { Source = this, ProjectPath = m_Project.FileName, Mode = parentMode.Title, Element = modeElement.Title,
+                        Title = modeElement.Title, TypeName = ModeOverviewWindow.TypeName(modeElement.StartElement), IsFolder = false };
+                }
+            }
+            SelectionInfoChanged(info);
+        }
+
         private void LooksChanged()
         {
+            RaiseSelectionInfo();
             if (m_Overview != null && !m_Overview.IsDisposed)
                 m_Overview.Reload();
             projectTree.Invalidate();
@@ -122,7 +156,7 @@ namespace Ares.Editor
             }
         }
 
-        private void LooksChooseEmoji()
+        internal void LooksChooseEmoji()
         {
             LookTarget t = GetLookTarget();
             if (t == null)
@@ -134,7 +168,7 @@ namespace Ares.Editor
                 LooksChanged();
         }
 
-        private void LooksAutoEmoji()
+        internal void LooksAutoEmoji()
         {
             LookTarget t = GetLookTarget();
             if (t == null)
@@ -152,7 +186,7 @@ namespace Ares.Editor
                 LooksChanged();
         }
 
-        private void LooksChooseColor()
+        internal void LooksChooseColor()
         {
             LookTarget t = GetLookTarget();
             if (t == null)
@@ -168,7 +202,7 @@ namespace Ares.Editor
             LooksChanged();
         }
 
-        private void LooksChooseIcon()
+        internal void LooksChooseIcon()
         {
             LookTarget t = GetLookTarget();
             if (t == null)
@@ -180,7 +214,7 @@ namespace Ares.Editor
             LooksChanged();
         }
 
-        private void LooksChoosePicture()
+        internal void LooksChoosePicture()
         {
             LookTarget t = GetLookTarget();
             if (t == null)
@@ -204,7 +238,7 @@ namespace Ares.Editor
             }
         }
 
-        private void LooksSuggestImages()
+        internal void LooksSuggestImages()
         {
             LookTarget t = GetLookTarget();
             if (t == null)
@@ -243,7 +277,7 @@ namespace Ares.Editor
             }
         }
 
-        private void LooksRemoveImage()
+        internal void LooksRemoveImage()
         {
             LookTarget t = GetLookTarget();
             if (t == null)

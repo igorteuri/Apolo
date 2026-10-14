@@ -72,16 +72,9 @@ namespace Ares.Editor
             toolStrip1.Items.Remove(undoButton);
             toolStrip1.Items.Remove(redoButton);
             toolStrip1.Items.Remove(stopButton);
-            menuStrip1.ImageScalingSize = new Size(20, 20);
-            menuStrip1.ShowItemToolTips = true;
-            menuStrip1.Items.Add(new ToolStripSeparator());
-            menuStrip1.Items.Add(saveButton);
-            menuStrip1.Items.Add(undoButton);
-            menuStrip1.Items.Add(redoButton);
-            menuStrip1.Items.Add(new ToolStripSeparator());
-            menuStrip1.Items.Add(stopButton);
+            // save / undo / redo live in the toolbar of the project explorer, "stop" is not needed
+            stopButton.Visible = false;
             toolStrip1.Visible = false;
-            EditorIcons.Toolbar(menuStrip1);
             tagsMenuItem.Visible = false; // the tag system is not used any more
             // the panels are fixed (like in the Player): no menu entries to close or show them
             projectExplorerToolStripMenuItem.Visible = false;
@@ -102,8 +95,16 @@ namespace Ares.Editor
             dockPanel.DockLeftPortion = 0.24;
             dockPanel.DockRightPortion = 0.26;
             dockPanel.DockBottomPortion = 0.22;
+            dockPanel.DockTopPortion = 0.2;
             dockPanel.ContentAdded += (s, e) => EditorIcons.Polish(e.Content as Form);
-            Ares.CommonGUI.LanguageManager.AddMenu(extrasToolStripMenuItem, -1);
+            // Settings menu: general settings and language; "stop all" is not needed here
+            extrasToolStripMenuItem.DropDownItems.Remove(settingsToolStripMenuItem);
+            settingsToolStripMenuItem.Text = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt" ? "Configurações gerais" : "General settings";
+            viewToolStripMenuItem.DropDownItems.Insert(0, settingsToolStripMenuItem);
+            Ares.CommonGUI.LanguageManager.AddMenu(viewToolStripMenuItem, 1);
+            stopAllToolStipMenuItem.Visible = false;
+            toolStripSeparator3.Visible = false;
+            toolStripSeparator4.Visible = false;
             EditorIcons.Menu(menuStrip1);
 			#if !MONO
             m_Instance.SetWindowHandle(Handle);
@@ -236,6 +237,8 @@ namespace Ares.Editor
             else if (persistString == "ProjectExplorer")
             {
                 m_ProjectExplorer = new ProjectExplorer();
+                m_ProjectExplorer.AdoptToolbarItems(saveButton, undoButton, redoButton);
+                m_ProjectExplorer.SelectionInfoChanged += info => { if (m_PlaybackPanel != null) m_PlaybackPanel.SetSelection(info); };
                 return m_ProjectExplorer;
             }
             else if (persistString == "VolumeWindow")
@@ -316,6 +319,20 @@ namespace Ares.Editor
             ActivateWindow(m_TagsEditor);
         }
 
+
+        private PlaybackPanel m_PlaybackPanel;
+
+        private void ShowPlaybackPanel()
+        {
+            if (m_PlaybackPanel == null)
+            {
+                m_PlaybackPanel = new PlaybackPanel();
+                m_PlaybackPanel.ShowHint = WeifenLuo.WinFormsUI.Docking.DockState.DockTop;
+                m_PlaybackPanel.Show(dockPanel);
+            }
+            else if (m_PlaybackPanel.IsHidden)
+                m_PlaybackPanel.IsHidden = false;
+        }
 
         private VolumeWindow m_VolumeWindow;
 
@@ -997,6 +1014,7 @@ namespace Ares.Editor
                 ShowVolumeWindow();
             }
 			#if !MONO
+            ShowPlaybackPanel();
             ShowFixedPanels();
             Settings.Settings.Instance.SettingsChanged += new EventHandler<Settings.Settings.SettingsEventArgs>(SettingsChanged);
 			#endif
@@ -1056,6 +1074,7 @@ namespace Ares.Editor
         private void ShowFixedPanels()
         {
             if (m_ProjectExplorer != null) m_ProjectExplorer.IsHidden = false;
+            if (m_PlaybackPanel != null) m_PlaybackPanel.IsHidden = false;
             if (m_VolumeWindow != null) m_VolumeWindow.IsHidden = false;
             if (m_AudioSourceSearch != null) m_AudioSourceSearch.IsHidden = false;
             for (int i = 0; i < m_FileExplorers.Length; i++)
