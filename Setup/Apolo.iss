@@ -63,14 +63,13 @@ Source: "..\TipsOfTheDay_de.xml"; DestDir: "{app}"; Flags: ignoreversion skipifs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\Apolo.exe"
-Name: "{group}\{#MyAppName} Editor"; Filename: "{app}\Apolo.Editor.exe"
 Name: "{group}\{cm:ShortcutStreamDeck}"; Filename: "{app}\StreamDeck\Apolo.streamDeckPlugin"; Check: FileExists(ExpandConstant('{app}\StreamDeck\Apolo.streamDeckPlugin'))
 Name: "{group}\{cm:ShortcutFoundry}"; Filename: "{app}\FoundryModule"; Check: DirExists(ExpandConstant('{app}\FoundryModule'))
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\Apolo.exe"; Tasks: desktopicon
 
 [Registry]
-; projetos do Apolo (.apolo) abrem no Player; projetos exportados (.apkg) abrem no Editor
+; projetos do Apolo (.apolo) abrem no Player; projetos exportados (.apkg) tambem abrem no Player
 Root: HKA; Subkey: "Software\Classes\.apolo"; ValueType: string; ValueName: ""; ValueData: "ApoloProject"; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\ApoloProject"; ValueType: string; ValueName: ""; ValueData: "{cm:FileTypeProject}"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\Classes\ApoloProject\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\Apolo.exe,0"
@@ -78,7 +77,7 @@ Root: HKA; Subkey: "Software\Classes\ApoloProject\shell\open\command"; ValueType
 Root: HKA; Subkey: "Software\Classes\.apkg"; ValueType: string; ValueName: ""; ValueData: "ApoloPackedProject"; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\ApoloPackedProject"; ValueType: string; ValueName: ""; ValueData: "{cm:FileTypePacked}"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\Classes\ApoloPackedProject\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\Apolo.exe,0"
-Root: HKA; Subkey: "Software\Classes\ApoloPackedProject\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Apolo.Editor.exe"" ""%1"""
+Root: HKA; Subkey: "Software\Classes\ApoloPackedProject\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Apolo.exe"" ""%1"""
 
 [Run]
 ; libera a porta do controle remoto (navegador, celular, Stream Deck) no Firewall do Windows

@@ -100,7 +100,12 @@ namespace Ares.Player
 
         private void InitEditMode()
         {
+            // the Editor was discontinued: the Player does everything
+            editorButton.Visible = false;
+            startEditorToolStripMenuItem.Visible = false;
             InitSaveMenu();
+            InitUndoMenu();
+            InitInfoMenus();
             InitExportMenu();
             InitMusicToolsMenu();
             InitOnlineMediaMenu();
@@ -184,6 +189,7 @@ namespace Ares.Player
             // context menu for buttons (elements)
             m_ElementMenu = new ContextMenuStrip();
             m_ElementMenu.Items.Add(T("Ver lista de músicas", "View track list"), null, (s, e) => ShowTrackPanel(m_MenuElementId));
+            m_ElementMenu.Items.Add(T("Propriedades da playlist", "Playlist properties"), null, (s, e) => EditPlaylistProperties());
             m_ElementMenu.Items.Add(new ToolStripSeparator());
             m_ElementMenu.Items.Add(T("Renomear", "Rename"), null, (s, e) => RenameElementButton());
             m_ElementDeleteItem = m_ElementMenu.Items.Add(T("Excluir", "Delete"), null, (s, e) => DeleteElementButton());
@@ -423,7 +429,7 @@ namespace Ares.Player
                 if (fromMode == dropIndex)
                     return;
                 int movedId = info.ElementId;
-                string targetTitle = m_Project.GetModes()[dropIndex].Title;
+                string srcTitle = m_Project.GetModes()[fromMode].Title;
                 BeginInvoke(new MethodInvoker(() => ApplyProjectEdit(() =>
                 {
                     IMode src = m_Project.GetModes()[fromMode];
@@ -433,7 +439,7 @@ namespace Ares.Player
                         return;
                     src.RemoveElement(moved);
                     dst.AddElement(moved);
-                }, targetTitle)));
+                }, srcTitle)));
             }
         }
 
@@ -652,6 +658,11 @@ namespace Ares.Player
                 return;
             bool oldWatch = fileSystemWatcher1.EnableRaisingEvents;
             fileSystemWatcher1.EnableRaisingEvents = false;
+            // the folder which is shown stays the same (unless the caller names another one)
+            IMode shown = CurrentMode();
+            string keepTitle = selectModeTitle ?? (shown != null ? shown.Title : null);
+            PushUndo();
+            m_UndoBusy = true;
             try
             {
                 StopAllPlaying();
@@ -659,7 +670,15 @@ namespace Ares.Player
                 m_Project.Changed = true;
                 DataModule.ProjectManager.SaveProject(m_Project);
                 OpenProject(m_Project.FileName, false);
-                SelectModeByTitle(selectModeTitle);
+                ShowModeAfterReload(keepTitle);
+                string again = keepTitle;
+                BeginInvoke(new MethodInvoker(() =>
+                {
+                    // something may have selected the first folder meanwhile
+                    IMode now = CurrentMode();
+                    if (again != null && (now == null || now.Title != again))
+                        ShowModeAfterReload(again);
+                }));
             }
             catch (Exception ex)
             {
@@ -668,6 +687,8 @@ namespace Ares.Player
             }
             finally
             {
+                m_UndoBusy = false;
+                UpdateUndoMenu();
                 fileSystemWatcher1.EnableRaisingEvents = oldWatch;
             }
         }

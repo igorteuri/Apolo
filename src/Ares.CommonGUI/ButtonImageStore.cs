@@ -21,6 +21,31 @@ namespace Ares.CommonGUI
             new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
         private static readonly Dictionary<string, Bitmap> s_Images = new Dictionary<string, Bitmap>(StringComparer.OrdinalIgnoreCase);
 
+        /// <summary>Raised before the pictures / colors of a project are changed (the Player keeps a copy for "undo").</summary>
+        public static event Action<string> BeforeChange;
+
+        private static void Notify(string projectPath)
+        {
+            Action<string> handler = BeforeChange;
+            if (handler != null)
+            {
+                try { handler(projectPath); } catch (Exception) { }
+            }
+        }
+
+        /// <summary>The settings file of the pictures of a project.</summary>
+        public static string SettingsFile(string projectPath)
+        {
+            return SidecarPath(projectPath);
+        }
+
+        /// <summary>Forgets what was read from the settings file (after the file was replaced).</summary>
+        public static void Reload(string projectPath)
+        {
+            if (!string.IsNullOrEmpty(projectPath))
+                s_Cache.Remove(projectPath);
+        }
+
         private static string SidecarPath(string projectPath)
         {
             return projectPath + ".icons";
@@ -269,6 +294,7 @@ namespace Ares.CommonGUI
         {
             if (string.IsNullOrEmpty(projectPath))
                 return;
+            Notify(projectPath);
             Dictionary<string, string> map = Load(projectPath);
             if (string.IsNullOrEmpty(spec))
                 map.Remove(Key(mode, element));
@@ -281,6 +307,7 @@ namespace Ares.CommonGUI
         {
             if (string.IsNullOrEmpty(projectPath))
                 return;
+            Notify(projectPath);
             Dictionary<string, string> map = Load(projectPath);
             bool changed = false;
             string spec = Get(projectPath, mode, oldTitle);
@@ -332,6 +359,7 @@ namespace Ares.CommonGUI
         {
             if (string.IsNullOrEmpty(projectPath))
                 return;
+            Notify(projectPath);
             Dictionary<string, string> map = Load(projectPath);
             string key = Key(mode, ColorPrefix + (element ?? ""));
             if (color.IsEmpty)
@@ -356,6 +384,7 @@ namespace Ares.CommonGUI
         {
             if (string.IsNullOrEmpty(projectPath))
                 return;
+            Notify(projectPath);
             Dictionary<string, string> map = Load(projectPath);
             string prefix = Key(oldMode, "");
             List<KeyValuePair<string, string>> moved = new List<KeyValuePair<string, string>>();

@@ -1202,6 +1202,8 @@ namespace Ares.Player
 
         protected override bool ProcessCmdKey(ref System.Windows.Forms.Message msg, System.Windows.Forms.Keys keyData)
         {
+            if (HandleUndoKey(keyData))
+                return true;
             if (HandleProgramShortcut(keyData))
                 return true;
 #if MONO
@@ -1975,10 +1977,7 @@ namespace Ares.Player
             updateTimer.Tick += new EventHandler(updateTimer_Tick);
             updateTimer.Start();
             fileSystemWatcher1.Changed += new System.IO.FileSystemEventHandler(fileSystemWatcher1_Changed);
-            if (Settings.Settings.Instance.CheckForUpdate)
-            {
-                Ares.Online.OnlineOperations.CheckForUpdate(this, false);
-            }
+            // no automatic search for updates: new versions are delivered in the vault of the supporters (menu Ajuda)
         }
 
         private void helpOnlineToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1988,7 +1987,7 @@ namespace Ares.Player
 
         private void checkForUpdateToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Ares.Online.OnlineOperations.CheckForUpdate(this, true);
+            ShowUpdateInfo();
         }
 
         private void notifyIcon_DoubleClick(object sender, EventArgs e)

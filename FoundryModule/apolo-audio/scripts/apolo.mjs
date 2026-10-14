@@ -577,7 +577,7 @@ function renderLibrary(lib) {
   };
   walk(-1, 0);
   folders.innerHTML = rows
-    .map((r) => `<button type="button" data-lib="mode" data-index="${r.index}" class="${r.index === lib.mode ? "on" : ""}" style="padding-left:${8 + r.depth * 14}px">${escapeHtml(lib.modes[r.index] ?? "")}</button>`)
+    .map((r) => `<button type="button" data-lib="mode" data-index="${r.index}" class="${r.index === lib.mode ? "on" : ""}">${r.depth ? "\u21B3 ".repeat(1) : ""}${escapeHtml(lib.modes[r.index] ?? "")}</button>`)
     .join("");
   elements.innerHTML = (lib.elements ?? []).length
     ? lib.elements.map((e) => `<button type="button" data-lib="element" data-id="${e.id}" class="${e.active ? "on" : ""}">${escapeHtml(e.title)}</button>`).join("")

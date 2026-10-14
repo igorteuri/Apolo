@@ -590,6 +590,7 @@ namespace Ares.Player
 
         private void AfterTreeChange(string selectTitle)
         {
+            PushUndo();
             SaveModeTree();
             RebuildModeRows();
             bool oldListen = m_Listen;

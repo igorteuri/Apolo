@@ -140,6 +140,7 @@
     <Compile Include="Player.OnlineMedia.cs" />
     <Compile Include="OpenMedia.cs" />
     <Compile Include="EmojiCatalog.cs" />
+    <Compile Include="PlaylistProperties.cs" />
     <Compile Include="AppearanceDialogs.cs" />
     <Compile Include="ImageSearchDialog.cs" />
     <Compile Include="Player.Appearance.cs" />
@@ -161,6 +162,8 @@
     <Compile Include="Player.Status.cs" />
     <Compile Include="Player.Discord.cs" />
     <Compile Include="Player.Deck.cs" />
+    <Compile Include="Player.Undo.cs" />
+    <Compile Include="Player.Info.cs" />
     <Compile Include="Player.ModeTree.cs" />
     <Compile Include="DiscordBridge.cs" />
     <Compile Include="ProcessLoopbackCapture.cs" />
