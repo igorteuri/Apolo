@@ -83,6 +83,12 @@ namespace Ares.Editor
             toolStrip1.Visible = false;
             EditorIcons.Toolbar(menuStrip1);
             tagsMenuItem.Visible = false; // the tag system is not used any more
+            // the panels are fixed (like in the Player): no menu entries to close or show them
+            projectExplorerToolStripMenuItem.Visible = false;
+            fileExplorerToolStripMenuItem.Visible = false;
+            soundFileExplorerToolStripMenuItem.Visible = false;
+            volumesToolStripMenuItem.Visible = false;
+            audioSourceSearchToolStripMenuItem.Visible = false;
             EnableFolderDrop(this);
             // fixed panels like in the player: no pin / auto-hide button, no dragging windows around
             dockPanel.Extender.DockPaneCaptionFactory = new ApoloDockCaptionFactory();
@@ -332,6 +338,10 @@ namespace Ares.Editor
             else if (window.VisibleState == WeifenLuo.WinFormsUI.Docking.DockState.DockTopAutoHide)
             {
                 window.VisibleState = WeifenLuo.WinFormsUI.Docking.DockState.DockTop;
+            }
+            else if (window is ToolWindow && !((ToolWindow)window).Closable)
+            {
+                window.IsHidden = false; // fixed panels are always shown
             }
             else
             {
@@ -987,6 +997,7 @@ namespace Ares.Editor
                 ShowVolumeWindow();
             }
 			#if !MONO
+            ShowFixedPanels();
             Settings.Settings.Instance.SettingsChanged += new EventHandler<Settings.Settings.SettingsEventArgs>(SettingsChanged);
 			#endif
             fileExplorerToolStripMenuItem.Checked = !m_FileExplorers[0].IsHidden;
@@ -1039,6 +1050,18 @@ namespace Ares.Editor
                 Dialogs.TipOfDayDialog dialog = new Dialogs.TipOfDayDialog();
                 dialog.SetTips(tips, lastTip);
                 dialog.ShowDialog();
+            }
+        }
+
+        private void ShowFixedPanels()
+        {
+            if (m_ProjectExplorer != null) m_ProjectExplorer.IsHidden = false;
+            if (m_VolumeWindow != null) m_VolumeWindow.IsHidden = false;
+            if (m_AudioSourceSearch != null) m_AudioSourceSearch.IsHidden = false;
+            for (int i = 0; i < m_FileExplorers.Length; i++)
+            {
+                if (m_FileExplorers[i] != null)
+                    m_FileExplorers[i].IsHidden = false;
             }
         }
 

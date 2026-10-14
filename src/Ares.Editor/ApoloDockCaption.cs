@@ -24,8 +24,16 @@ namespace Ares.Editor
             return Math.Max(24, Font.Height + 10);
         }
 
+        private bool CanClose()
+        {
+            ToolWindow window = DockPane.ActiveContent as ToolWindow;
+            return window == null || window.Closable;
+        }
+
         private Rectangle CloseRect()
         {
+            if (!CanClose())
+                return new Rectangle(Width, 0, 0, 0);
             int size = Math.Max(16, Height - 8);
             return new Rectangle(Width - size - 6, (Height - size) / 2, size, size);
         }
@@ -61,6 +69,8 @@ namespace Ares.Editor
                 using (Brush b = new SolidBrush(p != null && !p.IsClassic ? p.Hover : SystemColors.ControlLight))
                     g.FillRectangle(b, close);
             }
+            if (!CanClose())
+                return;
             using (Bitmap bmp = IconLibrary.Get("x", close.Size, active || m_HoverClose ? text : dim))
             {
                 if (bmp != null)
@@ -92,7 +102,7 @@ namespace Ares.Editor
         protected override void OnMouseUp(MouseEventArgs e)
         {
             base.OnMouseUp(e);
-            if (e.Button == MouseButtons.Left && CloseRect().Contains(e.Location))
+            if (e.Button == MouseButtons.Left && CanClose() && CloseRect().Contains(e.Location))
                 DockPane.CloseActiveContent();
         }
     }

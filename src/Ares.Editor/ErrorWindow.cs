@@ -30,6 +30,11 @@ namespace Ares.Editor
 {
     partial class ErrorWindow : ToolWindow
     {
+        public override bool Closable
+        {
+            get { return true; }
+        }
+
         public interface IErrorWindowClient
         {
             void MoveToElement(Object element);

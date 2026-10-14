@@ -23,6 +23,12 @@ namespace Ares.Editor
 {
     class ToolWindow : WeifenLuo.WinFormsUI.Docking.DockContent
     {
+        /// <summary>Only the alerts window can be closed; all other panels are always shown (like in the Player).</summary>
+        public virtual bool Closable
+        {
+            get { return false; }
+        }
+
         public ToolWindow()
         {
             HideOnClose = true;
