@@ -245,9 +245,103 @@ async function poll() {
             apolo.state = null;
         }
         refreshAll();
+        if (apolo.state)
+            loadLooks();
     } finally {
         apolo.busy = false;
     }
+}
+
+
+// ---------------------------------------------------------------- pictures and colors of the buttons (as set in the Apolo Player)
+
+const looks = { byId: new Map(), loadedAt: 0, loading: false };
+const iconCache = new Map(); // file name -> data URI ('' when it could not be loaded)
+
+function httpBinary(path, token) {
+    return new Promise((resolve, reject) => {
+        const port = parseInt(globalSettings.port, 10) || 8767;
+        const req = http.request({ host: '127.0.0.1', port: port, method: 'GET', path: path, headers: { Host: 'localhost:' + port, 'X-Token': token }, timeout: 3000 }, res => {
+            const chunks = [];
+            res.on('data', c => chunks.push(c));
+            res.on('end', () => resolve({ status: res.statusCode, body: Buffer.concat(chunks) }));
+        });
+        req.on('timeout', () => req.destroy(new Error('timeout')));
+        req.on('error', reject);
+        req.end();
+    });
+}
+
+async function loadIcon(name) {
+    if (iconCache.has(name) || !apolo.token)
+        return;
+    iconCache.set(name, '');
+    try {
+        const r = await httpBinary('/api/icon?n=' + encodeURIComponent(name), apolo.token);
+        if (r.status === 200 && r.body.length > 0)
+            iconCache.set(name, 'data:image/png;base64,' + r.body.toString('base64'));
+        else
+            iconCache.delete(name);
+    } catch (e) {
+        iconCache.delete(name);
+    }
+    refreshAll();
+}
+
+async function loadLooks() {
+    if (looks.loading || Date.now() - looks.loadedAt < 10000)
+        return;
+    looks.loading = true;
+    try {
+        const text = await api('GET', '/api/project');
+        if (text !== null) {
+            const map = new Map();
+            for (const mode of JSON.parse(text)) {
+                for (const e of (mode.elements || [])) {
+                    if (e.img || e.color)
+                        map.set(mode.title + '\u0000' + e.id, { img: e.img || '', color: e.color || '' });
+                }
+            }
+            looks.byId = map;
+            looks.loadedAt = Date.now();
+            refreshAll();
+        }
+    } catch (e) {
+        looks.loadedAt = Date.now();
+    } finally {
+        looks.loading = false;
+    }
+}
+
+function findLook(modeTitle, elementId) {
+    const exact = looks.byId.get((modeTitle || '') + '\u0000' + elementId);
+    if (exact || modeTitle)
+        return exact || null;
+    for (const [key, value] of looks.byId) {
+        if (key.endsWith('\u0000' + elementId))
+            return value;
+    }
+    return null;
+}
+
+function xml(text) {
+    return String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c]);
+}
+
+// key picture: color background, emoji / picture on top (the title of the key is drawn by Stream Deck over it), ring when playing
+function keyImage(look, active) {
+    const color = /^#[0-9A-Fa-f]{6}$/.test(look.color) ? look.color : '#1f2430';
+    const icon = look.img ? iconCache.get(look.img) : '';
+    let svg = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="144" height="144" viewBox="0 0 144 144">' +
+        '<rect width="144" height="144" rx="14" fill="' + xml(color) + '"' + (look.color ? '' : ' fill-opacity="1"') + '/>';
+    if (look.color)
+        svg += '<rect width="144" height="144" rx="14" fill="#000" fill-opacity="0.25"/>';
+    if (icon)
+        svg += '<image x="32" y="14" width="80" height="80" xlink:href="' + icon + '" href="' + icon + '"/>';
+    if (active)
+        svg += '<rect x="4" y="4" width="136" height="136" rx="12" fill="none" stroke="#ffb627" stroke-width="8"/>';
+    svg += '</svg>';
+    return 'data:image/svg+xml;charset=utf8,' + encodeURIComponent(svg);
 }
 
 // ---------------------------------------------------------------- showing state on the keys
@@ -335,6 +429,21 @@ function refreshOne(ctx, entry) {
                     active = st.elements.some(e => e.id === settings.elementId && e.active);
             }
             setIfChanged(ctx, entry, 'title', title, () => sd({ event: 'setTitle', context: ctx, payload: { title: shortText(title, 30), target: 0 } }));
+            // emoji / color of the button, as set in the Apolo Player
+            const look = findLook(settings.modeTitle, settings.elementId);
+            if (look && look.img)
+                loadIcon(look.img);
+            const picture = look && (look.color || (look.img && iconCache.get(look.img))) ? look : null;
+            const stamp = picture ? JSON.stringify([picture, picture.img ? !!iconCache.get(picture.img) : false]) : '';
+            setIfChanged(ctx, entry, 'look', stamp, () => {
+                if (picture) {
+                    sd({ event: 'setImage', context: ctx, payload: { image: keyImage(picture, false), target: 0, state: 0 } });
+                    sd({ event: 'setImage', context: ctx, payload: { image: keyImage(picture, true), target: 0, state: 1 } });
+                } else {
+                    sd({ event: 'setImage', context: ctx, payload: { target: 0, state: 0 } });
+                    sd({ event: 'setImage', context: ctx, payload: { target: 0, state: 1 } });
+                }
+            });
             setIfChanged(ctx, entry, 'state', active ? 1 : 0, () => sd({ event: 'setState', context: ctx, payload: { state: active ? 1 : 0 } }));
             break;
         }

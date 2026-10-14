@@ -130,7 +130,9 @@ namespace Ares.Player
                                 if (!first)
                                     json.Append(",");
                                 first = false;
-                                json.Append("{\"id\":").Append(me.Id).Append(",\"title\":").Append(JsonString(me.Title)).Append("}");
+                                json.Append("{\"id\":").Append(me.Id).Append(",\"title\":").Append(JsonString(me.Title));
+                                AppendLook(json, mode.Title, me.Title);
+                                json.Append("}");
                             }
                             json.Append("]}");
                         }
@@ -143,6 +145,25 @@ namespace Ares.Player
             {
             }
             return result;
+        }
+
+        // picture (emoji) and color of a button, as the Player shows them: ,"img":"name.png","color":"#rrggbb"
+        private void AppendLook(StringBuilder json, string modeTitle, string elementTitle)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(m_CurrentProjectPath))
+                    return;
+                string spec = Ares.CommonGUI.ButtonImageStore.Get(m_CurrentProjectPath, modeTitle, elementTitle);
+                if (spec != null && spec.StartsWith("lib:") && spec.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                    json.Append(",\"img\":").Append(JsonString(spec.Substring(4)));
+                Color color = Ares.CommonGUI.ButtonImageStore.GetColor(m_CurrentProjectPath, modeTitle, elementTitle);
+                if (!color.IsEmpty)
+                    json.Append(",\"color\":\"#").Append(color.R.ToString("X2")).Append(color.G.ToString("X2")).Append(color.B.ToString("X2")).Append("\"");
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private static string DeckPluginFile

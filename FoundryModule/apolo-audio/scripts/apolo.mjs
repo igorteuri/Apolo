@@ -28,6 +28,8 @@ const state = {
   loudnessSeen: 0,
   connectTimer: null,
   now: { playing: false },
+  libOpen: false,
+  lib: null,
   bridge: { port: null, timer: null, lastSent: "", lastTime: 0, lastNow: null, fails: 0 }
 };
 
@@ -347,6 +349,7 @@ function injectSidebar(app, element) {
   state.sidebarFailed = false;
   wireControls(row);
   refreshUi();
+  mountLibrary();
 }
 
 function wantFloating() {
@@ -404,6 +407,7 @@ function updateUi() {
       if (pauseIcon) pauseIcon.className = state.now?.playing && state.now?.paused ? "fa-solid fa-play" : "fa-solid fa-pause";
     }
   }
+  if (state.libOpen && !iAmController()) closeLibrary();
 }
 
 /* ---------------------------------------------------------------- what is playing + remote control (through the GM) */
@@ -503,14 +507,36 @@ function sendLibrary(userId) {
 
 function openLibrary() {
   if (!iAmController()) return;
-  buildLibraryPanel();
+  if (state.libOpen) {
+    closeLibrary();
+    return;
+  }
+  state.libOpen = true;
+  mountLibrary();
   game.socket.emit(`module.${MODULE_ID}`, { type: "library", userId: game.user.id });
 }
 
+function closeLibrary() {
+  state.libOpen = false;
+  document.getElementById(LIBRARY_ID)?.remove();
+}
+
+/** The library lives inside the Apolo row (below the music name); the row is drawn again with the tab, so it is put back each time. */
+function mountLibrary() {
+  const existing = document.getElementById(LIBRARY_ID);
+  if (!state.libOpen || !iAmController() || !state.row?.isConnected) {
+    if (existing && !state.libOpen) existing.remove();
+    return;
+  }
+  if (existing && state.row.contains(existing)) return;
+  existing?.remove();
+  const panel = buildLibraryPanel();
+  state.row.appendChild(panel);
+  if (state.lib) renderLibrary(state.lib);
+}
+
 function buildLibraryPanel() {
-  let panel = document.getElementById(LIBRARY_ID);
-  if (panel) return panel;
-  panel = document.createElement("div");
+  const panel = document.createElement("div");
   panel.id = LIBRARY_ID;
   panel.innerHTML = `
     <header><span><i class="fa-solid fa-folder-tree"></i> ${t("Library")}</span><button type="button" data-lib="close" title="${t("Close")}"><i class="fa-solid fa-xmark"></i></button></header>
@@ -519,17 +545,18 @@ function buildLibraryPanel() {
       <section class="apolo-lib-elements"></section>
     </div>`;
   panel.addEventListener("click", (event) => {
+    event.stopPropagation();
     const el = event.target.closest("[data-lib]");
     if (!el) return;
-    if (el.dataset.lib === "close") panel.remove();
+    if (el.dataset.lib === "close") closeLibrary();
     else if (el.dataset.lib === "mode") sendControl("mode", el.dataset.index);
     else if (el.dataset.lib === "element") sendControl("element", el.dataset.id);
   });
-  document.body.appendChild(panel);
   return panel;
 }
 
 function renderLibrary(lib) {
+  if (lib) state.lib = lib;
   const panel = document.getElementById(LIBRARY_ID);
   if (!panel || !lib) return;
   const folders = panel.querySelector(".apolo-lib-folders");

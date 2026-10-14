@@ -163,9 +163,32 @@ namespace Ares.Player
             return diff == 0;
         }
 
+        // picture of a button (only files of the icons folder of Apolo, nothing else can be reached)
+        private static byte[] ReadIcon(string name)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(name))
+                    return null;
+                string file = System.IO.Path.GetFileName(name);
+                if (file != name || !file.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                    return null;
+                string full = System.IO.Path.Combine(Ares.CommonGUI.ButtonImageStore.IconsFolder, file);
+                if (!System.IO.File.Exists(full) || new System.IO.FileInfo(full).Length > 2000000)
+                    return null;
+                return System.IO.File.ReadAllBytes(full);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
         private bool Authorized(HttpListenerRequest request)
         {
             string token = request.Headers["X-Token"];
+            if (string.IsNullOrEmpty(token))
+                token = request.QueryString["t"];
             if (string.IsNullOrEmpty(token))
                 return false;
             lock (m_Lock)
@@ -308,6 +331,29 @@ namespace Ares.Player
                     return;
                 }
                 Reply(context, 200, "application/json; charset=utf-8", m_State);
+                return;
+            }
+            if (path == "/api/icon" && request.HttpMethod == "GET")
+            {
+                if (!Authorized(request))
+                {
+                    Reply(context, 401, "text/plain; charset=utf-8", "login");
+                    return;
+                }
+                byte[] icon = ReadIcon(request.QueryString["n"]);
+                if (icon == null)
+                {
+                    Reply(context, 404, "text/plain; charset=utf-8", "Not found");
+                    return;
+                }
+                HttpListenerResponse response = context.Response;
+                response.StatusCode = 200;
+                response.ContentType = "image/png";
+                response.ContentLength64 = icon.Length;
+                response.Headers.Add("Cache-Control", "private, max-age=3600");
+                response.Headers.Add("X-Content-Type-Options", "nosniff");
+                response.OutputStream.Write(icon, 0, icon.Length);
+                response.OutputStream.Close();
                 return;
             }
             if (path == "/api/project" && request.HttpMethod == "GET")
@@ -622,7 +668,9 @@ namespace Ares.Player
                             json.Append(",");
                         first = false;
                         json.Append("{\"id\":").Append(me.Id).Append(",\"title\":").Append(JsonString(me.Title));
-                        json.Append(",\"active\":").Append(active.Contains(me.Id) ? "true" : "false").Append("}");
+                        json.Append(",\"active\":").Append(active.Contains(me.Id) ? "true" : "false");
+                        AppendLook(json, mode.Title, me.Title);
+                        json.Append("}");
                     }
                 }
                 json.Append("]}");
