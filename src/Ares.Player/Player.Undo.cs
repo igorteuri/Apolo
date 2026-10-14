@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 using Ares.Data;
+using WinKeys = System.Windows.Forms.Keys;
 
 namespace Ares.Player
 {
@@ -222,13 +223,13 @@ namespace Ares.Player
         }
 
         // Ctrl+Z / Ctrl+Y (not while typing in a text box, which has its own undo)
-        private bool HandleUndoKey(Keys keyData)
+        private bool HandleUndoKey(WinKeys keyData)
         {
-            if (keyData != (Keys.Control | Keys.Z) && keyData != (Keys.Control | Keys.Y) && keyData != (Keys.Control | Keys.Shift | Keys.Z))
+            if (keyData != (WinKeys.Control | WinKeys.Z) && keyData != (WinKeys.Control | WinKeys.Y) && keyData != (WinKeys.Control | WinKeys.Shift | WinKeys.Z))
                 return false;
             if (ActiveControl is TextBoxBase || (ActiveControl != null && ActiveControl.ContainsFocus && FocusedControlIsText()))
                 return false;
-            if (keyData == (Keys.Control | Keys.Z))
+            if (keyData == (WinKeys.Control | WinKeys.Z))
                 UndoEdit();
             else
                 RedoEdit();
