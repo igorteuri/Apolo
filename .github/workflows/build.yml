@@ -114,6 +114,8 @@ jobs:
           Copy-Item "Libraries\*" dist -Recurse -Force -ErrorAction SilentlyContinue
           # the BASS library (not free for commercial use) must never be part of Apolo
           Remove-Item dist\bass*.dll, dist\Bass*.dll -Force -ErrorAction SilentlyContinue
+          # the Editor was discontinued (everything is done in the Player now)
+          Remove-Item dist\Apolo.Editor.exe*, dist\WeifenLuo*.dll -Force -ErrorAction SilentlyContinue
 
       - name: Setup Node.js (for the Discord bridge)
         uses: actions/setup-node@v4
@@ -154,6 +156,29 @@ jobs:
           if (Test-Path $dest) { Remove-Item $dest }
           Add-Type -AssemblyName System.IO.Compression.FileSystem
           [System.IO.Compression.ZipFile]::CreateFromDirectory($src, $dest, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+
+      - name: Build the installer (Inno Setup)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+            $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          }
+          $v = (Get-Item dist/Apolo.exe).VersionInfo.FileVersion
+          $parts = $v.Split('.')
+          $version = "$($parts[0]).$($parts[1]).$($parts[2])"
+          Write-Host "Apolo version: $version"
+          & $iscc "/DMyAppVersion=$version" Setup/Apolo.iss
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Apolo-installer
+          path: installer
+          if-no-files-found: ignore
 
       - name: Upload build
         uses: actions/upload-artifact@v4
