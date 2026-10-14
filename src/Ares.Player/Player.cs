@@ -567,7 +567,14 @@ namespace Ares.Player
             if (m_MessagesForm == null)
             {
                 m_MessagesForm = new MessagesForm();
-                m_MessagesForm.Location = new Point(Location.X + Size.Width, Location.Y);
+                // centered over the window of Apolo (on the screen where it is), never outside the screen
+                m_MessagesForm.StartPosition = FormStartPosition.Manual;
+                Rectangle area = Screen.FromControl(this).WorkingArea;
+                int mx = Location.X + (Width - m_MessagesForm.Width) / 2;
+                int my = Location.Y + (Height - m_MessagesForm.Height) / 2;
+                mx = Math.Max(area.Left, Math.Min(mx, area.Right - m_MessagesForm.Width));
+                my = Math.Max(area.Top, Math.Min(my, area.Bottom - m_MessagesForm.Height));
+                m_MessagesForm.Location = new Point(mx, my);
                 m_MessagesForm.FindMissingRequested += (s, e) => ShowMissingFiles();
                 m_MessagesForm.FormClosed += new FormClosedEventHandler(m_MessagesForm_FormClosed);
                 m_MessagesForm.Show(this);
@@ -810,6 +817,8 @@ namespace Ares.Player
         }
 
         private bool m_Listen = true;
+        // set while a project is opened again after an edit: the folder to show
+        private string m_PreferredModeTitle;
 
         private void UpdateModesList()
         {
@@ -839,6 +848,10 @@ namespace Ares.Player
                 }
                 EnsureModeTree();
                 string currentTitle = m_PlayingControl.CurrentMode != null ? m_PlayingControl.CurrentMode.Title : null;
+                // after an edit / undo the folder which was shown stays (the player itself would go back to the first one)
+                bool keepShown = m_PreferredModeTitle != null && ModeIndexByTitle(m_PreferredModeTitle) >= 0;
+                if (keepShown)
+                    currentTitle = m_PreferredModeTitle;
                 ModeNode currentNode = m_ModeTree.Find(currentTitle);
                 if (currentNode != null && ExpandAncestors(currentNode))
                     SaveModeTree();
@@ -847,6 +860,12 @@ namespace Ares.Player
                 if (currentRow < 0 && m_ModeRows.Count > 0)
                     currentRow = 0;
                 modesList.SelectedIndex = currentRow;
+                if (keepShown && currentRow >= 0)
+                {
+                    int shownIndex = ModeIndexByTitle(m_PreferredModeTitle);
+                    if (shownIndex >= 0)
+                        m_PlayingControl.SetMode(m_Project.GetModes()[shownIndex]);
+                }
             }
             modesList.EndUpdate();
             UpdateElementsPanel();

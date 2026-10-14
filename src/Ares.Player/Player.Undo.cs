@@ -179,10 +179,14 @@ namespace Ares.Player
                 m_ModeTree = null;
                 m_ModeTreePath = null;
                 m_LastUndoCapture = DateTime.MinValue;
+                // the folder which is shown now stays (when it still exists)
+                string title = now != null ? now.ModeTitle : null;
+                if (title == null)
+                    title = target.ModeTitle;
+                m_PreferredModeTitle = title;
                 OpenProject(path, false);
-                string title = target.ModeTitle;
                 if (title == null || ModeIndexByTitle(title) < 0)
-                    title = now != null ? now.ModeTitle : null;
+                    title = target.ModeTitle;
                 ShowModeAfterReload(title);
                 ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
                     ReferenceEquals(from, m_UndoStack) ? T("Desfeito.", "Undone.") : T("Refeito.", "Redone.")));
@@ -194,6 +198,7 @@ namespace Ares.Player
             }
             finally
             {
+                m_PreferredModeTitle = null;
                 fileSystemWatcher1.EnableRaisingEvents = oldWatch;
                 UpdateUndoMenu();
             }

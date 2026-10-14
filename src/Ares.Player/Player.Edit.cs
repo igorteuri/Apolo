@@ -356,7 +356,7 @@ namespace Ares.Player
                 return;
             int modeIndex = SelectedModeIndex;
             string modeTitle = mode.Title;
-            BeginInvoke(new MethodInvoker(() => ApplyProjectEdit(() =>
+            RunAfterDrag(() => ApplyProjectEdit(() =>
             {
                 IMode m = m_Project.GetModes()[modeIndex];
                 IModeElement moved = m.GetElements().FirstOrDefault(x => x.Id == movedId);
@@ -368,7 +368,21 @@ namespace Ares.Player
                     m.AddElement(moved);
                 else
                     m.InsertElement(target, moved);
-            }, modeTitle)));
+            }, modeTitle));
+        }
+
+        // the drop happens inside the drag loop of the button: wait until it is over before the project is opened again
+        private void RunAfterDrag(Action action)
+        {
+            System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
+            timer.Interval = 120;
+            timer.Tick += (s, e) =>
+            {
+                timer.Stop();
+                timer.Dispose();
+                action();
+            };
+            timer.Start();
         }
 
         private void ModesDragOver(object sender, DragEventArgs e)
@@ -430,7 +444,7 @@ namespace Ares.Player
                     return;
                 int movedId = info.ElementId;
                 string srcTitle = m_Project.GetModes()[fromMode].Title;
-                BeginInvoke(new MethodInvoker(() => ApplyProjectEdit(() =>
+                RunAfterDrag(() => ApplyProjectEdit(() =>
                 {
                     IMode src = m_Project.GetModes()[fromMode];
                     IMode dst = m_Project.GetModes()[dropIndex];
@@ -439,7 +453,7 @@ namespace Ares.Player
                         return;
                     src.RemoveElement(moved);
                     dst.AddElement(moved);
-                }, srcTitle)));
+                }, srcTitle));
             }
         }
 
@@ -669,6 +683,7 @@ namespace Ares.Player
                 edit();
                 m_Project.Changed = true;
                 DataModule.ProjectManager.SaveProject(m_Project);
+                m_PreferredModeTitle = keepTitle;
                 OpenProject(m_Project.FileName, false);
                 ShowModeAfterReload(keepTitle);
                 string again = keepTitle;
@@ -687,6 +702,7 @@ namespace Ares.Player
             }
             finally
             {
+                m_PreferredModeTitle = null;
                 m_UndoBusy = false;
                 UpdateUndoMenu();
                 fileSystemWatcher1.EnableRaisingEvents = oldWatch;
