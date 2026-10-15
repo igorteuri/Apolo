@@ -47,3 +47,4 @@ Esta etapa não executou a fase 1: sem poder compilar aqui, converter 19 projeto
 - Etapa 74: importar .apkg ao abrir o programa: monitor de progresso não usa mais a rede quando ela ainda não existe (NullReference).
 - Etapa 75: log de diagnóstico da captura de áudio (%AppData%\Apolo\audio-capture.log) para investigar áudio das abas web que não sai no Discord/VDO.
 - Etapa 76: captura de áudio refeita (motor do Apolo sempre + processos WebView2 via process loopback, mixados); botão Extensões nas abas web (pasta, .crx, .zip).
+- Etapa 77: com 'não ouvir pelo PC' as abas web continuam sendo enviadas (Discord/VDO) mas ficam mudas no PC (sessões de áudio do WebView2 mutadas no Windows).
