@@ -209,6 +209,7 @@ namespace Ares.Player
         public bool Muted;     // muted by the user
         public bool Loaded;    // page loaded
         public VirtualMic Mic; // the virtual microphone "Apolo Audio" (VDO tab)
+        public bool CaptureHooked; // the sound of the page was taken from inside the page (PC does not play it)
     }
 
     internal class WebAudioInfo
@@ -453,6 +454,7 @@ namespace Ares.Player
             Controls.Add(bar);
             LayoutBar(bar);
 
+            Ares.Playing.AudioInit.OutputChanged += OnOutputChangedForTabs;
             LoadTabs();
             if (m_Tabs.Count > 0)
                 m_Selected = m_Tabs[0];
@@ -632,7 +634,13 @@ namespace Ares.Player
                     core.WebMessageReceived += (s, e) => HandleVdoMessage(tab, vmic, e);
                     core.NavigationStarting += (s, e) => vmic.Stop();
                 }
-                core.IsMuted = tab.Kind != "vdo" && tab.Muted;
+                if (tab.Kind != "vdo")
+                {
+                    // sound taken from inside the page: used when the PC doesn't play Apolo ("don't listen on this PC")
+                    await core.AddScriptToExecuteOnDocumentCreatedAsync(CaptureScript);
+                    core.WebMessageReceived += (s, e) => HandlePageMessage(tab, core, e);
+                }
+                core.IsMuted = tab.Kind != "vdo" && (tab.Muted || CaptureMode);
                 core.PermissionRequested += (s, e) =>
                 {
                     if (e.PermissionKind == CoreWebView2PermissionKind.Microphone)
@@ -736,10 +744,158 @@ namespace Ares.Player
                 if (tab.Kind == "vdo")
                     tab.View.CoreWebView2.ExecuteScriptAsync("window.__aresSetMuted && window.__aresSetMuted(" + (muted ? "true" : "false") + ");");
                 else
-                    tab.View.CoreWebView2.IsMuted = muted;
+                    tab.View.CoreWebView2.IsMuted = muted || CaptureMode;
             }
             UpdateTabState(tab);
         }
+
+        // ---- sound of the web pages when the PC does not play Apolo ----
+        // Windows can only capture what a page plays on the speakers. When the output is "don't listen on this PC" the
+        // pages are silenced in the browser and their sound is taken from inside the page (Web Audio) and mixed by Apolo.
+
+        private static bool CaptureMode
+        {
+            get { return !Ares.Playing.AudioInit.LocalOutputEnabled; }
+        }
+
+        private void OnOutputChangedForTabs()
+        {
+            try
+            {
+                if (IsHandleCreated && !IsDisposed)
+                    BeginInvoke(new Action(ApplyCaptureModeAll));
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private void ApplyCaptureModeAll()
+        {
+            bool mode = CaptureMode;
+            foreach (WebTab tab in m_Tabs)
+            {
+                if (tab.Kind == "vdo" || tab.View == null || tab.View.CoreWebView2 == null)
+                    continue;
+                CoreWebView2 core = tab.View.CoreWebView2;
+                try
+                {
+                    core.IsMuted = tab.Muted || mode;
+                    core.PostWebMessageAsString(mode ? "apolo-capture:on" : "apolo-capture:off");
+                    if (!mode && tab.CaptureHooked)
+                    {
+                        // the page was rerouted through Web Audio: a reload gives the normal sound back
+                        tab.CaptureHooked = false;
+                        core.Reload();
+                    }
+                }
+                catch (Exception)
+                {
+                }
+            }
+        }
+
+        private void HandlePageMessage(WebTab tab, CoreWebView2 core, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            string msg;
+            try
+            {
+                msg = e.TryGetWebMessageAsString();
+            }
+            catch (Exception)
+            {
+                return;
+            }
+            if (msg == null)
+                return;
+            if (msg == "apolo-hello")
+            {
+                core.PostWebMessageAsString(CaptureMode ? "apolo-capture:on" : "apolo-capture:off");
+            }
+            else if (msg.StartsWith("apolo-pcm:", StringComparison.Ordinal))
+            {
+                if (tab.Muted || !CaptureMode)
+                    return;
+                try
+                {
+                    byte[] data = Convert.FromBase64String(msg.Substring(10));
+                    tab.CaptureHooked = true;
+                    AppAudioCapture.PushPageAudio(tab, data, data.Length);
+                }
+                catch (FormatException)
+                {
+                }
+            }
+        }
+
+        private const string CaptureScript = @"(function() {
+ if (window.__apoloCap) return;
+ var cap = window.__apoloCap = { on: false };
+ var wv = window.chrome && window.chrome.webview;
+ if (!wv) return;
+ var origConnect = AudioNode.prototype.connect, origDisconnect = AudioNode.prototype.disconnect;
+ var queue = [], queued = 0;
+ function toB64(i16) {
+  var bytes = new Uint8Array(i16.buffer), s = '';
+  for (var i = 0; i < bytes.length; i += 8192) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+  return btoa(s);
+ }
+ function push(l, r, rate) {
+  if (!cap.on) return;
+  var n = Math.floor(l.length * 48000 / rate);
+  var out = new Int16Array(n * 2);
+  for (var i = 0; i < n; i++) {
+   var pos = i * rate / 48000, k = Math.floor(pos), f = pos - k, k2 = Math.min(k + 1, l.length - 1);
+   var a = l[k] + (l[k2] - l[k]) * f, b = r[k] + (r[k2] - r[k]) * f;
+   a = a > 1 ? 1 : (a < -1 ? -1 : a); b = b > 1 ? 1 : (b < -1 ? -1 : b);
+   out[i * 2] = a * 32767; out[i * 2 + 1] = b * 32767;
+  }
+  try { wv.postMessage('apolo-pcm:' + toB64(out)); } catch (e) {}
+ }
+ function tapOf(ctx) {
+  if (ctx.__apoloTap) return ctx.__apoloTap;
+  var sp = ctx.createScriptProcessor(2048, 2, 2);
+  sp.__apoloIsTap = true;
+  sp.onaudioprocess = function(e) {
+   if (!cap.on) return;
+   var ib = e.inputBuffer, l = ib.getChannelData(0), r = ib.numberOfChannels > 1 ? ib.getChannelData(1) : l;
+   push(l, r, ctx.sampleRate);
+  };
+  origConnect.call(sp, ctx.destination);
+  ctx.__apoloTap = sp;
+  return sp;
+ }
+ AudioNode.prototype.connect = function(dest) {
+  var r = origConnect.apply(this, arguments);
+  try { if (dest instanceof AudioDestinationNode && !this.__apoloIsTap) origConnect.call(this, tapOf(dest.context)); } catch (e) {}
+  return r;
+ };
+ AudioNode.prototype.disconnect = function(dest) {
+  try {
+   if ((arguments.length === 0 || dest instanceof AudioDestinationNode) && this.context && this.context.__apoloTap && !this.__apoloIsTap)
+    origDisconnect.call(this, this.context.__apoloTap);
+  } catch (e) {}
+  return origDisconnect.apply(this, arguments);
+ };
+ function hook(el) {
+  if (el.__apoloHooked) return;
+  el.__apoloHooked = true;
+  try {
+   var ctx = new (window.AudioContext || window.webkitAudioContext)();
+   var src = ctx.createMediaElementSource(el);
+   src.connect(ctx.destination);
+   ctx.resume();
+  } catch (e) {}
+ }
+ var origPlay = HTMLMediaElement.prototype.play;
+ HTMLMediaElement.prototype.play = function() { if (cap.on) hook(this); return origPlay.apply(this, arguments); };
+ function hookAll() { var els = document.querySelectorAll('audio,video'); for (var i = 0; i < els.length; i++) hook(els[i]); }
+ wv.addEventListener('message', function(e) {
+  if (e.data === 'apolo-capture:on') { cap.on = true; hookAll(); }
+  else if (e.data === 'apolo-capture:off') { cap.on = false; }
+ });
+ wv.postMessage('apolo-hello');
+})();";
 
         /// <summary>Tabs that currently make sound (or send it), for the indicator in the Player window.</summary>
         public System.Collections.Generic.List<WebAudioInfo> GetAudioStates()

@@ -110,6 +110,42 @@ namespace Ares.Player
             public ProcessLoopbackCapture Capture;
         }
 
+        // sound which the web pages send from inside (see WebWindow: used when the PC does not play the pages)
+        private static readonly List<AppAudioCapture> s_Instances = new List<AppAudioCapture>();
+
+        /// <summary>Gives PCM data (48 kHz, stereo, 16 bit) of a web page to everything which sends the sound of Apolo.</summary>
+        public static void PushPageAudio(object key, byte[] buffer, int count)
+        {
+            AppAudioCapture[] list;
+            lock (s_Instances)
+            {
+                if (s_Instances.Count == 0)
+                    return;
+                list = s_Instances.ToArray();
+            }
+            foreach (AppAudioCapture c in list)
+                c.AddPage(key, buffer, count);
+        }
+
+        private readonly Dictionary<object, Source> m_Pages = new Dictionary<object, Source>();
+
+        private void AddPage(object key, byte[] buffer, int count)
+        {
+            Source source;
+            lock (m_Lock)
+            {
+                if (!m_Started)
+                    return;
+                if (!m_Pages.TryGetValue(key, out source))
+                {
+                    source = new Source();
+                    m_Pages[key] = source;
+                    ProcessLoopbackCapture.Log("sound of Apolo: web page sound from inside the page started");
+                }
+            }
+            source.Add(buffer, count);
+        }
+
         private readonly int m_ProcessId;
         private readonly object m_Lock = new object();
         private readonly Source m_Engine = new Source();
@@ -139,6 +175,7 @@ namespace Ares.Player
                 m_Stop = false;
                 System.Threading.Interlocked.Increment(ref s_Active);
             }
+            lock (s_Instances) { s_Instances.Add(this); }
             m_EngineListening = Ares.Playing.AudioInit.AddPcmListener(OnEngineData);
             ProcessLoopbackCapture.Log("sound of Apolo: started (engine " + (m_EngineListening ? "listening" : "NOT available") + ")");
             m_MixThread = new Thread(MixLoop);
@@ -163,6 +200,8 @@ namespace Ares.Player
                 m_Started = false;
             }
             m_Stop = true;
+            lock (s_Instances) { s_Instances.Remove(this); }
+            lock (m_Lock) { m_Pages.Clear(); }
             if (m_EngineListening)
             {
                 Ares.Playing.AudioInit.RemovePcmListener(OnEngineData);
@@ -226,11 +265,22 @@ namespace Ares.Player
                         ProcessLoopbackCapture.Log("sound of Apolo: first sound from the audio engine");
                     }
                 }
+                Source[] pages;
                 WebSource[] web;
                 lock (m_Lock)
                 {
                     web = new WebSource[m_Web.Count];
                     m_Web.Values.CopyTo(web, 0);
+                    pages = new Source[m_Pages.Count];
+                    m_Pages.Values.CopyTo(pages, 0);
+                }
+                foreach (Source pg in pages)
+                {
+                    if (pg.TakeFrame(frame))
+                    {
+                        Accumulate(sum, frame);
+                        any = true;
+                    }
                 }
                 foreach (WebSource w in web)
                 {
