@@ -118,32 +118,58 @@ namespace Ares.Player
             m_Shown.Clear();
             m_Overflow = 0;
             m_OverflowRect = Rectangle.Empty;
-            List<Chip> all = new List<Chip>();
-            all.AddRange(m_Web);
-            all.AddRange(m_Sounds);
-            if (all.Count == 0)
+            if (m_Sounds.Count == 0 && m_Web.Count == 0)
                 return;
             int room = Width - 2;
-            int fit = Math.Max(1, (room + Gap) / (ChipMin + Gap));
-            int count = Math.Min(all.Count, fit);
-            if (all.Count > fit)
+
+            // browser tabs: at the right end
+            int webW = 230;
+            int webFit = 0;
+            if (m_Web.Count > 0)
             {
-                // leave place for the "+N" chip
-                fit = Math.Max(1, (room - 46 + Gap) / (ChipMin + Gap));
-                count = Math.Min(all.Count, fit);
-                m_Overflow = all.Count - count;
+                webFit = Math.Max(1, Math.Min(m_Web.Count, (room / 2 + Gap) / (webW + Gap)));
+                webW = Math.Min(webW, Math.Max(120, (room / 2 - (webFit - 1) * Gap) / webFit));
+                int x0 = Width - 1 - webFit * webW - (webFit - 1) * Gap;
+                for (int i = 0; i < webFit; i++)
+                {
+                    m_Web[i].Rect = new Rectangle(x0 + i * (webW + Gap), 2, webW, Height - 4);
+                    m_Shown.Add(m_Web[i]);
+                }
             }
-            int reserve = m_Overflow > 0 ? 46 : 0;
-            int w = Math.Min(ChipMax, (room - reserve - (count - 1) * Gap) / count);
+            int webArea = webFit > 0 ? webFit * webW + (webFit - 1) * Gap + Gap * 2 : 0;
+
+            // sound effects: from the left
+            int soundRoom = room - webArea;
+            int count = m_Sounds.Count;
+            if (count == 0)
+                return;
+            int fit = Math.Max(1, (soundRoom + Gap) / (ChipMin + Gap));
+            int reserve = 0;
+            if (count > fit)
+            {
+                reserve = 46;
+                fit = Math.Max(1, (soundRoom - reserve + Gap) / (ChipMin + Gap));
+                count = Math.Min(count, fit);
+                m_Overflow = m_Sounds.Count - count;
+            }
+            int w = Math.Max(100, Math.Min(ChipMax, (soundRoom - reserve - (count - 1) * Gap) / count));
             int x = 1;
             for (int i = 0; i < count; i++)
             {
-                all[i].Rect = new Rectangle(x, 2, w, Height - 4);
-                m_Shown.Add(all[i]);
+                m_Sounds[i].Rect = new Rectangle(x, 2, w, Height - 4);
+                m_Shown.Add(m_Sounds[i]);
                 x += w + Gap;
             }
             if (m_Overflow > 0)
                 m_OverflowRect = new Rectangle(x, 2, 40, Height - 4);
+        }
+
+        private static Color MixColors(Color a, Color b, double t)
+        {
+            return Color.FromArgb(255,
+                (int)Math.Round(a.R + (b.R - a.R) * t),
+                (int)Math.Round(a.G + (b.G - a.G) * t),
+                (int)Math.Round(a.B + (b.B - a.B) * t));
         }
 
         private static Rectangle StopRect(Rectangle r)
@@ -299,7 +325,7 @@ namespace Ares.Player
                 Rectangle r = c.Rect;
                 using (GraphicsPath path = Round(r, 8))
                 {
-                    using (SolidBrush b = new SolidBrush(chipBack))
+                    using (SolidBrush b = new SolidBrush(c.Web ? MixColors(chipBack, accent, 0.22) : chipBack))
                         g.FillPath(b, path);
                     if (!c.Web && c.Length > 0)
                     {

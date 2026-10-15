@@ -17,6 +17,9 @@ namespace Ares.Player
     public partial class Player
     {
         private const string SupportersUrl = "https://cutt.ly/clubecritico";
+        private const string SourceUrl = "https://github.com/igorteuri/Apolo";
+        // the tutorials: for now the search for the channel; later the playlist of videos about Apolo
+        private const string TutorialsUrl = "https://www.youtube.com/results?search_query=Dados+Cr%C3%ADticos+Apolo";
         private const string VaultUrl = "https://igorteuri.itch.io/contedo-exclusivo-dados-criticos";
 
         private void InitInfoMenus()
@@ -27,6 +30,112 @@ namespace Ares.Player
             int pos = Math.Min(4, extrasToolStripMenuItem.DropDownItems.Count);
             extrasToolStripMenuItem.DropDownItems.Insert(pos, foundry);
             checkForUpdateToolStripMenuItem.Text = T("Como atualizar o Apolo...", "How to update Apolo...");
+
+            // Projeto > Novo projeto (first entry of the menu)
+            ToolStripMenuItem newProject = new ToolStripMenuItem(T("Novo projeto...", "New project..."));
+            newProject.Name = "newProjectMenuItem";
+            newProject.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N;
+            newProject.Click += (s, e) => NewProject();
+            projectToolStripMenuItem.DropDownItems.Insert(0, newProject);
+
+            // the menu "Ajuda" becomes "Sobre"
+            helpToolStripMenuItem.Text = T("Sobre", "About");
+            helpOnlineToolStripMenuItem.Text = T("Tutoriais (canal Dados Críticos)", "Tutorials (Dados Críticos channel)");
+            aboutToolStripMenuItem.Text = T("Sobre o Apolo...", "About Apolo...");
+            ToolStripMenuItem source = new ToolStripMenuItem(T("Código-fonte no GitHub", "Source code on GitHub"));
+            source.Click += (s, e) => OpenAddress(SourceUrl);
+            helpToolStripMenuItem.DropDownItems.Add(source);
+        }
+
+        // creates an empty project (with one first folder) in a file chosen by the user and opens it
+        private void NewProject()
+        {
+            string name = Prompt(this, T("Novo projeto", "New project"), T("Nome do projeto:", "Project name:"), "");
+            if (name == null)
+                return;
+            name = name.Trim();
+            if (name.Length == 0)
+                return;
+            string path;
+            using (SaveFileDialog dlg = new SaveFileDialog())
+            {
+                dlg.Title = T("Onde guardar o novo projeto", "Where to save the new project");
+                dlg.Filter = T("Projetos do Apolo|*.apolo", "Apolo projects|*.apolo");
+                dlg.DefaultExt = "apolo";
+                dlg.AddExtension = true;
+                dlg.OverwritePrompt = true;
+                string safe = name;
+                foreach (char c in Path.GetInvalidFileNameChars())
+                    safe = safe.Replace(c, '_');
+                dlg.FileName = safe;
+                dlg.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                if (dlg.ShowDialog(this) != DialogResult.OK)
+                    return;
+                path = dlg.FileName;
+            }
+            bool oldWatch = fileSystemWatcher1.EnableRaisingEvents;
+            fileSystemWatcher1.EnableRaisingEvents = false;
+            try
+            {
+                StopAllPlaying();
+                Ares.Data.IProject created = Ares.Data.DataModule.ProjectManager.CreateProject(name);
+                created.FileName = path;
+                created.AddMode(T("Principal", "Main"));
+                Ares.Data.DataModule.ProjectManager.SaveProject(created);
+                Ares.Data.DataModule.ProjectManager.UnloadProject(created);
+                OpenProject(path, false);
+                ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
+                    T("Projeto criado. Use o modo de edição para adicionar playlists.", "Project created. Use edit mode to add playlists.")));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, T("Não foi possível criar o projeto: ", "Could not create the project: ") + ex.Message,
+                    StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                fileSystemWatcher1.EnableRaisingEvents = oldWatch;
+            }
+        }
+
+        // window "Sobre": version, credits, links
+        private void ShowAboutApolo()
+        {
+            string version = System.Windows.Forms.Application.ProductVersion;
+            string text = T(
+@"APOLO
+
+Versão " + version + @"
+
+Player de áudio para mesas de RPG, feito para tocar música e efeitos sonoros ao mesmo tempo, com controle pelo celular, Stream Deck, Discord e Foundry VTT.
+
+O Apolo é mantido pelo canal Dados Críticos. As novidades chegam primeiro aos Clubistas, os apoiadores do canal.
+
+CRÉDITOS
+O Apolo nasceu do Ares, criado por Jörg Ruedenauer, e continua sob a licença GNU GPL (versão 2 ou posterior). Obrigado a quem fez o Ares e a todas as bibliotecas livres usadas aqui.
+
+CÓDIGO-FONTE
+O código do Apolo é aberto e está no GitHub:
+" + SourceUrl,
+@"APOLO
+
+Version " + version + @"
+
+Audio player for tabletop RPG, made to play music and sound effects at the same time, with control from a phone, Stream Deck, Discord and Foundry VTT.
+
+Apolo is kept by the Dados Críticos channel. The news reach the Clubistas, the supporters of the channel, first.
+
+CREDITS
+Apolo was born from Ares, created by Jörg Ruedenauer, and stays under the GNU GPL licence (version 2 or later). Thanks to everyone who made Ares and to all the free libraries used here.
+
+SOURCE CODE
+The code of Apolo is open and lives on GitHub:
+" + SourceUrl);
+            List<KeyValuePair<string, Action>> buttons = new List<KeyValuePair<string, Action>>();
+            buttons.Add(new KeyValuePair<string, Action>(T("Código-fonte no GitHub", "Source code on GitHub"), () => OpenAddress(SourceUrl)));
+            buttons.Add(new KeyValuePair<string, Action>(T("Tutoriais", "Tutorials"), () => OpenAddress(TutorialsUrl)));
+            buttons.Add(new KeyValuePair<string, Action>(T("Fechar", "Close"), null));
+            ShowInfoWindow(T("Sobre o Apolo", "About Apolo"), text, buttons);
         }
 
         private void OpenAddress(string url)

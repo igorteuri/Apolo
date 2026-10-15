@@ -23,7 +23,7 @@ namespace Ares.Player
         private bool m_MultiSelected;
         private int m_Kind;
 
-        /// <summary>What the button plays: 0 = unknown, 1 = music playlist, 2 = sound effect (small badge in the corner).</summary>
+        /// <summary>What the button plays, as flags: 1 = music, 2 = sound effects (small badges in the corner).</summary>
         public int Kind
         {
             get { return m_Kind; }
@@ -368,19 +368,27 @@ namespace Ares.Player
 
                 if (m_Kind != 0)
                 {
-                    string glyph = m_Kind == 2 ? "\u26A1" : "\u266B";
+                    // one small badge for each kind: music (1) and / or sound effects (2)
+                    List<string> glyphs = new List<string>();
+                    if ((m_Kind & 1) != 0)
+                        glyphs.Add("\u266B");
+                    if ((m_Kind & 2) != 0)
+                        glyphs.Add("\u26A1");
                     int bd = Math.Max(16, (int)Math.Round(18 * Scale));
-                    Rectangle pill = m_ListMode
-                        ? new Rectangle(Width - bd - 8, (Height - bd) / 2, bd, bd)
-                        : new Rectangle(6, 6, bd, bd);
-                    using (GraphicsPath pp = Rounded(pill, bd / 3))
-                    {
-                        using (SolidBrush pb = new SolidBrush(Color.FromArgb(m_Picture != null && !m_ListMode ? 215 : 120, window)))
-                            g.FillPath(pb, pp);
-                    }
                     using (Font gf = new Font(Font.FontFamily, Math.Max(7f, Font.Size - 1.5f), FontStyle.Regular))
-                        TextRenderer.DrawText(g, glyph, gf, pill, accent,
-                            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+                    {
+                        for (int gi = 0; gi < glyphs.Count; gi++)
+                        {
+                            Rectangle pill = m_ListMode
+                                ? new Rectangle(Width - (bd + 4) * (glyphs.Count - gi) - 6, (Height - bd) / 2, bd, bd)
+                                : new Rectangle(6 + gi * (bd + 3), 6, bd, bd);
+                            using (GraphicsPath pp = Rounded(pill, bd / 3))
+                            using (SolidBrush pb = new SolidBrush(Color.FromArgb(m_Picture != null && !m_ListMode ? 215 : 120, window)))
+                                g.FillPath(pb, pp);
+                            TextRenderer.DrawText(g, glyphs[gi], gf, pill, accent,
+                                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+                        }
+                    }
                 }
 
                 if (m_MultiSelected)

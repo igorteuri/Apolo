@@ -49,6 +49,22 @@ namespace Ares.Player
         private int m_HoverX;
 
         private const int Padding_ = 10;
+        private string m_Title = "";
+
+        /// <summary>Name of the music which is playing, shown between the two times.</summary>
+        public string Title
+        {
+            get { return m_Title; }
+            set
+            {
+                string v = value ?? "";
+                if (v != m_Title)
+                {
+                    m_Title = v;
+                    Invalidate();
+                }
+            }
+        }
 
         /// <summary>
         /// Compact mode (for the small bars of sound effects): no hover bubble, less height.
@@ -90,6 +106,7 @@ namespace Ares.Player
         /// </summary>
         public void Clear()
         {
+            Title = "";
             if (!m_Seekable && m_Position == 0 && m_Length == 0 && !m_Dragging)
                 return;
             m_Seekable = false;
@@ -281,6 +298,19 @@ namespace Ares.Player
                 TextFormatFlags.Left | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
             TextRenderer.DrawText(g, right, Font, rightRect, dim,
                 TextFormatFlags.Right | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+            if (!Compact && m_Title.Length > 0 && m_Seekable)
+            {
+                int timeW = Math.Max(
+                    TextRenderer.MeasureText(g, left, Font, new Size(int.MaxValue, int.MaxValue), TextFormatFlags.NoPadding).Width,
+                    TextRenderer.MeasureText(g, right, Font, new Size(int.MaxValue, int.MaxValue), TextFormatFlags.NoPadding).Width);
+                int tx = Padding_ + timeW + 10;
+                int tw = Width - 2 * (Padding_ + timeW + 10);
+                if (tw > 40)
+                {
+                    TextRenderer.DrawText(g, m_Title, Font, new Rectangle(tx, textY, tw, Font.Height + 2), text,
+                        TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
+                }
+            }
         }
 
         private static Color Blend(Color a, Color b, double amountOfB)

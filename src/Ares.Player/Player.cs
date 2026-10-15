@@ -238,6 +238,7 @@ namespace Ares.Player
             };
             m_SoundPanel.RepeatRequested += (sender, e) =>
             {
+                m_RepeatTouched.Add(e.Handle);
                 PlayingControl control = m_PlayingControl;
                 if (control != null)
                     control.SetSoundRepeat(e.Handle, e.Repeat);
@@ -250,7 +251,7 @@ namespace Ares.Player
             m_NowPlaying.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             m_NowPlaying.StopRequested += npHandle => { PlayingControl npc = m_PlayingControl; if (npc != null) npc.StopSound(npHandle); };
             m_NowPlaying.PauseRequested += npHandle => { PlayingControl npc = m_PlayingControl; if (npc != null) npc.ToggleSoundPause(npHandle); };
-            m_NowPlaying.RepeatRequested += (npHandle, npRepeat) => { PlayingControl npc = m_PlayingControl; if (npc != null) npc.SetSoundRepeat(npHandle, npRepeat); };
+            m_NowPlaying.RepeatRequested += (npHandle, npRepeat) => { m_RepeatTouched.Add(npHandle); PlayingControl npc = m_PlayingControl; if (npc != null) npc.SetSoundRepeat(npHandle, npRepeat); };
             m_NowPlaying.SeekRequested += (npHandle, npSec) => { PlayingControl npc = m_PlayingControl; if (npc != null) npc.SeekSound(npHandle, npSec); };
             Controls.Add(m_NowPlaying);
 
@@ -513,6 +514,7 @@ namespace Ares.Player
                     m_SoundPanel.UpdateSounds(sounds);
                 else
                     m_SoundPanel.ClearSounds();
+                ShowConfiguredRepeat(sounds);
                 if (m_NowPlaying != null && m_NowPlaying.SetSounds(sounds))
                     LayoutMainColumns();
 
@@ -1172,8 +1174,7 @@ namespace Ares.Player
                         if (kinds[i] == 2 && specs[i].IndexOf("emoji-", StringComparison.OrdinalIgnoreCase) >= 0)
                             checkBox.PictureContain = true;
                         checkBox.TintColor = Ares.CommonGUI.ButtonImageStore.GetColor(m_CurrentProjectPath, shownModeTitle, visible[i].Title);
-                        int trackKind = TrackKindOf(element.StartElement);
-                        checkBox.Kind = trackKind == 2 ? 2 : (trackKind >= 0 ? 1 : 0);
+                        checkBox.Kind = KindsOf(element.StartElement, 0);
                         checkBox.SetBounds(0, 0, cardSize.Width, cardSize.Height);
                         checkBox.Checked = m_PlayingControl.CurrentModeElements.Contains(element);
                         int id = element.Id;
@@ -1310,6 +1311,8 @@ namespace Ares.Player
             {
                 musicLabel.Text = MusicInfo.GetInfo(musicElementId).LongTitle;
                 lastMusicElementId = musicElementId;
+                CountMusicPlay(musicElementId);
+                m_MusicProgressBar.Title = musicElementId == -1 ? "" : musicLabel.Text;
                 SyncTrackSelection();
                 var currentMusicList = Ares.Data.DataModule.ElementRepository.GetElement(m_PlayingControl.CurrentMusicList) as IMusicList;
                 var elements = currentMusicList != null ? currentMusicList.GetFileElements() : null;
@@ -1462,8 +1465,7 @@ namespace Ares.Player
 
         private void aboutButton_Click(object sender, EventArgs e)
         {
-            CommonGUI.AboutDialog dialog = new CommonGUI.AboutDialog();
-            dialog.ShowDialog(this);
+            ShowAboutApolo();
         }
 
         private void Player_FormClosing(object sender, FormClosingEventArgs e)
@@ -2016,7 +2018,7 @@ namespace Ares.Player
 
         private void helpOnlineToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Ares.Online.OnlineOperations.ShowHelppage(StringResources.HelpPage, this);
+            OpenAddress(TutorialsUrl);
         }
 
         private void checkForUpdateToolStripMenuItem_Click(object sender, EventArgs e)

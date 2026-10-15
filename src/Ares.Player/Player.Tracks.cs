@@ -20,6 +20,7 @@ namespace Ares.Player
             public string Album;
             public double Seconds;
             public bool Loaded;
+            public int Plays;
         }
 
         private const int TrackGap = 6;
@@ -227,6 +228,12 @@ namespace Ares.Player
                 m_TrackSaveOrderItem.Click += (s, e) => SaveTrackOrder();
                 trackMenu.Items.Add(editItem);
                 trackMenu.Items.Add(m_TrackSaveOrderItem);
+                m_TrackMostPlayedItem = new ToolStripMenuItem(T("Ordem: mais tocadas primeiro (gravar)", "Order: most played first (save)"));
+                m_TrackMostPlayedItem.Click += (s, e) => OrderByPlays(false);
+                m_TrackLeastPlayedItem = new ToolStripMenuItem(T("Ordem: menos tocadas primeiro (gravar)", "Order: least played first (save)"));
+                m_TrackLeastPlayedItem.Click += (s, e) => OrderByPlays(true);
+                trackMenu.Items.Add(m_TrackMostPlayedItem);
+                trackMenu.Items.Add(m_TrackLeastPlayedItem);
                 m_TrackList.ContextMenuStrip = trackMenu;
                 m_TrackList.MouseDown += (s, e) =>
                 {
@@ -241,6 +248,7 @@ namespace Ares.Player
                 {
                     if (m_TrackList.SelectedIndex < 0 || m_TrackList.SelectedIndex >= m_TrackShown.Count)
                         e.Cancel = true;
+                    m_TrackMostPlayedItem.Visible = m_TrackLeastPlayedItem.Visible = TrackContainer() is ISequentialContainer && m_TrackSearch.Text.Trim().Length == 0;
                     m_TrackSaveOrderItem.Visible = m_TrackSortCol >= 0 && TrackContainer() is ISequentialContainer && m_TrackSearch.Text.Trim().Length == 0;
                 };
 
@@ -628,6 +636,7 @@ namespace Ares.Player
                 row.File = f;
                 row.Index = -1;
                 row.Number = m_TrackRows.Count + 1;
+                row.Plays = PlayCounts.Get(FullPathOf(f));
                 ApplyCachedTags(row);
                 for (int i = 0; i < top.Count; i++)
                 {

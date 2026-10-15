@@ -16,6 +16,14 @@ namespace Ares.Player
         /// <summary>Called on a capture thread with PCM data (buffer, length in bytes).</summary>
         public event Action<byte[], int> DataAvailable;
 
+        private static int s_Active;
+
+        /// <summary>true while the sound of Apolo is being sent somewhere (Discord, virtual microphone, VDO).</summary>
+        public static bool AnyActive
+        {
+            get { return System.Threading.Thread.VolatileRead(ref s_Active) > 0; }
+        }
+
         private readonly int m_ProcessId;
         private readonly object m_Lock = new object();
         private ProcessLoopbackCapture m_Loopback;
@@ -36,6 +44,7 @@ namespace Ares.Player
                 if (m_Started || m_Disposed)
                     return null;
                 m_Started = true;
+                System.Threading.Interlocked.Increment(ref s_Active);
             }
             Ares.Playing.AudioInit.OutputChanged += OnOutputChanged;
             Apply();
@@ -54,6 +63,8 @@ namespace Ares.Player
             bool listening;
             lock (m_Lock)
             {
+                if (m_Started)
+                    System.Threading.Interlocked.Decrement(ref s_Active);
                 m_Started = false;
                 loopback = m_Loopback;
                 m_Loopback = null;

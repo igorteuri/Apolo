@@ -23,7 +23,8 @@ namespace Ares.Player
         private const int ColArtist = 2;
         private const int ColAlbum = 3;
         private const int ColDuration = 4;
-        private const int ColFile = 5;
+        private const int ColPlays = 5;
+        private const int ColFile = 6;
 
         private static readonly Dictionary<string, Ares.Tags.AudioTagInfo> s_TagCache =
             new Dictionary<string, Ares.Tags.AudioTagInfo>(StringComparer.OrdinalIgnoreCase);
@@ -32,6 +33,8 @@ namespace Ares.Player
         private bool m_TrackSortAsc = true;
         private int m_TrackMetaGeneration;
         private ToolStripMenuItem m_TrackSaveOrderItem;
+        private ToolStripMenuItem m_TrackMostPlayedItem;
+        private ToolStripMenuItem m_TrackLeastPlayedItem;
         private ListViewItem m_TrackDropItem;
 
         private static string[] TrackColumnNames()
@@ -43,6 +46,7 @@ namespace Ares.Player
                 T("Artista", "Artist"),
                 T("Álbum", "Album"),
                 T("Duração", "Duration"),
+                T("Tocadas", "Plays"),
                 T("Arquivo", "File")
             };
         }
@@ -50,13 +54,13 @@ namespace Ares.Player
         private void InitTrackColumns()
         {
             string[] names = TrackColumnNames();
-            int[] widths = { 44, 260, 150, 150, 70, 240 };
+            int[] widths = { 44, 260, 150, 150, 70, 70, 240 };
             for (int i = 0; i < names.Length; i++)
             {
                 ColumnHeader h = new ColumnHeader();
                 h.Text = names[i];
                 h.Width = widths[i];
-                if (i == ColNumber || i == ColDuration)
+                if (i == ColNumber || i == ColDuration || i == ColPlays)
                     h.TextAlign = HorizontalAlignment.Right;
                 m_TrackList.Columns.Add(h);
             }
@@ -132,6 +136,8 @@ namespace Ares.Player
                                : rows.OrderByDescending(r => r.Album ?? "", StringComparer.CurrentCultureIgnoreCase);
                 case ColDuration:
                     return asc ? rows.OrderBy(r => r.Seconds) : rows.OrderByDescending(r => r.Seconds);
+                case ColPlays:
+                    return asc ? rows.OrderBy(r => r.Plays) : rows.OrderByDescending(r => r.Plays);
                 default:
                     return asc ? rows.OrderBy(r => r.File.FilePath ?? "", StringComparer.CurrentCultureIgnoreCase)
                                : rows.OrderByDescending(r => r.File.FilePath ?? "", StringComparer.CurrentCultureIgnoreCase);
@@ -145,6 +151,7 @@ namespace Ares.Player
             item.SubItems.Add(row.Artist ?? "");
             item.SubItems.Add(row.Album ?? "");
             item.SubItems.Add(FormatDuration(row.Seconds));
+            item.SubItems.Add(row.Plays.ToString());
             item.SubItems.Add(row.File.FilePath ?? "");
             item.Tag = row;
             return item;
@@ -240,6 +247,42 @@ namespace Ares.Player
                 item.SubItems[ColDuration].Text = FormatDuration(row.Seconds);
             }
             m_TrackList.EndUpdate();
+        }
+
+        // a music title was counted: updates the cell (and sorts again when the list is sorted by plays)
+        private void RefreshTrackPlays(int fileId, int plays)
+        {
+            if (m_TrackList == null)
+                return;
+            foreach (TrackRow row in m_TrackRows)
+            {
+                if (row.File.Id != fileId)
+                    continue;
+                row.Plays = plays;
+                if (m_TrackSortCol == ColPlays)
+                {
+                    FillTrackList(false);
+                    return;
+                }
+                foreach (ListViewItem item in m_TrackList.Items)
+                {
+                    if (ReferenceEquals(item.Tag, row))
+                        item.SubItems[ColPlays].Text = plays.ToString();
+                }
+                return;
+            }
+        }
+
+        // sorts a sequential playlist by the number of plays and saves that order
+        private void OrderByPlays(bool leastFirst)
+        {
+            if (!(TrackContainer() is ISequentialContainer) || m_TrackSearch.Text.Trim().Length > 0)
+                return;
+            m_TrackSortCol = ColPlays;
+            m_TrackSortAsc = leastFirst;
+            UpdateTrackHeaders();
+            FillTrackList(false);
+            SaveTrackOrder();
         }
 
         // ---- reorder by dragging ----

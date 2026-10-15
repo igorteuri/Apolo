@@ -63,6 +63,7 @@ namespace Ares.Player
             m_WebWindow.SelectionChanged += RefreshTabBar;
             WebWindow.StateChanged += RefreshTabBar;
             RefreshTabBar();
+            InitCustomChrome();
             Shown += (s, e) => MakeRoomForTabBar();
 
             // the pages are reached through the tab bar; the old "Tocando" menu is replaced by the buttons below the lists

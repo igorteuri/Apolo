@@ -42,9 +42,12 @@ namespace Ares.Player
                 m_HeaderSpacer.Margin = new Padding(0);
                 m_HeaderSpacer.Enabled = false;
                 menuStrip1.Items.Add(m_HeaderSpacer);
-                m_DiscordButton = MakeQuickButton("discordButton", T("Discord: conectar o Apolo a um canal de voz", "Discord: connect Apolo to a voice channel"), () => ShowDiscordDialog());
-                m_VdoButton = MakeQuickButton("vdoButton", T("VDO.Ninja: enviar o áudio do Apolo pela internet (Foundry, jogadores)", "VDO.Ninja: send the Apolo audio over the internet (Foundry, players)"), () => ShowWebWindow(true));
-                m_NetButton = MakeQuickButton("netButton", T("Controle remoto e compartilhamento em rede (celular / internet)", "Remote control and network sharing (phone / internet)"), () => ShowRemoteDialog());
+                m_DiscordButton = MakeQuickButton("discordButton", "Discord", T("Discord: conectar o Apolo a um canal de voz", "Discord: connect Apolo to a voice channel"), () => ShowDiscordDialog());
+                m_VdoButton = MakeQuickButton("vdoButton", T("Enviar áudio", "Send audio"), T("VDO.Ninja: enviar o áudio do Apolo pela internet (Foundry, jogadores)", "VDO.Ninja: send the Apolo audio over the internet (Foundry, players)"), () => ShowWebWindow(true));
+                m_NetButton = MakeQuickButton("netButton", T("Compartilhar", "Share"), T("Controle remoto e compartilhamento em rede (celular / internet)", "Remote control and network sharing (phone / internet)"), () => ShowRemoteDialog());
+                // thin separators make clear that these are three different buttons
+                menuStrip1.Items.Insert(menuStrip1.Items.IndexOf(m_VdoButton), new ToolStripSeparator());
+                menuStrip1.Items.Insert(menuStrip1.Items.IndexOf(m_NetButton), new ToolStripSeparator());
                 Ares.CommonGUI.IconLibrary.Bind(menuStrip1, new Dictionary<ToolStripItem, string>
                 {
                     { m_NetButton, "globe" },
@@ -204,15 +207,18 @@ namespace Ares.Player
             }
         }
 
-        private ToolStripButton MakeQuickButton(string name, string tip, Action click)
+        private ToolStripButton MakeQuickButton(string name, string label, string tip, Action click)
         {
             ToolStripButton b = new ToolStripButton();
             b.Name = name;
-            b.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            b.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+            b.Text = label;
+            b.TextImageRelation = TextImageRelation.ImageBeforeText;
             b.ImageScaling = ToolStripItemImageScaling.None;
             b.ToolTipText = tip;
             b.Alignment = ToolStripItemAlignment.Left;
-            b.Margin = new Padding(14, 0, 14, 0);
+            b.Margin = new Padding(4, 0, 4, 0);
+            b.Padding = new Padding(6, 0, 6, 0);
             b.Click += (s, e) => click();
             menuStrip1.Items.Add(b);
             return b;

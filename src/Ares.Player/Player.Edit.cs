@@ -153,7 +153,6 @@ namespace Ares.Player
             m_ModeMenu = new ContextMenuStrip();
             m_ModeMenu.Items.Add(T("Nova pasta", "New folder"), null, (s, e) => NewEmptyMode(false));
             m_ModeMenu.Items.Add(T("Nova subpasta aqui", "New subfolder here"), null, (s, e) => NewEmptyMode(true));
-            m_ModeMenu.Items.Add(T("Novo painel de efeitos", "New effects board"), null, (s, e) => NewEffectsBoard());
             m_ModeMenu.Items.Add(T("Importar pasta do computador aqui dentro", "Import a folder of the computer in here"), null, (s, e) => ImportFolderAsFolders(true));
             m_ModeMenu.Items.Add(T("Renomear", "Rename"), null, (s, e) => RenameCurrentMode());
             ToolStripItem modeDelete = m_ModeMenu.Items.Add(T("Excluir", "Delete"), null, (s, e) => DeleteCurrentMode());
@@ -767,19 +766,6 @@ namespace Ares.Player
                 if (dlg.ShowDialog(this) == DialogResult.OK)
                     ImportDroppedPaths(dlg.FileNames);
             }
-        }
-
-        // a folder meant for sound effects: the next files which are dropped become one button each
-        private void NewEffectsBoard()
-        {
-            int before = m_Project != null ? m_Project.GetModes().Count : 0;
-            NewEmptyMode(false);
-            if (m_Project == null || m_Project.GetModes().Count <= before)
-                return;
-            Ares.CommonGUI.DropOptionsDialog.PreferEffects();
-            ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
-                T("Painel criado. Arraste arquivos de áudio para cá: cada um vira um botão de efeito.",
-                  "Board created. Drag audio files here: each one becomes an effect button.")));
         }
 
         private void NewEmptyMode(bool asChild)

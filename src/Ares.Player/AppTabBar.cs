@@ -25,12 +25,14 @@ namespace Ares.Player
     public class AppTabBar : Control
     {
         public const int BarHeight = 36;
-        private const int TabMinWidth = 105;
-        private const int TabMaxWidth = 315;
-        private const int HomeWidth = 150;
+        private const int TabMinWidth = 158;
+        private const int TabMaxWidth = 472;
+        private const int HomeWidth = 200;
         private const int AddWidth = 34;
         private const int CloseSize = 16;
-        private const int LogoWidth = 40;
+        private const int LogoWidth = 8;
+        private const int CaptionButtonWidth = 46;
+        private const int ResizeBand = 5;
 
         private readonly List<AppTabItem> m_Items = new List<AppTabItem>();
         private readonly List<Rectangle> m_Rects = new List<Rectangle>();
@@ -40,6 +42,28 @@ namespace Ares.Player
         private bool m_HoverClose;
         private bool m_HoverAdd;
         private Icon m_HomeIcon;
+        private Rectangle[] m_CaptionRects = new Rectangle[3]; // minimize, maximize / restore, close
+        private int m_CaptionHover = -1;
+        private bool m_Maximized;
+        private bool m_CaptionButtons;
+
+        /// <summary>Minimize / maximize / close buttons at the right end of the bar (the window has no title bar of its own).</summary>
+        public bool CaptionButtons
+        {
+            get { return m_CaptionButtons; }
+            set { m_CaptionButtons = value; Invalidate(); }
+        }
+
+        /// <summary>The window is maximized (the middle button shows "restore").</summary>
+        public bool Maximized
+        {
+            get { return m_Maximized; }
+            set { if (m_Maximized != value) { m_Maximized = value; Invalidate(); } }
+        }
+
+        public event Action MinimizeRequested;
+        public event Action MaximizeRequested;
+        public event Action CloseRequested;
 
         public event Action<int> TabSelected;
         public event Action<int> TabClosed;
@@ -95,7 +119,8 @@ namespace Ares.Player
             int top = 6;
             int h = Height - top;
             int count = m_Items.Count;
-            int available = Width - LogoWidth - AddWidth - 10;
+            int captionW = m_CaptionButtons ? 3 * CaptionButtonWidth : 0;
+            int available = Width - LogoWidth - AddWidth - 10 - captionW;
             int homeW = (count > 0 && m_Items[0].Home) ? HomeWidth : 0;
             List<int> widths = new List<int>();
             int total = 0;
@@ -133,6 +158,49 @@ namespace Ares.Player
                 x += widths[i] + 2;
             }
             m_AddRect = new Rectangle(x + 2, top + 3, AddWidth - 4, h - 6);
+            for (int i = 0; i < 3; i++)
+                m_CaptionRects[i] = m_CaptionButtons
+                    ? new Rectangle(Width - (3 - i) * CaptionButtonWidth, 0, CaptionButtonWidth, Height - 1)
+                    : Rectangle.Empty;
+        }
+
+        /// <summary>
+        /// true where dragging the bar moves the window: empty parts of the bar (not tabs or buttons), and the thin band
+        /// at the top, where the window is resized.
+        /// </summary>
+        public bool IsCaptionAt(Point p)
+        {
+            if (p.Y < 0 || p.Y >= Height)
+                return false;
+            Measure();
+            if (p.Y < ResizeBand)
+                return true;
+            bool close;
+            if (HitTab(p, out close) >= 0 || m_AddRect.Contains(p))
+                return false;
+            for (int i = 0; i < 3; i++)
+            {
+                if (m_CaptionRects[i].Contains(p))
+                    return false;
+            }
+            return true;
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_NCHITTEST = 0x0084;
+            if (m.Msg == WM_NCHITTEST && m_CaptionButtons)
+            {
+                long lp = m.LParam.ToInt64();
+                Point screen = new Point((short)(lp & 0xFFFF), (short)((lp >> 16) & 0xFFFF));
+                if (IsCaptionAt(PointToClient(screen)))
+                {
+                    // let the window decide: HTCAPTION (move) or the resize zone at the top
+                    m.Result = new IntPtr(-1); // HTTRANSPARENT
+                    return;
+                }
+            }
+            base.WndProc(ref m);
         }
 
         protected override void OnResize(EventArgs e)
@@ -168,6 +236,17 @@ namespace Ares.Player
             bool close;
             int hit = HitTab(e.Location, out close);
             bool add = m_AddRect.Contains(e.Location);
+            int cap = -1;
+            for (int i = 0; i < 3; i++)
+            {
+                if (m_CaptionRects[i].Contains(e.Location))
+                    cap = i;
+            }
+            if (cap != m_CaptionHover)
+            {
+                m_CaptionHover = cap;
+                Invalidate();
+            }
             if (hit != m_Hover || close != m_HoverClose || add != m_HoverAdd)
             {
                 m_Hover = hit;
@@ -180,8 +259,9 @@ namespace Ares.Player
         protected override void OnMouseLeave(EventArgs e)
         {
             base.OnMouseLeave(e);
-            if (m_Hover != -1 || m_HoverAdd)
+            if (m_Hover != -1 || m_HoverAdd || m_CaptionHover != -1)
             {
+                m_CaptionHover = -1;
                 m_Hover = -1;
                 m_HoverClose = false;
                 m_HoverAdd = false;
@@ -196,6 +276,15 @@ namespace Ares.Player
             int hit = HitTab(e.Location, out close);
             if (e.Button == MouseButtons.Left)
             {
+                for (int ci = 0; ci < 3; ci++)
+                {
+                    if (!m_CaptionRects[ci].Contains(e.Location))
+                        continue;
+                    Action action = ci == 0 ? MinimizeRequested : (ci == 1 ? MaximizeRequested : CloseRequested);
+                    if (action != null)
+                        action();
+                    return;
+                }
                 if (m_AddRect.Contains(e.Location))
                 {
                     if (AddClicked != null)
@@ -241,11 +330,6 @@ namespace Ares.Player
             g.Clear(barColor);
             g.SmoothingMode = SmoothingMode.AntiAlias;
             Measure();
-            // program logo at the left, like the title of a browser
-            if (m_HomeIcon == null)
-                m_HomeIcon = Ares.CommonGUI.ApoloBrand.GetIcon(16, Ares.CommonGUI.ApoloState.Playing, 0);
-            g.DrawIcon(m_HomeIcon, new Rectangle(12, (Height - 16) / 2 + 2, 16, 16));
-
             for (int i = 0; i < m_Items.Count; i++)
             {
                 AppTabItem item = m_Items[i];
@@ -264,7 +348,10 @@ namespace Ares.Player
                 int textLeft = r.X + 12;
                 if (item.Home)
                 {
-                    textLeft = r.X + 14;
+                    if (m_HomeIcon == null)
+                        m_HomeIcon = Ares.CommonGUI.ApoloBrand.GetIcon(16, Ares.CommonGUI.ApoloState.Playing, 0);
+                    g.DrawIcon(m_HomeIcon, new Rectangle(r.X + 10, r.Y + (r.Height - 16) / 2 + 1, 16, 16));
+                    textLeft = r.X + 32;
                 }
                 else if (item.Sound)
                 {
@@ -295,13 +382,11 @@ namespace Ares.Player
             }
 
             // "+" button
-            if (m_HoverAdd)
-            {
-                using (GraphicsPath path = RoundRect(m_AddRect, 7))
-                using (SolidBrush b = new SolidBrush(hover))
-                    g.FillPath(b, path);
-            }
-            using (Pen pen = new Pen(m_HoverAdd ? text : dim, 1.8f))
+            Color plusColor = (accent.R * 299 + accent.G * 587 + accent.B * 114) / 1000 > 150 ? Color.FromArgb(30, 30, 30) : Color.White;
+            using (GraphicsPath path = RoundRect(m_AddRect, 7))
+            using (SolidBrush b = new SolidBrush(m_HoverAdd ? ControlPaint.Light(accent, 0.25f) : accent))
+                g.FillPath(b, path);
+            using (Pen pen = new Pen(plusColor, 2.0f))
             {
                 pen.StartCap = LineCap.Round;
                 pen.EndCap = LineCap.Round;
@@ -309,6 +394,51 @@ namespace Ares.Player
                 float cy = m_AddRect.Y + m_AddRect.Height / 2f;
                 g.DrawLine(pen, cx - 5, cy, cx + 5, cy);
                 g.DrawLine(pen, cx, cy - 5, cx, cy + 5);
+            }
+            // minimize / maximize / close
+            if (m_CaptionButtons)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    Rectangle cr = m_CaptionRects[i];
+                    bool over = i == m_CaptionHover;
+                    Color glyph = text;
+                    if (over)
+                    {
+                        using (SolidBrush b = new SolidBrush(i == 2 ? Color.FromArgb(232, 17, 35) : hover))
+                            g.FillRectangle(b, cr);
+                        if (i == 2)
+                            glyph = Color.White;
+                    }
+                    float cx = cr.X + cr.Width / 2f;
+                    float cy = cr.Y + cr.Height / 2f;
+                    SmoothingMode old = g.SmoothingMode;
+                    g.SmoothingMode = SmoothingMode.None;
+                    using (Pen gp = new Pen(glyph, 1f))
+                    {
+                        if (i == 0)
+                            g.DrawLine(gp, cx - 5, cy + 0.5f, cx + 5, cy + 0.5f);
+                        else if (i == 1 && !m_Maximized)
+                            g.DrawRectangle(gp, cx - 5, cy - 5, 10, 10);
+                        else if (i == 1)
+                        {
+                            g.DrawRectangle(gp, cx - 5, cy - 2, 7, 7);
+                            g.DrawLine(gp, cx - 2, cy - 5, cx + 5, cy - 5);
+                            g.DrawLine(gp, cx + 5, cy - 5, cx + 5, cy + 2);
+                            g.DrawLine(gp, cx - 2, cy - 5, cx - 2, cy - 2);
+                            g.DrawLine(gp, cx + 2, cy + 2, cx + 5, cy + 2);
+                        }
+                    }
+                    g.SmoothingMode = old;
+                    if (i == 2)
+                    {
+                        using (Pen gp = new Pen(glyph, 1.2f))
+                        {
+                            g.DrawLine(gp, cx - 5, cy - 5, cx + 5, cy + 5);
+                            g.DrawLine(gp, cx + 5, cy - 5, cx - 5, cy + 5);
+                        }
+                    }
+                }
             }
             // thin line under the bar
             using (Pen line = new Pen(themed ? p.Border : SystemColors.ControlDarkDark))

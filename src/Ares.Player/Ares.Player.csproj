@@ -154,6 +154,8 @@
     <Compile Include="Player.Remote.cs" />
     <Compile Include="AppTabBar.cs" />
     <Compile Include="NowPlayingStrip.cs" />
+    <Compile Include="Player.Chrome.cs" />
+    <Compile Include="Player.Playing.cs" />
     <Compile Include="TrackListView.cs" />
     <Compile Include="Player.TrackColumns.cs" />
     <Compile Include="Player.Shortcuts.cs" />
