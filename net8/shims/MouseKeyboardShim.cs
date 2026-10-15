@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace MouseKeyboardActivityMonitor.WinApi
 {
-    internal delegate IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam);
+    public delegate IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam);
 
     public abstract class Hooker
     {
