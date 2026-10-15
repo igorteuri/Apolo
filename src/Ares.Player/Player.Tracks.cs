@@ -53,6 +53,8 @@ namespace Ares.Player
         private int m_ElementsTopOriginal;
         private EdgeHandle m_LeftStrip;
         private Panel m_ModesSplit;
+        private Panel m_StateSplit;
+        private int m_StateWidth;
         private int m_ModesWidth;
         private List<TrackRow> m_TrackRows = new List<TrackRow>();
         private List<TrackRow> m_TrackShown = new List<TrackRow>();
@@ -188,6 +190,37 @@ namespace Ares.Player
                 };
                 new ToolTip().SetToolTip(m_ModesSplit, T("Arraste para alargar ou estreitar a lista de pastas", "Drag to widen or narrow the folder list"));
                 host.Controls.Add(m_ModesSplit);
+
+                // the (hidden by default) state panel: its right edge can be dragged to make it narrower or wider
+                m_StateSplit = new Panel();
+                m_StateSplit.Name = "stateSplit";
+                m_StateSplit.Cursor = Cursors.VSplit;
+                m_StateSplit.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                m_StateSplit.Visible = false;
+                int stateStartX = 0, stateStartWidth = 0;
+                bool stateDragging = false;
+                m_StateSplit.MouseDown += (s2, e2) =>
+                {
+                    stateDragging = true;
+                    stateStartX = Cursor.Position.X;
+                    stateStartWidth = m_StateWidth;
+                };
+                m_StateSplit.MouseMove += (s2, e2) =>
+                {
+                    if (!stateDragging)
+                        return;
+                    m_StateWidth = stateStartWidth + Cursor.Position.X - stateStartX;
+                    LayoutMainColumns();
+                };
+                m_StateSplit.MouseUp += (s2, e2) =>
+                {
+                    if (!stateDragging)
+                        return;
+                    stateDragging = false;
+                    try { Ares.CommonGUI.Preferences.Set("StateWidth", m_StateWidth.ToString()); } catch (Exception) { }
+                };
+                new ToolTip().SetToolTip(m_StateSplit, T("Arraste para alargar ou estreitar o painel", "Drag to widen or narrow the panel"));
+                host.Controls.Add(m_StateSplit);
                 SizeChanged += (s, e) => LayoutMainColumns();
 
                 m_TrackCollapse.Visible = false;
@@ -466,12 +499,18 @@ namespace Ares.Player
                 groupBox3.Visible = leftOpen;
                 m_LeftStrip.Visible = true;
                 m_LeftStrip.PointsLeft = leftOpen;
-                int modesLeft = leftOpen ? m_ModesLeftOriginal : LeftStripThickness;
+                if (m_StateWidth <= 0)
+                {
+                    int savedState;
+                    m_StateWidth = int.TryParse(Ares.CommonGUI.Preferences.Get("StateWidth", "0"), out savedState) && savedState >= 160 ? savedState : m_ModesLeftOriginal - TrackGap - margin;
+                }
+                m_StateWidth = Math.Max(160, Math.Min(m_StateWidth, Math.Max(160, clientWidth / 2 - 100)));
+                int modesLeft = leftOpen ? margin + m_StateWidth + TrackGap : LeftStripThickness;
+                m_StateSplit.Visible = leftOpen;
                 if (leftOpen)
                 {
-                    int lw = m_ModesLeftOriginal - TrackGap - margin;
-                    if (lw >= 200)
-                        groupBox3.SetBounds(margin, bodyTop, lw, bodyHeight);
+                    groupBox3.SetBounds(margin, bodyTop, m_StateWidth, bodyHeight);
+                    m_StateSplit.SetBounds(margin + m_StateWidth, bodyTop, TrackGap, bodyHeight);
                 }
                 if (m_ModesWidth <= 0)
                 {

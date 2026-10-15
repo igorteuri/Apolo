@@ -1,10 +1,10 @@
 ﻿; Instalador do Apolo (Inno Setup 6)
 ; O build do GitHub Actions gera este instalador sozinho (veja .github/workflows/build.yml).
 ; Para gerar na sua maquina: compile o projeto, junte tudo na pasta "dist" (como o workflow faz)
-; e abra este arquivo no Inno Setup, ou rode:  iscc /DMyAppVersion=0.68.0 Setup\Apolo.iss
+; e abra este arquivo no Inno Setup, ou rode:  iscc /DMyAppVersion=0.69.0 Setup\Apolo.iss
 
 #ifndef MyAppVersion
-  #define MyAppVersion "0.68.0"
+  #define MyAppVersion "0.69.0"
 #endif
 #define MyAppName "Apolo"
 #define MyAppPublisher "Igor Teuri (Dados Críticos)"

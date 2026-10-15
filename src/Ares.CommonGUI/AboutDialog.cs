@@ -89,7 +89,7 @@ namespace Ares.CommonGUI
             channel.Location = new Point(24, 382);
             channel.LinkClicked += (s, e) =>
             {
-                try { System.Diagnostics.Process.Start(ChannelUrl); } catch (Exception) { }
+                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ChannelUrl) { UseShellExecute = true }); } catch (Exception) { }
             };
             Controls.Add(channel);
 
@@ -99,7 +99,7 @@ namespace Ares.CommonGUI
             original.Location = new Point(24, 406);
             original.LinkClicked += (s, e) =>
             {
-                try { System.Diagnostics.Process.Start("http://aresrpg.sourceforge.net/"); } catch (Exception) { }
+                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("http://aresrpg.sourceforge.net/") { UseShellExecute = true }); } catch (Exception) { }
             };
             Controls.Add(original);
 

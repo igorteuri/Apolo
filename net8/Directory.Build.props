@@ -5,4 +5,9 @@
     <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
     <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
   </PropertyGroup>
+  <!-- Languages of the interface: Portuguese, German, English. The .NET runtime brings translations of its own messages in
+       13 languages, each in a folder beside Apolo.exe; only the languages Apolo has are kept. -->
+  <PropertyGroup>
+    <SatelliteResourceLanguages>pt;pt-BR;de;en</SatelliteResourceLanguages>
+  </PropertyGroup>
 </Project>

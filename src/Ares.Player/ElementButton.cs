@@ -233,6 +233,26 @@ namespace Ares.Player
             base.OnCheckedChanged(e);
         }
 
+        // a soft fade into the color of the button at the edges of the picture, so it does not end abruptly
+        private static void FadeEdges(Graphics g, Rectangle area, Color back)
+        {
+            int f = Math.Max(6, (int)(Math.Min(area.Width, area.Height) * 0.2));
+            Color opaque = Color.FromArgb(255, back);
+            Color clear = Color.FromArgb(0, back);
+            Rectangle left = new Rectangle(area.X, area.Y, f, area.Height);
+            Rectangle right = new Rectangle(area.Right - f, area.Y, f, area.Height);
+            Rectangle top = new Rectangle(area.X, area.Y, area.Width, f);
+            Rectangle bottom = new Rectangle(area.X, area.Bottom - f, area.Width, f);
+            using (LinearGradientBrush b = new LinearGradientBrush(Rectangle.Inflate(left, 1, 1), opaque, clear, LinearGradientMode.Horizontal))
+                g.FillRectangle(b, left);
+            using (LinearGradientBrush b = new LinearGradientBrush(Rectangle.Inflate(right, 1, 1), clear, opaque, LinearGradientMode.Horizontal))
+                g.FillRectangle(b, right);
+            using (LinearGradientBrush b = new LinearGradientBrush(Rectangle.Inflate(top, 1, 1), opaque, clear, LinearGradientMode.Vertical))
+                g.FillRectangle(b, top);
+            using (LinearGradientBrush b = new LinearGradientBrush(Rectangle.Inflate(bottom, 1, 1), clear, opaque, LinearGradientMode.Vertical))
+                g.FillRectangle(b, bottom);
+        }
+
         private void PaintRow(Graphics g, Color text, Color accent)
         {
             int pad = (int)Math.Round(8 * Scale);
@@ -337,6 +357,8 @@ namespace Ares.Player
                     int h = (int)Math.Ceiling(m_Picture.Height * scale);
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.DrawImage(m_Picture, area.X + (area.Width - w) / 2, area.Y + (area.Height - h) / 2, w, h);
+                    if (!m_PictureContain)
+                        FadeEdges(g, area, back);
                     g.Clip = oldClip;
                     oldClip.Dispose();
                     textTop = ph + 4;

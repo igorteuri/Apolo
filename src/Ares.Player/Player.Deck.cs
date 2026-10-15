@@ -250,7 +250,7 @@ namespace Ares.Player
                             StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return;
                     }
-                    try { System.Diagnostics.Process.Start(file); }
+                    try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(file) { UseShellExecute = true }); }
                     catch (Exception ex)
                     {
                         MessageBox.Show(form, T("Não consegui abrir o plugin. O programa do Stream Deck está instalado?\n\n", "Could not open the plugin. Is the Stream Deck software installed?\n\n") + ex.Message,

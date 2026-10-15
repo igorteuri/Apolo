@@ -1240,6 +1240,8 @@ namespace Ares.Player
         {
             if (HandleUndoKey(keyData))
                 return true;
+            if (keyData == System.Windows.Forms.Keys.F2 && TryRenameWithF2())
+                return true;
             if (HandleProgramShortcut(keyData))
                 return true;
 #if MONO
@@ -2304,7 +2306,7 @@ namespace Ares.Player
         {
             try
             {
-                System.Diagnostics.Process.Start(webAddressLabel.Text);
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(webAddressLabel.Text) { UseShellExecute = true });
             }
             catch (Exception ex)
             {

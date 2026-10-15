@@ -874,6 +874,28 @@ namespace Ares.Player
             return null;
         }
 
+        // F2: renames the folder (when the list of folders has the focus) or the playlist button which has the focus
+        private bool TryRenameWithF2()
+        {
+            Control active = ActiveControl;
+            while (active is ContainerControl && ((ContainerControl)active).ActiveControl != null)
+                active = ((ContainerControl)active).ActiveControl;
+            if (active == null || m_Project == null)
+                return false;
+            if (active == modesList)
+            {
+                RenameCurrentMode();
+                return true;
+            }
+            if (active is CheckBox && active.Tag is int && elementsPanel.Contains(active))
+            {
+                m_MenuElementId = (int)active.Tag;
+                RenameElementButton();
+                return true;
+            }
+            return false;
+        }
+
         private void RenameElementButton()
         {
             IMode mode; int index;

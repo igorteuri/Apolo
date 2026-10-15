@@ -65,6 +65,7 @@ namespace Ares.Player
                     m_EditButton.Margin = new Padding(14, 0, 14, 0);
                     if (string.IsNullOrEmpty(m_EditButton.ToolTipText) || m_EditButton.ToolTipText == m_EditButton.Text)
                         m_EditButton.ToolTipText = T("Modo de edição: criar e alterar playlists e elementos", "Edit mode: create and change playlists and elements");
+                    menuStrip1.Items.Add(new ToolStripSeparator());
                     menuStrip1.Items.Add(m_EditButton);
                 }
                 if (m_AddButton != null)

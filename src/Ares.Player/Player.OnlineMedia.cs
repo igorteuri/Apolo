@@ -317,7 +317,7 @@ namespace Ares.Player
                 {
                     if (h.PageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                     {
-                        try { Process.Start(h.PageUrl); } catch (Exception) { }
+                        try { Process.Start(new ProcessStartInfo(h.PageUrl) { UseShellExecute = true }); } catch (Exception) { }
                     }
                     break;
                 }
@@ -327,7 +327,7 @@ namespace Ares.Player
             // So Apolo opens it, and brings the downloaded files into the library with the credit.
             private void OpenYouTubeLibrary()
             {
-                try { Process.Start("https://studio.youtube.com/"); } catch (Exception ex) { MessageBox.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning); }
+                try { Process.Start(new ProcessStartInfo("https://studio.youtube.com/") { UseShellExecute = true }); } catch (Exception ex) { MessageBox.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning); }
                 m_Info.Text = T("No YouTube Studio, abra \"Biblioteca de áudio\" no menu da esquerda, filtre por gênero, humor ou duração e baixe as faixas. "
                     + "Depois clique em \"Trazer arquivos baixados do YouTube...\" para colocá-las na Biblioteca do Apolo.",
                     "In YouTube Studio open \"Audio library\" in the left menu, filter by genre, mood or length and download the tracks. "
