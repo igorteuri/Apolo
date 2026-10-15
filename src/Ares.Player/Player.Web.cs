@@ -292,7 +292,7 @@ namespace Ares.Player
         private Panel m_Host;
         private WebTab m_Selected;
         private TextBox m_Address;
-        private Button m_Back, m_Forward, m_Reload, m_Add, m_ToAres, m_VdoSettings, m_VdoCopy, m_Mute;
+        private Button m_Back, m_Forward, m_Reload, m_Add, m_ToAres, m_VdoSettings, m_VdoCopy, m_Mute, m_Extensions;
         public static event Action StateChanged;
         public event Action TabsChanged;
         public event Action SelectionChanged;
@@ -428,6 +428,7 @@ namespace Ares.Player
             m_Reload = MakeBarButton("⟳", 168, 36, (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CoreWebView2 != null) t.View.CoreWebView2.Reload(); });
             m_Add = MakeBarButton(T("+ Favorito", "+ Favorite"), 0, 90, (s, e) => AddFavorite());
             m_Mute = MakeBarButton(T("Mutar aba", "Mute tab"), 0, 100, (s, e) => { WebTab t = Current(); if (t != null) SetTabMuted(t, !t.Muted); });
+            m_Extensions = MakeBarButton(T("Extensões", "Extensions"), 0, 90, (s, e) => ManageExtensions());
             m_VdoSettings = MakeBarButton(T("Config. VDO", "VDO settings"), 0, 100, (s, e) => ConfigureVdo());
             m_VdoCopy = MakeBarButton(T("Copiar link do ouvinte", "Copy listener link"), 0, 170, (s, e) => CopyListenerLink());
             m_Address = new TextBox();
@@ -441,7 +442,7 @@ namespace Ares.Player
                     GoToAddress();
                 }
             };
-            bar.Controls.AddRange(new Control[] { m_ToAres, m_Back, m_Forward, m_Reload, m_Address, m_Mute, m_VdoCopy, m_VdoSettings, m_Add });
+            bar.Controls.AddRange(new Control[] { m_ToAres, m_Back, m_Forward, m_Reload, m_Address, m_Mute, m_Extensions, m_VdoCopy, m_VdoSettings, m_Add });
             bar.Resize += (s, e) => LayoutBar(bar);
 
             m_Host = new Panel();
@@ -483,6 +484,8 @@ namespace Ares.Player
             right = m_VdoCopy.Left - 6;
             m_Mute.Left = right - m_Mute.Width;
             right = m_Mute.Left - 6;
+            m_Extensions.Left = right - m_Extensions.Width;
+            right = m_Extensions.Left - 6;
             m_Address.Width = Math.Max(100, right - m_Address.Left);
         }
 
@@ -581,6 +584,7 @@ namespace Ares.Player
             {
                 string dir = Path.Combine(Ares.Settings.AppFolders.Root, "WebView2");
                 CoreWebView2EnvironmentOptions options = new CoreWebView2EnvironmentOptions("--autoplay-policy=no-user-gesture-required");
+                options.AreBrowserExtensionsEnabled = true;
                 s_Env = CoreWebView2Environment.CreateAsync(null, dir, options);
             }
             return s_Env;
@@ -804,6 +808,36 @@ namespace Ares.Player
             return null;
         }
 
+        // browser extensions (unpacked folders, or .crx / .zip files which are unpacked first)
+        public void ManageExtensions()
+        {
+            CoreWebView2 core = null;
+            WebTab current = Current();
+            if (current != null && current.View != null && current.View.CoreWebView2 != null)
+                core = current.View.CoreWebView2;
+            if (core == null)
+            {
+                foreach (WebTab t in m_Tabs)
+                {
+                    if (t.View != null && t.View.CoreWebView2 != null)
+                    {
+                        core = t.View.CoreWebView2;
+                        break;
+                    }
+                }
+            }
+            if (core == null)
+            {
+                MessageBox.Show(FindForm(), T("Abra uma aba da internet primeiro.", "Open a web tab first."), "Apolo",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            using (ExtensionsDialog dialog = new ExtensionsDialog(core))
+            {
+                dialog.ShowDialog(FindForm());
+            }
+        }
+
         public void ShowTabMenu(WebTab tab, Point screenPoint)
         {
             ContextMenuStrip menu = new ContextMenuStrip();
@@ -901,6 +935,176 @@ namespace Ares.Player
             catch (Exception ex)
             {
                 MessageBox.Show(FindForm(), ex.Message, "Apolo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+    }
+
+    internal class ExtensionsDialog : Form
+    {
+        private readonly CoreWebView2 m_Core;
+        private readonly ListBox m_List = new ListBox();
+        private readonly Label m_Info = new Label();
+        private List<CoreWebView2BrowserExtension> m_Items = new List<CoreWebView2BrowserExtension>();
+
+        private static string T(string pt, string en)
+        {
+            return System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt" ? pt : en;
+        }
+
+        public ExtensionsDialog(CoreWebView2 core)
+        {
+            m_Core = core;
+            Text = T("Extensões do navegador", "Browser extensions");
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            StartPosition = FormStartPosition.CenterParent;
+            MaximizeBox = false;
+            MinimizeBox = false;
+            ShowInTaskbar = false;
+            ClientSize = new Size(560, 380);
+
+            Label help = new Label();
+            help.SetBounds(12, 10, 536, 78);
+            help.Text = T(
+                "Aqui você instala extensões nas abas de internet do Apolo (bloqueador de anúncios, melhorias do YouTube etc.). A Chrome Web Store não pode ser usada direto: baixe a extensão (arquivo .crx ou .zip) ou escolha a pasta de uma extensão já descompactada.",
+                "Install extensions in the web tabs of Apolo (ad blockers, YouTube improvements ...). The Chrome Web Store can't be used directly: download the extension (.crx or .zip file) or choose the folder of an unpacked extension.");
+            Controls.Add(help);
+
+            m_List.SetBounds(12, 94, 536, 190);
+            Controls.Add(m_List);
+
+            m_Info.SetBounds(12, 290, 536, 36);
+            Controls.Add(m_Info);
+
+            Button addFolder = MakeButton(T("Adicionar pasta...", "Add folder..."), 12, 336, 150);
+            addFolder.Click += async (s, e) => await AddFolder();
+            Button addFile = MakeButton(T("Adicionar arquivo...", "Add file..."), 168, 336, 150);
+            addFile.Click += async (s, e) => await AddFile();
+            Button remove = MakeButton(T("Remover", "Remove"), 324, 336, 110);
+            remove.Click += async (s, e) => await RemoveSelected();
+            Button close = MakeButton(T("Fechar", "Close"), 458, 336, 90);
+            close.DialogResult = DialogResult.Cancel;
+            CancelButton = close;
+            Controls.AddRange(new Control[] { addFolder, addFile, remove, close });
+
+            Shown += async (s, e) => await Refresh();
+        }
+
+        private static Button MakeButton(string text, int x, int y, int width)
+        {
+            Button b = new Button();
+            b.Text = text;
+            b.SetBounds(x, y, width, 30);
+            return b;
+        }
+
+        private async Task Refresh()
+        {
+            try
+            {
+                IReadOnlyList<CoreWebView2BrowserExtension> list = await m_Core.Profile.GetBrowserExtensionsAsync();
+                m_Items = new List<CoreWebView2BrowserExtension>(list);
+                m_List.Items.Clear();
+                foreach (CoreWebView2BrowserExtension ext in m_Items)
+                    m_List.Items.Add(ext.Name + (ext.IsEnabled ? "" : T("  (desativada)", "  (disabled)")));
+            }
+            catch (Exception ex)
+            {
+                m_Info.Text = ex.Message;
+            }
+        }
+
+        private async Task Install(string folder)
+        {
+            try
+            {
+                string manifest = Path.Combine(folder, "manifest.json");
+                if (!File.Exists(manifest))
+                {
+                    m_Info.Text = T("Esta pasta não tem um arquivo manifest.json (não é uma extensão descompactada).",
+                        "This folder has no manifest.json file (it isn't an unpacked extension).");
+                    return;
+                }
+                m_Info.Text = T("Instalando...", "Installing...");
+                CoreWebView2BrowserExtension ext = await m_Core.Profile.AddBrowserExtensionAsync(folder);
+                m_Info.Text = T("Instalada: ", "Installed: ") + ext.Name + T(". Recarregue as abas para usar.", ". Reload the tabs to use it.");
+                await Refresh();
+            }
+            catch (Exception ex)
+            {
+                m_Info.Text = T("Não foi possível instalar: ", "Could not install: ") + ex.Message;
+            }
+        }
+
+        private async Task AddFolder()
+        {
+            using (FolderBrowserDialog dialog = new FolderBrowserDialog())
+            {
+                dialog.Description = T("Escolha a pasta da extensão (a que contém o manifest.json)", "Choose the folder of the extension (the one with manifest.json)");
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                    return;
+                await Install(dialog.SelectedPath);
+            }
+        }
+
+        private async Task AddFile()
+        {
+            using (OpenFileDialog dialog = new OpenFileDialog())
+            {
+                dialog.Filter = T("Extensões (*.crx;*.zip)|*.crx;*.zip", "Extensions (*.crx;*.zip)|*.crx;*.zip");
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                    return;
+                try
+                {
+                    string name = Path.GetFileNameWithoutExtension(dialog.FileName);
+                    string target = Path.Combine(Ares.Settings.AppFolders.Root, "Extensions", name);
+                    if (Directory.Exists(target))
+                        Directory.Delete(target, true);
+                    Directory.CreateDirectory(target);
+                    byte[] data = File.ReadAllBytes(dialog.FileName);
+                    int zipStart = 0;
+                    if (data.Length > 16 && data[0] == (byte)'C' && data[1] == (byte)'r' && data[2] == (byte)'2' && data[3] == (byte)'4')
+                    {
+                        // CRX: a header in front of the zip (version 2 or 3)
+                        int version = BitConverter.ToInt32(data, 4);
+                        if (version == 3)
+                            zipStart = 12 + BitConverter.ToInt32(data, 8);
+                        else
+                            zipStart = 16 + BitConverter.ToInt32(data, 8) + BitConverter.ToInt32(data, 12);
+                    }
+                    string temp = Path.Combine(Path.GetTempPath(), "apolo-ext-" + Guid.NewGuid().ToString("N") + ".zip");
+                    using (FileStream fs = File.Create(temp))
+                        fs.Write(data, zipStart, data.Length - zipStart);
+                    try
+                    {
+                        System.IO.Compression.ZipFile.ExtractToDirectory(temp, target);
+                    }
+                    finally
+                    {
+                        try { File.Delete(temp); } catch (Exception) { }
+                    }
+                    await Install(target);
+                }
+                catch (Exception ex)
+                {
+                    m_Info.Text = T("Não foi possível abrir o arquivo: ", "Could not open the file: ") + ex.Message;
+                }
+            }
+        }
+
+        private async Task RemoveSelected()
+        {
+            int index = m_List.SelectedIndex;
+            if (index < 0 || index >= m_Items.Count)
+                return;
+            try
+            {
+                await m_Items[index].RemoveAsync();
+                m_Info.Text = T("Extensão removida.", "Extension removed.");
+                await Refresh();
+            }
+            catch (Exception ex)
+            {
+                m_Info.Text = ex.Message;
             }
         }
     }
