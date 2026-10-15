@@ -123,6 +123,7 @@ namespace Ares.Player
                         }
                         else
                         {
+                            ProcessLoopbackCapture.Log("the sound of the program could not be captured (" + error + "): only the sound of the Apolo engine is sent, without web pages");
                             loopback.Dispose();
                         }
                     }

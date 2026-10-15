@@ -45,3 +45,4 @@ Esta etapa não executou a fase 1: sem poder compilar aqui, converter 19 projeto
 - Etapa 72: corrige build do WinSecurity (solution filter tools/WinSecurity.slnf).
 - Etapa 73: importador de .apkg tolerante (projeto identificado pela extensão, comparações ordinais, entradas desconhecidas ignoradas).
 - Etapa 74: importar .apkg ao abrir o programa: monitor de progresso não usa mais a rede quando ela ainda não existe (NullReference).
+- Etapa 75: log de diagnóstico da captura de áudio (%AppData%\Apolo\audio-capture.log) para investigar áudio das abas web que não sai no Discord/VDO.

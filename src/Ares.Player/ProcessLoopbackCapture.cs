@@ -64,6 +64,23 @@ namespace Ares.Player
             Stop();
         }
 
+        /// <summary>Small diagnostic log (folder of the settings, file audio-capture.log): what Windows answered at each step.</summary>
+        internal static void Log(string text)
+        {
+            try
+            {
+                string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Apolo");
+                System.IO.Directory.CreateDirectory(dir);
+                string file = System.IO.Path.Combine(dir, "audio-capture.log");
+                if (System.IO.File.Exists(file) && new System.IO.FileInfo(file).Length > 200000)
+                    System.IO.File.Delete(file);
+                System.IO.File.AppendAllText(file, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "  " + text + "\r\n");
+            }
+            catch (Exception)
+            {
+            }
+        }
+
         // ---------------- COM interop ----------------
 
         private static readonly Guid IID_IAudioClient = new Guid("1CB9AD4C-DBFA-4c32-B178-C2F568A703B2");
@@ -166,6 +183,7 @@ namespace Ares.Player
                 Marshal.WriteInt32(variant, 8, 12);
                 Marshal.WriteIntPtr(variant, IntPtr.Size == 8 ? 16 : 12, paramsPtr);
 
+                Log("process loopback: start, process " + m_ProcessId + ", " + (IntPtr.Size * 8) + " bit, " + Environment.OSVersion.Version);
                 CompletionHandler handler = new CompletionHandler();
                 Guid iid = IID_IAudioClient;
                 IActivateAudioInterfaceAsyncOperation op;
@@ -180,6 +198,7 @@ namespace Ares.Player
                 if (hr != 0 || activateResult != 0)
                     throw new InvalidOperationException("GetActivateResult 0x" + (hr != 0 ? hr : activateResult).ToString("X8"));
                 client = (IAudioClient)unk;
+                Log("process loopback: activated");
 
                 // WAVEFORMATEX: PCM, 2 channels, 48000 Hz, 16 bit
                 format = Marshal.AllocHGlobal(18);
@@ -208,6 +227,7 @@ namespace Ares.Player
                 if (hr != 0)
                     throw new InvalidOperationException("Start 0x" + hr.ToString("X8"));
                 started = true;
+                Log("process loopback: capturing");
                 m_Started.Set();
 
                 byte[] buffer = new byte[65536];
@@ -238,6 +258,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
+                Log("process loopback: " + (started ? "stopped by error: " : "FAILED: ") + ex);
                 if (!started)
                     m_Error = ex.Message;
             }
