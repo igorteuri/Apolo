@@ -164,26 +164,26 @@ namespace Ares.Player
                 m_ModesSplit.Name = "modesSplit";
                 m_ModesSplit.Cursor = Cursors.VSplit;
                 m_ModesSplit.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-                int dragStartX = 0, dragStartWidth = 0;
-                bool dragging = false;
+                int modesStartX = 0, modesStartWidth = 0;
+                bool modesDragging = false;
                 m_ModesSplit.MouseDown += (s2, e2) =>
                 {
-                    dragging = true;
-                    dragStartX = Cursor.Position.X;
-                    dragStartWidth = m_ModesWidth;
+                    modesDragging = true;
+                    modesStartX = Cursor.Position.X;
+                    modesStartWidth = m_ModesWidth;
                 };
                 m_ModesSplit.MouseMove += (s2, e2) =>
                 {
-                    if (!dragging)
+                    if (!modesDragging)
                         return;
-                    m_ModesWidth = dragStartWidth + Cursor.Position.X - dragStartX;
+                    m_ModesWidth = modesStartWidth + Cursor.Position.X - modesStartX;
                     LayoutMainColumns();
                 };
                 m_ModesSplit.MouseUp += (s2, e2) =>
                 {
-                    if (!dragging)
+                    if (!modesDragging)
                         return;
-                    dragging = false;
+                    modesDragging = false;
                     try { Ares.CommonGUI.Preferences.Set("ModesWidth", m_ModesWidth.ToString()); } catch (Exception) { }
                 };
                 new ToolTip().SetToolTip(m_ModesSplit, T("Arraste para alargar ou estreitar a lista de pastas", "Drag to widen or narrow the folder list"));
