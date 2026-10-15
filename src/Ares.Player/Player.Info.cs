@@ -143,7 +143,7 @@ The code of Apolo is open and lives on GitHub:
         {
             try
             {
-                System.Diagnostics.Process.Start(url);
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
             }
             catch (Exception ex)
             {

@@ -271,7 +271,7 @@ namespace Ares.Player
             m_TrackList.EndUpdate();
         }
 
-        // a music title was counted: updates the cell (and sorts again when the list is sorted by plays)
+        // a music title was counted: updates the cell (the list is sorted again the next time it is filled)
         private void RefreshTrackPlays(int fileId, int plays)
         {
             if (m_TrackList == null)
@@ -281,11 +281,8 @@ namespace Ares.Player
                 if (row.File.Id != fileId)
                     continue;
                 row.Plays = plays;
-                if (m_TrackSortCol == ColPlays)
-                {
-                    FillTrackList(false);
-                    return;
-                }
+                // when sorted by plays the list is NOT sorted again right now: otherwise the title which started would
+                // jump down the list and the sequence to play would change under the user's hands
                 foreach (ListViewItem item in m_TrackList.Items)
                 {
                     if (ReferenceEquals(item.Tag, row))

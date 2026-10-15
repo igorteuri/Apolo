@@ -232,7 +232,11 @@ namespace Ares.Ipc
                 mutexSec.AddAccessRule(rule);
                 
                 // den benannten Mutex mit dem Namen und der ZugriffsRegel erzeugen.
+#if NET
+                mutex = MutexAcl.Create(false, mutexName, out mutexWasCreated, mutexSec);
+#else
                 mutex = new Mutex(false, mutexName, out mutexWasCreated, mutexSec);
+#endif
                 if (mutexWasCreated)
                 {
                     return mutex;
@@ -253,8 +257,13 @@ namespace Ares.Ipc
                 // und zu ändern
                 try
                 {
+#if NET
+                    mutex = MutexAcl.OpenExisting(mutexName,
+                        MutexRights.ReadPermissions | MutexRights.ChangePermissions);
+#else
                     mutex = Mutex.OpenExisting(mutexName,
                         MutexRights.ReadPermissions | MutexRights.ChangePermissions);
+#endif
 
                     // die aktuelle ACL holen. Das erfordert das Recht
                     // MutexRights.ReadPermissions.

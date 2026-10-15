@@ -319,7 +319,36 @@ namespace Ares.CommonGUI
                     SetApoloIcon(f);
                 }
                 AddAppearanceMenu(f);
+                if (s_Reveal.Contains(f))
+                    Reveal(f);
             }
+        }
+
+        // A window which is invisible until the theme was applied to it: otherwise it shows for a moment with the
+        // white colors of Windows when the program starts. A timer shows it anyway after a short time.
+        private static readonly List<Form> s_Reveal = new List<Form>();
+
+        public static void RevealWhenThemed(Form form)
+        {
+            if (form == null || Current == null || Current.IsClassic)
+                return;
+            form.Opacity = 0;
+            s_Reveal.Add(form);
+            Timer fallback = new Timer();
+            fallback.Interval = 2500;
+            fallback.Tick += delegate
+            {
+                fallback.Stop();
+                fallback.Dispose();
+                Reveal(form);
+            };
+            fallback.Start();
+        }
+
+        private static void Reveal(Form form)
+        {
+            if (s_Reveal.Remove(form) && !form.IsDisposed)
+                form.Opacity = 1;
         }
 
         // --------------------------------------------------------------------------------
@@ -580,6 +609,7 @@ namespace Ares.CommonGUI
                 cb.FlatStyle = FlatStyle.Flat;
                 cb.BackColor = p.Surface;
                 cb.ForeColor = p.Text;
+                ApplyComboLook(cb);
             }
             else if (c is ListView)
             {
@@ -587,6 +617,13 @@ namespace Ares.CommonGUI
                 lv.BackColor = p.Surface;
                 lv.ForeColor = p.Text;
                 lv.BorderStyle = BorderStyle.FixedSingle;
+                if (!p.IsClassic)
+                {
+                    if (lv.GridLines)
+                        ApplySoftGrid(lv);
+                    else
+                        ApplyHeaderLook(lv);
+                }
             }
             else if (c is TreeView)
             {
@@ -855,6 +892,8 @@ namespace Ares.CommonGUI
             lb.DrawMode = DrawMode.OwnerDrawFixed;
             lb.ItemHeight = Math.Max(22, lb.Font.Height + 8);
             lb.DrawItem += OnListBoxDrawItem;
+            lb.MouseMove += OnListBoxMouseMove;
+            lb.MouseLeave += OnListBoxMouseLeave;
         }
 
         private static void RemoveListBoxLook(ListBox lb)
@@ -863,8 +902,43 @@ namespace Ares.CommonGUI
             if (!s_ListLook.TryGetValue(lb, out marker))
                 return;
             lb.DrawItem -= OnListBoxDrawItem;
+            lb.MouseMove -= OnListBoxMouseMove;
+            lb.MouseLeave -= OnListBoxMouseLeave;
             s_ListLook.Remove(lb);
             lb.DrawMode = DrawMode.Normal;
+        }
+
+        // an item which does not fit in the list shows its whole text when the mouse rests on it
+        private static ToolTip s_ListTip;
+        private static ListBox s_TipList;
+        private static int s_TipIndex = -1;
+
+        private static void OnListBoxMouseMove(object sender, MouseEventArgs e)
+        {
+            ListBox lb = (ListBox)sender;
+            int i = lb.IndexFromPoint(e.Location);
+            if (i == s_TipIndex && lb == s_TipList)
+                return;
+            OnListBoxMouseLeave(sender, EventArgs.Empty);
+            if (i < 0 || i >= lb.Items.Count)
+                return;
+            string text = lb.GetItemText(lb.Items[i]);
+            Size size = TextRenderer.MeasureText(text, lb.Font);
+            s_TipList = lb;
+            s_TipIndex = i;
+            if (size.Width <= lb.ClientSize.Width - 14)
+                return;
+            if (s_ListTip == null)
+                s_ListTip = new ToolTip();
+            s_ListTip.Show(text, lb, e.X + 14, e.Y + 22, 6000);
+        }
+
+        private static void OnListBoxMouseLeave(object sender, EventArgs e)
+        {
+            if (s_ListTip != null && s_TipList != null)
+                s_ListTip.Hide(s_TipList);
+            s_TipList = null;
+            s_TipIndex = -1;
         }
 
         private static void OnListBoxDrawItem(object sender, DrawItemEventArgs e)
@@ -884,6 +958,38 @@ namespace Ares.CommonGUI
             string text = lb.GetItemText(lb.Items[e.Index]);
             Rectangle r = new Rectangle(e.Bounds.X + 8, e.Bounds.Y, e.Bounds.Width - 10, e.Bounds.Height);
             TextRenderer.DrawText(e.Graphics, text, lb.Font, r, p.Text,
+                TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.Left);
+        }
+
+        // ---- drop-down lists drawn with the colors of the theme ----
+
+        private static readonly ConditionalWeakTable<ComboBox, object> s_ComboLook = new ConditionalWeakTable<ComboBox, object>();
+
+        private static void ApplyComboLook(ComboBox cb)
+        {
+            if (cb.DropDownStyle != ComboBoxStyle.DropDownList || cb.DrawMode != DrawMode.Normal)
+                return;
+            object marker;
+            if (s_ComboLook.TryGetValue(cb, out marker))
+                return;
+            s_ComboLook.Add(cb, new object());
+            cb.DrawMode = DrawMode.OwnerDrawFixed;
+            cb.ItemHeight = Math.Max(cb.ItemHeight, cb.Font.Height + 4);
+            cb.DrawItem += OnComboDrawItem;
+        }
+
+        private static void OnComboDrawItem(object sender, DrawItemEventArgs e)
+        {
+            ComboBox cb = (ComboBox)sender;
+            ThemePalette p = Current;
+            if (e.Index < 0 || p == null)
+                return;
+            bool inList = (e.State & DrawItemState.ComboBoxEdit) == 0;
+            bool selected = inList && (e.State & DrawItemState.Selected) != 0;
+            using (SolidBrush back = new SolidBrush(selected ? p.Selection : p.Surface))
+                e.Graphics.FillRectangle(back, e.Bounds);
+            Rectangle r = new Rectangle(e.Bounds.X + 4, e.Bounds.Y, e.Bounds.Width - 6, e.Bounds.Height);
+            TextRenderer.DrawText(e.Graphics, cb.GetItemText(cb.Items[e.Index]), cb.Font, r, p.Text,
                 TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.Left);
         }
 
@@ -1075,7 +1181,10 @@ namespace Ares.CommonGUI
                     using (SolidBrush b2 = new SolidBrush(stripBack))
                     {
                         // the empty part of the tab row, to the right of the last tab
-                        g2.FillRectangle(b2, new Rectangle(tabsRight, 0, Math.Max(0, client.Width - tabsRight), top));
+                        g2.FillRectangle(b2, new Rectangle(0, 0, client.Width, top));
+                        // the tabs again, without the light edges which Windows draws around them
+                        for (int i = 0; i < m_Tab.TabCount; ++i)
+                            DrawTab(g2, m_Tab, i, m_Tab.GetTabRect(i));
                     }
                     using (Graphics g = Graphics.FromHwnd(m_Tab.Handle))
                     using (Region r = new Region(area))
@@ -1118,20 +1227,25 @@ namespace Ares.CommonGUI
             ThemePalette p = Current;
             if (tc == null || p == null || p.IsClassic || e.Index < 0 || e.Index >= tc.TabPages.Count)
                 return;
-            bool selected = e.Index == tc.SelectedIndex;
-            Rectangle r = e.Bounds;
+            DrawTab(e.Graphics, tc, e.Index, e.Bounds);
+        }
+
+        private static void DrawTab(Graphics g, TabControl tc, int index, Rectangle r)
+        {
+            ThemePalette p = Current;
+            bool selected = index == tc.SelectedIndex;
             using (SolidBrush back = new SolidBrush(selected ? p.Window : p.Surface))
             {
-                e.Graphics.FillRectangle(back, r);
+                g.FillRectangle(back, r);
             }
             if (selected)
             {
                 using (SolidBrush accent = new SolidBrush(p.Accent))
                 {
-                    e.Graphics.FillRectangle(accent, new Rectangle(r.X, r.Y, r.Width, 2));
+                    g.FillRectangle(accent, new Rectangle(r.X, r.Y, r.Width, 2));
                 }
             }
-            TextRenderer.DrawText(e.Graphics, tc.TabPages[e.Index].Text, tc.Font, r,
+            TextRenderer.DrawText(g, tc.TabPages[index].Text, tc.Font, r,
                 selected ? p.Text : p.TextDim,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
         }
@@ -1241,6 +1355,9 @@ namespace Ares.CommonGUI
         [DllImport("uxtheme.dll", CharSet = CharSet.Unicode)]
         private static extern int SetWindowTheme(IntPtr hWnd, string pszSubAppName, string pszSubIdList);
 
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 
@@ -1254,8 +1371,12 @@ namespace Ares.CommonGUI
                 if (c is ListView)
                 {
                     SetWindowTheme(c.Handle, dark ? "DarkMode_ItemsView" : "Explorer", null);
+                    // the column header is a window of its own: it is white unless it gets the dark theme too
+                    IntPtr header = SendMessage(c.Handle, 0x101F, IntPtr.Zero, IntPtr.Zero);
+                    if (header != IntPtr.Zero)
+                        SetWindowTheme(header, dark ? "DarkMode_ItemsView" : "Explorer", null);
                 }
-                else if (c is TreeView || c is ListBox || c is TextBoxBase || c is ScrollableControl && c.GetType() == typeof(Panel))
+                else if (c is TreeView || c is ListBox || c is TextBoxBase || c is Panel)
                 {
                     SetWindowTheme(c.Handle, dark ? "DarkMode_Explorer" : "Explorer", null);
                 }
@@ -1360,6 +1481,98 @@ namespace Ares.CommonGUI
             public override Color RaftingContainerGradientEnd { get { return P.Window; } }
         }
 
+        // --------------------------------------------------------------------------------
+        // lists with a grid: the native grid is bright white in the dark themes, so such lists
+        // are drawn by hand with a soft line below each row (like the track list)
+        // --------------------------------------------------------------------------------
+
+        private static readonly ConditionalWeakTable<ListView, object> s_SoftGrid = new ConditionalWeakTable<ListView, object>();
+
+        // the header of a list: dark, with light letters (the native header stays white with dark letters)
+        private static void OnDrawThemedHeader(object sender, DrawListViewColumnHeaderEventArgs e)
+        {
+            ThemePalette pal = Current;
+            using (SolidBrush back = new SolidBrush(pal.Window))
+                e.Graphics.FillRectangle(back, e.Bounds);
+            using (Pen line = new Pen(Color.FromArgb(110, pal.Border)))
+            {
+                e.Graphics.DrawLine(line, e.Bounds.Left, e.Bounds.Bottom - 1, e.Bounds.Right, e.Bounds.Bottom - 1);
+                e.Graphics.DrawLine(line, e.Bounds.Right - 1, e.Bounds.Top + 4, e.Bounds.Right - 1, e.Bounds.Bottom - 5);
+            }
+            HorizontalAlignment align = e.Header.TextAlign;
+            TextFormatFlags flags = TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix
+                | (align == HorizontalAlignment.Right ? TextFormatFlags.Right : align == HorizontalAlignment.Center ? TextFormatFlags.HorizontalCenter : TextFormatFlags.Left);
+            Rectangle tr = new Rectangle(e.Bounds.X + 6, e.Bounds.Y, Math.Max(0, e.Bounds.Width - 12), e.Bounds.Height);
+            TextRenderer.DrawText(e.Graphics, e.Header.Text, ((ListView)sender).Font, tr, pal.Text, flags);
+        }
+
+        // lists without a grid (the track list) keep their normal drawing, only the header is drawn by hand
+        private static readonly ConditionalWeakTable<ListView, object> s_HeaderLook = new ConditionalWeakTable<ListView, object>();
+
+        private static void ApplyHeaderLook(ListView lv)
+        {
+            if (lv.View != View.Details || lv.OwnerDraw || lv.CheckBoxes || lv.Groups.Count > 0)
+                return;
+            object dummy;
+            if (s_HeaderLook.TryGetValue(lv, out dummy))
+                return;
+            s_HeaderLook.Add(lv, new object());
+            lv.OwnerDraw = true;
+            lv.DrawColumnHeader += OnDrawThemedHeader;
+            lv.DrawItem += delegate (object sender, DrawListViewItemEventArgs e) { e.DrawDefault = true; };
+            lv.DrawSubItem += delegate (object sender, DrawListViewSubItemEventArgs e) { e.DrawDefault = true; };
+        }
+
+        private static void ApplySoftGrid(ListView lv)
+        {
+            if (!lv.GridLines || lv.View != View.Details)
+                return;
+            object dummy;
+            if (s_SoftGrid.TryGetValue(lv, out dummy))
+                return;
+            s_SoftGrid.Add(lv, new object());
+            lv.GridLines = false;
+            lv.OwnerDraw = true;
+            lv.DrawItem += delegate (object sender, DrawListViewItemEventArgs e) { };
+            lv.DrawColumnHeader += OnDrawThemedHeader;
+            lv.DrawSubItem += delegate (object sender, DrawListViewSubItemEventArgs e)
+            {
+                ThemePalette pal = Current;
+                ListView list = (ListView)sender;
+                Rectangle b = e.Bounds;
+                if (e.ColumnIndex == 0 && list.Columns.Count > 0)
+                    b = new Rectangle(b.X, b.Y, list.Columns[0].Width, b.Height);
+                using (SolidBrush back = new SolidBrush(e.Item.Selected ? pal.Selection : pal.Surface))
+                    e.Graphics.FillRectangle(back, b);
+                using (Pen line = new Pen(Color.FromArgb(70, pal.Border)))
+                    e.Graphics.DrawLine(line, b.Left, b.Bottom - 1, b.Right, b.Bottom - 1);
+                int textLeft = b.X + 6;
+                if (e.ColumnIndex == 0 && list.CheckBoxes)
+                {
+                    Rectangle box = new Rectangle(b.X + 4, b.Y + (b.Height - 13) / 2, 13, 13);
+                    using (SolidBrush boxBack = new SolidBrush(pal.Window))
+                        e.Graphics.FillRectangle(boxBack, box);
+                    using (Pen boxLine = new Pen(pal.TextDim))
+                        e.Graphics.DrawRectangle(boxLine, box.X, box.Y, box.Width - 1, box.Height - 1);
+                    if (e.Item.Checked)
+                    {
+                        System.Drawing.Drawing2D.SmoothingMode old = e.Graphics.SmoothingMode;
+                        e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                        using (Pen tick = new Pen(pal.Accent, 2f))
+                        {
+                            e.Graphics.DrawLine(tick, box.X + 3, box.Y + 7, box.X + 5, box.Y + 9);
+                            e.Graphics.DrawLine(tick, box.X + 5, box.Y + 9, box.X + 10, box.Y + 3);
+                        }
+                        e.Graphics.SmoothingMode = old;
+                    }
+                    textLeft = b.X + 24;
+                }
+                Rectangle tr = new Rectangle(textLeft, b.Y, Math.Max(0, b.Right - textLeft - 4), b.Height);
+                TextRenderer.DrawText(e.Graphics, e.SubItem.Text, list.Font, tr, e.SubItem.ForeColor,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+            };
+        }
+
         private sealed class ThemedRenderer : ToolStripProfessionalRenderer
         {
             public ThemedRenderer()
@@ -1432,9 +1645,10 @@ namespace Ares.CommonGUI
                 return;
             s_MenuHooked.Add(strip, new object());
             StripEllipsis(strip.Items);
+            TidyMenu(strip as ToolStripDropDown);
             ContextMenuStrip cms = strip as ContextMenuStrip;
             if (cms != null)
-                cms.Opening += delegate { StripEllipsis(cms.Items); };
+                cms.Opening += delegate { StripEllipsis(cms.Items); TidyMenu(cms); };
         }
 
         private static void StripEllipsis(ToolStripItemCollection items)
@@ -1460,11 +1674,30 @@ namespace Ares.CommonGUI
                     {
                         s_MenuHooked.Add(dd, new object());
                         ToolStripDropDownItem captured = dd;
-                        dd.DropDownOpening += delegate { StripEllipsis(captured.DropDownItems); };
+                        dd.DropDownOpening += delegate { StripEllipsis(captured.DropDownItems); TidyMenu(captured.DropDown); };
                     }
                     StripEllipsis(dd.DropDownItems);
+                    TidyMenu(dd.DropDown);
                 }
             }
+        }
+
+        // Menus without icons: only a few items had one and the empty column in front of the others looked broken.
+        // The column is only kept (for the check mark) when some item can be checked.
+        private static void TidyMenu(ToolStripDropDown drop)
+        {
+            ToolStripDropDownMenu menu = drop as ToolStripDropDownMenu;
+            if (menu == null)
+                return;
+            bool anyCheck = false;
+            foreach (ToolStripItem item in menu.Items)
+            {
+                ToolStripMenuItem mi = item as ToolStripMenuItem;
+                if (mi != null && (mi.CheckOnClick || mi.Checked))
+                    anyCheck = true;
+            }
+            menu.ShowImageMargin = false;
+            menu.ShowCheckMargin = anyCheck;
         }
 
         // --------------------------------------------------------------------------------

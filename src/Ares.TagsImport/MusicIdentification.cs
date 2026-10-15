@@ -454,7 +454,11 @@ namespace Ares.TagsImport
         private T Execute<T>(RestSharp.RestRequest request) where T : new()
         {
             var client = new RestSharp.RestClient();
+            #if NET
+            client.BaseUrl = new System.Uri(baseUrl);
+#else
             client.BaseUrl = baseUrl;
+#endif
             request.AddParameter("client", apiKey);
             m_RateGate.WaitToProceed();
             var response = client.Execute<T>(request);
@@ -510,7 +514,11 @@ namespace Ares.TagsImport
         private String RetrieveMusicInfo(String musicBrainzId)
         {
             var client = new RestSharp.RestClient();
+            #if NET
+            client.BaseUrl = new System.Uri(baseURL);
+#else
             client.BaseUrl = baseURL;
+#endif
             client.UserAgent = m_UserAgent;
             var request = new RestSharp.RestRequest("/ws/2/recording/" + musicBrainzId + "?inc=artists+releases&fmt=xml", RestSharp.Method.GET);
             m_RateGate.WaitToProceed();
@@ -522,7 +530,11 @@ namespace Ares.TagsImport
         private String Get(String path)
         {
             var client = new RestSharp.RestClient();
+            #if NET
+            client.BaseUrl = new System.Uri(baseURL);
+#else
             client.BaseUrl = baseURL;
+#endif
             client.UserAgent = m_UserAgent;
             var request = new RestSharp.RestRequest(path, RestSharp.Method.GET);
             m_RateGate.WaitToProceed();

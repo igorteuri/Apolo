@@ -243,7 +243,7 @@ namespace Ares.Player
             protected readonly ListView m_List = new ListView();
             protected readonly Label m_Info = new Label();
             protected readonly ProgressBar m_Progress = new ProgressBar();
-            protected readonly Panel m_Top = new Panel();
+            protected readonly FlowLayoutPanel m_Top = new FlowLayoutPanel();
             protected volatile bool m_Cancel;
             protected bool m_Busy;
 
@@ -259,7 +259,9 @@ namespace Ares.Player
                 MinimizeBox = false;
                 try { Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0); } catch (Exception) { }
 
-                m_Top.SetBounds(12, 10, 936, 32);
+                m_Top.SetBounds(12, 10, 936, 36);
+                m_Top.WrapContents = false;
+                m_Top.FlowDirection = FlowDirection.LeftToRight;
                 m_Top.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
                 Controls.Add(m_Top);
                 int x = 0;
@@ -304,7 +306,7 @@ namespace Ares.Player
                 b.AutoSize = true;
                 b.AutoSizeMode = AutoSizeMode.GrowAndShrink;
                 b.Padding = new Padding(8, 2, 8, 2);
-                b.Location = new Point(x, 0);
+                b.Margin = new Padding(0, 0, 8, 0);
                 b.Click += click;
                 m_Top.Controls.Add(b);
                 return b.Right + 8;

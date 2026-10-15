@@ -356,7 +356,7 @@ namespace Ares.Player
                 return;
             int modeIndex = SelectedModeIndex;
             string modeTitle = mode.Title;
-            RunAfterDrag(() => ApplyProjectEdit(() =>
+            RunAfterDrag(() => ApplyProjectEditLive(() =>
             {
                 IMode m = m_Project.GetModes()[modeIndex];
                 IModeElement moved = m.GetElements().FirstOrDefault(x => x.Id == movedId);
@@ -666,6 +666,53 @@ namespace Ares.Player
             return m_Project.GetModes()[index];
         }
 
+        // Reordering buttons inside the folder which is shown: the project is saved and the buttons are moved in place,
+        // so that the music which is playing keeps playing (the project is not reloaded).
+        private void ApplyProjectEditLive(Action edit, string modeTitle)
+        {
+            if (m_Project == null)
+                return;
+            bool oldWatch = fileSystemWatcher1.EnableRaisingEvents;
+            fileSystemWatcher1.EnableRaisingEvents = false;
+            try
+            {
+                PushUndo();
+                m_UndoBusy = true;
+                edit();
+                m_Project.Changed = true;
+                DataModule.ProjectManager.SaveProject(m_Project);
+                IMode mode = CurrentMode();
+                if (mode == null || mode.Title != modeTitle)
+                {
+                    ShowModeAfterReload(modeTitle);
+                    return;
+                }
+                int pos = 0;
+                elementsPanel.SuspendLayout();
+                foreach (IModeElement el in mode.GetElements())
+                {
+                    CheckBox box;
+                    if (m_ButtonsForIds.TryGetValue(el.Id, out box) && box.Parent == elementsPanel)
+                    {
+                        elementsPanel.Controls.SetChildIndex(box, pos);
+                        ++pos;
+                    }
+                }
+                elementsPanel.ResumeLayout(true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, T("Erro ao editar: ", "Edit error: ") + ex.Message, StringResources.Ares,
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                m_UndoBusy = false;
+                UpdateUndoMenu();
+                fileSystemWatcher1.EnableRaisingEvents = oldWatch;
+            }
+        }
+
         private void ApplyProjectEdit(Action edit, string selectModeTitle)
         {
             if (m_Project == null)
@@ -872,6 +919,28 @@ namespace Ares.Player
                 }
             }
             return null;
+        }
+
+        // F2: renames the folder (when the list of folders has the focus) or the playlist button which has the focus
+        private bool TryRenameWithF2()
+        {
+            Control active = ActiveControl;
+            while (active is ContainerControl && ((ContainerControl)active).ActiveControl != null)
+                active = ((ContainerControl)active).ActiveControl;
+            if (active == null || m_Project == null)
+                return false;
+            if (active == modesList)
+            {
+                RenameCurrentMode();
+                return true;
+            }
+            if (active is CheckBox && active.Tag is int && elementsPanel.Contains(active))
+            {
+                m_MenuElementId = (int)active.Tag;
+                RenameElementButton();
+                return true;
+            }
+            return false;
         }
 
         private void RenameElementButton()

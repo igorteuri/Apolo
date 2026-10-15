@@ -294,6 +294,7 @@
     </Compile>
     <Compile Include="KeyChecks.cs" />
     <Compile Include="ThemeManager.cs" />
+    <Compile Include="ThemedComboBox.cs" />
     <Compile Include="ApoloBrand.cs" />
     <Compile Include="ModernSlider.cs" />
     <Compile Include="LibraryHelper.cs" />

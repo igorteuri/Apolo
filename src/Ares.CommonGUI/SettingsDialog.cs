@@ -70,12 +70,82 @@ namespace Ares.CommonGUI
                 m_Overflow = 0;
                 FitCaptions(tabControl);
                 foreach (TabPage page in tabControl.TabPages)
-                    FitCaptions(page);
+                {
+                    if (page != generalPage)
+                        FitCaptions(page);
+                }
                 if (m_Overflow > 0)
                     Width += m_Overflow + 8;
+                LayoutGeneralPage();
             }
             catch (Exception)
             {
+            }
+        }
+
+        // The first page is laid out again by code with the real size of the texts and fonts: the fixed positions of the
+        // designer put the "..." buttons over the folder names when the text is larger than the designer expected.
+        private void LayoutGeneralPage()
+        {
+            int gap = 10;
+            int rowH = Math.Max(30, TextRenderer.MeasureText("Ag", Font).Height + 14);
+            int buttonW = Math.Max(36, TextRenderer.MeasureText("...", Font).Width + 24);
+            int top = 8;
+            int pageW = generalPage.ClientSize.Width;
+
+            // folders of the music and the sounds
+            Label[] captions2 = { label1, label2 };
+            Label[] paths2 = { musicDirLabel, soundDirLabel };
+            Button[] buttons2 = { selectMusicButton, selectSoundButton };
+            LayoutRows(groupBox2, top, pageW, gap, rowH, buttonW, captions2, paths2, buttons2);
+            top = groupBox2.Bottom + 10;
+
+            // where the settings are kept
+            Control[] captions1 = { userDirButton, appDirButton, otherDirButton };
+            Label[] paths1 = { userDirLabel, appDirLabel, otherDirLabel };
+            Button[] buttons1 = { null, null, selectOtherDirButton };
+            LayoutRows(groupBox1, top, pageW, gap, rowH, buttonW, captions1, paths1, buttons1);
+            top = groupBox1.Bottom + 10;
+
+            groupBox3.SetBounds(6, top, pageW - 12, Math.Max(50, rowH + 30));
+            updateCheckBox.Location = new Point(gap, 24);
+            top = groupBox3.Bottom + 10;
+
+            int missing = top - generalPage.ClientSize.Height;
+            if (missing > 0)
+                Height += missing;
+        }
+
+        private void LayoutRows(GroupBox box, int top, int pageW, int gap, int rowH, int buttonW, Control[] captions, Label[] paths, Button[] buttons)
+        {
+            int captionW = 0;
+            foreach (Control c in captions)
+                captionW = Math.Max(captionW, TextRenderer.MeasureText(c.Text, c.Font).Width + (c is RadioButton ? 40 : 14));
+            box.SetBounds(6, top, pageW - 12, 30 + captions.Length * rowH + 6);
+            int innerW = box.ClientSize.Width;
+            for (int i = 0; i < captions.Length; i++)
+            {
+                int y = 26 + i * rowH;
+                Control cap = captions[i];
+                cap.AutoSize = false;
+                cap.SetBounds(gap, y, captionW, rowH - 4);
+                if (cap is Label)
+                    ((Label)cap).TextAlign = ContentAlignment.MiddleLeft;
+                int pathLeft = gap + captionW + gap;
+                int right = innerW - gap;
+                if (buttons[i] != null)
+                {
+                    buttons[i].SetBounds(innerW - gap - buttonW, y - 1, buttonW, rowH - 4);
+                    buttons[i].Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                    right = buttons[i].Left - gap;
+                }
+                Label path = paths[i];
+                path.AutoSize = false;
+                path.AutoEllipsis = true;
+                path.TextAlign = ContentAlignment.MiddleLeft;
+                path.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+                path.SetBounds(pathLeft, y, Math.Max(40, right - pathLeft), rowH - 4);
+                new ToolTip().SetToolTip(path, path.Text);
             }
         }
 
@@ -93,7 +163,7 @@ namespace Ares.CommonGUI
                     int needed = TextRenderer.MeasureText(ch.Text, ch.Font, new Size(int.MaxValue, int.MaxValue), TextFormatFlags.NoPadding | TextFormatFlags.SingleLine).Width
                         + (ch is Label ? 6 : 26);
                     int single = TextRenderer.MeasureText("Ag", ch.Font).Height * 2;
-                    if (ch.Height <= single && needed > ch.Width - 2)
+                    if (ch.Height <= single)
                     {
                         // controls to the right of the caption's start in the same row; they may even overlap the old text
                         List<Control> row = new List<Control>();
@@ -106,10 +176,11 @@ namespace Ares.CommonGUI
                                 minLeft = Math.Min(minLeft, s.Left);
                             }
                         }
-                        ch.Width = needed;
+                        if (needed > ch.Width - 2)
+                            ch.Width = needed;
                         if (row.Count > 0)
                         {
-                            int delta = ch.Left + needed + 4 - minLeft;
+                            int delta = ch.Right + 8 - minLeft;
                             if (delta > 0)
                             {
                                 foreach (Control s in row)

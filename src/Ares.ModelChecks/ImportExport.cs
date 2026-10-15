@@ -82,6 +82,8 @@ namespace Ares.ModelInfo
                 bool overWrite = true;
                 bool hasAskedForOverwrite = silent;
                 bool hasInnerFile = false;
+                String innerName = null;
+                List<String> otherNames = new List<String>();
                 using (ZipFile file = CreateZipFile(importFileName))
                 {
                     for (int i = 0; i < file.Count; ++i)
@@ -98,14 +100,20 @@ namespace Ares.ModelInfo
                         String fileName = GetFileName(entry, out isTagsDbFile);
                         if (fileName == String.Empty)
                         {
-                            if (hasInnerFile)
+                            if (IsProjectName(entry.Name))
                             {
-                                throw new ArgumentException(StringResources.InvalidImportFile);
+                                if (hasInnerFile)
+                                {
+                                    throw new ArgumentException(StringResources.InvalidImportFile);
+                                }
+                                hasInnerFile = true;
+                                innerName = entry.Name;
+                                overallSize += entry.Size;
                             }
                             else
                             {
-                                hasInnerFile = true;
-                                overallSize += entry.Size;
+                                // something else (old packages, other tools): only used when there is no project file at all
+                                otherNames.Add(entry.Name);
                             }
                         }
                         else if (isTagsDbFile)
@@ -138,12 +146,18 @@ namespace Ares.ModelInfo
                             overallSize += entry.Size;
                         }
                     }
+                    if (!hasInnerFile && otherNames.Count == 1)
+                    {
+                        hasInnerFile = true;
+                        innerName = otherNames[0];
+                    }
                     if (!hasInnerFile)
                     {
                         throw new ArgumentException(StringResources.InvalidImportFile);
                     }
                 }
                 ImportData data = new ImportData();
+                data.InnerName = innerName;
                 data.Overwrite = overWrite;
                 data.ImportFile = importFileName;
                 data.TargetFile = targetFileName;
@@ -217,6 +231,8 @@ namespace Ares.ModelInfo
                     }
                     if (fileName == String.Empty)
                     {
+                        if (entry.IsDirectory || entry.Name != data.InnerName)
+                            continue;
                         fileName = data.TargetFile;
                     }
                     else if (isTagsDBFile)
@@ -271,6 +287,14 @@ namespace Ares.ModelInfo
             public String ImportFile { get; set; }
             public String TargetFile { get; set; }
             public long OverallSize { get; set; }
+            public String InnerName { get; set; }
+        }
+
+        private static bool IsProjectName(String name)
+        {
+            if (name.IndexOf('/') >= 0 || name.IndexOf('\\') >= 0)
+                return false;
+            return name.EndsWith(".apolo", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".ares", StringComparison.OrdinalIgnoreCase);
         }
 
         // where an entry with a picture of a button goes (null if the entry is something else)
@@ -293,7 +317,7 @@ namespace Ares.ModelInfo
         private String GetFileName(ZipEntry entry, out bool isTagsDBFile)
         {
             String fileName = String.Empty;
-            if (entry.Name.StartsWith(Exporter.MUSIC_DIR))
+            if (entry.Name.StartsWith(Exporter.MUSIC_DIR + "/", StringComparison.Ordinal))
             {
                 fileName = entry.Name.Substring(Exporter.MUSIC_DIR.Length + 1);
                 if (fileName.Equals("aresmusictags.jsv", StringComparison.OrdinalIgnoreCase))
@@ -307,7 +331,7 @@ namespace Ares.ModelInfo
                     isTagsDBFile = false;
                 }
             }
-            else if (entry.Name.StartsWith(Exporter.SOUND_DIR))
+            else if (entry.Name.StartsWith(Exporter.SOUND_DIR + "/", StringComparison.Ordinal))
             {
                 fileName = entry.Name.Substring(Exporter.SOUND_DIR.Length + 1);
 				fileName = FileHelpers.AppendFileName(Settings.Settings.Instance.SoundDirectory, fileName);

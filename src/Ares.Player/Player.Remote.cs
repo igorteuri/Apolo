@@ -694,7 +694,7 @@ namespace Ares.Player
             string result = "ok";
             try
             {
-                Invoke(new MethodInvoker(() =>
+                Invoke(new System.Windows.Forms.MethodInvoker(() =>
                 {
                     PlayingControl control = m_PlayingControl;
                     if (control == null)

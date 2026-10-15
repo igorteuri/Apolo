@@ -172,6 +172,7 @@ Apolo updates: menu About > How to update.") }
                     }
                 };
                 show();
+                Ares.CommonGUI.ThemeManager.Apply(form);
                 form.ShowDialog(this);
                 Ares.CommonGUI.Preferences.SetBool("TutorialSeen", !again.Checked);
             }

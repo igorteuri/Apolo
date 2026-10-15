@@ -83,6 +83,7 @@ namespace Ares.Player
             m_KeyboardHookManager.KeyDown += new KeyEventHandler(m_KeyboardHookManager_KeyDown);
 #endif
             InitializeComponent();
+            Ares.CommonGUI.ThemeManager.RevealWhenThemed(this);
             if (!m_HideToTray)
             {
                 notifyIcon.Visible = false;
@@ -185,6 +186,7 @@ namespace Ares.Player
         private SoundProgressPanel m_SoundPanel;
         private NowPlayingStrip m_NowPlaying;
         private ToolStripButton m_PauseButton;
+        private Size m_PauseIconSize;
         private bool m_PauseShown;
         private ToolStripDropDownButton m_OutputButton;
         private int m_OutputShown = int.MinValue;
@@ -479,8 +481,11 @@ namespace Ares.Player
 
         private void UpdatePauseButton(bool paused)
         {
-            if (m_PauseButton == null || m_PauseShown == paused && m_PauseButton.Image != null)
+            // the icon is made again when the size of the toolbar icons changed (the scale of the theme is applied after the start)
+            Size iconSize = (m_TransportStrip ?? toolStrip1).ImageScalingSize;
+            if (m_PauseButton == null || m_PauseShown == paused && m_PauseButton.Image != null && iconSize == m_PauseIconSize)
                 return;
+            m_PauseIconSize = iconSize;
             m_PauseShown = paused;
             m_PauseButton.ToolTipText = PauseText(paused);
             m_PauseButton.Text = PauseText(paused);
@@ -1239,6 +1244,8 @@ namespace Ares.Player
         protected override bool ProcessCmdKey(ref System.Windows.Forms.Message msg, System.Windows.Forms.Keys keyData)
         {
             if (HandleUndoKey(keyData))
+                return true;
+            if (keyData == System.Windows.Forms.Keys.F2 && TryRenameWithF2())
                 return true;
             if (HandleProgramShortcut(keyData))
                 return true;
@@ -2102,27 +2109,27 @@ namespace Ares.Player
             {
                 mGUIMonitor.IncreaseProgress(percent);
                 mPercent += percent;
-                mNetwork.InformClientOfImportProgress((int)mPercent, String.Empty);
+                if (mNetwork != null) mNetwork.InformClientOfImportProgress((int)mPercent, String.Empty);
             }
 
             public void IncreaseProgress(double percent, string text)
             {
                 mGUIMonitor.IncreaseProgress(percent, text);
                 mPercent += percent;
-                mNetwork.InformClientOfImportProgress((int)mPercent, text);
+                if (mNetwork != null) mNetwork.InformClientOfImportProgress((int)mPercent, text);
             }
 
             public void SetIndeterminate(string text)
             {
                 mGUIMonitor.SetIndeterminate(text);
-                mNetwork.InformClientOfImportProgress(-1, text);
+                if (mNetwork != null) mNetwork.InformClientOfImportProgress(-1, text);
             }
 
             public void SetProgress(int percent, string text)
             {
                 mGUIMonitor.SetProgress(percent, text);
                 mPercent = percent;
-                mNetwork.InformClientOfImportProgress(percent, text);
+                if (mNetwork != null) mNetwork.InformClientOfImportProgress(percent, text);
             }
         }
 
@@ -2304,7 +2311,7 @@ namespace Ares.Player
         {
             try
             {
-                System.Diagnostics.Process.Start(webAddressLabel.Text);
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(webAddressLabel.Text) { UseShellExecute = true });
             }
             catch (Exception ex)
             {

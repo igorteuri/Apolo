@@ -109,7 +109,10 @@ namespace Ares.Player
             try
             {
                 args += " " + tempFile;
-                ProcessStartInfo psi = new ProcessStartInfo("Ares.WinSecurity.exe", args);
+                string helper = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "WinSecurity", "Ares.WinSecurity.exe");
+                if (!File.Exists(helper))
+                    helper = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Ares.WinSecurity.exe");
+                ProcessStartInfo psi = new ProcessStartInfo(helper, args);
                 psi.Verb = "runas";
                 psi.CreateNoWindow = true;
                 psi.WindowStyle = ProcessWindowStyle.Hidden;
