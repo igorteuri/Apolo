@@ -19,3 +19,7 @@ Situação: o Apolo é WinForms em .NET Framework 4.8 (C# 5, csproj antigo com l
 4. Instalador/CI: publicar autocontido (`dotnet publish -r win-x86 --self-contained`) e ajustar o Inno Setup.
 
 Esta etapa não executou a fase 1: sem poder compilar aqui, converter 19 projetos às cegas quebraria o build atual. Proposta: fazer a fase 1 na próxima etapa, depois que os testes automáticos rodarem no CI.
+
+## Andamento
+- Etapa 55 (fase 1, em andamento): pasta `net8/` com cópias "paralelas" dos projetos `Ares.Ipc`, `Ares.Settings` e `Ares.Data` para .NET 8. Elas compilam os MESMOS arquivos de `src/` (gerado por `tools/gen_net8.py`), então o Apolo atual não muda. O passo "Migration test (.NET 8)" do build mostra quais já compilam; ele não bloqueia o instalador.
+- Próximas fases: acrescentar `Ares.Tags` (trocar ServiceStack.Text e SQLite por pacotes NuGet), `Ares.Playing`, `Ares.Players`, `Ares.CommonGUI` e por fim `Ares.Player`; quando todos compilarem em .NET 8, o executável novo substitui o antigo.
