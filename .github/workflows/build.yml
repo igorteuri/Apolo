@@ -129,7 +129,8 @@ jobs:
         shell: pwsh
         run: |
           $ok = @(); $bad = @()
-          foreach ($f in Get-ChildItem net8 -Filter *.Net8.csproj) {
+          foreach ($n in @("Ares.Ipc","Ares.Data","Ares.Settings","Ares.Tags","Ares.ModelInfo","Ares.Playing","Ares.CommonGUI")) {
+            $f = Get-Item "net8/$n.Net8.csproj"
             Write-Host "=== $($f.Name)"
             dotnet build $f.FullName -c Release --nologo -v:q -clp:ErrorsOnly
             if ($LASTEXITCODE -eq 0) { $ok += $f.Name } else { $bad += $f.Name }

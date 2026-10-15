@@ -64,7 +64,7 @@ def gen(name, refs=(), packages=(), shim=None, csproj=None, forms=False):
 gen('Ares.Ipc', packages=[('System.Threading.AccessControl', '8.0.0')])
 gen('Ares.Settings', ['Ares.Ipc'])
 gen('Ares.Data')
-gen('Ares.Tags', shim='ServiceStackTextShim.cs', packages=[('System.Data.SQLite.Core', '1.0.118.0'), ('TagLibSharp', '2.3.0')])
+gen('Ares.Tags', shim='ServiceStackTextShim.cs', packages=[('System.Data.SQLite.Core', '1.0.118.0'), ('Stub.System.Data.SQLite.Core.NetStandard', '1.0.118'), ('TagLibSharp', '2.3.0')])
 gen('Ares.ModelChecks', ['Ares.Data', 'Ares.Settings', 'Ares.Tags'], packages=[('SharpZipLib', '1.4.2')], csproj='Ares.ModelInfo')
 gen('Ares.Playing', ['Ares.Data', 'Ares.ModelInfo', 'Ares.Tags'],
     packages=[('NAudio.Core', '2.2.1'), ('NAudio.Wasapi', '2.2.1'), ('NLayer', '1.16.0'), ('NVorbis', '0.10.5'),
