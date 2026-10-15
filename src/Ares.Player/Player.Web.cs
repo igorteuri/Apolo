@@ -854,7 +854,7 @@ namespace Ares.Player
  }
  function tapOf(ctx) {
   if (ctx.__apoloTap) return ctx.__apoloTap;
-  var sp = ctx.createScriptProcessor(2048, 2, 2);
+  var sp = ctx.createScriptProcessor(4096, 2, 2);
   sp.__apoloIsTap = true;
   sp.onaudioprocess = function(e) {
    if (!cap.on) return;

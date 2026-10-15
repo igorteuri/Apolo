@@ -42,8 +42,21 @@ namespace Ares.Player
             private int m_Offset;
             private int m_Length;
             private bool m_Primed;
+            private readonly int m_Prime, m_Max, m_Keep;
             public long TotalBytes;
             public bool Reported;
+
+            public Source() : this(PrimeBytes, MaxBytes, KeepBytes)
+            {
+            }
+
+            // sources which arrive in bursts (the web pages) get a deeper buffer: a smooth sound is better than a short delay
+            public Source(int prime, int max, int keep)
+            {
+                m_Prime = prime;
+                m_Max = max;
+                m_Keep = keep;
+            }
 
             public void Add(byte[] buffer, int count)
             {
@@ -56,9 +69,9 @@ namespace Ares.Player
                     m_Chunks.Enqueue(copy);
                     m_Length += count;
                     TotalBytes += count;
-                    if (m_Length > MaxBytes)
+                    if (m_Length > m_Max)
                     {
-                        while (m_Length > KeepBytes && m_Chunks.Count > 0)
+                        while (m_Length > m_Keep && m_Chunks.Count > 0)
                         {
                             byte[] old = m_Chunks.Dequeue();
                             m_Length -= old.Length - m_Offset;
@@ -75,7 +88,7 @@ namespace Ares.Player
                 {
                     if (!m_Primed)
                     {
-                        if (m_Length >= PrimeBytes)
+                        if (m_Length >= m_Prime)
                             m_Primed = true;
                         else
                             return false;
@@ -138,7 +151,7 @@ namespace Ares.Player
                     return;
                 if (!m_Pages.TryGetValue(key, out source))
                 {
-                    source = new Source();
+                    source = new Source(FrameBytes * 12, FrameBytes * 40, FrameBytes * 14);
                     m_Pages[key] = source;
                     ProcessLoopbackCapture.Log("sound of Apolo: web page sound from inside the page started");
                 }
