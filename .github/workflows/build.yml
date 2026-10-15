@@ -11,6 +11,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set the version (file VERSION + build number)
+        shell: pwsh
+        run: |
+          $base = (Get-Content VERSION -Raw).Trim()
+          $version = "$base.${{ github.run_number }}.0"
+          Write-Host "Apolo version: $version"
+          $f = "src/Ares.Player/Properties/AssemblyInfo.cs"
+          $t = [System.IO.File]::ReadAllText($f)
+          $t = [regex]::Replace($t, 'AssemblyVersion\("[^"]*"\)', "AssemblyVersion(`"$version`")")
+          $t = [regex]::Replace($t, 'AssemblyFileVersion\("[^"]*"\)', "AssemblyFileVersion(`"$version`")")
+          [System.IO.File]::WriteAllText($f, $t)
+
       - name: Create placeholder Freesound key
         shell: pwsh
         run: Copy-Item src/Ares.AudioSource.Freesound/ApiKey.example.cs src/Ares.AudioSource.Freesound/ApiKey.cs
@@ -104,6 +116,24 @@ jobs:
 
       - name: Build solution
         run: msbuild Ares.sln /m /restore:false /p:Configuration=Release /p:Platform=x86 /v:minimal
+
+      - name: Automatic tests
+        # first rounds: a failing test is reported but does not stop the installer
+        continue-on-error: true
+        shell: pwsh
+        run: dotnet test tests/Apolo.Tests/Apolo.Tests.csproj --nologo
+
+      - name: Migration test (.NET 8) - same code, built for .NET 8
+        # does not change Apolo.exe; only shows which projects already compile on .NET 8
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          foreach ($p in @("Ares.Ipc","Ares.Settings","Ares.Data")) {
+            Write-Host "=== $p (.NET 8)"
+            dotnet build "net8/$p.Net8.csproj" -c Release --nologo -v:minimal
+            if ($LASTEXITCODE -ne 0) { Write-Host "FAILED: $p"; $global:failed = $true }
+          }
+          if ($global:failed) { exit 1 }
 
       - name: Collect output
         shell: pwsh
