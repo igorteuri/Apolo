@@ -9,7 +9,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
-    <NoWarn>$(NoWarn);CS0649;CS0168;CS0169;CS0414;CS0618;CS0219;CS0108;CS0114;SYSLIB0011;SYSLIB0051;WFO1000</NoWarn>
+    <NoWarn>$(NoWarn);CS0649;CS0168;CS0169;CS0414;CS0618;CS0219;CS0108;CS0114;CA1416;CA1418;SYSLIB0003;SYSLIB0011;SYSLIB0050;SYSLIB0051;WFO1000;NU1701</NoWarn>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>bin\</OutputPath>
   </PropertyGroup>
