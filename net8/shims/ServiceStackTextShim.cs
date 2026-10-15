@@ -1,3 +1,4 @@
+// (internal on purpose: every project that needs it compiles its own copy)
 // Stand-in for the old ServiceStack.Text library (version 3.9, whose free licence is not available for .NET 8).
 // It only covers what Ares.Tags uses. The file format is JSON here instead of ServiceStack's "JSV" text format:
 // export/import files of the old Editor are therefore NOT compatible between the two builds (the Editor is discontinued).
@@ -6,7 +7,7 @@ using System.Text.Json;
 
 namespace ServiceStack.Text
 {
-    public static class TypeSerializer
+    internal static class TypeSerializer
     {
         private static readonly JsonSerializerOptions s_Options = new JsonSerializerOptions { IncludeFields = true, WriteIndented = false };
 

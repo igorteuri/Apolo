@@ -6,13 +6,14 @@ NS = '{http://schemas.microsoft.com/developer/msbuild/2003}'
 def pk(name, ver):
     return '    <PackageReference Include="%s" Version="%s" />' % (name, ver)
 
-def gen(name, refs=(), packages=(), shim=None, csproj=None, forms=False):
+def gen(name, refs=(), packages=(), shim=None, csproj=None, forms=False, exclude=()):
     csproj = csproj or name
     root = ET.parse('src/%s/%s.csproj' % (name, csproj)).getroot()
     comp, res = [], []
     for g in root.findall(NS + 'ItemGroup'):
         for c in g.findall(NS + 'Compile'):
-            comp.append(c.get('Include'))
+            if c.get('Include') not in exclude:
+                comp.append(c.get('Include'))
         for r in g.findall(NS + 'EmbeddedResource'):
             ln = r.find(NS + 'LogicalName')
             res.append((r.get('Include'), ln.text if ln is not None else None))
@@ -39,8 +40,8 @@ def gen(name, refs=(), packages=(), shim=None, csproj=None, forms=False):
            '  </PropertyGroup>', '  <ItemGroup>']
     for c in comp:
         out.append('    <Compile Include="..\\src\\%s\\%s" Link="%s" />' % (name, c, c))
-    if shim:
-        out.append('    <Compile Include="shims\\%s" />' % shim)
+    for sh in ([shim] if isinstance(shim, str) else (shim or [])):
+        out.append('    <Compile Include="shims\\%s" />' % sh)
     for r, ln in res:
         if ln:
             out.append('    <EmbeddedResource Include="..\\src\\%s\\%s" LogicalName="%s" />' % (name, r, ln))
@@ -70,3 +71,7 @@ gen('Ares.Playing', ['Ares.Data', 'Ares.ModelInfo', 'Ares.Tags'],
     packages=[('NAudio.Core', '2.2.1'), ('NAudio.Wasapi', '2.2.1'), ('NLayer', '1.16.0'), ('NVorbis', '0.10.5'),
               ('Concentus', '2.2.2'), ('Concentus.OggFile', '1.0.6')])
 gen('Ares.CommonGUI', ['Ares.Data', 'Ares.ModelInfo', 'Ares.Settings'])
+
+gen('Ares.TagsImport', ['Ares.Data', 'Ares.ModelInfo', 'Ares.Playing', 'Ares.Tags'], shim='ServiceStackTextShim.cs', packages=[('RestSharp', '106.15.0')])
+gen('Ares.Players', ['Ares.Data', 'Ares.Playing', 'Ares.Settings', 'Ares.Tags'], shim='WebNetworkStub.cs', exclude=['WebNetwork.cs'])
+gen('Ares.Online', ['Ares.CommonGUI'], packages=[('HtmlRenderer.WinForms', '1.5.0.6')])
