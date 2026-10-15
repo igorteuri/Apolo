@@ -27,3 +27,22 @@ jobs:
           Write-Host ("COMPILAM: " + ($ok -join ", "))
           Write-Host ("FALHARAM: " + ($bad -join ", "))
           if ($bad.Count -gt 0) { exit 1 }
+
+      - name: Publish Apolo for .NET 8 (self-contained, x86)
+        shell: pwsh
+        run: |
+          dotnet publish net8/Ares.Player.Net8.csproj -c Release -r win-x86 --self-contained true --nologo -v:q -clp:ErrorsOnly -o dist-net8
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          # native libraries (audio decoding, rights check) that already exist in the repository
+          foreach ($f in @("chromaprint.dll","avcodec-54.dll","avutil-52.dll","msvcp100.dll","msvcr100.dll")) {
+            if (Test-Path "Libraries/$f") { Copy-Item "Libraries/$f" dist-net8 -Force }
+          }
+          Invoke-WebRequest "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile dist-net8/cloudflared.exe
+          Get-ChildItem dist-net8 | Select-Object -First 80 Name, Length | Format-Table -AutoSize
+          Write-Host ("Apolo.exe exists: " + (Test-Path "dist-net8/Apolo.exe"))
+
+      - name: Upload Apolo .NET 8
+        uses: actions/upload-artifact@v4
+        with:
+          name: Apolo-net8
+          path: dist-net8
