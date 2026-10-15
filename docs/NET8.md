@@ -51,3 +51,4 @@ Esta etapa não executou a fase 1: sem poder compilar aqui, converter 19 projeto
 - Etapa 78: .apkg aberto por qualquer caminho (2ª instância, recentes, menu) agora é importado; removido o mute das abas no modo 'não ouvir pelo PC' (o Windows captura depois do mute: as abas voltam a ser enviadas sempre, e ficam audíveis no PC).
 - Etapa 79: com 'não ouvir pelo PC' as abas web ficam mudas no navegador e o som é tirado de dentro da página (Web Audio / elementos de mídia, script CaptureScript) e misturado pelo Apolo (AppAudioCapture.PushPageAudio); fora desse modo continua o process loopback. Limite: mídia de outro domínio sem CORS e DRM (Spotify) podem ficar mudas.
 - Etapa 80: som das abas (modo 'não ouvir pelo PC') menos picotado: buffer de 240 ms para fontes de página + blocos de 4096 no tap.
+- Etapa 81: abas web picotando no Discord/VDO: reamostragem com estado entre blocos (sem cliques), reserva de 80 ms na ponte do Discord, relógio de 1 ms no mixer.

@@ -30,7 +30,9 @@ try {
 
 const FRAME_BYTES = 3840;      // 20 ms of 48 kHz stereo 16 bit
 const MAX_QUEUE_BYTES = FRAME_BYTES * 20;   // 400 ms
-const KEEP_QUEUE_BYTES = FRAME_BYTES * 5;   // 100 ms
+const KEEP_QUEUE_BYTES = FRAME_BYTES * 8;   // 160 ms
+const PRIME_BYTES = FRAME_BYTES * 4;        // 80 ms collected before the sound starts (and again after a gap)
+let primed = false;
 
 let socket = null;
 let client = null;
@@ -62,6 +64,16 @@ function describeError(e) {
 
 function takeFrame() {
     const out = Buffer.alloc(FRAME_BYTES);
+    // a small reserve absorbs the uneven arrival of the sound: without it every late block is a gap
+    if (!primed) {
+        if (queued >= PRIME_BYTES)
+            primed = true;
+        else
+            return out;
+    }
+    else if (queued < FRAME_BYTES) {
+        primed = false;
+    }
     let filled = 0;
     while (filled < FRAME_BYTES && queue.length > 0) {
         const chunk = queue[0];
@@ -113,6 +125,7 @@ function stopFeed() {
     }
     queue = [];
     queued = 0;
+    primed = false;
 }
 
 function onPcm(buf) {

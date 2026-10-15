@@ -249,6 +249,23 @@ namespace Ares.Player
 
         private void MixLoop()
         {
+            // Windows normally wakes a sleeping thread only every 15 ms: ask for 1 ms so that the frames come evenly
+            try { timeBeginPeriod(1); } catch (Exception) { }
+            try { MixLoopCore(); }
+            finally
+            {
+                try { timeEndPeriod(1); } catch (Exception) { }
+            }
+        }
+
+        [DllImport("winmm.dll")]
+        private static extern uint timeBeginPeriod(uint period);
+
+        [DllImport("winmm.dll")]
+        private static extern uint timeEndPeriod(uint period);
+
+        private void MixLoopCore()
+        {
             Stopwatch clock = Stopwatch.StartNew();
             long next = 0;
             byte[] frame = new byte[FrameBytes];

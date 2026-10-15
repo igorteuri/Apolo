@@ -836,21 +836,27 @@ namespace Ares.Player
  var origConnect = AudioNode.prototype.connect, origDisconnect = AudioNode.prototype.disconnect;
  var queue = [], queued = 0;
  function toB64(i16) {
-  var bytes = new Uint8Array(i16.buffer), s = '';
+  var bytes = new Uint8Array(i16.buffer, i16.byteOffset, i16.byteLength), s = '';
   for (var i = 0; i < bytes.length; i += 8192) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
   return btoa(s);
  }
+ // resampling to 48 kHz keeps its position and its last sample from one block to the next (no clicks at the block borders)
+ var rs = { t: 0, pl: 0, pr: 0 };
  function push(l, r, rate) {
   if (!cap.on) return;
-  var n = Math.floor(l.length * 48000 / rate);
-  var out = new Int16Array(n * 2);
-  for (var i = 0; i < n; i++) {
-   var pos = i * rate / 48000, k = Math.floor(pos), f = pos - k, k2 = Math.min(k + 1, l.length - 1);
-   var a = l[k] + (l[k2] - l[k]) * f, b = r[k] + (r[k2] - r[k]) * f;
+  var step = rate / 48000, N = l.length;
+  var out = new Int16Array(Math.ceil((N + 1) / step) * 2 + 4), o = 0;
+  var t = rs.t;
+  while (t < N - 1) {
+   var k = Math.floor(t), f = t - k, a, b;
+   if (k < 0) { a = rs.pl + (l[0] - rs.pl) * f; b = rs.pr + (r[0] - rs.pr) * f; }
+   else { a = l[k] + (l[k + 1] - l[k]) * f; b = r[k] + (r[k + 1] - r[k]) * f; }
    a = a > 1 ? 1 : (a < -1 ? -1 : a); b = b > 1 ? 1 : (b < -1 ? -1 : b);
-   out[i * 2] = a * 32767; out[i * 2 + 1] = b * 32767;
+   out[o++] = a * 32767; out[o++] = b * 32767;
+   t += step;
   }
-  try { wv.postMessage('apolo-pcm:' + toB64(out)); } catch (e) {}
+  rs.t = t - N; rs.pl = l[N - 1]; rs.pr = r[N - 1];
+  try { wv.postMessage('apolo-pcm:' + toB64(out.subarray(0, o))); } catch (e) {}
  }
  function tapOf(ctx) {
   if (ctx.__apoloTap) return ctx.__apoloTap;
