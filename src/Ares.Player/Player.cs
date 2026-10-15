@@ -2109,27 +2109,27 @@ namespace Ares.Player
             {
                 mGUIMonitor.IncreaseProgress(percent);
                 mPercent += percent;
-                mNetwork.InformClientOfImportProgress((int)mPercent, String.Empty);
+                if (mNetwork != null) mNetwork.InformClientOfImportProgress((int)mPercent, String.Empty);
             }
 
             public void IncreaseProgress(double percent, string text)
             {
                 mGUIMonitor.IncreaseProgress(percent, text);
                 mPercent += percent;
-                mNetwork.InformClientOfImportProgress((int)mPercent, text);
+                if (mNetwork != null) mNetwork.InformClientOfImportProgress((int)mPercent, text);
             }
 
             public void SetIndeterminate(string text)
             {
                 mGUIMonitor.SetIndeterminate(text);
-                mNetwork.InformClientOfImportProgress(-1, text);
+                if (mNetwork != null) mNetwork.InformClientOfImportProgress(-1, text);
             }
 
             public void SetProgress(int percent, string text)
             {
                 mGUIMonitor.SetProgress(percent, text);
                 mPercent = percent;
-                mNetwork.InformClientOfImportProgress(percent, text);
+                if (mNetwork != null) mNetwork.InformClientOfImportProgress(percent, text);
             }
         }
 
