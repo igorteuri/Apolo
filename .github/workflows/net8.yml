@@ -41,6 +41,37 @@ jobs:
           Get-ChildItem dist-net8 | Select-Object -First 80 Name, Length | Format-Table -AutoSize
           Write-Host ("Apolo.exe exists: " + (Test-Path "dist-net8/Apolo.exe"))
 
+      - name: Setup Node.js (for the Discord bridge)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Package the Discord bridge, Stream Deck plugin and Foundry module
+        shell: pwsh
+        run: |
+          # Discord bridge (Node.js + libraries)
+          New-Item -ItemType Directory -Force -Path dist-net8/discord | Out-Null
+          Copy-Item src/Ares.Player/Discord/package.json dist-net8/discord/
+          Copy-Item src/Ares.Player/Discord/discord-bridge.js dist-net8/discord/
+          Push-Location dist-net8/discord
+          npm install --omit=dev --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { Write-Host "npm install failed" }
+          Pop-Location
+          Copy-Item (Get-Command node).Source dist-net8/discord/node.exe
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          # Stream Deck plugin
+          New-Item -ItemType Directory -Force -Path dist-net8/StreamDeck | Out-Null
+          $src = (Resolve-Path "StreamDeck/com.igorteuri.apolo.sdPlugin").Path
+          $dest = Join-Path (Resolve-Path "dist-net8/StreamDeck").Path "Apolo.streamDeckPlugin"
+          if (Test-Path $dest) { Remove-Item $dest }
+          [System.IO.Compression.ZipFile]::CreateFromDirectory($src, $dest, [System.IO.Compression.CompressionLevel]::Optimal, $true)
+          # Foundry VTT module
+          New-Item -ItemType Directory -Force -Path dist-net8/FoundryModule | Out-Null
+          $src = (Resolve-Path "FoundryModule/apolo-audio").Path
+          $dest = Join-Path (Resolve-Path "dist-net8/FoundryModule").Path "apolo-audio.zip"
+          if (Test-Path $dest) { Remove-Item $dest }
+          [System.IO.Compression.ZipFile]::CreateFromDirectory($src, $dest, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+
       - name: Upload Apolo .NET 8
         uses: actions/upload-artifact@v4
         with:

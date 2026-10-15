@@ -587,6 +587,8 @@ namespace Ares.CommonGUI
                 lv.BackColor = p.Surface;
                 lv.ForeColor = p.Text;
                 lv.BorderStyle = BorderStyle.FixedSingle;
+                if (!p.IsClassic)
+                    ApplySoftGrid(lv);
             }
             else if (c is TreeView)
             {
@@ -855,6 +857,8 @@ namespace Ares.CommonGUI
             lb.DrawMode = DrawMode.OwnerDrawFixed;
             lb.ItemHeight = Math.Max(22, lb.Font.Height + 8);
             lb.DrawItem += OnListBoxDrawItem;
+            lb.MouseMove += OnListBoxMouseMove;
+            lb.MouseLeave += OnListBoxMouseLeave;
         }
 
         private static void RemoveListBoxLook(ListBox lb)
@@ -863,8 +867,43 @@ namespace Ares.CommonGUI
             if (!s_ListLook.TryGetValue(lb, out marker))
                 return;
             lb.DrawItem -= OnListBoxDrawItem;
+            lb.MouseMove -= OnListBoxMouseMove;
+            lb.MouseLeave -= OnListBoxMouseLeave;
             s_ListLook.Remove(lb);
             lb.DrawMode = DrawMode.Normal;
+        }
+
+        // an item which does not fit in the list shows its whole text when the mouse rests on it
+        private static ToolTip s_ListTip;
+        private static ListBox s_TipList;
+        private static int s_TipIndex = -1;
+
+        private static void OnListBoxMouseMove(object sender, MouseEventArgs e)
+        {
+            ListBox lb = (ListBox)sender;
+            int i = lb.IndexFromPoint(e.Location);
+            if (i == s_TipIndex && lb == s_TipList)
+                return;
+            OnListBoxMouseLeave(sender, EventArgs.Empty);
+            if (i < 0 || i >= lb.Items.Count)
+                return;
+            string text = lb.GetItemText(lb.Items[i]);
+            Size size = TextRenderer.MeasureText(text, lb.Font);
+            s_TipList = lb;
+            s_TipIndex = i;
+            if (size.Width <= lb.ClientSize.Width - 14)
+                return;
+            if (s_ListTip == null)
+                s_ListTip = new ToolTip();
+            s_ListTip.Show(text, lb, e.X + 14, e.Y + 22, 6000);
+        }
+
+        private static void OnListBoxMouseLeave(object sender, EventArgs e)
+        {
+            if (s_ListTip != null && s_TipList != null)
+                s_ListTip.Hide(s_TipList);
+            s_TipList = null;
+            s_TipIndex = -1;
         }
 
         private static void OnListBoxDrawItem(object sender, DrawItemEventArgs e)
@@ -1360,6 +1399,55 @@ namespace Ares.CommonGUI
             public override Color RaftingContainerGradientEnd { get { return P.Window; } }
         }
 
+        // --------------------------------------------------------------------------------
+        // lists with a grid: the native grid is bright white in the dark themes, so such lists
+        // are drawn by hand with a soft line below each row (like the track list)
+        // --------------------------------------------------------------------------------
+
+        private static readonly ConditionalWeakTable<ListView, object> s_SoftGrid = new ConditionalWeakTable<ListView, object>();
+
+        private static void ApplySoftGrid(ListView lv)
+        {
+            if (!lv.GridLines || lv.View != View.Details || lv.CheckBoxes)
+                return;
+            object dummy;
+            if (s_SoftGrid.TryGetValue(lv, out dummy))
+                return;
+            s_SoftGrid.Add(lv, new object());
+            lv.GridLines = false;
+            lv.OwnerDraw = true;
+            lv.DrawItem += delegate (object sender, DrawListViewItemEventArgs e) { };
+            lv.DrawColumnHeader += delegate (object sender, DrawListViewColumnHeaderEventArgs e)
+            {
+                ThemePalette pal = Current;
+                using (SolidBrush back = new SolidBrush(pal.Window))
+                    e.Graphics.FillRectangle(back, e.Bounds);
+                using (Pen line = new Pen(Color.FromArgb(110, pal.Border)))
+                {
+                    e.Graphics.DrawLine(line, e.Bounds.Left, e.Bounds.Bottom - 1, e.Bounds.Right, e.Bounds.Bottom - 1);
+                    e.Graphics.DrawLine(line, e.Bounds.Right - 1, e.Bounds.Top + 4, e.Bounds.Right - 1, e.Bounds.Bottom - 5);
+                }
+                Rectangle tr = new Rectangle(e.Bounds.X + 6, e.Bounds.Y, Math.Max(0, e.Bounds.Width - 10), e.Bounds.Height);
+                TextRenderer.DrawText(e.Graphics, e.Header.Text, ((ListView)sender).Font, tr, pal.TextDim,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+            };
+            lv.DrawSubItem += delegate (object sender, DrawListViewSubItemEventArgs e)
+            {
+                ThemePalette pal = Current;
+                ListView list = (ListView)sender;
+                Rectangle b = e.Bounds;
+                if (e.ColumnIndex == 0 && list.Columns.Count > 0)
+                    b = new Rectangle(b.X, b.Y, list.Columns[0].Width, b.Height);
+                using (SolidBrush back = new SolidBrush(e.Item.Selected ? pal.Selection : pal.Surface))
+                    e.Graphics.FillRectangle(back, b);
+                using (Pen line = new Pen(Color.FromArgb(70, pal.Border)))
+                    e.Graphics.DrawLine(line, b.Left, b.Bottom - 1, b.Right, b.Bottom - 1);
+                Rectangle tr = new Rectangle(b.X + 6, b.Y, Math.Max(0, b.Width - 10), b.Height);
+                TextRenderer.DrawText(e.Graphics, e.SubItem.Text, list.Font, tr, pal.Text,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+            };
+        }
+
         private sealed class ThemedRenderer : ToolStripProfessionalRenderer
         {
             public ThemedRenderer()
@@ -1432,9 +1520,10 @@ namespace Ares.CommonGUI
                 return;
             s_MenuHooked.Add(strip, new object());
             StripEllipsis(strip.Items);
+            TidyMenu(strip as ToolStripDropDown);
             ContextMenuStrip cms = strip as ContextMenuStrip;
             if (cms != null)
-                cms.Opening += delegate { StripEllipsis(cms.Items); };
+                cms.Opening += delegate { StripEllipsis(cms.Items); TidyMenu(cms); };
         }
 
         private static void StripEllipsis(ToolStripItemCollection items)
@@ -1460,11 +1549,30 @@ namespace Ares.CommonGUI
                     {
                         s_MenuHooked.Add(dd, new object());
                         ToolStripDropDownItem captured = dd;
-                        dd.DropDownOpening += delegate { StripEllipsis(captured.DropDownItems); };
+                        dd.DropDownOpening += delegate { StripEllipsis(captured.DropDownItems); TidyMenu(captured.DropDown); };
                     }
                     StripEllipsis(dd.DropDownItems);
+                    TidyMenu(dd.DropDown);
                 }
             }
+        }
+
+        // Menus without icons: only a few items had one and the empty column in front of the others looked broken.
+        // The column is only kept (for the check mark) when some item can be checked.
+        private static void TidyMenu(ToolStripDropDown drop)
+        {
+            ToolStripDropDownMenu menu = drop as ToolStripDropDownMenu;
+            if (menu == null)
+                return;
+            bool anyCheck = false;
+            foreach (ToolStripItem item in menu.Items)
+            {
+                ToolStripMenuItem mi = item as ToolStripMenuItem;
+                if (mi != null && (mi.CheckOnClick || mi.Checked))
+                    anyCheck = true;
+            }
+            menu.ShowImageMargin = false;
+            menu.ShowCheckMargin = anyCheck;
         }
 
         // --------------------------------------------------------------------------------

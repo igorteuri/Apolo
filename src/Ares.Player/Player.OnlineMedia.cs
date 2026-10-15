@@ -102,7 +102,7 @@ namespace Ares.Player
                 l.Text = T("Buscar:", "Search:");
                 Place(l, 12, 16, 60, 20, AnchorStyles.Top | AnchorStyles.Left);
                 Controls.Add(l);
-                Place(m_Query, 76, 12, 400, 24, TopLR);
+                Place(m_Query, 76, 12, 390, 24, TopLR);
                 m_Query.KeyDown += (s, e) =>
                 {
                     if (e.KeyCode == System.Windows.Forms.Keys.Enter)
@@ -112,17 +112,17 @@ namespace Ares.Player
                     }
                 };
                 Controls.Add(m_Query);
-                Place(m_Kind, 486, 12, 180, 24, AnchorStyles.Top | AnchorStyles.Right);
+                Place(m_Kind, 476, 12, 150, 24, AnchorStyles.Top | AnchorStyles.Right);
                 m_Kind.DropDownStyle = ComboBoxStyle.DropDownList;
                 m_Kind.Items.Add(T("Música", "Music"));
                 m_Kind.Items.Add(T("Efeitos sonoros", "Sound effects"));
                 m_Kind.SelectedIndex = 0;
                 Controls.Add(m_Kind);
-                Place(m_Search, 676, 10, 110, 28, AnchorStyles.Top | AnchorStyles.Right);
+                Place(m_Search, 634, 10, 100, 28, AnchorStyles.Top | AnchorStyles.Right);
                 m_Search.Text = T("Buscar", "Search");
                 m_Search.Click += (s, e) => RunSearch();
                 Controls.Add(m_Search);
-                Place(m_Key, 792, 10, 116, 28, AnchorStyles.Top | AnchorStyles.Right);
+                Place(m_Key, 742, 10, 166, 28, AnchorStyles.Top | AnchorStyles.Right);
                 m_Key.Text = T("Chave Freesound", "Freesound key");
                 m_Key.Click += (s, e) => AskFreesoundKey();
                 Controls.Add(m_Key);
@@ -225,9 +225,9 @@ namespace Ares.Player
                     Label l = new Label();
                     l.SetBounds(12, 10, 536, 56);
                     l.Text = T("O Freesound (ótimo para efeitos sonoros) pede uma chave gratuita. Crie a sua em freesound.org/apiv2/apply e cole aqui. "
-                        + "Sem a chave, os efeitos vêm só do Openverse.",
+                        + "Sem a chave, a busca usa só o Wikimedia Commons e o Internet Archive.",
                         "Freesound (great for sound effects) asks for a free key. Create yours at freesound.org/apiv2/apply and paste it here. "
-                        + "Without it, effects come only from Openverse.");
+                        + "Without it, the search uses only Wikimedia Commons and the Internet Archive.");
                     f.Controls.Add(l);
                     TextBox box = new TextBox();
                     box.SetBounds(12, 72, 536, 24);
@@ -306,7 +306,7 @@ namespace Ares.Player
                         else
                             m_Info.Text = m_List.Items.Count + T(" resultado(s). Selecione e clique em \"Baixar para a Biblioteca\".", " result(s). Select and click \"Download to the library\".")
                                 + (problems.Length > 0 ? "  (" + problems + ")" : "")
-                                + (effects && OpenMedia.FreesoundKey.Length == 0 ? "  " + T("Para mais efeitos, use o botão \"Chave Freesound\".", "For more effects, use the \"Freesound key\" button.") : "");
+                                + (OpenMedia.FreesoundKey.Length == 0 ? "  " + T("Para incluir o Freesound, use o botão \"Chave Freesound\".", "To include Freesound, use the \"Freesound key\" button.") : "");
                     });
                 });
             }

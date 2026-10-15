@@ -276,13 +276,20 @@ namespace Ares.Player
             List<MediaHit> hits = new List<MediaHit>();
             StringBuilder errors = new StringBuilder();
             try { SearchOpenverseAudio(query, effects, commercialOnly, hits); }
-            catch (Exception ex) { errors.Append("Openverse: " + ex.Message + " "); }
+            catch (Exception ex)
+            {
+                // Openverse now asks for a registration for most requests: not worth bothering the person with it
+                if (ex.Message.IndexOf("401", StringComparison.Ordinal) < 0)
+                    errors.Append("Openverse: " + ex.Message + " ");
+            }
+            try { SearchCommons(query, commercialOnly, hits); }
+            catch (Exception ex) { errors.Append("Wikimedia Commons: " + ex.Message + " "); }
             if (!effects)
             {
                 try { SearchArchive(query, commercialOnly, hits); }
                 catch (Exception ex) { errors.Append("Internet Archive: " + ex.Message + " "); }
             }
-            else if (FreesoundKey.Length > 0)
+            if (FreesoundKey.Length > 0)
             {
                 try { SearchFreesound(query, commercialOnly, hits); }
                 catch (Exception ex) { errors.Append("Freesound: " + ex.Message + " "); }
@@ -313,6 +320,47 @@ namespace Ares.Player
                 double ms;
                 if (double.TryParse(Str(r, "duration"), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out ms))
                     h.Duration = ms / 1000.0;
+                if (h.DownloadUrl.Length > 0)
+                    hits.Add(h);
+            }
+        }
+
+        // Wikimedia Commons: free audio files, no key needed
+        private static void SearchCommons(string query, bool commercialOnly, List<MediaHit> hits)
+        {
+            string url = "https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=24"
+                + "&gsrsearch=" + Enc(query + " filetype:audio")
+                + "&prop=imageinfo&iiprop=url%7Cextmetadata%7Cmime";
+            object root = GetJson(url);
+            Dictionary<string, object> pages = Obj(Child(Child(root, "query"), "pages"));
+            if (pages == null)
+                return;
+            foreach (KeyValuePair<string, object> kv in pages)
+            {
+                object[] infos = Arr(Child(kv.Value, "imageinfo"));
+                if (infos == null || infos.Length == 0)
+                    continue;
+                object info = infos[0];
+                object meta = Child(info, "extmetadata");
+                string lic = StripHtml(Str(Child(meta, "LicenseShortName"), "value"));
+                if (commercialOnly && lic.IndexOf("NC", StringComparison.Ordinal) >= 0)
+                    continue;
+                MediaHit h = new MediaHit();
+                h.Source = "Wikimedia Commons";
+                string title = Str(kv.Value, "title");
+                if (title.StartsWith("File:", StringComparison.Ordinal))
+                    title = title.Substring(5);
+                int dot = title.LastIndexOf('.');
+                if (dot > 0)
+                    title = title.Substring(0, dot);
+                h.Title = title;
+                h.Author = StripHtml(Str(Child(meta, "Artist"), "value"));
+                h.License = lic;
+                h.LicenseUrl = Str(Child(meta, "LicenseUrl"), "value");
+                h.PageUrl = Str(info, "descriptionurl");
+                h.DownloadUrl = Str(info, "url");
+                int d2 = h.DownloadUrl.LastIndexOf('.');
+                h.Ext = d2 > 0 ? h.DownloadUrl.Substring(d2 + 1).ToLowerInvariant() : "ogg";
                 if (h.DownloadUrl.Length > 0)
                     hits.Add(h);
             }

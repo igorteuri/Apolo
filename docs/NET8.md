@@ -34,3 +34,6 @@ Esta etapa não executou a fase 1: sem poder compilar aqui, converter 19 projeto
 - Etapas 62-65: corrigidos os últimos erros (ambiguidade de `MethodInvoker`, `HookProc` público no substituto do monitor de teclado); os 10 projetos, incluindo o Apolo.exe, compilam no .NET 8.
 - Etapa 66: `net8.yml` agora publica o Apolo (self-contained, win-x86) e envia o artefato `Apolo-net8` para testes de execução.
 - Próximo: testar a execução (WebView2, atalhos globais, captura de áudio, verificação de direitos), instalador e limpeza do legado; só então o merge na master.
+- Etapa 67 (primeiros testes do Apolo .NET 8): abriu, toca, renomeia, verifica direitos e abre a web. Ajustes: pacote do Discord/Stream Deck/Foundry no net8.yml, grade suave nas listas, botões da janela de direitos, painel de pastas redimensionável com dica de texto completo, busca livre com Wikimedia Commons e Freesound em música e efeitos.
+- Menus sem ícones (só alguns itens tinham, deixava coluna vazia); marca de seleção mantida onde há itens marcáveis.
+- Conhecido: editar o projeto (mover botão) recarrega o projeto e para o som (comportamento antigo, a melhorar depois).

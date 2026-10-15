@@ -52,6 +52,8 @@ namespace Ares.Player
         private int m_ModesLeftOriginal;
         private int m_ElementsTopOriginal;
         private EdgeHandle m_LeftStrip;
+        private Panel m_ModesSplit;
+        private int m_ModesWidth;
         private List<TrackRow> m_TrackRows = new List<TrackRow>();
         private List<TrackRow> m_TrackShown = new List<TrackRow>();
         private Timer m_TrackPlayTimer;
@@ -158,6 +160,34 @@ namespace Ares.Player
                 new ToolTip().SetToolTip(m_LeftStrip, T("Mostrar / esconder o painel esquerdo" + KeyHint("left"), "Show / hide the left panel" + KeyHint("left")));
                 m_LeftStrip.Click += (s2, e2) => SetLeftOpen(!m_LeftOpen);
                 host.Controls.Add(m_LeftStrip);
+                m_ModesSplit = new Panel();
+                m_ModesSplit.Name = "modesSplit";
+                m_ModesSplit.Cursor = Cursors.VSplit;
+                m_ModesSplit.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+                int dragStartX = 0, dragStartWidth = 0;
+                bool dragging = false;
+                m_ModesSplit.MouseDown += (s2, e2) =>
+                {
+                    dragging = true;
+                    dragStartX = Cursor.Position.X;
+                    dragStartWidth = m_ModesWidth;
+                };
+                m_ModesSplit.MouseMove += (s2, e2) =>
+                {
+                    if (!dragging)
+                        return;
+                    m_ModesWidth = dragStartWidth + Cursor.Position.X - dragStartX;
+                    LayoutMainColumns();
+                };
+                m_ModesSplit.MouseUp += (s2, e2) =>
+                {
+                    if (!dragging)
+                        return;
+                    dragging = false;
+                    try { Ares.CommonGUI.Preferences.Set("ModesWidth", m_ModesWidth.ToString()); } catch (Exception) { }
+                };
+                new ToolTip().SetToolTip(m_ModesSplit, T("Arraste para alargar ou estreitar a lista de pastas", "Drag to widen or narrow the folder list"));
+                host.Controls.Add(m_ModesSplit);
                 SizeChanged += (s, e) => LayoutMainColumns();
 
                 m_TrackCollapse.Visible = false;
@@ -443,7 +473,14 @@ namespace Ares.Player
                     if (lw >= 200)
                         groupBox3.SetBounds(margin, bodyTop, lw, bodyHeight);
                 }
-                groupBox4.SetBounds(modesLeft, bodyTop, groupBox4.Width, bodyHeight);
+                if (m_ModesWidth <= 0)
+                {
+                    int savedWidth;
+                    m_ModesWidth = int.TryParse(Ares.CommonGUI.Preferences.Get("ModesWidth", "0"), out savedWidth) && savedWidth >= 120 ? savedWidth : groupBox4.Width;
+                }
+                m_ModesWidth = Math.Max(120, Math.Min(m_ModesWidth, Math.Max(120, clientWidth / 2)));
+                groupBox4.SetBounds(modesLeft, bodyTop, m_ModesWidth, bodyHeight);
+                m_ModesSplit.SetBounds(modesLeft + m_ModesWidth, bodyTop, TrackGap, bodyHeight);
                 groupBox5.Left = modesLeft + groupBox4.Width + TrackGap;
                 m_LeftStrip.SetBounds(0, bodyTop, LeftStripThickness, bodyHeight);
 
