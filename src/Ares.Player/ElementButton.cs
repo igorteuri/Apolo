@@ -383,10 +383,12 @@ namespace Ares.Player
                                 ? new Rectangle(Width - (bd + 4) * (glyphs.Count - gi) - 6, (Height - bd) / 2, bd, bd)
                                 : new Rectangle(6 + gi * (bd + 3), 6, bd, bd);
                             using (GraphicsPath pp = Rounded(pill, bd / 3))
-                            using (SolidBrush pb = new SolidBrush(Color.FromArgb(m_Picture != null && !m_ListMode ? 225 : 200, window)))
-                                g.FillPath(pb, pp);
-                            using (Pen pbd = new Pen(Color.FromArgb(150, accent)))
-                                g.DrawPath(pbd, pp);
+                            {
+                                using (SolidBrush pb = new SolidBrush(Color.FromArgb(m_Picture != null && !m_ListMode ? 225 : 200, window)))
+                                    g.FillPath(pb, pp);
+                                using (Pen pbd = new Pen(Color.FromArgb(150, accent)))
+                                    g.DrawPath(pbd, pp);
+                            }
                             TextRenderer.DrawText(g, glyphs[gi], gf, pill, accent,
                                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
                         }
