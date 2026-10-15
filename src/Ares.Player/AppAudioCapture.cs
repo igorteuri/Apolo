@@ -122,54 +122,6 @@ namespace Ares.Player
         private Thread m_MixThread;
         private Thread m_ScanThread;
         private string m_LastProcessList = "";
-        private bool m_MuteErrorLogged;
-        private bool m_Muting;
-        private readonly HashSet<string> m_MutedSessions = new HashSet<string>();
-
-        // Silences (or restores) the Windows volume of the web page processes. What Apolo captures of them is not changed
-        // by this: the person stops hearing the pages on this PC, the others still do.
-        private void SetLocalMute(bool mute, List<int> processes)
-        {
-#if NET
-            if (!mute && !m_Muting)
-                return;
-            NAudio.CoreAudioApi.MMDeviceEnumerator enumerator = new NAudio.CoreAudioApi.MMDeviceEnumerator();
-            try
-            {
-                foreach (NAudio.CoreAudioApi.MMDevice device in enumerator.EnumerateAudioEndPoints(NAudio.CoreAudioApi.DataFlow.Render, NAudio.CoreAudioApi.DeviceState.Active))
-                {
-                    NAudio.CoreAudioApi.AudioSessionManager manager = device.AudioSessionManager;
-                    manager.RefreshSessions();
-                    NAudio.CoreAudioApi.SessionCollection sessions = manager.Sessions;
-                    for (int i = 0; i < sessions.Count; ++i)
-                    {
-                        NAudio.CoreAudioApi.AudioSessionControl session = sessions[i];
-                        string key = device.ID + "|" + session.GetSessionInstanceIdentifier;
-                        if (mute)
-                        {
-                            if (processes != null && processes.Contains((int)session.GetProcessID) && !session.SimpleAudioVolume.Mute)
-                            {
-                                session.SimpleAudioVolume.Mute = true;
-                                m_MutedSessions.Add(key);
-                            }
-                        }
-                        else if (m_MutedSessions.Contains(key))
-                        {
-                            session.SimpleAudioVolume.Mute = false;
-                            m_MutedSessions.Remove(key);
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                enumerator.Dispose();
-            }
-            m_Muting = mute || m_MutedSessions.Count > 0;
-            if (!mute && m_MutedSessions.Count == 0)
-                m_Muting = false;
-#endif
-        }
 
         public AppAudioCapture(int processId)
         {
@@ -346,29 +298,14 @@ namespace Ares.Player
                 {
                     ProcessLoopbackCapture.Log("web audio scan: " + ex.Message);
                 }
-                for (int i = 0; i < 5 && !m_Stop; ++i)
+                for (int i = 0; i < 20 && !m_Stop; ++i)
                     Thread.Sleep(100);
             }
-            try { SetLocalMute(false, null); } catch (Exception) { }
         }
 
         private void ScanOnce()
         {
-            List<int> all;
-            List<int> roots = FindWebViewRoots(m_ProcessId, out all);
-            // "don't listen on this PC": the web pages keep being sent, but are not heard here
-            try
-            {
-                SetLocalMute(!Ares.Playing.AudioInit.LocalOutputEnabled, all);
-            }
-            catch (Exception ex)
-            {
-                if (!m_MuteErrorLogged)
-                {
-                    m_MuteErrorLogged = true;
-                    ProcessLoopbackCapture.Log("silencing the web pages on this PC failed: " + ex.Message);
-                }
-            }
+            List<int> roots = FindWebViewRoots(m_ProcessId);
             string list = string.Join(",", roots.ConvertAll<string>(delegate (int p) { return p.ToString(); }).ToArray());
             if (list != m_LastProcessList)
             {
@@ -433,9 +370,8 @@ namespace Ares.Player
 
         // the browser processes (msedgewebview2.exe) which belong to this program: the ones whose parent is not
         // itself a browser process of this program (Windows captures the child processes with them)
-        private static List<int> FindWebViewRoots(int ownerPid, out List<int> all)
+        private static List<int> FindWebViewRoots(int ownerPid)
         {
-            all = new List<int>();
             Dictionary<int, int> parent = new Dictionary<int, int>();
             Dictionary<int, string> names = new Dictionary<int, string>();
             IntPtr snap = CreateToolhelp32Snapshot(2, 0);
@@ -481,7 +417,6 @@ namespace Ares.Player
                 if (owned)
                     candidates.Add(pair.Key);
             }
-            all = new List<int>(candidates);
             List<int> roots = new List<int>();
             foreach (int c in candidates)
             {

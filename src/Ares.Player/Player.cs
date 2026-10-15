@@ -768,6 +768,12 @@ namespace Ares.Player
 
         private void OpenProject(String filePath, bool onControllerRequest)
         {
+            // a packed project (.apkg) is imported, never opened directly (it is a zip file)
+            if (filePath != null && filePath.EndsWith(".apkg", StringComparison.OrdinalIgnoreCase))
+            {
+                ImportProject(filePath, onControllerRequest);
+                return;
+            }
             if (!onControllerRequest)
                 filePath = Ares.Settings.ProjectFiles.Upgrade(filePath); // an old .ares project continues as .apolo
             StopAllPlaying();
