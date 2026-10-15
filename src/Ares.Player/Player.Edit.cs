@@ -356,7 +356,7 @@ namespace Ares.Player
                 return;
             int modeIndex = SelectedModeIndex;
             string modeTitle = mode.Title;
-            RunAfterDrag(() => ApplyProjectEdit(() =>
+            RunAfterDrag(() => ApplyProjectEditLive(() =>
             {
                 IMode m = m_Project.GetModes()[modeIndex];
                 IModeElement moved = m.GetElements().FirstOrDefault(x => x.Id == movedId);
@@ -664,6 +664,53 @@ namespace Ares.Player
             if (m_Project == null || index < 0 || index >= m_Project.GetModes().Count)
                 return null;
             return m_Project.GetModes()[index];
+        }
+
+        // Reordering buttons inside the folder which is shown: the project is saved and the buttons are moved in place,
+        // so that the music which is playing keeps playing (the project is not reloaded).
+        private void ApplyProjectEditLive(Action edit, string modeTitle)
+        {
+            if (m_Project == null)
+                return;
+            bool oldWatch = fileSystemWatcher1.EnableRaisingEvents;
+            fileSystemWatcher1.EnableRaisingEvents = false;
+            try
+            {
+                PushUndo();
+                m_UndoBusy = true;
+                edit();
+                m_Project.Changed = true;
+                DataModule.ProjectManager.SaveProject(m_Project);
+                IMode mode = CurrentMode();
+                if (mode == null || mode.Title != modeTitle)
+                {
+                    ShowModeAfterReload(modeTitle);
+                    return;
+                }
+                int pos = 0;
+                elementsPanel.SuspendLayout();
+                foreach (IModeElement el in mode.GetElements())
+                {
+                    CheckBox box;
+                    if (m_ButtonsForIds.TryGetValue(el.Id, out box) && box.Parent == elementsPanel)
+                    {
+                        elementsPanel.Controls.SetChildIndex(box, pos);
+                        ++pos;
+                    }
+                }
+                elementsPanel.ResumeLayout(true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, T("Erro ao editar: ", "Edit error: ") + ex.Message, StringResources.Ares,
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                m_UndoBusy = false;
+                UpdateUndoMenu();
+                fileSystemWatcher1.EnableRaisingEvents = oldWatch;
+            }
         }
 
         private void ApplyProjectEdit(Action edit, string selectModeTitle)

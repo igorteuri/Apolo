@@ -3,8 +3,6 @@ name: Apolo .NET 8 (small build)
 # Only the projects of the .NET 8 migration (folder net8/). It does not package the Discord bridge, Stream Deck,
 # Foundry module or installer: those do not depend on .NET and are tested by the big build (build.yml) on master.
 on:
-  push:
-    branches: [net-8]
   workflow_dispatch:
 
 jobs:

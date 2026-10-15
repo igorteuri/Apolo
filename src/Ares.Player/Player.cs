@@ -83,6 +83,7 @@ namespace Ares.Player
             m_KeyboardHookManager.KeyDown += new KeyEventHandler(m_KeyboardHookManager_KeyDown);
 #endif
             InitializeComponent();
+            Ares.CommonGUI.ThemeManager.RevealWhenThemed(this);
             if (!m_HideToTray)
             {
                 notifyIcon.Visible = false;
@@ -185,6 +186,7 @@ namespace Ares.Player
         private SoundProgressPanel m_SoundPanel;
         private NowPlayingStrip m_NowPlaying;
         private ToolStripButton m_PauseButton;
+        private Size m_PauseIconSize;
         private bool m_PauseShown;
         private ToolStripDropDownButton m_OutputButton;
         private int m_OutputShown = int.MinValue;
@@ -479,8 +481,11 @@ namespace Ares.Player
 
         private void UpdatePauseButton(bool paused)
         {
-            if (m_PauseButton == null || m_PauseShown == paused && m_PauseButton.Image != null)
+            // the icon is made again when the size of the toolbar icons changed (the scale of the theme is applied after the start)
+            Size iconSize = (m_TransportStrip ?? toolStrip1).ImageScalingSize;
+            if (m_PauseButton == null || m_PauseShown == paused && m_PauseButton.Image != null && iconSize == m_PauseIconSize)
                 return;
+            m_PauseIconSize = iconSize;
             m_PauseShown = paused;
             m_PauseButton.ToolTipText = PauseText(paused);
             m_PauseButton.Text = PauseText(paused);

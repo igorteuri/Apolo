@@ -120,7 +120,7 @@ namespace Ares.CommonGUI
         {
             int captionW = 0;
             foreach (Control c in captions)
-                captionW = Math.Max(captionW, TextRenderer.MeasureText(c.Text, c.Font).Width + (c is RadioButton ? 28 : 4));
+                captionW = Math.Max(captionW, TextRenderer.MeasureText(c.Text, c.Font).Width + (c is RadioButton ? 40 : 14));
             box.SetBounds(6, top, pageW - 12, 30 + captions.Length * rowH + 6);
             int innerW = box.ClientSize.Width;
             for (int i = 0; i < captions.Length; i++)
@@ -128,7 +128,7 @@ namespace Ares.CommonGUI
                 int y = 26 + i * rowH;
                 Control cap = captions[i];
                 cap.AutoSize = false;
-                cap.SetBounds(gap, y, captionW, rowH - 6);
+                cap.SetBounds(gap, y, captionW, rowH - 4);
                 if (cap is Label)
                     ((Label)cap).TextAlign = ContentAlignment.MiddleLeft;
                 int pathLeft = gap + captionW + gap;
@@ -144,7 +144,7 @@ namespace Ares.CommonGUI
                 path.AutoEllipsis = true;
                 path.TextAlign = ContentAlignment.MiddleLeft;
                 path.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-                path.SetBounds(pathLeft, y, Math.Max(40, right - pathLeft), rowH - 6);
+                path.SetBounds(pathLeft, y, Math.Max(40, right - pathLeft), rowH - 4);
                 new ToolTip().SetToolTip(path, path.Text);
             }
         }
@@ -163,7 +163,7 @@ namespace Ares.CommonGUI
                     int needed = TextRenderer.MeasureText(ch.Text, ch.Font, new Size(int.MaxValue, int.MaxValue), TextFormatFlags.NoPadding | TextFormatFlags.SingleLine).Width
                         + (ch is Label ? 6 : 26);
                     int single = TextRenderer.MeasureText("Ag", ch.Font).Height * 2;
-                    if (ch.Height <= single && needed > ch.Width - 2)
+                    if (ch.Height <= single)
                     {
                         // controls to the right of the caption's start in the same row; they may even overlap the old text
                         List<Control> row = new List<Control>();
@@ -176,10 +176,11 @@ namespace Ares.CommonGUI
                                 minLeft = Math.Min(minLeft, s.Left);
                             }
                         }
-                        ch.Width = needed;
+                        if (needed > ch.Width - 2)
+                            ch.Width = needed;
                         if (row.Count > 0)
                         {
-                            int delta = ch.Left + needed + 4 - minLeft;
+                            int delta = ch.Right + 8 - minLeft;
                             if (delta > 0)
                             {
                                 foreach (Control s in row)

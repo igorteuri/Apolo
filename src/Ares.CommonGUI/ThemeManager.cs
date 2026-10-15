@@ -319,7 +319,36 @@ namespace Ares.CommonGUI
                     SetApoloIcon(f);
                 }
                 AddAppearanceMenu(f);
+                if (s_Reveal.Contains(f))
+                    Reveal(f);
             }
+        }
+
+        // A window which is invisible until the theme was applied to it: otherwise it shows for a moment with the
+        // white colors of Windows when the program starts. A timer shows it anyway after a short time.
+        private static readonly List<Form> s_Reveal = new List<Form>();
+
+        public static void RevealWhenThemed(Form form)
+        {
+            if (form == null || Current == null || Current.IsClassic)
+                return;
+            form.Opacity = 0;
+            s_Reveal.Add(form);
+            Timer fallback = new Timer();
+            fallback.Interval = 2500;
+            fallback.Tick += delegate
+            {
+                fallback.Stop();
+                fallback.Dispose();
+                Reveal(form);
+            };
+            fallback.Start();
+        }
+
+        private static void Reveal(Form form)
+        {
+            if (s_Reveal.Remove(form) && !form.IsDisposed)
+                form.Opacity = 1;
         }
 
         // --------------------------------------------------------------------------------
@@ -1152,7 +1181,10 @@ namespace Ares.CommonGUI
                     using (SolidBrush b2 = new SolidBrush(stripBack))
                     {
                         // the empty part of the tab row, to the right of the last tab
-                        g2.FillRectangle(b2, new Rectangle(tabsRight, 0, Math.Max(0, client.Width - tabsRight), top));
+                        g2.FillRectangle(b2, new Rectangle(0, 0, client.Width, top));
+                        // the tabs again, without the light edges which Windows draws around them
+                        for (int i = 0; i < m_Tab.TabCount; ++i)
+                            DrawTab(g2, m_Tab, i, m_Tab.GetTabRect(i));
                     }
                     using (Graphics g = Graphics.FromHwnd(m_Tab.Handle))
                     using (Region r = new Region(area))
@@ -1195,20 +1227,25 @@ namespace Ares.CommonGUI
             ThemePalette p = Current;
             if (tc == null || p == null || p.IsClassic || e.Index < 0 || e.Index >= tc.TabPages.Count)
                 return;
-            bool selected = e.Index == tc.SelectedIndex;
-            Rectangle r = e.Bounds;
+            DrawTab(e.Graphics, tc, e.Index, e.Bounds);
+        }
+
+        private static void DrawTab(Graphics g, TabControl tc, int index, Rectangle r)
+        {
+            ThemePalette p = Current;
+            bool selected = index == tc.SelectedIndex;
             using (SolidBrush back = new SolidBrush(selected ? p.Window : p.Surface))
             {
-                e.Graphics.FillRectangle(back, r);
+                g.FillRectangle(back, r);
             }
             if (selected)
             {
                 using (SolidBrush accent = new SolidBrush(p.Accent))
                 {
-                    e.Graphics.FillRectangle(accent, new Rectangle(r.X, r.Y, r.Width, 2));
+                    g.FillRectangle(accent, new Rectangle(r.X, r.Y, r.Width, 2));
                 }
             }
-            TextRenderer.DrawText(e.Graphics, tc.TabPages[e.Index].Text, tc.Font, r,
+            TextRenderer.DrawText(g, tc.TabPages[index].Text, tc.Font, r,
                 selected ? p.Text : p.TextDim,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
         }
@@ -1339,7 +1376,7 @@ namespace Ares.CommonGUI
                     if (header != IntPtr.Zero)
                         SetWindowTheme(header, dark ? "DarkMode_ItemsView" : "Explorer", null);
                 }
-                else if (c is TreeView || c is ListBox || c is TextBoxBase || c is ScrollableControl && c.GetType() == typeof(Panel))
+                else if (c is TreeView || c is ListBox || c is TextBoxBase || c is Panel)
                 {
                     SetWindowTheme(c.Handle, dark ? "DarkMode_Explorer" : "Explorer", null);
                 }

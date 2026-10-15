@@ -1,10 +1,10 @@
 ﻿; Instalador do Apolo (Inno Setup 6)
-; O build do GitHub Actions gera este instalador sozinho (veja .github/workflows/build.yml).
+; O build do GitHub Actions (.NET 8) gera este instalador sozinho (veja .github/workflows/build.yml).
 ; Para gerar na sua maquina: compile o projeto, junte tudo na pasta "dist" (como o workflow faz)
-; e abra este arquivo no Inno Setup, ou rode:  iscc /DMyAppVersion=0.70.0 Setup\Apolo.iss
+; e abra este arquivo no Inno Setup, ou rode:  iscc /DMyAppVersion=0.71.0 Setup\Apolo.iss
 
 #ifndef MyAppVersion
-  #define MyAppVersion "0.70.0"
+  #define MyAppVersion "0.71.0"
 #endif
 #define MyAppName "Apolo"
 #define MyAppPublisher "Igor Teuri (Dados Críticos)"
@@ -40,7 +40,7 @@ SolidCompression=yes
 ; quem preferir pode escolher instalar so para o usuario atual.
 PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=dialog
-MinVersion=6.1sp1
+MinVersion=10.0.14393
 ChangesAssociations=yes
 CloseApplications=yes
 RestartApplications=no
@@ -81,11 +81,11 @@ Root: HKA; Subkey: "Software\Classes\ApoloPackedProject\shell\open\command"; Val
 
 [Run]
 ; libera a porta do controle remoto (navegador, celular, Stream Deck) no Firewall do Windows
-Filename: "{app}\Ares.WinSecurity.exe"; Parameters: "AddPort"; WorkingDir: "{app}"; Flags: runhidden waituntilterminated; StatusMsg: "{cm:TaskFirewall}"; Tasks: firewall
+Filename: "{app}\WinSecurity\Ares.WinSecurity.exe"; Parameters: "AddPort"; WorkingDir: "{app}\WinSecurity"; Flags: runhidden waituntilterminated; StatusMsg: "{cm:TaskFirewall}"; Tasks: firewall
 Filename: "{app}\Apolo.exe"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
-Filename: "{app}\Ares.WinSecurity.exe"; Parameters: "RemovePort"; WorkingDir: "{app}"; Flags: runhidden; RunOnceId: "RemoveApoloPort"; Check: IsAdminInstallMode
+Filename: "{app}\WinSecurity\Ares.WinSecurity.exe"; Parameters: "RemovePort"; WorkingDir: "{app}\WinSecurity"; Flags: runhidden; RunOnceId: "RemoveApoloPort"; Check: IsAdminInstallMode
 
 [CustomMessages]
 brazilianportuguese.TaskFirewall=Liberar o controle remoto no Firewall do Windows
@@ -100,31 +100,11 @@ brazilianportuguese.FileTypeProject=Projeto do Apolo
 english.FileTypeProject=Apolo project
 brazilianportuguese.FileTypePacked=Projeto empacotado do Apolo
 english.FileTypePacked=Apolo packed project
-brazilianportuguese.NeedsNet48=O Apolo precisa do .NET Framework 4.8.%n%nBaixe e instale em https://dotnet.microsoft.com/download/dotnet-framework/net48 e depois rode este instalador de novo.
-english.NeedsNet48=Apolo needs the .NET Framework 4.8.%n%nPlease download and install it from https://dotnet.microsoft.com/download/dotnet-framework/net48 and then run this setup again.
 brazilianportuguese.WelcomeCredits=O Apolo é um player de áudio para mesas de RPG, criado por Igor Teuri (Dados Críticos). Ele é uma modernização do Ares, de Jörg Ruedenauer, a quem pertence o crédito pela base do programa. Software livre, sob a licença GNU GPL (versão 2 ou posterior).
 english.WelcomeCredits=Apolo is an audio player for tabletop RPG sessions, created by Igor Teuri (Dados Críticos). It is a modernization of Ares by Jörg Ruedenauer, who deserves the credit for the foundation of the program. Free software under the GNU GPL (version 2 or later).
 
 [Code]
-// O Apolo usa o .NET Framework 4.8 (chave Release >= 528040)
-function IsNet48Installed(): Boolean;
-var
-  release: Cardinal;
-begin
-  Result := RegQueryDWordValue(HKLM, 'SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full', 'Release', release)
-            and (release >= 528040);
-end;
-
-function InitializeSetup(): Boolean;
-begin
-  Result := True;
-  if not IsNet48Installed() then
-  begin
-    MsgBox(CustomMessage('NeedsNet48'), mbError, MB_OK);
-    Result := False;
-  end;
-end;
-
+// O Apolo vem com o .NET 8 junto (nao precisa instalar nada alem do Windows 10 ou 11).
 procedure InitializeWizard();
 begin
   WizardForm.WelcomeLabel2.Caption := CustomMessage('WelcomeCredits');
