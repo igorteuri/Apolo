@@ -589,7 +589,12 @@ namespace Ares.CommonGUI
                 lv.ForeColor = p.Text;
                 lv.BorderStyle = BorderStyle.FixedSingle;
                 if (!p.IsClassic)
-                    ApplySoftGrid(lv);
+                {
+                    if (lv.GridLines)
+                        ApplySoftGrid(lv);
+                    else
+                        ApplyHeaderLook(lv);
+                }
             }
             else if (c is TreeView)
             {
@@ -1446,6 +1451,41 @@ namespace Ares.CommonGUI
 
         private static readonly ConditionalWeakTable<ListView, object> s_SoftGrid = new ConditionalWeakTable<ListView, object>();
 
+        // the header of a list: dark, with light letters (the native header stays white with dark letters)
+        private static void OnDrawThemedHeader(object sender, DrawListViewColumnHeaderEventArgs e)
+        {
+            ThemePalette pal = Current;
+            using (SolidBrush back = new SolidBrush(pal.Window))
+                e.Graphics.FillRectangle(back, e.Bounds);
+            using (Pen line = new Pen(Color.FromArgb(110, pal.Border)))
+            {
+                e.Graphics.DrawLine(line, e.Bounds.Left, e.Bounds.Bottom - 1, e.Bounds.Right, e.Bounds.Bottom - 1);
+                e.Graphics.DrawLine(line, e.Bounds.Right - 1, e.Bounds.Top + 4, e.Bounds.Right - 1, e.Bounds.Bottom - 5);
+            }
+            HorizontalAlignment align = e.Header.TextAlign;
+            TextFormatFlags flags = TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix
+                | (align == HorizontalAlignment.Right ? TextFormatFlags.Right : align == HorizontalAlignment.Center ? TextFormatFlags.HorizontalCenter : TextFormatFlags.Left);
+            Rectangle tr = new Rectangle(e.Bounds.X + 6, e.Bounds.Y, Math.Max(0, e.Bounds.Width - 12), e.Bounds.Height);
+            TextRenderer.DrawText(e.Graphics, e.Header.Text, ((ListView)sender).Font, tr, pal.Text, flags);
+        }
+
+        // lists without a grid (the track list) keep their normal drawing, only the header is drawn by hand
+        private static readonly ConditionalWeakTable<ListView, object> s_HeaderLook = new ConditionalWeakTable<ListView, object>();
+
+        private static void ApplyHeaderLook(ListView lv)
+        {
+            if (lv.View != View.Details || lv.OwnerDraw || lv.CheckBoxes || lv.Groups.Count > 0)
+                return;
+            object dummy;
+            if (s_HeaderLook.TryGetValue(lv, out dummy))
+                return;
+            s_HeaderLook.Add(lv, new object());
+            lv.OwnerDraw = true;
+            lv.DrawColumnHeader += OnDrawThemedHeader;
+            lv.DrawItem += delegate (object sender, DrawListViewItemEventArgs e) { e.DrawDefault = true; };
+            lv.DrawSubItem += delegate (object sender, DrawListViewSubItemEventArgs e) { e.DrawDefault = true; };
+        }
+
         private static void ApplySoftGrid(ListView lv)
         {
             if (!lv.GridLines || lv.View != View.Details)
@@ -1457,20 +1497,7 @@ namespace Ares.CommonGUI
             lv.GridLines = false;
             lv.OwnerDraw = true;
             lv.DrawItem += delegate (object sender, DrawListViewItemEventArgs e) { };
-            lv.DrawColumnHeader += delegate (object sender, DrawListViewColumnHeaderEventArgs e)
-            {
-                ThemePalette pal = Current;
-                using (SolidBrush back = new SolidBrush(pal.Window))
-                    e.Graphics.FillRectangle(back, e.Bounds);
-                using (Pen line = new Pen(Color.FromArgb(110, pal.Border)))
-                {
-                    e.Graphics.DrawLine(line, e.Bounds.Left, e.Bounds.Bottom - 1, e.Bounds.Right, e.Bounds.Bottom - 1);
-                    e.Graphics.DrawLine(line, e.Bounds.Right - 1, e.Bounds.Top + 4, e.Bounds.Right - 1, e.Bounds.Bottom - 5);
-                }
-                Rectangle tr = new Rectangle(e.Bounds.X + 6, e.Bounds.Y, Math.Max(0, e.Bounds.Width - 10), e.Bounds.Height);
-                TextRenderer.DrawText(e.Graphics, e.Header.Text, ((ListView)sender).Font, tr, pal.TextDim,
-                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
-            };
+            lv.DrawColumnHeader += OnDrawThemedHeader;
             lv.DrawSubItem += delegate (object sender, DrawListViewSubItemEventArgs e)
             {
                 ThemePalette pal = Current;

@@ -125,7 +125,7 @@ namespace Ares.Player
                 m_TrackCollapse = MakeSmallButton("▶", T("Recolher o painel para a lateral" + KeyHint("tracks"), "Collapse the panel to the side" + KeyHint("tracks")));
                 m_TrackUp = MakeSmallButton("▲", T("Mover a música para cima (só em lista em sequência)", "Move the track up (sequential lists only)"));
                 m_TrackDown = MakeSmallButton("▼", T("Mover a música para baixo (só em lista em sequência)", "Move the track down (sequential lists only)"));
-                m_TrackKind = new ComboBox();
+                m_TrackKind = new Ares.CommonGUI.ThemedComboBox();
                 m_TrackKind.DropDownStyle = ComboBoxStyle.DropDownList;
                 m_TrackKind.Items.Add(T("Música — aleatória", "Music — random"));
                 m_TrackKind.Items.Add(T("Música — em sequência", "Music — sequential"));
@@ -898,8 +898,16 @@ namespace Ares.Player
                 return;
             string modeTitle = m_TrackModeTitle;
             string elementTitle = m_TrackElementTitle;
-            ApplyProjectEdit(() => seq.MoveElements(from, from, delta), modeTitle);
-            ReloadTrackList(modeTitle, elementTitle, to);
+            try
+            {
+                ApplyProjectEdit(() => seq.MoveElements(from, from, delta), modeTitle);
+                ReloadTrackList(modeTitle, elementTitle, to);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, T("Não consegui mover a música: ", "Could not move the track: ") + ex.Message,
+                    StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         // after the project was reloaded: show the list of the same button again
