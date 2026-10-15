@@ -129,7 +129,7 @@ jobs:
         shell: pwsh
         run: |
           $ok = @(); $bad = @()
-          foreach ($n in @("Ares.Ipc","Ares.Data","Ares.Settings","Ares.Tags","Ares.ModelInfo","Ares.Playing","Ares.CommonGUI","Ares.TagsImport","Ares.Players","Ares.Online")) {
+          foreach ($n in @("Ares.Ipc","Ares.Data","Ares.Settings","Ares.Tags","Ares.ModelInfo","Ares.Playing","Ares.CommonGUI","Ares.TagsImport","Ares.Players","Ares.Player")) {
             $f = Get-Item "net8/$n.Net8.csproj"
             Write-Host "=== $($f.Name)"
             dotnet build $f.FullName -c Release --nologo -v:q -clp:ErrorsOnly

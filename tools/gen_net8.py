@@ -6,15 +6,15 @@ NS = '{http://schemas.microsoft.com/developer/msbuild/2003}'
 def pk(name, ver):
     return '    <PackageReference Include="%s" Version="%s" />' % (name, ver)
 
-def gen(name, refs=(), packages=(), shim=None, csproj=None, forms=False, exclude=()):
+def gen(name, refs=(), packages=(), shim=None, csproj=None, forms=False, exclude=(), only=None, noresources=False, exe=False, extra_props=''):
     csproj = csproj or name
     root = ET.parse('src/%s/%s.csproj' % (name, csproj)).getroot()
     comp, res = [], []
     for g in root.findall(NS + 'ItemGroup'):
         for c in g.findall(NS + 'Compile'):
-            if c.get('Include') not in exclude:
+            if c.get('Include') not in exclude and (only is None or c.get('Include') in only):
                 comp.append(c.get('Include'))
-        for r in g.findall(NS + 'EmbeddedResource'):
+        for r in ([] if noresources else g.findall(NS + 'EmbeddedResource')):
             ln = r.find(NS + 'LogicalName')
             res.append((r.get('Include'), ln.text if ln is not None else None))
     ns = None
@@ -30,6 +30,7 @@ def gen(name, refs=(), packages=(), shim=None, csproj=None, forms=False, exclude
            '    <AssemblyName>%s</AssemblyName>' % asm,
            '    <RootNamespace>%s</RootNamespace>' % ns,
            '    <UseWindowsForms>true</UseWindowsForms>',
+           ('    <OutputType>WinExe</OutputType>\n    <PlatformTarget>x86</PlatformTarget>\n    <ApplicationIcon>..\\src\\%s\\Resources\\Ares.ico</ApplicationIcon>' % name) if exe else '    <OutputType>Library</OutputType>',
            '    <EnableDefaultItems>false</EnableDefaultItems>',
            '    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>',
            '    <ImplicitUsings>disable</ImplicitUsings>',
@@ -72,6 +73,12 @@ gen('Ares.Playing', ['Ares.Data', 'Ares.ModelInfo', 'Ares.Tags'],
               ('Concentus', '2.2.2'), ('Concentus.OggFile', '1.0.6')])
 gen('Ares.CommonGUI', ['Ares.Data', 'Ares.ModelInfo', 'Ares.Settings'])
 
-gen('Ares.TagsImport', ['Ares.Data', 'Ares.ModelInfo', 'Ares.Playing', 'Ares.Tags'], shim='ServiceStackTextShim.cs', packages=[('RestSharp', '106.15.0')])
+# TagsImport: only what the Player uses (the song lookup of the rights check); the old online tag database stays out
+gen('Ares.TagsImport', ['Ares.Data', 'Ares.Playing'], packages=[('RestSharp', '106.15.0')], noresources=True,
+    only=['MusicLookup.cs', 'MusicIdentification.cs', 'Progress.cs', 'RateGate.cs', 'Properties\\AssemblyInfo.cs'])
 gen('Ares.Players', ['Ares.Data', 'Ares.Playing', 'Ares.Settings', 'Ares.Tags'], shim='WebNetworkStub.cs', exclude=['WebNetwork.cs'])
-gen('Ares.Online', ['Ares.CommonGUI'], packages=[('HtmlRenderer.WinForms', '1.5.0.6')])
+# Ares.Online (news / new-version dialogs of the old Ares) is not used by the Player: it is not migrated.
+
+gen('Ares.Player', ['Ares.CommonGUI', 'Ares.Data', 'Ares.Ipc', 'Ares.ModelInfo', 'Ares.Players', 'Ares.Playing', 'Ares.Settings', 'Ares.Tags', 'Ares.TagsImport'],
+    shim=['MouseKeyboardShim.cs', 'JavaScriptSerializerShim.cs'], exe=True,
+    packages=[('Microsoft.Web.WebView2', '1.0.2592.51'), ('System.Configuration.ConfigurationManager', '8.0.0')])

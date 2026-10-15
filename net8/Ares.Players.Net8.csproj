@@ -5,6 +5,7 @@
     <AssemblyName>Ares.Players</AssemblyName>
     <RootNamespace>Ares.Players</RootNamespace>
     <UseWindowsForms>true</UseWindowsForms>
+    <OutputType>Library</OutputType>
     <EnableDefaultItems>false</EnableDefaultItems>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <ImplicitUsings>disable</ImplicitUsings>

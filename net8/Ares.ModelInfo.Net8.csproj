@@ -5,6 +5,7 @@
     <AssemblyName>Ares.ModelInfo</AssemblyName>
     <RootNamespace>Ares.ModelInfo</RootNamespace>
     <UseWindowsForms>true</UseWindowsForms>
+    <OutputType>Library</OutputType>
     <EnableDefaultItems>false</EnableDefaultItems>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <ImplicitUsings>disable</ImplicitUsings>

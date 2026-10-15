@@ -5,6 +5,7 @@
     <AssemblyName>Ares.TagsImport</AssemblyName>
     <RootNamespace>Ares.TagsImport</RootNamespace>
     <UseWindowsForms>true</UseWindowsForms>
+    <OutputType>Library</OutputType>
     <EnableDefaultItems>false</EnableDefaultItems>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <ImplicitUsings>disable</ImplicitUsings>
@@ -14,27 +15,15 @@
     <OutputPath>bin\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\src\Ares.TagsImport\FileOperations.cs" Link="FileOperations.cs" />
-    <Compile Include="..\src\Ares.TagsImport\GlobalDB.cs" Link="GlobalDB.cs" />
     <Compile Include="..\src\Ares.TagsImport\MusicIdentification.cs" Link="MusicIdentification.cs" />
     <Compile Include="..\src\Ares.TagsImport\MusicLookup.cs" Link="MusicLookup.cs" />
     <Compile Include="..\src\Ares.TagsImport\Progress.cs" Link="Progress.cs" />
     <Compile Include="..\src\Ares.TagsImport\Properties\AssemblyInfo.cs" Link="Properties\AssemblyInfo.cs" />
     <Compile Include="..\src\Ares.TagsImport\RateGate.cs" Link="RateGate.cs" />
-    <Compile Include="..\src\Ares.TagsImport\Settings1.Designer.cs" Link="Settings1.Designer.cs" />
-    <Compile Include="..\src\Ares.TagsImport\StringResources.Designer.cs" Link="StringResources.Designer.cs" />
-    <Compile Include="..\src\Ares.TagsImport\Tags.cs" Link="Tags.cs" />
-    <Compile Include="..\src\Ares.TagsImport\TagsFromIds.cs" Link="TagsFromIds.cs" />
-    <Compile Include="shims\ServiceStackTextShim.cs" />
-    <EmbeddedResource Include="..\src\Ares.TagsImport\StringResources.de.resx" Link="StringResources.de.resx" />
-    <EmbeddedResource Include="..\src\Ares.TagsImport\StringResources.pt.resx" Link="StringResources.pt.resx" />
-    <EmbeddedResource Include="..\src\Ares.TagsImport\StringResources.resx" Link="StringResources.resx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Ares.Data.Net8.csproj" />
-    <ProjectReference Include="Ares.ModelInfo.Net8.csproj" />
     <ProjectReference Include="Ares.Playing.Net8.csproj" />
-    <ProjectReference Include="Ares.Tags.Net8.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="RestSharp" Version="106.15.0" />
