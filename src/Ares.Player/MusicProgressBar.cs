@@ -106,7 +106,6 @@ namespace Ares.Player
         /// </summary>
         public void Clear()
         {
-            Title = "";
             if (!m_Seekable && m_Position == 0 && m_Length == 0 && !m_Dragging)
                 return;
             m_Seekable = false;
@@ -298,7 +297,7 @@ namespace Ares.Player
                 TextFormatFlags.Left | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
             TextRenderer.DrawText(g, right, Font, rightRect, dim,
                 TextFormatFlags.Right | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-            if (!Compact && m_Title.Length > 0 && m_Seekable)
+            if (!Compact && m_Title.Length > 0)
             {
                 int timeW = Math.Max(
                     TextRenderer.MeasureText(g, left, Font, new Size(int.MaxValue, int.MaxValue), TextFormatFlags.NoPadding).Width,

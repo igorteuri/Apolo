@@ -19,12 +19,14 @@ namespace Ares.Player
     public partial class Player
     {
         private const int ColNumber = 0;
-        private const int ColTitle = 1;
-        private const int ColArtist = 2;
-        private const int ColAlbum = 3;
-        private const int ColDuration = 4;
-        private const int ColPlays = 5;
-        private const int ColFile = 6;
+        private const int ColKind = 1;
+        private const int ColTitle = 2;
+        private const int ColArtist = 3;
+        private const int ColAlbum = 4;
+        private const int ColDuration = 5;
+        private const int ColPlays = 6;
+        private const int ColRights = 7;
+        private const int ColFile = 8;
 
         private static readonly Dictionary<string, Ares.Tags.AudioTagInfo> s_TagCache =
             new Dictionary<string, Ares.Tags.AudioTagInfo>(StringComparer.OrdinalIgnoreCase);
@@ -42,11 +44,13 @@ namespace Ares.Player
             return new string[]
             {
                 "#",
+                T("Tipo", "Kind"),
                 T("Título", "Title"),
                 T("Artista", "Artist"),
                 T("Álbum", "Album"),
                 T("Duração", "Duration"),
                 T("Tocadas", "Plays"),
+                T("Direitos", "Rights"),
                 T("Arquivo", "File")
             };
         }
@@ -54,7 +58,7 @@ namespace Ares.Player
         private void InitTrackColumns()
         {
             string[] names = TrackColumnNames();
-            int[] widths = { 44, 260, 150, 150, 70, 70, 240 };
+            int[] widths = { 44, 46, 250, 150, 150, 70, 70, 110, 240 };
             for (int i = 0; i < names.Length; i++)
             {
                 ColumnHeader h = new ColumnHeader();
@@ -62,6 +66,8 @@ namespace Ares.Player
                 h.Width = widths[i];
                 if (i == ColNumber || i == ColDuration || i == ColPlays)
                     h.TextAlign = HorizontalAlignment.Right;
+                else if (i == ColKind)
+                    h.TextAlign = HorizontalAlignment.Center;
                 m_TrackList.Columns.Add(h);
             }
             m_TrackList.ColumnClick += (s, e) => SortTracksBy(e.Column);
@@ -138,6 +144,10 @@ namespace Ares.Player
                     return asc ? rows.OrderBy(r => r.Seconds) : rows.OrderByDescending(r => r.Seconds);
                 case ColPlays:
                     return asc ? rows.OrderBy(r => r.Plays) : rows.OrderByDescending(r => r.Plays);
+                case ColKind:
+                    return asc ? rows.OrderBy(r => (int)r.File.SoundFileType) : rows.OrderByDescending(r => (int)r.File.SoundFileType);
+                case ColRights:
+                    return asc ? rows.OrderBy(r => RightsCheck.Rank(r.Rights)) : rows.OrderByDescending(r => RightsCheck.Rank(r.Rights));
                 default:
                     return asc ? rows.OrderBy(r => r.File.FilePath ?? "", StringComparer.CurrentCultureIgnoreCase)
                                : rows.OrderByDescending(r => r.File.FilePath ?? "", StringComparer.CurrentCultureIgnoreCase);
@@ -147,11 +157,16 @@ namespace Ares.Player
         private ListViewItem MakeTrackItem(TrackRow row)
         {
             ListViewItem item = new ListViewItem(row.Number.ToString());
+            item.UseItemStyleForSubItems = false;
+            item.SubItems.Add(row.File.SoundFileType == SoundFileType.Music ? "\u266B" : "\u26A1");
             item.SubItems.Add(row.File.Title ?? "");
             item.SubItems.Add(row.Artist ?? "");
             item.SubItems.Add(row.Album ?? "");
             item.SubItems.Add(FormatDuration(row.Seconds));
             item.SubItems.Add(row.Plays.ToString());
+            ListViewItem.ListViewSubItem rightsCell = item.SubItems.Add(RightsCheck.Label(row.Rights));
+            rightsCell.ForeColor = RightsCheck.ColorOf(row.Rights, m_TrackList.ForeColor);
+            item.ToolTipText = row.RightsWhy.Length > 0 ? row.RightsWhy + "  (" + T("indicativo, não garantia", "indication, not a guarantee") + ")" : "";
             item.SubItems.Add(row.File.FilePath ?? "");
             item.Tag = row;
             return item;
@@ -169,6 +184,14 @@ namespace Ares.Player
                     return;
             }
             row.Loaded = true;
+            if (row.Rights == '\0')
+            {
+                char qc;
+                string qw;
+                RightsCheck.Quick(info, full, out qc, out qw);
+                row.Rights = qc;
+                row.RightsWhy = qw;
+            }
             row.Artist = info.artist;
             row.Album = info.album;
             row.Seconds = info.duration;
@@ -231,7 +254,7 @@ namespace Ares.Player
                 if (!row.Loaded)
                     ApplyCachedTags(row);
             }
-            if (m_TrackSortCol == ColArtist || m_TrackSortCol == ColAlbum || m_TrackSortCol == ColDuration)
+            if (m_TrackSortCol == ColArtist || m_TrackSortCol == ColAlbum || m_TrackSortCol == ColDuration || m_TrackSortCol == ColRights)
             {
                 FillTrackList(false);
                 return;
@@ -245,6 +268,10 @@ namespace Ares.Player
                 item.SubItems[ColArtist].Text = row.Artist ?? "";
                 item.SubItems[ColAlbum].Text = row.Album ?? "";
                 item.SubItems[ColDuration].Text = FormatDuration(row.Seconds);
+                item.SubItems[ColRights].Text = RightsCheck.Label(row.Rights);
+                item.SubItems[ColRights].ForeColor = RightsCheck.ColorOf(row.Rights, m_TrackList.ForeColor);
+                if (row.RightsWhy.Length > 0)
+                    item.ToolTipText = row.RightsWhy;
             }
             m_TrackList.EndUpdate();
         }
@@ -283,6 +310,94 @@ namespace Ares.Player
             UpdateTrackHeaders();
             FillTrackList(false);
             SaveTrackOrder();
+        }
+
+        // result of an earlier check on the internet (kept in a file)
+        private void InitRights(TrackRow row)
+        {
+            char code;
+            string why;
+            if (RightsCheck.TryGetChecked(FullPathOf(row.File), out code, out why))
+            {
+                row.Rights = code;
+                row.RightsWhy = why;
+            }
+        }
+
+        // checks the files of the list on the internet (some seconds each); the traffic light is filled in as the answers come
+        private void CheckRightsOnline()
+        {
+            List<KeyValuePair<TrackRow, string>> todo = new List<KeyValuePair<TrackRow, string>>();
+            foreach (TrackRow row in m_TrackRows)
+            {
+                char c;
+                string w;
+                string path = FullPathOf(row.File);
+                if (!RightsCheck.TryGetChecked(path, out c, out w))
+                    todo.Add(new KeyValuePair<TrackRow, string>(row, path));
+            }
+            if (todo.Count == 0)
+            {
+                ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
+                    T("Todas as músicas desta lista já foram verificadas.", "All the tracks of this list were checked already.")));
+                return;
+            }
+            ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
+                T("Verificando " + todo.Count + " música(s) na internet. Leva alguns segundos por música; o resultado é só um indicativo.",
+                  "Checking " + todo.Count + " track(s) on the internet. It takes some seconds per track; the result is only an indication.")));
+            ThreadPool.QueueUserWorkItem(state =>
+            {
+                foreach (KeyValuePair<TrackRow, string> pair in todo)
+                {
+                    char code;
+                    string why;
+                    try
+                    {
+                        Ares.Tags.AudioTagInfo tag;
+                        lock (s_TagCache)
+                            s_TagCache.TryGetValue(pair.Value, out tag);
+                        RightsCheck.Full(pair.Value, tag, out code, out why);
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+                    if (code == '\0')
+                        continue;
+                    TrackRow captured = pair.Key;
+                    char capturedCode = code;
+                    string capturedWhy = why;
+                    try
+                    {
+                        BeginInvoke((Action)(() =>
+                        {
+                            captured.Rights = capturedCode;
+                            captured.RightsWhy = capturedWhy;
+                            foreach (ListViewItem item in m_TrackList.Items)
+                            {
+                                if (ReferenceEquals(item.Tag, captured))
+                                {
+                                    item.SubItems[ColRights].Text = RightsCheck.Label(capturedCode);
+                                    item.SubItems[ColRights].ForeColor = RightsCheck.ColorOf(capturedCode, m_TrackList.ForeColor);
+                                    item.ToolTipText = capturedWhy;
+                                }
+                            }
+                        }));
+                    }
+                    catch (Exception)
+                    {
+                        return;
+                    }
+                }
+                try
+                {
+                    BeginInvoke((Action)(() => ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
+                        T("Verificação de direitos autorais concluída.", "Copyright check finished.")))));
+                }
+                catch (Exception)
+                {
+                }
+            });
         }
 
         // ---- reorder by dragging ----

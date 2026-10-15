@@ -45,6 +45,7 @@ namespace Ares.Player
             ToolStripMenuItem source = new ToolStripMenuItem(T("Código-fonte no GitHub", "Source code on GitHub"));
             source.Click += (s, e) => OpenAddress(SourceUrl);
             helpToolStripMenuItem.DropDownItems.Add(source);
+            InitTutorial();
         }
 
         // creates an empty project (with one first folder) in a file chosen by the user and opens it

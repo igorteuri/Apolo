@@ -134,19 +134,8 @@ namespace Ares.Player
                 if (options == null)
                     return;
 
-                string libPath = LibraryProjectPath;
-                string target = libPath;
-                if (m_Project != null && !string.Equals(m_Project.FileName, libPath, StringComparison.OrdinalIgnoreCase))
-                {
-                    DialogResult r = MessageBox.Show(this,
-                        IsPt ? "Adicionar ao projeto aberto \"" + m_Project.Title + "\"?\r\n\r\nSim = projeto aberto\r\nNão = Biblioteca (padrão)"
-                             : "Add to the open project \"" + m_Project.Title + "\"?\r\n\r\nYes = open project\r\nNo = Library (default)",
-                        StringResources.Ares, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-                    if (r == DialogResult.Cancel)
-                        return;
-                    if (r == DialogResult.Yes)
-                        target = m_Project.FileName;
-                }
+                // always into the project which is open now; the Library is only used when no project is open
+                string target = m_Project != null ? m_Project.FileName : LibraryProjectPath;
 
                 // loose files go into the mode that is currently selected (if it is a real mode)
                 string looseModeTitle = null;

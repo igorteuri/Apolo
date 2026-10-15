@@ -21,6 +21,7 @@ namespace Ares.Player
             LabelEdit = false;
             AllowDrop = true;
             DoubleBuffered = true;
+            ShowItemToolTips = true;
         }
 
         public int SelectedIndex

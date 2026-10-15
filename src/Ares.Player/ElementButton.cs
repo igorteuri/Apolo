@@ -374,8 +374,8 @@ namespace Ares.Player
                         glyphs.Add("\u266B");
                     if ((m_Kind & 2) != 0)
                         glyphs.Add("\u26A1");
-                    int bd = Math.Max(16, (int)Math.Round(18 * Scale));
-                    using (Font gf = new Font(Font.FontFamily, Math.Max(7f, Font.Size - 1.5f), FontStyle.Regular))
+                    int bd = Math.Max(18, (int)Math.Round(21 * Scale));
+                    using (Font gf = new Font("Segoe UI Symbol", Math.Max(8f, Font.Size), FontStyle.Regular))
                     {
                         for (int gi = 0; gi < glyphs.Count; gi++)
                         {
@@ -383,8 +383,10 @@ namespace Ares.Player
                                 ? new Rectangle(Width - (bd + 4) * (glyphs.Count - gi) - 6, (Height - bd) / 2, bd, bd)
                                 : new Rectangle(6 + gi * (bd + 3), 6, bd, bd);
                             using (GraphicsPath pp = Rounded(pill, bd / 3))
-                            using (SolidBrush pb = new SolidBrush(Color.FromArgb(m_Picture != null && !m_ListMode ? 215 : 120, window)))
+                            using (SolidBrush pb = new SolidBrush(Color.FromArgb(m_Picture != null && !m_ListMode ? 225 : 200, window)))
                                 g.FillPath(pb, pp);
+                            using (Pen pbd = new Pen(Color.FromArgb(150, accent)))
+                                g.DrawPath(pbd, pp);
                             TextRenderer.DrawText(g, glyphs[gi], gf, pill, accent,
                                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
                         }

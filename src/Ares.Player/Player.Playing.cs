@@ -108,16 +108,23 @@ namespace Ares.Player
             IReferenceElement reference = element as IReferenceElement;
             if (reference != null)
                 return KindsOf(DataModule.ElementRepository.GetElement(reference.ReferencedId), depth + 1);
-            IContainerElement wrapper = element as IContainerElement;
-            if (wrapper != null)
-                return KindsOf(wrapper.InnerElement, depth + 1);
             int kinds = 0;
+            // containers (also the sound lists with repeat): look at the files they hold
             IGeneralElementContainer container = element as IGeneralElementContainer;
             if (container != null)
             {
+                foreach (IFileElement file in container.GetFileElements())
+                    kinds |= file.SoundFileType == SoundFileType.Music ? 1 : 2;
+                if (kinds != 0)
+                    return kinds;
                 foreach (IContainerElement inner in container.GetGeneralElements())
                     kinds |= KindsOf(inner, depth + 1);
+                if (kinds != 0)
+                    return kinds;
             }
+            IContainerElement wrapper = element as IContainerElement;
+            if (wrapper != null && !ReferenceEquals(wrapper.InnerElement, element))
+                return KindsOf(wrapper.InnerElement, depth + 1);
             return kinds;
         }
 
@@ -136,18 +143,32 @@ namespace Ares.Player
             IReferenceElement reference = element as IReferenceElement;
             if (reference != null)
                 return RepeatConfiguredIn(DataModule.ElementRepository.GetElement(reference.ReferencedId), fileId, repeat, depth + 1);
-            IContainerElement wrapper = element as IContainerElement;
-            if (wrapper != null)
-                return RepeatConfiguredIn(wrapper.InnerElement, fileId, repeat, depth + 1);
             IGeneralElementContainer container = element as IGeneralElementContainer;
             if (container != null)
             {
+                bool holds = false;
+                foreach (IFileElement f in container.GetFileElements())
+                {
+                    if (f.Id == fileId)
+                    {
+                        holds = true;
+                        break;
+                    }
+                }
+                if (!holds)
+                    return false;
+                if (repeat)
+                    return true;
                 foreach (IContainerElement inner in container.GetGeneralElements())
                 {
-                    if (RepeatConfiguredIn(inner, fileId, repeat, depth + 1))
+                    if (!ReferenceEquals(inner, element) && RepeatConfiguredIn(inner, fileId, repeat, depth + 1))
                         return true;
                 }
+                return false;
             }
+            IContainerElement wrapper = element as IContainerElement;
+            if (wrapper != null && !ReferenceEquals(wrapper.InnerElement, element))
+                return RepeatConfiguredIn(wrapper.InnerElement, fileId, repeat, depth + 1);
             return false;
         }
 

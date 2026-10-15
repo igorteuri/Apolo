@@ -23,7 +23,7 @@ Cole no inicio da conversa: "Leia docs/HANDOFF.md do repositorio igorteuri/Apolo
 
 ## O que foi feito (resumo por etapa)
 - Etapas 46-50: propriedades da playlist; icones/cores nos botoes do Stream Deck e do controle web; biblioteca do Foundry inline; desfazer/refazer (Ctrl+Z/Y); a pasta permanece ao editar/arrastar (`m_PreferredModeTitle`); janela de Avisos centralizada; Editor removido do build/instalador; janelas de ajuda do Foundry e de atualizacao.
-- Etapa 51 (esta): abas 50% mais largas com logo a esquerda; faixa "Tocando agora" (chips de efeitos com progresso/pausa/parar/repetir e chips de abas web com mutar) no lugar da coluna de status (agora recolhida por padrao, preferencia `LeftOpenV2`); lista de musicas em colunas (#, Titulo, Artista, Album, Duracao, Arquivo) com ordenacao por clique no cabecalho, colunas reordenaveis, arrastar linhas para reordenar playlists em sequencia, "Gravar esta ordem na playlist", "Editar informacoes" (titulo no projeto; artista/album nas tags); selo de tipo nos botoes (musica / efeito); atalhos no dialogo de adicionar; "Novo painel de efeitos" no menu de pastas.
+- Etapa 51: abas 50% mais largas com logo a esquerda; faixa "Tocando agora" (chips de efeitos com progresso/pausa/parar/repetir e chips de abas web com mutar) no lugar da coluna de status (agora recolhida por padrao, preferencia `LeftOpenV2`); lista de musicas em colunas (#, Titulo, Artista, Album, Duracao, Arquivo) com ordenacao por clique no cabecalho, colunas reordenaveis, arrastar linhas para reordenar playlists em sequencia, "Gravar esta ordem na playlist", "Editar informacoes" (titulo no projeto; artista/album nas tags); selo de tipo nos botoes (musica / efeito); atalhos no dialogo de adicionar; "Novo painel de efeitos" no menu de pastas.
 - Checkpoint: tag/branch local `checkpoint-etapa50` (commit b619101) e zip `apolo-checkpoint-etapa50-fonte-completo.zip`.
 
 ## Pendencias / ideias
@@ -37,3 +37,8 @@ Cole no inicio da conversa: "Leia docs/HANDOFF.md do repositorio igorteuri/Apolo
 ## Licoes tecnicas
 - `Ares.Playing.Player.SetProject` volta para a primeira pasta; por isso a UI reaplica a pasta preferida apos recarregar.
 - Evitar chaves duplicadas em inicializadores de dicionario; `sed` pode alterar modificadores de acesso; compilar "no escuro" exige revisao cuidadosa.
+
+## Etapas 52 e 53 (resumo)
+- 52: chips de abas web a direita, selos de tipo (musica/efeito) nos botoes, titulo da musica sob a barra de progresso, janela sem barra de titulo do Windows (Player.Chrome.cs; preferencia `CustomTitleBar=false` desfaz), rotulos nos botoes Discord/Enviar audio/Compartilhar, coluna "Tocadas" (PlayCounts, `%APPDATA%\Apolo\playcounts.txt`), alertas maiores com som suave (mudo enquanto o audio e enviado), menu Sobre, Projeto > Novo projeto (Ctrl+N).
+- 53: versao automatica (arquivo `VERSION` + numero do build no `build.yml`, ex. 0.53.<build>); selos/repeticao corretos para listas de efeitos (usa GetFileElements); titulo da musica nao some ao repetir; colunas Tipo e Direitos na lista de musicas (semaforo verde/amarelo/vermelho, so indicativo; `Player.Rights.cs`, cache `%APPDATA%\Apolo\rights.txt`); adicionar arquivos sempre vai para o projeto aberto; tutorial (primeira abertura e menu Sobre).
+- Pendencias: painel de efeitos (Igor nao disse como quer), link real do canal/playlist de tutoriais, testes automatizados, ordem automatica por "mais tocadas".

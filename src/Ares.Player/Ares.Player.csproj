@@ -156,6 +156,8 @@
     <Compile Include="NowPlayingStrip.cs" />
     <Compile Include="Player.Chrome.cs" />
     <Compile Include="Player.Playing.cs" />
+    <Compile Include="Player.Rights.cs" />
+    <Compile Include="Player.Tutorial.cs" />
     <Compile Include="TrackListView.cs" />
     <Compile Include="Player.TrackColumns.cs" />
     <Compile Include="Player.Shortcuts.cs" />

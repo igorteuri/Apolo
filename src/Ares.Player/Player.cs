@@ -503,6 +503,7 @@ namespace Ares.Player
                 PlayingControl control = m_PlayingControl;
                 if (control == null || WindowState == FormWindowState.Minimized || !Visible)
                     return;
+                m_MusicProgressBar.Title = control.CurrentMusicElement == -1 ? "" : (musicLabel.Text ?? "");
                 double position, length;
                 if (control.GetMusicPosition(out position, out length))
                     m_MusicProgressBar.SetProgress(position, length);
@@ -1312,7 +1313,6 @@ namespace Ares.Player
                 musicLabel.Text = MusicInfo.GetInfo(musicElementId).LongTitle;
                 lastMusicElementId = musicElementId;
                 CountMusicPlay(musicElementId);
-                m_MusicProgressBar.Title = musicElementId == -1 ? "" : musicLabel.Text;
                 SyncTrackSelection();
                 var currentMusicList = Ares.Data.DataModule.ElementRepository.GetElement(m_PlayingControl.CurrentMusicList) as IMusicList;
                 var elements = currentMusicList != null ? currentMusicList.GetFileElements() : null;

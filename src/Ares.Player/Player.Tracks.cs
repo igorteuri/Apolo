@@ -21,6 +21,8 @@ namespace Ares.Player
             public double Seconds;
             public bool Loaded;
             public int Plays;
+            public char Rights;
+            public string RightsWhy = "";
         }
 
         private const int TrackGap = 6;
@@ -232,6 +234,10 @@ namespace Ares.Player
                 m_TrackMostPlayedItem.Click += (s, e) => OrderByPlays(false);
                 m_TrackLeastPlayedItem = new ToolStripMenuItem(T("Ordem: menos tocadas primeiro (gravar)", "Order: least played first (save)"));
                 m_TrackLeastPlayedItem.Click += (s, e) => OrderByPlays(true);
+                ToolStripMenuItem rightsItem = new ToolStripMenuItem(T("Verificar direitos autorais desta lista (internet)", "Check the copyright of this list (internet)"));
+                rightsItem.ToolTipText = T("Só um indicativo, nunca uma garantia.", "Only an indication, never a guarantee.");
+                rightsItem.Click += (s, e) => CheckRightsOnline();
+                trackMenu.Items.Add(rightsItem);
                 trackMenu.Items.Add(m_TrackMostPlayedItem);
                 trackMenu.Items.Add(m_TrackLeastPlayedItem);
                 m_TrackList.ContextMenuStrip = trackMenu;
@@ -637,6 +643,7 @@ namespace Ares.Player
                 row.Index = -1;
                 row.Number = m_TrackRows.Count + 1;
                 row.Plays = PlayCounts.Get(FullPathOf(f));
+                InitRights(row);
                 ApplyCachedTags(row);
                 for (int i = 0; i < top.Count; i++)
                 {
