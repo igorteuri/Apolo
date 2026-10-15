@@ -128,12 +128,16 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: |
-          foreach ($p in @("Ares.Ipc","Ares.Settings","Ares.Data")) {
-            Write-Host "=== $p (.NET 8)"
-            dotnet build "net8/$p.Net8.csproj" -c Release --nologo -v:minimal
-            if ($LASTEXITCODE -ne 0) { Write-Host "FAILED: $p"; $global:failed = $true }
+          $ok = @(); $bad = @()
+          foreach ($f in Get-ChildItem net8 -Filter *.Net8.csproj) {
+            Write-Host "=== $($f.Name)"
+            dotnet build $f.FullName -c Release --nologo -v:q -clp:ErrorsOnly
+            if ($LASTEXITCODE -eq 0) { $ok += $f.Name } else { $bad += $f.Name }
           }
-          if ($global:failed) { exit 1 }
+          Write-Host "=============== RESUMO .NET 8 ==============="
+          Write-Host ("COMPILAM: " + ($ok -join ", "))
+          Write-Host ("FALHARAM: " + ($bad -join ", "))
+          if ($bad.Count -gt 0) { exit 1 }
 
       - name: Collect output
         shell: pwsh
