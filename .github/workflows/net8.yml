@@ -1,0 +1,29 @@
+name: Apolo .NET 8 (small build)
+
+# Only the projects of the .NET 8 migration (folder net8/). It does not package the Discord bridge, Stream Deck,
+# Foundry module or installer: those do not depend on .NET and are tested by the big build (build.yml) on master.
+on:
+  push:
+    branches: [net-8]
+  workflow_dispatch:
+
+jobs:
+  net8:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the projects for .NET 8
+        shell: pwsh
+        run: |
+          $ok = @(); $bad = @()
+          foreach ($n in @("Ares.Ipc","Ares.Data","Ares.Settings","Ares.Tags","Ares.ModelInfo","Ares.Playing","Ares.CommonGUI","Ares.TagsImport","Ares.Players","Ares.Player")) {
+            $f = Get-Item "net8/$n.Net8.csproj"
+            Write-Host "=== $($f.Name)"
+            dotnet build $f.FullName -c Release --nologo -v:q -clp:ErrorsOnly
+            if ($LASTEXITCODE -eq 0) { $ok += $f.Name } else { $bad += $f.Name }
+          }
+          Write-Host "=============== RESUMO .NET 8 ==============="
+          Write-Host ("COMPILAM: " + ($ok -join ", "))
+          Write-Host ("FALHARAM: " + ($bad -join ", "))
+          if ($bad.Count -gt 0) { exit 1 }

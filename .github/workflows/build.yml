@@ -2,6 +2,8 @@ name: Build Apolo (Windows)
 
 on:
   push:
+    # the .NET 8 migration branch has its own, smaller workflow (net8.yml)
+    branches-ignore: [net-8]
   pull_request:
   workflow_dispatch:
 
@@ -122,23 +124,6 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: dotnet test tests/Apolo.Tests/Apolo.Tests.csproj --nologo
-
-      - name: Migration test (.NET 8) - same code, built for .NET 8
-        # does not change Apolo.exe; only shows which projects already compile on .NET 8
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $ok = @(); $bad = @()
-          foreach ($n in @("Ares.Ipc","Ares.Data","Ares.Settings","Ares.Tags","Ares.ModelInfo","Ares.Playing","Ares.CommonGUI","Ares.TagsImport","Ares.Players","Ares.Player")) {
-            $f = Get-Item "net8/$n.Net8.csproj"
-            Write-Host "=== $($f.Name)"
-            dotnet build $f.FullName -c Release --nologo -v:q -clp:ErrorsOnly
-            if ($LASTEXITCODE -eq 0) { $ok += $f.Name } else { $bad += $f.Name }
-          }
-          Write-Host "=============== RESUMO .NET 8 ==============="
-          Write-Host ("COMPILAM: " + ($ok -join ", "))
-          Write-Host ("FALHARAM: " + ($bad -join ", "))
-          if ($bad.Count -gt 0) { exit 1 }
 
       - name: Collect output
         shell: pwsh
