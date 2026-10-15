@@ -37,7 +37,7 @@ jobs:
       - name: Build the firewall helper (Ares.WinSecurity, .NET Framework 4.8)
         shell: pwsh
         run: |
-          msbuild src/Ares.WinSecurity/Ares.WinSecurity.csproj /restore:false /p:Configuration=Release /p:Platform=x86 /v:minimal
+          msbuild tools/WinSecurity.slnf /restore:false /p:Configuration=Release /p:Platform=x86 /v:minimal
           if ($LASTEXITCODE -ne 0) { exit 1 }
           New-Item -ItemType Directory -Force -Path dist/WinSecurity | Out-Null
           Get-ChildItem src/bin/Release -File | Where-Object { $_.Extension -ne ".pdb" -and $_.Extension -ne ".xml" } | ForEach-Object { Copy-Item $_.FullName dist/WinSecurity -Force }

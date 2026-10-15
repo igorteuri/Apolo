@@ -1,0 +1,10 @@
+{
+  "solution": {
+    "path": "..\\Ares.sln",
+    "projects": [
+      "src\\Ares.Ipc\\Ares.Ipc.csproj",
+      "src\\Ares.Settings\\Ares.Settings.csproj",
+      "src\\Ares.WinSecurity\\Ares.WinSecurity.csproj"
+    ]
+  }
+}

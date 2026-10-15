@@ -42,3 +42,4 @@ Esta etapa não executou a fase 1: sem poder compilar aqui, converter 19 projeto
 - Etapa 70: cabeçalho das listas desenhado com cores do tema; `ThemedComboBox` (lista suspensa no tema) no tipo da playlist; setas ▲▼ da lista de músicas com aviso de erro. Barras de rolagem do tema ainda pendentes.
 
 - Etapa 71: build.yml agora publica .NET 8 self-contained + instalador Inno Setup (WinSecurity em subpasta); net8.yml só manual; testes em net8; correções: flash branco na abertura, ícone de pausa, barra de rolagem, abas/espaçamentos de Configurações, reordenar botões sem parar a música.
+- Etapa 72: corrige build do WinSecurity (solution filter tools/WinSecurity.slnf).
