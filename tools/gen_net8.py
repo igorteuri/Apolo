@@ -44,6 +44,7 @@ def gen(name, refs, extra=''):
     out.append('</Project>')
     open('net8/%s.Net8.csproj' % name, 'w', encoding='utf-8').write('\n'.join(out) + '\n')
     print(name, len(comp), 'files', len(res), 'resources')
-gen('Ares.Ipc', [])
+ACL = '  <ItemGroup>\n    <PackageReference Include="System.Threading.AccessControl" Version="8.0.0" />\n  </ItemGroup>'
+gen('Ares.Ipc', [], ACL)
 gen('Ares.Settings', ['Ares.Ipc'])
 gen('Ares.Data', [])

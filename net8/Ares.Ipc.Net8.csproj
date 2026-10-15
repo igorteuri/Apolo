@@ -24,4 +24,7 @@
     <Compile Include="..\src\Ares.Ipc\SharedMemory.cs" Link="SharedMemory.cs" />
     <Compile Include="..\src\Ares.Ipc\SharedMemoryException.cs" Link="SharedMemoryException.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Threading.AccessControl" Version="8.0.0" />
+  </ItemGroup>
 </Project>
