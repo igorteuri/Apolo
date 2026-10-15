@@ -75,6 +75,12 @@ namespace Ares.CommonGUI
             }
         }
 
+        /// <summary>The next drop starts with "sound effects, one button per file" (used by the quick effects board).</summary>
+        public static void PreferEffects()
+        {
+            s_Last = new DropOptions { Sounds = true, OneElement = false, Kind = PlaylistKind.Random, Repeat = false };
+        }
+
         private static string Tx(string pt, string en)
         {
             return IsPt ? pt : en;
@@ -104,6 +110,14 @@ namespace Ares.CommonGUI
                 Margin = new Padding(0, 0, 0, 8)
             };
             layout.Controls.Add(info);
+
+            // two quick choices which fill in everything below
+            var presets = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 8) };
+            var presetMusic = new Button { AutoSize = true, Text = pt ? "\u266B  Trilha: uma playlist por pasta" : "\u266B  Soundtrack: one playlist per folder" };
+            var presetEffects = new Button { AutoSize = true, Text = pt ? "\u26A1  Efeitos: um botão por arquivo" : "\u26A1  Effects: one button per file" };
+            presets.Controls.Add(presetMusic);
+            presets.Controls.Add(presetEffects);
+            layout.Controls.Add(presets);
 
             var typeBox = new GroupBox { Text = pt ? "Tipo de áudio" : "Kind of audio", AutoSize = true, Dock = DockStyle.Fill };
             var typeFlow = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, Dock = DockStyle.Fill, WrapContents = false };
@@ -170,6 +184,18 @@ namespace Ares.CommonGUI
             layout.Controls.Add(buttons);
             AcceptButton = ok;
             CancelButton = cancel;
+
+            presetMusic.Click += (s, e) =>
+            {
+                m_Music.Checked = true;
+                m_One.Checked = true;
+                m_KindRandom.Checked = true;
+            };
+            presetEffects.Click += (s, e) =>
+            {
+                m_Sounds.Checked = true;
+                m_Each.Checked = true;
+            };
 
             EventHandler update = (s, e) => UpdateState();
             m_Music.CheckedChanged += update;

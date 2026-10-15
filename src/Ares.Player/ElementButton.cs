@@ -21,6 +21,14 @@ namespace Ares.Player
         private string m_IconCacheKey;
         private bool m_ListMode;
         private bool m_MultiSelected;
+        private int m_Kind;
+
+        /// <summary>What the button plays: 0 = unknown, 1 = music playlist, 2 = sound effect (small badge in the corner).</summary>
+        public int Kind
+        {
+            get { return m_Kind; }
+            set { if (m_Kind != value) { m_Kind = value; Invalidate(); } }
+        }
 
         /// <summary>Selected (with Ctrl / Shift) in edit mode, for deleting several buttons at once.</summary>
         public bool MultiSelected
@@ -357,6 +365,23 @@ namespace Ares.Player
                 Color line = Checked ? accent : (m_Hover ? accent : border);
                 using (Pen pen = new Pen(line, Checked ? 2f : 1f))
                     g.DrawPath(pen, path);
+
+                if (m_Kind != 0)
+                {
+                    string glyph = m_Kind == 2 ? "\u26A1" : "\u266B";
+                    int bd = Math.Max(16, (int)Math.Round(18 * Scale));
+                    Rectangle pill = m_ListMode
+                        ? new Rectangle(Width - bd - 8, (Height - bd) / 2, bd, bd)
+                        : new Rectangle(6, 6, bd, bd);
+                    using (GraphicsPath pp = Rounded(pill, bd / 3))
+                    {
+                        using (SolidBrush pb = new SolidBrush(Color.FromArgb(m_Picture != null && !m_ListMode ? 215 : 120, window)))
+                            g.FillPath(pb, pp);
+                    }
+                    using (Font gf = new Font(Font.FontFamily, Math.Max(7f, Font.Size - 1.5f), FontStyle.Regular))
+                        TextRenderer.DrawText(g, glyph, gf, pill, accent,
+                            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+                }
 
                 if (m_MultiSelected)
                 {

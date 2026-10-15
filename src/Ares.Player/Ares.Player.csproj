@@ -153,6 +153,9 @@
     <Compile Include="Player.Overlay.cs" />
     <Compile Include="Player.Remote.cs" />
     <Compile Include="AppTabBar.cs" />
+    <Compile Include="NowPlayingStrip.cs" />
+    <Compile Include="TrackListView.cs" />
+    <Compile Include="Player.TrackColumns.cs" />
     <Compile Include="Player.Shortcuts.cs" />
     <Compile Include="Player.Missing.cs" />
     <Compile Include="Player.Web.cs" />

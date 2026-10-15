@@ -15,6 +15,11 @@ namespace Ares.Player
         {
             public IFileElement File;
             public int Index; // position in the container, -1 when not a top-level element
+            public int Number; // position in the list, starting with 1
+            public string Artist;
+            public string Album;
+            public double Seconds;
+            public bool Loaded;
         }
 
         private const int TrackGap = 6;
@@ -33,7 +38,7 @@ namespace Ares.Player
         private ComboBox m_TrackKind;
         private bool m_TrackKindLock;
         private TextBox m_TrackSearch;
-        private ListBox m_TrackList;
+        private TrackListView m_TrackList;
         private int m_TrackState = 0; // 0 = not placed yet, 1 = collapsed, 2 = open
         private int m_TrackHeight = 230;
         private int m_TrackElementId = -1;
@@ -119,9 +124,8 @@ namespace Ares.Player
                 m_TrackKind.Items.Add(T("Efeito sonoro — um aleatório", "Sound effect — one at random"));
                 new ToolTip().SetToolTip(m_TrackKind, T("Tipo da playlist: muda como ela toca os arquivos", "Playlist type: changes how it plays its files"));
                 m_TrackSearch = new TextBox();
-                m_TrackList = new ListBox();
-                m_TrackList.IntegralHeight = false;
-                m_TrackList.HorizontalScrollbar = true;
+                m_TrackList = new TrackListView();
+                InitTrackColumns();
 
                 m_TrackBody.Controls.Add(m_TrackList);
                 m_TrackBody.Controls.Add(m_TrackSearch);
@@ -143,7 +147,7 @@ namespace Ares.Player
                 m_TrackSplit.Anchor = AnchorStyles.Top | AnchorStyles.Left;
                 m_TrackStrip.Anchor = AnchorStyles.Top | AnchorStyles.Left;
                 m_TrackStrip.Horizontal = true;
-                m_LeftOpen = Ares.CommonGUI.Preferences.GetBool("LeftOpen", true);
+                m_LeftOpen = Ares.CommonGUI.Preferences.GetBool("LeftOpenV2", false);
                 m_LeftStrip = new EdgeHandle();
                 m_LeftStrip.Name = "leftStrip";
                 m_LeftStrip.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
@@ -161,7 +165,7 @@ namespace Ares.Player
                     if (!m_TrackKindLock)
                         ChangeTrackKind(m_TrackKind.SelectedIndex);
                 };
-                m_TrackSearch.TextChanged += (s, e) => FillTrackList();
+                m_TrackSearch.TextChanged += (s, e) => FillTrackList(false);
                 m_TrackSearch.HandleCreated += (s, e) =>
                     SendMessage(m_TrackSearch.Handle, 0x1501, (IntPtr)1, T("Buscar música...", "Search track..."));
                 m_TrackSearch.KeyDown += (s, e) =>
@@ -217,6 +221,12 @@ namespace Ares.Player
                 showItem.Click += (s, e) => ShowSelectedTrackInFolder();
                 trackMenu.Items.Add(playItem);
                 trackMenu.Items.Add(showItem);
+                ToolStripMenuItem editItem = new ToolStripMenuItem(T("Editar informações...", "Edit information..."));
+                editItem.Click += (s, e) => EditSelectedTrackInfo();
+                m_TrackSaveOrderItem = new ToolStripMenuItem(T("Gravar esta ordem na playlist", "Save this order in the playlist"));
+                m_TrackSaveOrderItem.Click += (s, e) => SaveTrackOrder();
+                trackMenu.Items.Add(editItem);
+                trackMenu.Items.Add(m_TrackSaveOrderItem);
                 m_TrackList.ContextMenuStrip = trackMenu;
                 m_TrackList.MouseDown += (s, e) =>
                 {
@@ -231,6 +241,7 @@ namespace Ares.Player
                 {
                     if (m_TrackList.SelectedIndex < 0 || m_TrackList.SelectedIndex >= m_TrackShown.Count)
                         e.Cancel = true;
+                    m_TrackSaveOrderItem.Visible = m_TrackSortCol >= 0 && TrackContainer() is ISequentialContainer && m_TrackSearch.Text.Trim().Length == 0;
                 };
 
                 // splitter: drag to change the height of the panel
@@ -389,6 +400,16 @@ namespace Ares.Player
                 int margin = groupBox3.Left;
                 int headerBottom = m_VolumePanel != null ? m_VolumePanel.Bottom : menuStrip1.Bottom + 6;
                 int bodyTop = headerBottom + 8;
+                if (m_NowPlaying != null)
+                {
+                    // the "playing now" strip has a fixed place, so that nothing jumps when a sound starts
+                    m_NowPlaying.Visible = true;
+                    {
+                        m_NowPlaying.SetBounds(margin, headerBottom + 4, Math.Max(100, clientWidth - 2 * margin), NowPlayingStrip.StripHeight);
+                        m_NowPlaying.BringToFront();
+                        bodyTop = m_NowPlaying.Bottom + 6;
+                    }
+                }
                 int statusHeight = m_StatusStrip != null && m_StatusStrip.Visible ? m_StatusStrip.Height : 0;
                 int bodyBottom = ClientSize.Height - statusHeight - 10;
                 int bodyHeight = Math.Max(150, bodyBottom - bodyTop);
@@ -454,7 +475,7 @@ namespace Ares.Player
             if (m_LeftOpen == open)
                 return;
             m_LeftOpen = open;
-            Ares.CommonGUI.Preferences.SetBool("LeftOpen", open);
+            Ares.CommonGUI.Preferences.SetBool("LeftOpenV2", open);
             LayoutMainColumns();
         }
 
@@ -606,6 +627,8 @@ namespace Ares.Player
                 TrackRow row = new TrackRow();
                 row.File = f;
                 row.Index = -1;
+                row.Number = m_TrackRows.Count + 1;
+                ApplyCachedTags(row);
                 for (int i = 0; i < top.Count; i++)
                 {
                     if (top[i].InnerElement != null && top[i].InnerElement.Id == f.Id)
@@ -620,6 +643,11 @@ namespace Ares.Player
 
         private void FillTrackList()
         {
+            FillTrackList(true);
+        }
+
+        private void FillTrackList(bool loadMeta)
+        {
             if (m_TrackList == null)
                 return;
             if (m_TrackElementId < 0)
@@ -632,16 +660,20 @@ namespace Ares.Player
             if (m_TrackList.SelectedIndex >= 0 && m_TrackList.SelectedIndex < m_TrackShown.Count)
                 keepId = m_TrackShown[m_TrackList.SelectedIndex].File.Id;
             m_TrackShown.Clear();
-            m_TrackList.BeginUpdate();
-            m_TrackList.Items.Clear();
+            List<TrackRow> filtered = new List<TrackRow>();
             for (int i = 0; i < m_TrackRows.Count; i++)
             {
                 string title = m_TrackRows[i].File.Title;
-                if (q.Length > 0 && title.IndexOf(q, StringComparison.CurrentCultureIgnoreCase) < 0)
+                if (q.Length > 0 && (title ?? "").IndexOf(q, StringComparison.CurrentCultureIgnoreCase) < 0
+                    && (m_TrackRows[i].Artist ?? "").IndexOf(q, StringComparison.CurrentCultureIgnoreCase) < 0)
                     continue;
-                m_TrackShown.Add(m_TrackRows[i]);
-                m_TrackList.Items.Add((i + 1).ToString() + "   " + title);
+                filtered.Add(m_TrackRows[i]);
             }
+            m_TrackShown.AddRange(SortedTrackRows(filtered));
+            m_TrackList.BeginUpdate();
+            m_TrackList.Items.Clear();
+            foreach (TrackRow shown in m_TrackShown)
+                m_TrackList.Items.Add(MakeTrackItem(shown));
             m_TrackList.EndUpdate();
             for (int i = 0; i < m_TrackShown.Count; i++)
             {
@@ -659,13 +691,15 @@ namespace Ares.Player
             m_TrackKind.Enabled = kind >= 0;
             m_TrackTitle.Text = m_TrackElementTitle + "  ·  " + m_TrackRows.Count + " " + T("arquivos", "files");
             UpdateTrackButtons();
+            if (loadMeta)
+                StartTrackMetaLoading();
         }
 
         private void UpdateTrackButtons()
         {
             bool seq = TrackContainer() is ISequentialContainer;
             int idx = m_TrackList.SelectedIndex;
-            bool canMove = idx >= 0 && idx < m_TrackShown.Count && m_TrackShown[idx].Index >= 0 && m_TrackSearch.Text.Trim().Length == 0;
+            bool canMove = idx >= 0 && idx < m_TrackShown.Count && m_TrackShown[idx].Index >= 0 && m_TrackSearch.Text.Trim().Length == 0 && m_TrackSortCol < 0;
             m_TrackUp.Enabled = canMove && m_TrackShown[idx].Index > 0;
             m_TrackDown.Enabled = canMove && m_TrackShown[idx].Index < m_TrackRows.Count - 1;
         }

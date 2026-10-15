@@ -25,11 +25,12 @@ namespace Ares.Player
     public class AppTabBar : Control
     {
         public const int BarHeight = 36;
-        private const int TabMinWidth = 70;
-        private const int TabMaxWidth = 210;
-        private const int HomeWidth = 118;
+        private const int TabMinWidth = 105;
+        private const int TabMaxWidth = 315;
+        private const int HomeWidth = 150;
         private const int AddWidth = 34;
         private const int CloseSize = 16;
+        private const int LogoWidth = 40;
 
         private readonly List<AppTabItem> m_Items = new List<AppTabItem>();
         private readonly List<Rectangle> m_Rects = new List<Rectangle>();
@@ -90,11 +91,11 @@ namespace Ares.Player
         private void Measure()
         {
             m_Rects.Clear();
-            int x = 8;
+            int x = LogoWidth;
             int top = 6;
             int h = Height - top;
             int count = m_Items.Count;
-            int available = Width - 8 - AddWidth - 10;
+            int available = Width - LogoWidth - AddWidth - 10;
             int homeW = (count > 0 && m_Items[0].Home) ? HomeWidth : 0;
             List<int> widths = new List<int>();
             int total = 0;
@@ -240,6 +241,10 @@ namespace Ares.Player
             g.Clear(barColor);
             g.SmoothingMode = SmoothingMode.AntiAlias;
             Measure();
+            // program logo at the left, like the title of a browser
+            if (m_HomeIcon == null)
+                m_HomeIcon = Ares.CommonGUI.ApoloBrand.GetIcon(16, Ares.CommonGUI.ApoloState.Playing, 0);
+            g.DrawIcon(m_HomeIcon, new Rectangle(12, (Height - 16) / 2 + 2, 16, 16));
 
             for (int i = 0; i < m_Items.Count; i++)
             {
@@ -259,10 +264,7 @@ namespace Ares.Player
                 int textLeft = r.X + 12;
                 if (item.Home)
                 {
-                    if (m_HomeIcon == null)
-                        m_HomeIcon = Ares.CommonGUI.ApoloBrand.GetIcon(16, Ares.CommonGUI.ApoloState.Playing, 0);
-                    g.DrawIcon(m_HomeIcon, new Rectangle(r.X + 10, r.Y + (r.Height - 16) / 2 + 1, 16, 16));
-                    textLeft = r.X + 32;
+                    textLeft = r.X + 14;
                 }
                 else if (item.Sound)
                 {

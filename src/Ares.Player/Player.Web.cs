@@ -25,6 +25,8 @@ namespace Ares.Player
                 ? new System.Collections.Generic.List<WebAudioInfo>()
                 : m_WebWindow.GetAudioStates();
             m_WebAudioPanel.Rebuild(infos);
+            if (m_NowPlaying != null && m_NowPlaying.SetWeb(infos))
+                LayoutMainColumns();
             int h = m_WebAudioPanel.Height;
             m_WebAudioPanel.Top = groupBox3.ClientSize.Height - h - 4;
             int bottom = (h > 0) ? m_WebAudioPanel.Top - 4 : groupBox3.ClientSize.Height - 8;

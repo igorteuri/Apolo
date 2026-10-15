@@ -183,6 +183,7 @@ namespace Ares.Player
 
         private MusicProgressBar m_MusicProgressBar;
         private SoundProgressPanel m_SoundPanel;
+        private NowPlayingStrip m_NowPlaying;
         private ToolStripButton m_PauseButton;
         private bool m_PauseShown;
         private ToolStripDropDownButton m_OutputButton;
@@ -242,6 +243,16 @@ namespace Ares.Player
                     control.SetSoundRepeat(e.Handle, e.Repeat);
             };
             groupBox3.Controls.Add(m_SoundPanel);
+
+            // the slim "playing now" strip below the header
+            m_NowPlaying = new NowPlayingStrip();
+            m_NowPlaying.Name = "nowPlayingStrip";
+            m_NowPlaying.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            m_NowPlaying.StopRequested += npHandle => { PlayingControl npc = m_PlayingControl; if (npc != null) npc.StopSound(npHandle); };
+            m_NowPlaying.PauseRequested += npHandle => { PlayingControl npc = m_PlayingControl; if (npc != null) npc.ToggleSoundPause(npHandle); };
+            m_NowPlaying.RepeatRequested += (npHandle, npRepeat) => { PlayingControl npc = m_PlayingControl; if (npc != null) npc.SetSoundRepeat(npHandle, npRepeat); };
+            m_NowPlaying.SeekRequested += (npHandle, npSec) => { PlayingControl npc = m_PlayingControl; if (npc != null) npc.SeekSound(npHandle, npSec); };
+            Controls.Add(m_NowPlaying);
 
             // pause button, right behind the stop button
             m_PauseButton = new ToolStripButton();
@@ -502,6 +513,8 @@ namespace Ares.Player
                     m_SoundPanel.UpdateSounds(sounds);
                 else
                     m_SoundPanel.ClearSounds();
+                if (m_NowPlaying != null && m_NowPlaying.SetSounds(sounds))
+                    LayoutMainColumns();
 
                 UpdatePauseButton(control.IsPaused());
                 UpdateOutputButton();
@@ -1159,6 +1172,8 @@ namespace Ares.Player
                         if (kinds[i] == 2 && specs[i].IndexOf("emoji-", StringComparison.OrdinalIgnoreCase) >= 0)
                             checkBox.PictureContain = true;
                         checkBox.TintColor = Ares.CommonGUI.ButtonImageStore.GetColor(m_CurrentProjectPath, shownModeTitle, visible[i].Title);
+                        int trackKind = TrackKindOf(element.StartElement);
+                        checkBox.Kind = trackKind == 2 ? 2 : (trackKind >= 0 ? 1 : 0);
                         checkBox.SetBounds(0, 0, cardSize.Width, cardSize.Height);
                         checkBox.Checked = m_PlayingControl.CurrentModeElements.Contains(element);
                         int id = element.Id;
