@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Automatic tests of Apolo. Run in the build (GitHub Actions) after the main build; they use the DLLs it produced. -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <IsPackable>false</IsPackable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Drawing" />
+    <Reference Include="Ares.Tags"><HintPath>..\..\src\bin\Release\Ares.Tags.dll</HintPath></Reference>
+    <Reference Include="Ares.TagsImport"><HintPath>..\..\src\bin\Release\Ares.TagsImport.dll</HintPath></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- the logic under test is compiled straight from the player sources (no window code) -->
+    <Compile Include="..\..\src\Ares.Player\TrackText.cs" Link="Linked\TrackText.cs" />
+    <Compile Include="..\..\src\Ares.Player\Player.Rights.cs" Link="Linked\Player.Rights.cs" />
+  </ItemGroup>
+</Project>

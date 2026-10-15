@@ -15,7 +15,8 @@ namespace Ares.Player
         {
             public IFileElement File;
             public int Index; // position in the container, -1 when not a top-level element
-            public int Number; // position in the list, starting with 1
+            public int Number; // position as shown in the list (changes with sorting / filter), starting with 1
+            public int Original; // position in the playlist itself, starting with 1
             public string Artist;
             public string Album;
             public double Seconds;
@@ -641,7 +642,8 @@ namespace Ares.Player
                 TrackRow row = new TrackRow();
                 row.File = f;
                 row.Index = -1;
-                row.Number = m_TrackRows.Count + 1;
+                row.Original = m_TrackRows.Count + 1;
+                row.Number = row.Original;
                 row.Plays = PlayCounts.Get(FullPathOf(f));
                 InitRights(row);
                 ApplyCachedTags(row);
@@ -686,6 +688,8 @@ namespace Ares.Player
                 filtered.Add(m_TrackRows[i]);
             }
             m_TrackShown.AddRange(SortedTrackRows(filtered));
+            for (int n = 0; n < m_TrackShown.Count; n++)
+                m_TrackShown[n].Number = n + 1; // the number always follows what is on the screen
             m_TrackList.BeginUpdate();
             m_TrackList.Items.Clear();
             foreach (TrackRow shown in m_TrackShown)
@@ -706,6 +710,8 @@ namespace Ares.Player
             m_TrackKindLock = false;
             m_TrackKind.Enabled = kind >= 0;
             m_TrackTitle.Text = m_TrackElementTitle + "  ·  " + m_TrackRows.Count + " " + T("arquivos", "files");
+            if (m_TrackSortCol >= 0 && m_TrackSortCol != ColNumber && TrackContainer() is ISequentialContainer)
+                m_TrackTitle.Text += "  ·  " + T("ordem só na tela (botão direito > Gravar esta ordem)", "order on screen only (right-click > Save this order)");
             UpdateTrackButtons();
             if (loadMeta)
                 StartTrackMetaLoading();

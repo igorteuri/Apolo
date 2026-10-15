@@ -159,6 +159,7 @@
     <Compile Include="Player.Rights.cs" />
     <Compile Include="Player.Tutorial.cs" />
     <Compile Include="TrackListView.cs" />
+    <Compile Include="TrackText.cs" />
     <Compile Include="Player.TrackColumns.cs" />
     <Compile Include="Player.Shortcuts.cs" />
     <Compile Include="Player.Missing.cs" />

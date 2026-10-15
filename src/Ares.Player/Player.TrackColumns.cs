@@ -114,12 +114,7 @@ namespace Ares.Player
 
         private static string FormatDuration(double seconds)
         {
-            if (seconds <= 0)
-                return "";
-            int t = (int)Math.Round(seconds);
-            if (t >= 3600)
-                return (t / 3600) + ":" + ((t / 60) % 60).ToString("00") + ":" + (t % 60).ToString("00");
-            return (t / 60) + ":" + (t % 60).ToString("00");
+            return TrackText.FormatDuration(seconds);
         }
 
         private IEnumerable<TrackRow> SortedTrackRows(IEnumerable<TrackRow> rows)
@@ -130,7 +125,7 @@ namespace Ares.Player
             switch (m_TrackSortCol)
             {
                 case ColNumber:
-                    return asc ? rows.OrderBy(r => r.Number) : rows.OrderByDescending(r => r.Number);
+                    return asc ? rows.OrderBy(r => r.Original) : rows.OrderByDescending(r => r.Original);
                 case ColTitle:
                     return asc ? rows.OrderBy(r => r.File.Title ?? "", StringComparer.CurrentCultureIgnoreCase)
                                : rows.OrderByDescending(r => r.File.Title ?? "", StringComparer.CurrentCultureIgnoreCase);
