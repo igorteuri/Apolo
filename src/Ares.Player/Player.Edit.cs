@@ -190,6 +190,7 @@ namespace Ares.Player
             m_ElementMenu = new ContextMenuStrip();
             m_ElementMenu.Items.Add(T("Ver lista de músicas", "View track list"), null, (s, e) => ShowTrackPanel(m_MenuElementId));
             m_ElementMenu.Items.Add(T("Propriedades da playlist", "Playlist properties"), null, (s, e) => EditPlaylistProperties());
+            m_ElementMenu.Items.Add(T("Trocar tipo: Música \u21C4 Efeito sonoro...", "Switch kind: Music \u21C4 Sound effect..."), null, (s, e) => ToggleButtonKind(m_MenuElementId));
             m_ElementMenu.Items.Add(new ToolStripSeparator());
             m_ElementMenu.Items.Add(T("Renomear", "Rename"), null, (s, e) => RenameElementButton());
             m_ElementDeleteItem = m_ElementMenu.Items.Add(T("Excluir", "Delete"), null, (s, e) => DeleteElementButton());
@@ -210,6 +211,12 @@ namespace Ares.Player
             elementsPanel.DragOver += ElementsDragOver;
             elementsPanel.DragDrop += ElementsDragDrop;
             elementsPanel.DragLeave += (s, e) => HideDropMarker();
+            // right click on the free space of the panel: add a button
+            elementsPanel.MouseUp += (s, e) =>
+            {
+                if (e.Button == MouseButtons.Right)
+                    ShowAddMenu(elementsPanel, e.Location);
+            };
             modesList.AllowDrop = true;
             modesList.DragOver += ModesDragOver;
             modesList.DragDrop += ModesDragDrop;
@@ -473,6 +480,13 @@ namespace Ares.Player
             m_EditMode = on;
             m_AddButton.Visible = on;
             ClearElementSelection();
+            // in edit mode a click on the music / effect badge of a button switches its kind
+            foreach (Control c in elementsPanel.Controls)
+            {
+                ElementButton card = c as ElementButton;
+                if (card != null)
+                    card.BadgeClickable = on;
+            }
             // Ctrl / Shift select several folders (to delete them together)
             bool oldListen = m_Listen;
             m_Listen = false;

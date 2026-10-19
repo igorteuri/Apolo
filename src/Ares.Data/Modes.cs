@@ -28,7 +28,19 @@ namespace Ares.Data
     {
         public bool IsPlaying { get; set; }
 
-        public IElement StartElement { get; set; }
+        private IElement m_StartElement;
+
+        public IElement StartElement
+        {
+            get { return m_StartElement; }
+            set
+            {
+                m_StartElement = value;
+                // a key trigger always points to the element which starts
+                if (m_Trigger != null && value != null)
+                    m_Trigger.TargetElementId = value.Id;
+            }
+        }
 
         public ITrigger Trigger 
         {

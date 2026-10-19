@@ -15,6 +15,7 @@ namespace Ares.Player
         private Panel m_ListBar;
         private TextBox m_SearchBox;
         private Button m_ListToggle;
+        private Button m_AddBarButton;
         private int m_FilterModeIndex = -1;
         private bool m_ListReady = false;
 
@@ -38,6 +39,12 @@ namespace Ares.Player
                 m_ListToggle.Name = "listToggle";
                 m_ListToggle.FlatStyle = FlatStyle.System;
                 m_ListToggle.UseVisualStyleBackColor = true;
+                m_AddBarButton = new Button();
+                m_AddBarButton.Name = "addBarButton";
+                m_AddBarButton.FlatStyle = FlatStyle.System;
+                m_AddBarButton.UseVisualStyleBackColor = true;
+                m_AddBarButton.Text = T("+ Adicionar \u25BE", "+ Add \u25BE");
+                m_AddBarButton.Click += (s, e) => ShowAddMenu(m_AddBarButton, new Point(0, m_AddBarButton.Height));
 
                 int barHeight = Math.Max(26, m_SearchBox.PreferredHeight + 2);
                 int gap = 4;
@@ -45,6 +52,7 @@ namespace Ares.Player
                 m_ListBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
                 m_ListBar.Controls.Add(m_SearchBox);
                 m_ListBar.Controls.Add(m_ListToggle);
+                m_ListBar.Controls.Add(m_AddBarButton);
                 m_ListBar.Resize += (s, e) => LayoutListBar();
 
                 elementsPanel.Top += barHeight + gap;
@@ -110,8 +118,10 @@ namespace Ares.Player
             if (m_ListBar == null)
                 return;
             int toggleWidth = Math.Max(90, TextRenderer.MeasureText("▦ Cartões", m_ListToggle.Font).Width + 24);
+            int addWidth = Math.Max(90, TextRenderer.MeasureText(m_AddBarButton.Text, m_AddBarButton.Font).Width + 24);
             m_ListToggle.SetBounds(m_ListBar.ClientSize.Width - toggleWidth, 0, toggleWidth, m_ListBar.ClientSize.Height);
-            m_SearchBox.SetBounds(0, 0, Math.Max(40, m_ListBar.ClientSize.Width - toggleWidth - 6), m_SearchBox.Height);
+            m_AddBarButton.SetBounds(m_ListBar.ClientSize.Width - toggleWidth - 6 - addWidth, 0, addWidth, m_ListBar.ClientSize.Height);
+            m_SearchBox.SetBounds(0, 0, Math.Max(40, m_ListBar.ClientSize.Width - toggleWidth - addWidth - 12), m_SearchBox.Height);
             m_SearchBox.Top = (m_ListBar.ClientSize.Height - m_SearchBox.Height) / 2;
         }
 

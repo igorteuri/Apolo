@@ -117,6 +117,92 @@ namespace Ares.CommonGUI
             s_Last = new DropOptions { Sounds = true, OneElement = false, Kind = PlaylistKind.Random, Repeat = false };
         }
 
+        /// <summary>Big choice button (looks like the playlist buttons of the Player): glyph, name and a short hint.</summary>
+        private class KindCard : RadioButton
+        {
+            public string Glyph = "";
+            public string Title = "";
+            public string Hint = "";
+            private bool m_Hover;
+
+            public KindCard()
+            {
+                Appearance = Appearance.Button;
+                SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer
+                    | ControlStyles.ResizeRedraw | ControlStyles.Selectable, true);
+                float scale = Math.Max(80, ThemeManager.ScalePercent) / 110f;
+                Size = new Size((int)Math.Round(190 * scale), (int)Math.Round(60 * scale));
+                Margin = new Padding(0, 0, 8, 0);
+            }
+
+            protected override void OnMouseEnter(EventArgs e)
+            {
+                m_Hover = true;
+                Invalidate();
+                base.OnMouseEnter(e);
+            }
+
+            protected override void OnMouseLeave(EventArgs e)
+            {
+                m_Hover = false;
+                Invalidate();
+                base.OnMouseLeave(e);
+            }
+
+            protected override void OnCheckedChanged(EventArgs e)
+            {
+                Invalidate();
+                base.OnCheckedChanged(e);
+            }
+
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                ThemePalette p = ThemeManager.Current;
+                bool themed = p != null && !p.IsClassic;
+                Color window = themed ? p.Window : SystemColors.Control;
+                Color surface = themed ? p.Surface : SystemColors.ControlLight;
+                Color hover = themed ? p.Hover : SystemColors.ControlLightLight;
+                Color selection = themed ? p.Selection : SystemColors.Highlight;
+                Color accent = themed ? p.Accent : SystemColors.Highlight;
+                Color border = themed ? p.Border : SystemColors.ControlDark;
+                Color text = themed ? p.Text : SystemColors.ControlText;
+                Color textOnBack = Checked && !themed ? SystemColors.HighlightText : text;
+
+                Graphics g = e.Graphics;
+                g.Clear(Parent != null ? ThemeManager.EffectiveBack(this) : window);
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                float scale = Math.Max(80, ThemeManager.ScalePercent) / 110f;
+                int radius = (int)Math.Round(8 * scale);
+                Rectangle r = new Rectangle(0, 0, Width - 1, Height - 1);
+                using (System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath())
+                {
+                    int d = radius * 2;
+                    path.AddArc(r.X, r.Y, d, d, 180, 90);
+                    path.AddArc(r.Right - d, r.Y, d, d, 270, 90);
+                    path.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
+                    path.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
+                    path.CloseFigure();
+                    using (SolidBrush b = new SolidBrush(Checked ? selection : (m_Hover ? hover : surface)))
+                        g.FillPath(b, path);
+                    using (Pen pen = new Pen(Checked || m_Hover ? accent : border, Checked ? 2f : 1f))
+                        g.DrawPath(pen, path);
+                }
+
+                int pad = (int)Math.Round(10 * scale);
+                int glyphWidth = (int)Math.Round(30 * scale);
+                using (Font gf = new Font("Segoe UI Symbol", 16f * scale, FontStyle.Regular))
+                    TextRenderer.DrawText(g, Glyph, gf, new Rectangle(pad, 0, glyphWidth, Height), Checked && !themed ? textOnBack : accent,
+                        TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+                int textLeft = pad + glyphWidth + 4;
+                using (Font tf = new Font(Font, FontStyle.Bold))
+                    TextRenderer.DrawText(g, Title, tf, new Rectangle(textLeft, Height / 2 - tf.Height - 1, Width - textLeft - pad, tf.Height),
+                        textOnBack, TextFormatFlags.Left | TextFormatFlags.Bottom | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
+                using (Font hf = new Font(Font.FontFamily, Math.Max(7f, Font.Size - 1.5f), FontStyle.Regular))
+                    TextRenderer.DrawText(g, Hint, hf, new Rectangle(textLeft, Height / 2 + 1, Width - textLeft - pad, hf.Height),
+                        Color.FromArgb(200, textOnBack), TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.NoPadding | TextFormatFlags.EndEllipsis);
+            }
+        }
+
         private static string Tx(string pt, string en)
         {
             return IsPt ? pt : en;
@@ -244,6 +330,32 @@ namespace Ares.CommonGUI
                 });
             }
 
+            // first question: is it music or a sound effect? (two big buttons, like the playlist buttons)
+            layout.Controls.Add(new Label
+            {
+                AutoSize = true,
+                Text = pt ? "O que são esses arquivos?" : "What are these files?",
+                Margin = new Padding(0, 0, 0, 4)
+            });
+            var typeFlow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Dock = DockStyle.Fill, WrapContents = false, Margin = new Padding(0, 0, 0, 8) };
+            m_Music = new KindCard
+            {
+                Glyph = "♫",
+                Title = pt ? "Música" : "Music",
+                Hint = pt ? "toca em segundo plano" : "plays in the background",
+                Checked = !s_Last.Sounds
+            };
+            m_Sounds = new KindCard
+            {
+                Glyph = "⚡",
+                Title = pt ? "Efeito sonoro" : "Sound effect",
+                Hint = pt ? "toca junto com a música" : "plays over the music",
+                Checked = s_Last.Sounds
+            };
+            typeFlow.Controls.Add(m_Music);
+            typeFlow.Controls.Add(m_Sounds);
+            layout.Controls.Add(typeFlow);
+
             // the ways to place it: only when there is more than one sensible answer
             if (scan != null)
             {
@@ -269,23 +381,6 @@ namespace Ares.CommonGUI
                     layout.Controls.Add(layoutBox);
                 }
             }
-
-            // two quick choices which fill in everything below
-            var presets = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 8) };
-            var presetMusic = new Button { AutoSize = true, Text = pt ? "♫  Trilha: uma playlist por pasta" : "♫  Soundtrack: one playlist per folder" };
-            var presetEffects = new Button { AutoSize = true, Text = pt ? "⚡  Efeitos: um botão por arquivo" : "⚡  Effects: one button per file" };
-            presets.Controls.Add(presetMusic);
-            presets.Controls.Add(presetEffects);
-            layout.Controls.Add(presets);
-
-            var typeBox = new GroupBox { Text = pt ? "Tipo de áudio" : "Kind of audio", AutoSize = true, Dock = DockStyle.Fill };
-            var typeFlow = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, Dock = DockStyle.Fill, WrapContents = false };
-            m_Music = new RadioButton { AutoSize = true, Text = pt ? "Música (toca em segundo plano, uma de cada vez)" : "Music (background, one at a time)", Checked = !s_Last.Sounds };
-            m_Sounds = new RadioButton { AutoSize = true, Text = pt ? "Efeitos sonoros (podem tocar junto com a música)" : "Sound effects (can play over the music)", Checked = s_Last.Sounds };
-            typeFlow.Controls.Add(m_Music);
-            typeFlow.Controls.Add(m_Sounds);
-            typeBox.Controls.Add(typeFlow);
-            layout.Controls.Add(typeBox);
 
             bool loosePlaylist = scan != null && scan.Shape == DropShape.Files;
             m_StructBox = new GroupBox { Text = pt ? "Como criar os botões" : "How to make the buttons", AutoSize = true, Dock = DockStyle.Fill };
@@ -355,18 +450,6 @@ namespace Ares.CommonGUI
                 m_EffectBox.Visible = show;
                 more.Text = (pt ? "Mais ajustes " : "More settings ") + (show ? "▴" : "▾");
             };
-            presetMusic.Click += (s, e) =>
-            {
-                m_Music.Checked = true;
-                m_One.Checked = true;
-                m_KindRandom.Checked = true;
-            };
-            presetEffects.Click += (s, e) =>
-            {
-                m_Sounds.Checked = true;
-                m_Each.Checked = true;
-            };
-
             EventHandler update = (s, e) => UpdateState();
             m_Music.CheckedChanged += update;
             m_Sounds.CheckedChanged += update;

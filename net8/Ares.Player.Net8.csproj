@@ -28,6 +28,7 @@
     <Compile Include="..\src\Ares.Player\MusicProgressBar.cs" Link="MusicProgressBar.cs" />
     <Compile Include="..\src\Ares.Player\Player.Library.cs" Link="Player.Library.cs" />
     <Compile Include="..\src\Ares.Player\Player.Groups.cs" Link="Player.Groups.cs" />
+    <Compile Include="..\src\Ares.Player\Player.Kinds.cs" Link="Player.Kinds.cs" />
     <Compile Include="..\src\Ares.Player\ToastPanel.cs" Link="ToastPanel.cs" />
     <Compile Include="..\src\Ares.Player\Player.Edit.cs" Link="Player.Edit.cs" />
     <Compile Include="..\src\Ares.Player\Player.Export.cs" Link="Player.Export.cs" />

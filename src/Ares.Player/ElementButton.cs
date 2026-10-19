@@ -40,11 +40,49 @@ namespace Ares.Player
         /// <summary>When set, the next click only changes the selection and does not play the playlist.</summary>
         public bool SwallowClick;
 
+        /// <summary>When set (edit mode), a click on the small music / effect badge asks to switch the kind instead of playing.</summary>
+        public bool BadgeClickable;
+
+        /// <summary>The badge (music / sound effect) was clicked.</summary>
+        public event EventHandler KindBadgeClicked;
+
+        private int BadgeCount()
+        {
+            return ((m_Kind & 1) != 0 ? 1 : 0) + ((m_Kind & 2) != 0 ? 1 : 0);
+        }
+
+        // where the small badges are drawn (the same place for painting and for the click)
+        private Rectangle BadgeRect(int index, int count)
+        {
+            int bd = Math.Max(18, (int)Math.Round(21 * Scale));
+            return m_ListMode
+                ? new Rectangle(Width - (bd + 4) * (count - index) - 6, (Height - bd) / 2, bd, bd)
+                : new Rectangle(6 + index * (bd + 3), 6, bd, bd);
+        }
+
+        private bool BadgeHit(Point p)
+        {
+            int count = BadgeCount();
+            for (int i = 0; i < count; i++)
+            {
+                if (BadgeRect(i, count).Contains(p))
+                    return true;
+            }
+            return false;
+        }
+
         protected override void OnClick(EventArgs e)
         {
             if (SwallowClick)
             {
                 SwallowClick = false;
+                return;
+            }
+            if (BadgeClickable && m_Kind != 0 && BadgeHit(PointToClient(Cursor.Position)))
+            {
+                EventHandler handler = KindBadgeClicked;
+                if (handler != null)
+                    handler(this, EventArgs.Empty);
                 return;
             }
             base.OnClick(e);
@@ -401,9 +439,7 @@ namespace Ares.Player
                     {
                         for (int gi = 0; gi < glyphs.Count; gi++)
                         {
-                            Rectangle pill = m_ListMode
-                                ? new Rectangle(Width - (bd + 4) * (glyphs.Count - gi) - 6, (Height - bd) / 2, bd, bd)
-                                : new Rectangle(6 + gi * (bd + 3), 6, bd, bd);
+                            Rectangle pill = BadgeRect(gi, glyphs.Count);
                             using (GraphicsPath pp = Rounded(pill, bd / 3))
                             {
                                 using (SolidBrush pb = new SolidBrush(Color.FromArgb(m_Picture != null && !m_ListMode ? 225 : 200, window)))

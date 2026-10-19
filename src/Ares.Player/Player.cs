@@ -1191,6 +1191,9 @@ namespace Ares.Player
                             checkBox.PictureContain = true;
                         checkBox.TintColor = Ares.CommonGUI.ButtonImageStore.GetColor(m_CurrentProjectPath, shown[i].OwnerTitle, visible[i].Title);
                         checkBox.Kind = KindsOf(element.StartElement, 0);
+                        checkBox.BadgeClickable = m_EditMode;
+                        int badgeId = element.Id;
+                        checkBox.KindBadgeClicked += (Object, EventArgs) => RunAfterDrag(() => ToggleButtonKind(badgeId));
                         checkBox.SetBounds(0, 0, cardSize.Width, cardSize.Height);
                         checkBox.Checked = m_PlayingControl.CurrentModeElements.Contains(element);
                         int id = element.Id;
