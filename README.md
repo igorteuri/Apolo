@@ -17,7 +17,7 @@ O Apolo é uma modernização do **[Ares](http://aresrpg.sourceforge.net/)** (*A
 - **Páginas web embutidas:** Microsoft WebView2.
 - **Túnel do controle remoto:** [cloudflared](https://github.com/cloudflare/cloudflared), da Cloudflare.
 - **Discord:** [discord.js/voice](https://github.com/discordjs/discord.js) e [@snazzah/davey](https://github.com/Snazzah/davey), rodando em um processo Node.js que acompanha o programa.
-- Bibliotecas do projeto original: WeifenLuo DockPanel Suite, ServiceStack, RestSharp, Chromaprint, FFmpeg, HtmlRenderer, Mouse/Keyboard Hooks, jCIFS e outras, cada uma com a sua licença (veja os arquivos `*Licence*` na raiz).
+- Bibliotecas do projeto original ainda usadas: RestSharp, Chromaprint, FFmpeg e Mouse/Keyboard Hooks, cada uma com a sua licença (veja a pasta [Licencas](Licencas)). O Editor do Ares (com WeifenLuo DockPanel Suite, HtmlRenderer e ServiceStack) foi retirado desta versão do repositório; continua no histórico do Git e no projeto original.
 
 ## Licença
 
@@ -39,12 +39,13 @@ Assim como o Ares, o Apolo é distribuído sob a **GNU GPL (versão 2 ou posteri
 - **Verificador de direitos autorais** (menu Extras): identifica a música e mostra um semáforo de risco para lives e vídeos. É só um indicativo, não uma garantia.
 - **Música e efeitos livres** (menu Extras) e **imagens para os botões**: busca em bancos de licença livre ([Openverse](https://openverse.org/), Wikimedia Commons, Internet Archive e, opcionalmente, Freesound), sempre guardando autor e licença.
 - **Aparência:** emoji (escolhido ou sugerido automaticamente pelo nome do botão) e cor de destaque para cada botão e cada pasta.
-- **Aviso de atualização** pelos Releases do GitHub e **mostrar na pasta** para qualquer música da lista.
+- **Imagem do botão por link da internet:** cole o endereço (ou o texto todo, com o link no meio) e o Apolo acha a imagem; também lê WebP.
+- **Como atualizar** (menu Ajuda) e **mostrar na pasta** para qualquer música da lista.
 - Temas claro e escuro, ícone na bandeja do Windows, português e inglês.
 
 ## Como compilar
 
-Veja [docs/HowToBuild.md](docs/HowToBuild.md) e [docs/Modules.md](docs/Modules.md). O repositório também tem um fluxo do GitHub Actions (`.github/workflows/build.yml`) que compila o Apolo no Windows e empacota o Discord e o plugin do Stream Deck.
+Veja [docs/HowToBuild.md](docs/HowToBuild.md) e [docs/Modules.md](docs/Modules.md). O repositório também tem um fluxo do GitHub Actions (`.github/workflows/build.yml`) que compila o Apolo no Windows, roda os testes e gera o instalador, com o Discord e o plugin do Stream Deck.
 
 ## Roadmap
 

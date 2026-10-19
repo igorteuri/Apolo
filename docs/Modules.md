@@ -1,32 +1,23 @@
 # Módulos do Apolo
 
-O Apolo é dividido em módulos (projetos .NET) para separar responsabilidades. Os nomes internos `Ares.*` vêm do projeto original. Todos os projetos .NET ficam na pasta `src`.
+O Apolo é dividido em módulos (projetos .NET) para separar responsabilidades. Os nomes internos `Ares.*` vêm do projeto original e foram mantidos. Os projetos ficam na pasta `src`.
 
 ## Base
 
 - **Ares.Data**: modelo de dados dos projetos (pastas, playlists, arquivos), gravado em XML (`.apolo`).
 - **Ares.Settings**: configurações do programa, pastas de dados (`%APPDATA%\Apolo`) e extensão de projeto.
 - **Ares.Tags**: leitura e gravação das tags de áudio (TagLib#).
-- **Ares.CommonGUI**: telas e utilidades comuns ao Player e ao Editor (temas claro/escuro, ícones, janela "Sobre", marca do Apolo, imagens e cores dos botões).
-- **Ares.Ipc**: troca de dados entre o Player e o Editor abertos ao mesmo tempo.
+- **Ares.CommonGUI**: telas e utilidades comuns (temas claro/escuro, ícones, janela "Sobre", marca do Apolo, imagens e cores dos botões, diálogo de adicionar arquivos e pastas).
+- **Ares.Ipc**: reconhecimento de uma segunda cópia do programa aberta (abre o projeto na janela que já existe).
 - **Ares.ModelChecks** (`Ares.ModelInfo`): verificações que apontam erros no projeto.
-- **Ares.Online**: aviso de atualização (Releases do GitHub) e notícias.
-- **Ares.WinSecurity**: pequeno executável que ajusta o firewall do Windows para o controle remoto (precisa de permissão de administrador).
+- **Ares.WinSecurity**: pequeno executável que ajusta o firewall do Windows para o controle remoto (precisa de permissão de administrador; é o único projeto em .NET Framework 4.8).
 
 ## Reprodução
 
 - **Ares.Playing**: toda a lógica de tocar os elementos dos projetos. O motor de áudio próprio do Apolo (pasta `Audio`) usa [NAudio](https://github.com/naudio/NAudio) para a saída, NLayer / NVorbis / Concentus para decodificar e TagLib# para as tags.
-- **Ares.Players**: código comum dos players, incluindo o servidor web do controle remoto pelo navegador e pelo celular.
-- **Ares.Player**: o programa principal (Player), em Windows Forms. Inclui os renomeador de músicas, verificador de direitos autorais, busca de música e imagens livres, emojis e cores dos botões.
-- **Ares.CmdLinePlayer**: player de linha de comando.
-
-## Editor
-
-- **Ares.Editor**: o Editor de projetos, com janelas acopláveis ([DockPanel Suite](http://dockpanelsuite.com/)).
-- **Ares.Editor.Actions**: as ações do Editor (padrão *command*, que permite desfazer e refazer).
-- **Ares.Editor.Controls**: controles para editar os elementos de um projeto.
-- **Ares.TagsImport**: identificação de músicas ([Chromaprint](https://acoustid.org/chromaprint), AcoustID e MusicBrainz).
-- **Ares.AudioSource**, **Ares.AudioSource.Freesound** e **Ares.AudioSource.Test**: fontes de áudio do Editor (a busca no Freesound precisa de uma chave de API, veja `ApiKey.example.cs`).
+- **Ares.Players**: código comum dos players (controle da reprodução, mensagens).
+- **Ares.Player**: o programa principal (Player), em Windows Forms. Inclui o modo de edição, o renomeador de músicas, o verificador de direitos autorais, a busca de música e imagens livres, emojis, imagens por link e cores dos botões, o controle remoto (`Player.Remote.cs`) e a ponte do Discord.
+- **Ares.TagsImport**: identificação de músicas ([Chromaprint](https://acoustid.org/chromaprint), AcoustID e MusicBrainz), usada na verificação de direitos autorais.
 
 ## Fora do .NET
 
@@ -34,3 +25,9 @@ O Apolo é dividido em módulos (projetos .NET) para separar responsabilidades. 
 - **FoundryModule**: módulo `apolo-audio` para o Foundry VTT.
 - **src/Ares.Player/Discord**: ponte do Discord (Node.js).
 - **Branding**: logos do Apolo.
+- **Setup**: instalador (Inno Setup).
+- **tests**: testes automáticos (xunit); rodam no build e, se algum falhar, o instalador não é gerado.
+
+## O que foi removido
+
+O Editor do Ares original (`Ares.Editor`, `Ares.Editor.Actions`, `Ares.Editor.Controls`), o player de linha de comando, as fontes de áudio do Editor (`Ares.AudioSource*`), as janelas de novidades do Ares antigo (`Ares.Online`) e os restos do Android foram retirados do repositório porque o Apolo não os usa. Eles continuam no histórico do Git (o ponto de partida é o commit anterior à limpeza) e no repositório original do Ares.

@@ -27,7 +27,7 @@ DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 OutputDir=..\installer
 OutputBaseFilename=Apolo-Setup-{#MyAppVersion}
-SetupIconFile=..\Ares.ico
+SetupIconFile=Ares.ico
 UninstallDisplayIcon={app}\Apolo.exe
 UninstallDisplayName={#MyAppName}
 WizardStyle=modern
@@ -58,8 +58,6 @@ Name: "firewall"; Description: "{cm:TaskFirewall}"; GroupDescription: "{cm:TaskG
 Source: "{#DistDir}\*"; DestDir: "{app}"; Excludes: "*.pdb,*.vshost.*"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\Licencas\*"; DestDir: "{app}\Licencas"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "..\TipsOfTheDay.xml"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
-Source: "..\TipsOfTheDay_de.xml"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\Apolo.exe"

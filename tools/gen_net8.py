@@ -77,7 +77,7 @@ gen('Ares.CommonGUI', ['Ares.Data', 'Ares.ModelInfo', 'Ares.Settings'], packages
 gen('Ares.TagsImport', ['Ares.Data', 'Ares.Playing'], packages=[('RestSharp', '106.15.0')], noresources=True,
     only=['MusicLookup.cs', 'MusicIdentification.cs', 'Progress.cs', 'RateGate.cs', 'Properties\\AssemblyInfo.cs'])
 gen('Ares.Players', ['Ares.Data', 'Ares.Playing', 'Ares.Settings', 'Ares.Tags'], shim='WebNetworkStub.cs', exclude=['WebNetwork.cs'])
-# Ares.Online (news / new-version dialogs of the old Ares) is not used by the Player: it is not migrated.
+# Ares.Online (news / new-version dialogs of the old Ares) was removed from the repository.
 
 gen('Ares.Player', ['Ares.CommonGUI', 'Ares.Data', 'Ares.Ipc', 'Ares.ModelInfo', 'Ares.Players', 'Ares.Playing', 'Ares.Settings', 'Ares.Tags', 'Ares.TagsImport'],
     shim=['MouseKeyboardShim.cs', 'JavaScriptSerializerShim.cs'], exe=True,

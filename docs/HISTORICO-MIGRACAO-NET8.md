@@ -1,3 +1,5 @@
+> **Histórico.** Registro de como o Apolo foi migrado para .NET 8 (já concluído). Para compilar hoje, veja `HowToBuild.md`. Citações de arquivos como `net8.yml`, `Ares.Online` e `Ares.Editor` se referem ao que existia na época: foram removidos na limpeza do repositório.
+
 # Migração do Apolo para .NET 8 — avaliação e plano
 
 Situação: o Apolo é WinForms em .NET Framework 4.8 (C# 5, csproj antigo com lista explícita de arquivos, 19 projetos, ~370 arquivos .cs). O único compilador que temos é o do GitHub Actions, então cada tentativa custa um ciclo de upload + build.

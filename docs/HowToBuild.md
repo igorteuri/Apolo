@@ -1,20 +1,25 @@
 # Como compilar o Apolo
 
-O Apolo é um programa de Windows (C#, .NET Framework 4.8, WinForms, plataforma x86). O projeto herdou do Ares os nomes internos `Ares.*`, que continuam nas pastas e nos namespaces.
+O Apolo é um programa de Windows (C#, **.NET 8**, WinForms, plataforma x86). O projeto herdou do Ares os nomes internos `Ares.*`, que continuam nas pastas e nos namespaces.
 
 ## Pelo GitHub (o jeito mais simples)
 
-O arquivo `.github/workflows/build.yml` compila tudo a cada envio (`push`). Ele baixa as bibliotecas necessárias (NAudio, NLayer, NVorbis, Concentus, TagLib#, WebView2 e cloudflared), compila o `Ares.sln`, empacota a ponte do Discord, o plugin do Stream Deck e o módulo do Foundry VTT, e publica o resultado como artefato **Apolo-windows** na aba *Actions*.
+O arquivo `.github/workflows/build.yml` compila tudo a cada envio (`push`): publica o programa (`dotnet publish`, autocontido, win-x86), compila o pequeno ajudante de firewall (`Ares.WinSecurity`, .NET Framework 4.8), junta as bibliotecas nativas, empacota a ponte do Discord, o plugin do Stream Deck e o módulo do Foundry VTT, **roda os testes automáticos** e, só se eles passarem, gera o instalador (Inno Setup). O resultado aparece na aba *Actions*: `Apolo-installer` e `Apolo-windows`.
 
 ## No seu computador
 
-1. Instale o Visual Studio (Community) com a carga de trabalho **Desenvolvimento para desktop com .NET**.
-2. Coloque na pasta `Libraries` as bibliotecas que o workflow baixa (veja os passos "Download ... libraries" em `.github/workflows/build.yml`) e crie `src/Ares.AudioSource.Freesound/ApiKey.cs` a partir de `ApiKey.example.cs`.
-3. Abra `Ares.sln`, escolha **Release** e **x86** e compile. A saída fica em `src\bin\Release`.
-4. Copie o conteúdo de `Libraries` para a pasta de saída, para o programa rodar.
+1. Instale o [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+2. Rode os testes: `dotnet test tests/Apolo.Tests`.
+3. Gere o programa: `dotnet publish net8/Ares.Player.Net8.csproj -c Release -r win-x86 --self-contained true -o dist`.
+4. Copie para `dist` as bibliotecas nativas da pasta `Libraries` (`chromaprint.dll`, `avcodec-54.dll`, `avutil-52.dll`, `msvcp100.dll`, `msvcr100.dll`).
+5. O ajudante de firewall precisa do MSBuild (Visual Studio ou Build Tools): `msbuild tools/WinSecurity.slnf /p:Configuration=Release /p:Platform=x86`.
+
+## Os projetos `net8/*.csproj`
+
+Eles são **gerados** por `python tools/gen_net8.py` a partir da lista de arquivos dos projetos antigos (`src/*/*.csproj`). Ao criar, mover ou apagar um arquivo `.cs`, edite o `.csproj` de `src` e rode o gerador (ou edite o de `net8` igual). Se o arquivo tem lógica que dá para testar sem janela, ligue-o também em `tests/Apolo.Tests/Apolo.Tests.csproj`.
 
 ## Observações
 
 - A biblioteca BASS (que não é gratuita para uso comercial) **não** faz parte do Apolo e o workflow a remove da saída.
-- O instalador é feito com o [Inno Setup](https://jrsoftware.org/isinfo.php) a partir de `Setup/Apolo.iss`. O workflow o gera sozinho depois do build e o publica como `Apolo-installer` (aba Actions). Para gerar na sua máquina, junte o resultado do build na pasta `dist` (como o workflow faz) e rode `iscc /DMyAppVersion=0.38.0 Setup\Apolo.iss`.
-- A assinatura digital (pasta `CodeSigning`) é opcional. Sem certificado, o projeto `Ares.WinSecurity` compila normalmente.
+- O instalador é feito com o [Inno Setup](https://jrsoftware.org/isinfo.php) a partir de `Setup/Apolo.iss`. Para gerar na sua máquina, junte o resultado do build na pasta `dist` e rode `iscc /DMyAppVersion=0.81.0 Setup\Apolo.iss`.
+- A assinatura digital (pasta `CodeSigning`) é opcional.

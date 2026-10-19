@@ -308,11 +308,6 @@
       <Name>Ares.ModelInfo</Name>
       <Private>False</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Ares.Online\Ares.Online.csproj">
-      <Project>{7550AD48-17A5-45BF-A632-B75EB82123DD}</Project>
-      <Name>Ares.Online</Name>
-      <Private>False</Private>
-    </ProjectReference>
     <ProjectReference Include="..\Ares.Players\Ares.Players.csproj">
       <Project>{87F61D82-5515-48C4-94F5-FC5EF8435DBF}</Project>
       <Name>Ares.Players</Name>
