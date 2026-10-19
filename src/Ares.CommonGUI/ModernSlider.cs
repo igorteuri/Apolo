@@ -22,6 +22,20 @@ namespace Ares.CommonGUI
         public event EventHandler Scroll;
         public event EventHandler ValueChanged;
 
+        /// <summary>At or below this percent of the range the slider is red, whatever the theme (nobody hears anything).</summary>
+        public int LowWarningPercent = 10;
+
+        private static readonly Color LowColor = Color.FromArgb(226, 60, 52);
+
+        private bool IsLow
+        {
+            get
+            {
+                int range = Math.Max(1, m_Maximum - m_Minimum);
+                return Enabled && 100.0 * (m_Value - m_Minimum) / range <= LowWarningPercent;
+            }
+        }
+
         public ModernSlider()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer
@@ -249,6 +263,12 @@ namespace Ares.CommonGUI
             if (!Enabled)
             {
                 accent = track;
+            }
+            else if (IsLow)
+            {
+                // red knob and bar (the free part of the bar gets a red tint as well, so that a zero is seen too)
+                accent = LowColor;
+                track = Color.FromArgb((track.R + LowColor.R * 2) / 3, (track.G + LowColor.G * 2) / 3, (track.B + LowColor.B * 2) / 3);
             }
             Graphics g = e.Graphics;
             g.Clear(back);

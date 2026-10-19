@@ -132,6 +132,74 @@ namespace Ares.Player
                 current.Visible = any || !searching;
         }
 
+        private string OwnerTitleOf(int elementId, string fallback)
+        {
+            string title;
+            return m_ElementOwners.TryGetValue(elementId, out title) ? title : fallback;
+        }
+
+        /// <summary>
+        /// Where a dragged button lands: the folder (the shown one or a subfolder under a heading) and the button
+        /// it goes in front of (-1 = at the end of that folder).
+        /// </summary>
+        private void FindDropPosition(Point panelPoint, string shownTitle, out int beforeId, out string ownerTitle)
+        {
+            beforeId = -1;
+            ownerTitle = shownTitle;
+            List<ElementButton> buttons = new List<ElementButton>();
+            foreach (Control c in elementsPanel.Controls)
+            {
+                ElementButton b = c as ElementButton;
+                if (b != null && b.Visible && b.Tag is int)
+                    buttons.Add(b);
+            }
+            foreach (ElementButton b in buttons)
+            {
+                if (!b.Bounds.Contains(panelPoint))
+                    continue;
+                ownerTitle = OwnerTitleOf((int)b.Tag, shownTitle);
+                bool front = m_ListMode ? panelPoint.Y < b.Top + b.Height / 2 : panelPoint.X < b.Left + b.Width / 2;
+                if (front)
+                {
+                    beforeId = (int)b.Tag;
+                    return;
+                }
+                // behind it: in front of the next button of the same folder, or at the end of the folder
+                bool passed = false;
+                foreach (ElementButton next in buttons)
+                {
+                    if (passed && OwnerTitleOf((int)next.Tag, shownTitle) == ownerTitle)
+                    {
+                        beforeId = (int)next.Tag;
+                        return;
+                    }
+                    if (next == b)
+                        passed = true;
+                }
+                return;
+            }
+            // on a heading: at the start of that folder
+            foreach (Control c in elementsPanel.Controls)
+            {
+                GroupHeaderLabel header = c as GroupHeaderLabel;
+                if (header == null || !header.Visible || !header.Bounds.Contains(panelPoint))
+                    continue;
+                ownerTitle = header.ModeTitle;
+                foreach (ElementButton b in buttons)
+                {
+                    if (OwnerTitleOf((int)b.Tag, shownTitle) == ownerTitle)
+                    {
+                        beforeId = (int)b.Tag;
+                        break;
+                    }
+                }
+                return;
+            }
+            // free space: at the end of the last folder
+            if (buttons.Count > 0)
+                ownerTitle = OwnerTitleOf((int)buttons[buttons.Count - 1].Tag, shownTitle);
+        }
+
         /// <summary>The folder which owns a button of the panel (the shown folder when it is not known).</summary>
         private IMode OwnerModeOf(int elementId)
         {

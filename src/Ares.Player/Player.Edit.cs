@@ -200,6 +200,7 @@ namespace Ares.Player
             m_ElementMenu.Items.Add(T("Cor do botão", "Button color"), null, (s, e) => ChooseButtonColor());
             m_ElementMenu.Items.Add(T("Escolher ícone", "Choose icon"), null, (s, e) => ChooseButtonIcon());
             m_ElementMenu.Items.Add(T("Escolher imagem", "Choose picture"), null, (s, e) => ChooseButtonPicture());
+            m_ElementMenu.Items.Add(T("Imagem por link da internet...", "Picture from a link..."), null, (s, e) => ChooseButtonImageFromLink());
             m_ElementMenu.Items.Add(T("Sugerir imagens na internet", "Suggest pictures from the internet"), null, (s, e) => SuggestButtonImages());
             m_ElementMenu.Items.Add(T("Remover imagem / ícone", "Remove picture / icon"), null, (s, e) => RemoveButtonImage());
             m_ElementMenu.Items.Add(new ToolStripSeparator());
@@ -350,37 +351,37 @@ namespace Ares.Player
             DragInfo info = e.Data.GetData(typeof(DragInfo)) as DragInfo;
             if (!m_EditMode || info == null || info.IsMode)
                 return;
-            Rectangle marker;
-            Control before = FindInsertBefore(elementsPanel.PointToClient(new Point(e.X, e.Y)), out marker);
-            int beforeId = -1;
-            if (before != null && before.Tag is int)
-                beforeId = (int)before.Tag;
-            int movedId = info.ElementId;
-            if (beforeId == movedId)
-                return;
             IMode mode = CurrentMode();
             if (mode == null)
                 return;
-            // buttons of subfolders (shown under headings) are not moved here: only inside their own folder
-            string ownerTitle;
-            if (m_ElementOwners.TryGetValue(movedId, out ownerTitle) && ownerTitle != mode.Title)
+            int movedId = info.ElementId;
+            // where it lands: the folder under the mouse (a subfolder shown under a heading too) and the position in it
+            int beforeId;
+            string targetTitle;
+            FindDropPosition(elementsPanel.PointToClient(new Point(e.X, e.Y)), mode.Title, out beforeId, out targetTitle);
+            if (beforeId == movedId)
                 return;
-            if (beforeId != -1 && m_ElementOwners.TryGetValue(beforeId, out ownerTitle) && ownerTitle != mode.Title)
-                beforeId = -1;
-            int modeIndex = SelectedModeIndex;
+            string sourceTitle = OwnerTitleOf(movedId, mode.Title);
+            int sourceIndex = ModeIndexByTitle(sourceTitle);
+            int targetIndex = ModeIndexByTitle(targetTitle);
+            if (sourceIndex < 0 || targetIndex < 0)
+                return;
             string modeTitle = mode.Title;
             RunAfterDrag(() => ApplyProjectEditLive(() =>
             {
-                IMode m = m_Project.GetModes()[modeIndex];
-                IModeElement moved = m.GetElements().FirstOrDefault(x => x.Id == movedId);
+                IMode source = m_Project.GetModes()[sourceIndex];
+                IMode m = m_Project.GetModes()[targetIndex];
+                IModeElement moved = source.GetElements().FirstOrDefault(x => x.Id == movedId);
                 if (moved == null)
                     return;
-                m.RemoveElement(moved);
+                source.RemoveElement(moved);
                 int target = beforeId == -1 ? -1 : m.GetElements().ToList().FindIndex(x => x.Id == beforeId);
                 if (target < 0)
                     m.AddElement(moved);
                 else
                     m.InsertElement(target, moved);
+                if (sourceIndex != targetIndex)
+                    Ares.CommonGUI.ButtonImageStore.MoveElement(m_CurrentProjectPath, sourceTitle, targetTitle, moved.Title);
             }, modeTitle));
         }
 
@@ -471,6 +472,8 @@ namespace Ares.Player
                         return;
                     src.RemoveElement(moved);
                     dst.AddElement(moved);
+                    // the picture and the color of the button go with it
+                    Ares.CommonGUI.ButtonImageStore.MoveElement(m_CurrentProjectPath, src.Title, dst.Title, moved.Title);
                 }, srcTitle));
             }
         }
@@ -717,6 +720,15 @@ namespace Ares.Player
                 {
                     ShowModeAfterReload(modeTitle);
                     return;
+                }
+                // with subfolders under headings the buttons are made again (the project is not reloaded: the music goes on)
+                foreach (string owner in m_ElementOwners.Values)
+                {
+                    if (owner != modeTitle)
+                    {
+                        UpdateElementsPanel();
+                        return;
+                    }
                 }
                 int pos = 0;
                 elementsPanel.SuspendLayout();

@@ -71,7 +71,7 @@ gen('Ares.ModelChecks', ['Ares.Data', 'Ares.Settings', 'Ares.Tags'], packages=[(
 gen('Ares.Playing', ['Ares.Data', 'Ares.ModelInfo', 'Ares.Tags'],
     packages=[('NAudio.Core', '2.2.1'), ('NAudio.Wasapi', '2.2.1'), ('NLayer', '1.16.0'), ('NVorbis', '0.10.5'),
               ('Concentus', '2.2.2'), ('Concentus.OggFile', '1.0.6')])
-gen('Ares.CommonGUI', ['Ares.Data', 'Ares.ModelInfo', 'Ares.Settings'])
+gen('Ares.CommonGUI', ['Ares.Data', 'Ares.ModelInfo', 'Ares.Settings'], packages=[('SkiaSharp', '2.88.9'), ('SkiaSharp.NativeAssets.Win32', '2.88.9')])
 
 # TagsImport: only what the Player uses (the song lookup of the rights check); the old online tag database stays out
 gen('Ares.TagsImport', ['Ares.Data', 'Ares.Playing'], packages=[('RestSharp', '106.15.0')], noresources=True,

@@ -138,6 +138,8 @@
     <Compile Include="Player.Window.cs" />
     <Compile Include="SplashForm.cs" />
     <Compile Include="Player.Update.cs" />
+    <Compile Include="Player.ImageLink.cs" />
+    <Compile Include="ImageUrlParser.cs" />
     <Compile Include="UpdateVersion.cs" />
     <Compile Include="ToastPanel.cs" />
     <Compile Include="Player.Edit.cs" />

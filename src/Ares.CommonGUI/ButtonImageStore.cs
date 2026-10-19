@@ -303,6 +303,30 @@ namespace Ares.CommonGUI
             Save(projectPath);
         }
 
+        /// <summary>A button went to another folder: its picture and color go along.</summary>
+        public static void MoveElement(string projectPath, string fromMode, string toMode, string title)
+        {
+            if (string.IsNullOrEmpty(projectPath) || string.Equals(fromMode, toMode, StringComparison.Ordinal))
+                return;
+            Dictionary<string, string> map = Load(projectPath);
+            string[] prefixes = { "", ColorPrefix };
+            bool changed = false;
+            foreach (string prefix in prefixes)
+            {
+                string value;
+                string oldKey = Key(fromMode, prefix + title);
+                if (!map.TryGetValue(oldKey, out value))
+                    continue;
+                if (!changed)
+                    Notify(projectPath);
+                map.Remove(oldKey);
+                map[Key(toMode, prefix + title)] = value;
+                changed = true;
+            }
+            if (changed)
+                Save(projectPath);
+        }
+
         public static void RenameElement(string projectPath, string mode, string oldTitle, string newTitle)
         {
             if (string.IsNullOrEmpty(projectPath))

@@ -442,7 +442,8 @@ namespace Ares.Settings
 			SoundFolder = GetDefaultSoundDirectory();
 			#endif
             LastDownloadLocation = SoundDirectory;
-            GlobalVolume = MusicVolume = SoundVolume = 100;
+            // the first time: volumes in the middle (not full blast)
+            GlobalVolume = MusicVolume = SoundVolume = 50;
             TcpPort = 11112;
             WebTcpPort = 11113;
             UseLegacyNetwork = true;
