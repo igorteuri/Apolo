@@ -24,7 +24,7 @@ namespace Apolo.Tests
         public void ReadInfo_VersionAndUrl()
         {
             string version, url;
-            Assert.True(UpdateVersion.TryReadInfo("{ \"version\": \"0.85\", \"url\": \"https:\/\/exemplo.com\/apolo\" }", out version, out url));
+            Assert.True(UpdateVersion.TryReadInfo("{ \"version\": \"0.85\", \"url\": \"https:\\/\\/exemplo.com\\/apolo\" }", out version, out url));
             Assert.Equal("0.85", version);
             Assert.Equal("https://exemplo.com/apolo", url);
         }
