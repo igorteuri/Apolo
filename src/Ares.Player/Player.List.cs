@@ -85,6 +85,7 @@ namespace Ares.Player
                 elementsPanel.VisibleChanged += (s, e) => m_ListBar.Visible = elementsPanel.Visible;
                 elementsPanel.Resize += (s, e) =>
                 {
+                    FitHeaderWidths();
                     if (m_ListMode)
                         FitRowWidths();
                 };
@@ -158,6 +159,7 @@ namespace Ares.Player
                 if (m_SearchBox.Text.Length > 0)
                     m_SearchBox.Text = "";
             }
+            FitHeaderWidths();
             ApplyElementFilter();
             elementsPanel.ResumeLayout(true);
             AfterElementsForTrackPanel();
@@ -174,6 +176,7 @@ namespace Ares.Player
                 if (c is ElementButton)
                     c.Visible = q.Length == 0 || c.Text.IndexOf(q, StringComparison.CurrentCultureIgnoreCase) >= 0;
             }
+            ApplyHeaderFilter(q.Length > 0);
             elementsPanel.ResumeLayout(true);
         }
     }

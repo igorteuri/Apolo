@@ -23,5 +23,6 @@
     <Compile Include="..\..\src\Ares.Player\TrackText.cs" Link="Linked\TrackText.cs" />
     <Compile Include="..\..\src\Ares.Player\JsonText.cs" Link="Linked\JsonText.cs" />
     <Compile Include="..\..\src\Ares.Player\Player.Rights.cs" Link="Linked\Player.Rights.cs" />
+    <Compile Include="..\..\src\Ares.CommonGUI\DropPlan.cs" Link="Linked\DropPlan.cs" />
   </ItemGroup>
 </Project>

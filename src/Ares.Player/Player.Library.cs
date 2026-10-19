@@ -9,7 +9,7 @@ using Ares.Data;
 namespace Ares.Player
 {
     // Drag & drop of folders / audio files straight into the Player.
-    // Each dropped folder becomes a music list ("playlist") in the mode "Biblioteca".
+    // What was dropped is analysed (DropScan) and the dialog asks only what is open; DropPlan decides the folders and buttons.
     public partial class Player
     {
         private const string LibraryModeTitle = "Biblioteca";
@@ -141,15 +141,17 @@ namespace Ares.Player
         }
 
         /// <summary>
-        /// Puts the dropped audio in the project. With "intoFolder" every dropped folder / file becomes a playlist (button)
-        /// inside that folder; without it (or when it does not exist) each dropped folder becomes a folder of its own.
+        /// Puts dropped / chosen audio in the project. The dropped things are looked at first: the dialog then asks only
+        /// what is open (where it goes, one button per file or one playlist per folder).
+        /// "intoFolder" = the folder which receives the drop (null = none: new folders are created).
+        /// "anchorTitle" = new top level folders are put right after this folder.
         /// </summary>
-        private void ImportDroppedPaths(string[] paths, string intoFolder = null)
+        private void ImportDroppedPaths(string[] paths, string intoFolder = null, string anchorTitle = null)
         {
             try
             {
-                List<Ares.CommonGUI.DroppedGroup> groups = Ares.CommonGUI.LibraryHelper.Collect(paths);
-                if (groups.Count == 0)
+                Ares.CommonGUI.DropScan scan = Ares.CommonGUI.DropScan.Read(paths);
+                if (scan.IsEmpty)
                 {
                     MessageBox.Show(this, IsPt ? "Nenhum arquivo de áudio encontrado no que foi arrastado."
                         : "No audio files found in what was dropped.", StringResources.Ares,
@@ -157,71 +159,87 @@ namespace Ares.Player
                     return;
                 }
 
-                int fileCount = groups.Sum(g => g.Files.Count);
-                Ares.CommonGUI.DropOptions options = Ares.CommonGUI.DropOptionsDialog.Ask(this, groups.Count, fileCount);
+                string destination = intoFolder != null && ModeIndexByTitle(intoFolder) >= 0 ? intoFolder : null;
+                Ares.CommonGUI.DropOptions options = Ares.CommonGUI.DropOptionsDialog.Ask(this, scan, destination);
                 if (options == null)
                     return;
 
-                // always into the project which is open now; the Library is only used when no project is open
-                string target = m_Project != null ? m_Project.FileName : LibraryProjectPath;
-
-                // loose files go into the mode that is currently selected (if it is a real mode)
-                string looseModeTitle = null;
-                if (m_Project != null && string.Equals(m_Project.FileName, target, StringComparison.OrdinalIgnoreCase)
-                    && SelectedModeIndex >= 0 && SelectedModeIndex < m_Project.GetModes().Count)
+                // the Library is only used when no project is open
+                if (m_Project == null)
                 {
-                    looseModeTitle = m_Project.GetModes()[SelectedModeIndex].Title;
+                    string libPath = LibraryProjectPath;
+                    EnsureProjectFile(libPath);
+                    OpenProject(libPath, false);
                 }
-                if (looseModeTitle == null)
-                    looseModeTitle = IsPt ? "Músicas soltas" : "Loose music";
+                if (m_Project == null)
+                    return;
 
-                bool oldWatch = fileSystemWatcher1.EnableRaisingEvents;
-                fileSystemWatcher1.EnableRaisingEvents = false;
-                try
+                Ares.CommonGUI.DropPlan plan = Ares.CommonGUI.DropPlan.Build(scan, options.Layout, destination,
+                    m_Project.GetModes().Select(m => m.Title).ToList(), IsPt ? "Músicas soltas" : "Loose music");
+                Ares.CommonGUI.PlannedFolder firstNew = plan.Folders.FirstOrDefault(f => !f.Existing);
+                string showTitle = firstNew != null ? firstNew.Title : destination;
+
+                int added = 0;
+                ApplyProjectEdit(() =>
                 {
-                    if (m_Project == null || !string.Equals(m_Project.FileName, target, StringComparison.OrdinalIgnoreCase))
+                    foreach (Ares.CommonGUI.PlannedFolder planned in plan.Folders)
                     {
-                        EnsureProjectFile(target);
-                        OpenProject(target, false);
-                    }
-                    if (m_Project == null)
-                        return;
-                    StopAllPlaying();
-
-                    string targetFolder = intoFolder != null && m_Project.GetModes().Any(m => m.Title == intoFolder) ? intoFolder : null;
-                    int added = 0;
-                    string lastMode = null;
-                    foreach (Ares.CommonGUI.DroppedGroup g in groups)
-                    {
-                        string modeTitle = targetFolder != null ? targetFolder : (g.IsLoose ? looseModeTitle : g.Name);
-                        IMode mode = m_Project.GetModes().FirstOrDefault(m => m.Title == modeTitle);
+                        IMode mode = m_Project.GetModes().FirstOrDefault(m => m.Title == planned.Title);
                         if (mode == null)
-                            mode = m_Project.AddMode(modeTitle);
-                        var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                        foreach (IModeElement old in mode.GetElements())
                         {
-                            IFileElement oldFile = old.StartElement as IFileElement;
-                            if (oldFile != null)
-                                existing.Add(oldFile.FilePath);
+                            if (planned.Existing)
+                                continue;
+                            mode = m_Project.AddMode(planned.Title);
                         }
-                        List<string> newFiles = g.Files.Where(f => !existing.Contains(f)).ToList();
-                        foreach (IModeElement me in Ares.CommonGUI.LibraryHelper.BuildModeElements(g, newFiles, options))
+                        // what is in the folder already is not added twice
+                        HashSet<string> present = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        if (planned.Existing)
                         {
-                            mode.AddElement(me);
-                            added++;
+                            foreach (IModeElement old in mode.GetElements())
+                            {
+                                IFileElement oldFile = old.StartElement as IFileElement;
+                                if (oldFile != null)
+                                    present.Add(oldFile.FilePath);
+                            }
                         }
-                        lastMode = modeTitle;
+                        foreach (Ares.CommonGUI.DroppedGroup group in planned.Groups)
+                        {
+                            List<string> files = group.Files.Where(f => !present.Contains(f)).ToList();
+                            foreach (IModeElement me in Ares.CommonGUI.LibraryHelper.BuildModeElements(group, files, options))
+                            {
+                                mode.AddElement(me);
+                                added++;
+                            }
+                            foreach (string file in files)
+                                present.Add(file);
+                        }
                     }
-                    m_Project.Changed = true;
-                    DataModule.ProjectManager.SaveProject(m_Project);
-                    OpenProject(m_Project.FileName, false);
-                    SelectModeByTitle(lastMode);
-                    ShowLibraryMessage(groups.Count, added);
-                }
-                finally
-                {
-                    fileSystemWatcher1.EnableRaisingEvents = oldWatch;
-                }
+
+                    // nest the new folders: inside their parent, or (top level) right after the anchor
+                    EnsureModeTree();
+                    ModeNode anchor = anchorTitle != null ? m_ModeTree.Find(anchorTitle) : null;
+                    foreach (Ares.CommonGUI.PlannedFolder planned in plan.Folders)
+                    {
+                        if (planned.Existing)
+                            continue;
+                        ModeNode node = m_ModeTree.Find(planned.Title);
+                        if (node == null)
+                            continue;
+                        ModeNode parent = planned.Parent != null ? m_ModeTree.Find(planned.Parent) : null;
+                        if (parent != null && parent != node)
+                        {
+                            m_ModeTree.Attach(node, parent, -1);
+                            parent.Collapsed = false;
+                        }
+                        else if (planned.Parent == null && anchor != null && anchor.Parent != null)
+                        {
+                            m_ModeTree.Attach(node, anchor.Parent, anchor.Parent.Children.IndexOf(anchor) + 1);
+                            anchor = node;
+                        }
+                    }
+                    SaveModeTree();
+                }, showTitle);
+                ShowLibraryMessage(plan.Folders.Count(f => !f.Existing), added);
             }
             catch (Exception ex)
             {
@@ -240,166 +258,27 @@ namespace Ares.Player
             DataModule.ProjectManager.UnloadProject(created);
         }
 
-        // ---- a folder of the computer becomes a folder of Apolo, with its subfolders and a playlist per audio folder ----
-
-        private class DiskFolder
-        {
-            public string Name;
-            public List<string> Files = new List<string>();
-            public List<DiskFolder> Subfolders = new List<DiskFolder>();
-            public bool IsLeaf { get { return Subfolders.Count == 0; } }
-        }
-
-        // reads the folder; folders without any audio (also below them) are left out
-        private static DiskFolder ReadDiskFolder(string dir, ref int folders, ref int files)
-        {
-            DiskFolder result = new DiskFolder { Name = new DirectoryInfo(dir).Name };
-            try
-            {
-                result.Files.AddRange(Directory.GetFiles(dir).Where(Ares.CommonGUI.LibraryHelper.IsAudioFile));
-                result.Files.Sort(StringComparer.CurrentCultureIgnoreCase);
-                string[] subs = Directory.GetDirectories(dir);
-                Array.Sort(subs, StringComparer.CurrentCultureIgnoreCase);
-                foreach (string sub in subs)
-                {
-                    DiskFolder child = ReadDiskFolder(sub, ref folders, ref files);
-                    if (child != null)
-                        result.Subfolders.Add(child);
-                }
-            }
-            catch (Exception)
-            {
-            }
-            if (result.Files.Count == 0 && result.Subfolders.Count == 0)
-                return null;
-            folders++;
-            files += result.Files.Count;
-            return result;
-        }
-
-        private string UniqueModeTitle(string wanted, HashSet<string> used)
-        {
-            string title = wanted;
-            int n = 2;
-            while (used.Contains(title))
-                title = wanted + " (" + n++ + ")";
-            used.Add(title);
-            return title;
-        }
-
-        // creates the Apolo folder (mode) for a disk folder; "leaf" folders inside it become playlists, not folders
-        private void BuildFolderFromDisk(DiskFolder disk, string title, string parentTitle, Ares.CommonGUI.DropOptions options,
-            HashSet<string> used, List<KeyValuePair<string, string>> placement, ref int elements)
-        {
-            IMode mode = m_Project.AddMode(title);
-            placement.Add(new KeyValuePair<string, string>(title, parentTitle));
-            if (disk.Files.Count > 0)
-            {
-                Ares.CommonGUI.DroppedGroup group = new Ares.CommonGUI.DroppedGroup { Name = disk.Name, Files = disk.Files };
-                foreach (IModeElement me in Ares.CommonGUI.LibraryHelper.BuildModeElements(group, disk.Files, options))
-                {
-                    mode.AddElement(me);
-                    elements++;
-                }
-            }
-            foreach (DiskFolder child in disk.Subfolders)
-            {
-                if (child.IsLeaf)
-                {
-                    Ares.CommonGUI.DroppedGroup group = new Ares.CommonGUI.DroppedGroup { Name = child.Name, Files = child.Files };
-                    foreach (IModeElement me in Ares.CommonGUI.LibraryHelper.BuildModeElements(group, child.Files, options))
-                    {
-                        mode.AddElement(me);
-                        elements++;
-                    }
-                }
-                else
-                {
-                    BuildFolderFromDisk(child, UniqueModeTitle(child.Name, used), title, options, used, placement, ref elements);
-                }
-            }
-        }
-
-        /// <summary>Asks for a folder of the computer and creates the matching folders and playlists.</summary>
+        /// <summary>Asks for a folder of the computer and adds it like a dropped folder (the dialog asks how).</summary>
         private void ImportFolderAsFolders(bool asChild)
         {
             string path;
             using (FolderBrowserDialog dlg = new FolderBrowserDialog())
             {
-                dlg.Description = IsPt ? "Escolha a pasta com os áudios. Cada subpasta vira uma playlist (ou uma pasta, se tiver outras subpastas)."
-                    : "Choose the folder with the audio. Each subfolder becomes a playlist (or a folder if it has subfolders of its own).";
+                dlg.Description = IsPt ? "Escolha a pasta com os áudios."
+                    : "Choose the folder with the audio.";
                 if (dlg.ShowDialog(this) != DialogResult.OK)
                     return;
                 path = dlg.SelectedPath;
             }
-            int folders = 0, files = 0;
-            Cursor old = Cursor;
-            Cursor = Cursors.WaitCursor;
-            DiskFolder disk;
-            try { disk = ReadDiskFolder(path, ref folders, ref files); }
-            finally { Cursor = old; }
-            if (disk == null)
-            {
-                MessageBox.Show(this, IsPt ? "Nenhum arquivo de áudio encontrado nessa pasta." : "No audio files found in that folder.",
-                    StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-            Ares.CommonGUI.DropOptions options = Ares.CommonGUI.DropOptionsDialog.Ask(this, folders, files);
-            if (options == null)
-                return;
-            if (m_Project == null)
-            {
-                string libPath = LibraryProjectPath;
-                EnsureProjectFile(libPath);
-                OpenProject(libPath, false);
-            }
-            if (m_Project == null)
-                return;
-            ModeNode selected = SelectedModeNode;
-            string anchorTitle = selected != null ? selected.Title : null;
-            string firstTitle = null;
-            int created = 0;
-            ApplyProjectEdit(() =>
-            {
-                HashSet<string> used = new HashSet<string>(m_Project.GetModes().Select(m => m.Title), StringComparer.Ordinal);
-                List<KeyValuePair<string, string>> placement = new List<KeyValuePair<string, string>>();
-                firstTitle = UniqueModeTitle(disk.Name, used);
-                int elements = 0;
-                BuildFolderFromDisk(disk, firstTitle, null, options, used, placement, ref elements);
-                created = elements;
-                EnsureModeTree();
-                ModeNode anchor = anchorTitle != null ? m_ModeTree.Find(anchorTitle) : null;
-                foreach (KeyValuePair<string, string> p in placement)
-                {
-                    ModeNode node = m_ModeTree.Find(p.Key);
-                    if (node == null)
-                        continue;
-                    if (p.Value != null)
-                    {
-                        ModeNode parent = m_ModeTree.Find(p.Value);
-                        if (parent != null)
-                            m_ModeTree.Attach(node, parent, -1);
-                    }
-                    else if (asChild && anchor != null)
-                    {
-                        m_ModeTree.Attach(node, anchor, -1);
-                        anchor.Collapsed = false;
-                    }
-                    else if (anchor != null && anchor.Parent != null)
-                    {
-                        m_ModeTree.Attach(node, anchor.Parent, anchor.Parent.Children.IndexOf(anchor) + 1);
-                    }
-                }
-                SaveModeTree();
-            }, null);
-            SelectModeByTitle(firstTitle);
-            this.Text = this.Text + "  -  " + (IsPt ? folders + " pasta(s), " + created + " item(ns) criados" : folders + " folder(s), " + created + " item(s) created");
+            ModeNode selected = m_Project != null ? SelectedModeNode : null;
+            string title = selected != null ? selected.Title : null;
+            ImportDroppedPaths(new[] { path }, asChild ? title : null, asChild ? null : title);
         }
 
         private void ShowLibraryMessage(int lists, int files)
         {
-            this.Text = this.Text + "  -  " + (IsPt ? lists + " pasta(s), " + files + " música(s) adicionadas"
-                : lists + " folder(s), " + files + " track(s) added");
+            this.Text = this.Text + "  -  " + (IsPt ? lists + " pasta(s) nova(s), " + files + " botão(ões) criado(s)"
+                : lists + " new folder(s), " + files + " button(s) created");
         }
     }
 }

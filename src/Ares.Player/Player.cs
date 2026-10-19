@@ -1134,6 +1134,7 @@ namespace Ares.Player
                 }
                 m_CurrentButtons.Clear();
                 m_ButtonsForIds.Clear();
+                m_ElementOwners.Clear();
                 elementsPanel.Controls.Clear();
 
                 if (m_Project != null && m_Project.GetModes().Count > modeIndex)
@@ -1141,8 +1142,11 @@ namespace Ares.Player
                     bool showKeys = Settings.Settings.Instance.ShowKeysInButtons;
                     KeysConverter converter = new KeysConverter();
                     Ares.Data.IMode shownMode = m_Project.GetModes()[modeIndex];
-                    IList<Ares.Data.IModeElement> elements = shownMode.GetElements();
-                    string shownModeTitle = shownMode.Title;
+                    // the buttons of the folder, then (under a heading each) the ones of its subfolders
+                    List<ShownButton> shown = CollectShownButtons(shownMode);
+                    List<Ares.Data.IModeElement> elements = new List<Ares.Data.IModeElement>();
+                    foreach (ShownButton sb in shown)
+                        elements.Add(sb.Element);
                     // text, picture / icon of every visible button
                     List<Ares.Data.IModeElement> visible = new List<Ares.Data.IModeElement>();
                     List<string> texts = new List<string>();
@@ -1150,8 +1154,6 @@ namespace Ares.Player
                     List<int> kinds = new List<int>();
                     for (int i = 0; i < elements.Count; ++i)
                     {
-                        if (!elements[i].IsVisibleInPlayer)
-                            continue;
                         String text = elements[i].Title;
                         if (showKeys && elements[i].Trigger != null && elements[i].Trigger.TriggerType == TriggerType.Key)
                         {
@@ -1159,7 +1161,7 @@ namespace Ares.Player
                             if (keyCode != 0)
                                 text += " (" + converter.ConvertToString((System.Windows.Forms.Keys)keyCode) + ")";
                         }
-                        string spec = Ares.CommonGUI.ButtonImageStore.Get(m_CurrentProjectPath, shownModeTitle, elements[i].Title);
+                        string spec = Ares.CommonGUI.ButtonImageStore.Get(m_CurrentProjectPath, shown[i].OwnerTitle, elements[i].Title);
                         int kind = 0;
                         if (spec != null && (spec.StartsWith("img:") || spec.StartsWith("lib:")) && Ares.CommonGUI.ButtonImageStore.LoadImage(m_CurrentProjectPath, spec) != null)
                             kind = 2;
@@ -1176,6 +1178,8 @@ namespace Ares.Player
                     {
                         ++count;
                         Ares.Data.IModeElement element = visible[i];
+                        if (shown[i].Header != null)
+                            elementsPanel.Controls.Add(MakeGroupHeader(shown[i].Header, shown[i].OwnerTitle));
                         ElementButton checkBox = new ElementButton();
                         checkBox.Font = elementsPanel.Font;
                         checkBox.Text = texts[i];
@@ -1185,7 +1189,7 @@ namespace Ares.Player
                             checkBox.IconName = specs[i].Substring(7);
                         if (kinds[i] == 2 && specs[i].IndexOf("emoji-", StringComparison.OrdinalIgnoreCase) >= 0)
                             checkBox.PictureContain = true;
-                        checkBox.TintColor = Ares.CommonGUI.ButtonImageStore.GetColor(m_CurrentProjectPath, shownModeTitle, visible[i].Title);
+                        checkBox.TintColor = Ares.CommonGUI.ButtonImageStore.GetColor(m_CurrentProjectPath, shown[i].OwnerTitle, visible[i].Title);
                         checkBox.Kind = KindsOf(element.StartElement, 0);
                         checkBox.SetBounds(0, 0, cardSize.Width, cardSize.Height);
                         checkBox.Checked = m_PlayingControl.CurrentModeElements.Contains(element);
@@ -1200,6 +1204,7 @@ namespace Ares.Player
                         checkBox.CheckedChanged += handler;
                         m_CurrentButtons.Add(checkBox, handler);
                         m_ButtonsForIds.Add(id, checkBox);
+                        m_ElementOwners[id] = shown[i].OwnerTitle;
                         AttachElementMenu(checkBox, id);
                         elementsPanel.Controls.Add(checkBox);
                     }

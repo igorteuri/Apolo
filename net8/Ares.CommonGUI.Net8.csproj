@@ -24,6 +24,7 @@
     <Compile Include="..\src\Ares.CommonGUI\ApoloBrand.cs" Link="ApoloBrand.cs" />
     <Compile Include="..\src\Ares.CommonGUI\ModernSlider.cs" Link="ModernSlider.cs" />
     <Compile Include="..\src\Ares.CommonGUI\LibraryHelper.cs" Link="LibraryHelper.cs" />
+    <Compile Include="..\src\Ares.CommonGUI\DropPlan.cs" Link="DropPlan.cs" />
     <Compile Include="..\src\Ares.CommonGUI\LanguageManager.cs" Link="LanguageManager.cs" />
     <Compile Include="..\src\Ares.CommonGUI\ButtonImageStore.cs" Link="ButtonImageStore.cs" />
     <Compile Include="..\src\Ares.CommonGUI\Preferences.cs" Link="Preferences.cs" />

@@ -6,23 +6,12 @@ using Ares.Data;
 
 namespace Ares.CommonGUI
 {
-    /// <summary>One group of audio files (a folder, or loose files) found in a drop.</summary>
-    public class DroppedGroup
-    {
-        public string Name;
-        public bool IsLoose;
-        public List<string> Files = new List<string>();
-    }
-
     /// <summary>Helpers shared by Player and Editor for drag &amp; drop of folders/files and the "Library" folder.</summary>
     public static class LibraryHelper
     {
-        private static readonly string[] s_Extensions =
-            { ".mp3", ".wav", ".ogg", ".opus", ".flac", ".m4a", ".aac", ".wma", ".aif", ".aiff", ".mp2", ".mp1" };
-
         public static bool IsAudioFile(string path)
         {
-            return s_Extensions.Contains(Path.GetExtension(path).ToLowerInvariant());
+            return DropScan.IsAudioFile(path);
         }
 
         public static string TitleOf(string file)

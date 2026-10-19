@@ -354,6 +354,12 @@ namespace Ares.Player
             IMode mode = CurrentMode();
             if (mode == null)
                 return;
+            // buttons of subfolders (shown under headings) are not moved here: only inside their own folder
+            string ownerTitle;
+            if (m_ElementOwners.TryGetValue(movedId, out ownerTitle) && ownerTitle != mode.Title)
+                return;
+            if (beforeId != -1 && m_ElementOwners.TryGetValue(beforeId, out ownerTitle) && ownerTitle != mode.Title)
+                beforeId = -1;
             int modeIndex = SelectedModeIndex;
             string modeTitle = mode.Title;
             RunAfterDrag(() => ApplyProjectEditLive(() =>
@@ -440,10 +446,15 @@ namespace Ares.Player
                 if (dropIndex < 0)
                     return;
                 int fromMode = SelectedModeIndex;
-                if (fromMode == dropIndex)
+                string ownerOfMoved;
+                if (m_ElementOwners.TryGetValue(info.ElementId, out ownerOfMoved))
+                    fromMode = ModeIndexByTitle(ownerOfMoved);
+                if (fromMode < 0 || fromMode == dropIndex)
                     return;
                 int movedId = info.ElementId;
-                string srcTitle = m_Project.GetModes()[fromMode].Title;
+                // the folder which is shown stays shown
+                IMode shownNow = CurrentMode();
+                string srcTitle = shownNow != null ? shownNow.Title : null;
                 RunAfterDrag(() => ApplyProjectEdit(() =>
                 {
                     IMode src = m_Project.GetModes()[fromMode];
@@ -610,15 +621,20 @@ namespace Ares.Player
                     "Delete the " + ids.Count + " selected playlists?\n(Audio files are not deleted.)"),
                     StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
-            int modeIndex = SelectedModeIndex;
             string modeTitle = mode.Title;
+            Dictionary<int, string> owners = new Dictionary<int, string>(m_ElementOwners);
             m_SelectedElements.Clear();
             m_SelectAnchor = -1;
             ApplyProjectEdit(() =>
             {
-                IMode m = m_Project.GetModes()[modeIndex];
                 foreach (int id in ids)
                 {
+                    string ownerTitle;
+                    if (!owners.TryGetValue(id, out ownerTitle))
+                        ownerTitle = modeTitle;
+                    IMode m = m_Project.GetModes().FirstOrDefault(x => x.Title == ownerTitle);
+                    if (m == null)
+                        continue;
                     IModeElement e = m.GetElements().FirstOrDefault(x => x.Id == id);
                     if (e == null)
                         continue;
@@ -905,7 +921,7 @@ namespace Ares.Player
 
         private IModeElement MenuElement(out IMode mode, out int index)
         {
-            mode = CurrentMode();
+            mode = OwnerModeOf(m_MenuElementId);
             index = -1;
             if (mode == null)
                 return null;
@@ -952,10 +968,10 @@ namespace Ares.Player
             string name = Prompt(this, T("Renomear playlist", "Rename playlist"), T("Novo nome:", "New name:"), me.Title);
             if (name == null)
                 return;
-            int modeIndex = SelectedModeIndex;
             string modeTitle = mode.Title;
+            int modeIndex = ModeIndexByTitle(modeTitle);
             Ares.CommonGUI.ButtonImageStore.RenameElement(m_CurrentProjectPath, modeTitle, me.Title, name);
-            ApplyProjectEdit(() => m_Project.GetModes()[modeIndex].GetElements()[index].Title = name, modeTitle);
+            ApplyProjectEdit(() => m_Project.GetModes()[modeIndex].GetElements()[index].Title = name, null);
         }
 
         private void ChooseButtonPicture()
@@ -1020,15 +1036,14 @@ namespace Ares.Player
             if (MessageBox.Show(this, T("Excluir a playlist \"" + me.Title + "\"?", "Delete playlist \"" + me.Title + "\"?"),
                     StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
-            int modeIndex = SelectedModeIndex;
-            string modeTitle = mode.Title;
+            int modeIndex = ModeIndexByTitle(mode.Title);
             ApplyProjectEdit(() =>
             {
                 IMode m = m_Project.GetModes()[modeIndex];
                 IModeElement e = m.GetElements()[index];
                 m.RemoveElement(e);
                 DataModule.ElementRepository.DeleteElement(e.Id);
-            }, modeTitle);
+            }, null);
         }
 
         private void MoveElementButton(int delta)
@@ -1040,15 +1055,14 @@ namespace Ares.Player
             int target = index + delta;
             if (target < 0 || target >= mode.GetElements().Count)
                 return;
-            int modeIndex = SelectedModeIndex;
-            string modeTitle = mode.Title;
+            int modeIndex = ModeIndexByTitle(mode.Title);
             ApplyProjectEdit(() =>
             {
                 IMode m = m_Project.GetModes()[modeIndex];
                 IModeElement e = m.GetElements()[index];
                 m.RemoveElement(e);
                 m.InsertElement(target, e);
-            }, modeTitle);
+            }, null);
         }
     }
 }

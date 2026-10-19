@@ -133,6 +133,7 @@
     </Compile>
     <Compile Include="MusicProgressBar.cs" />
     <Compile Include="Player.Library.cs" />
+    <Compile Include="Player.Groups.cs" />
     <Compile Include="ToastPanel.cs" />
     <Compile Include="Player.Edit.cs" />
     <Compile Include="Player.Export.cs" />
