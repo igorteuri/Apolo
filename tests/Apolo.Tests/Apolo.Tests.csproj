@@ -24,5 +24,6 @@
     <Compile Include="..\..\src\Ares.Player\JsonText.cs" Link="Linked\JsonText.cs" />
     <Compile Include="..\..\src\Ares.Player\Player.Rights.cs" Link="Linked\Player.Rights.cs" />
     <Compile Include="..\..\src\Ares.CommonGUI\DropPlan.cs" Link="Linked\DropPlan.cs" />
+    <Compile Include="..\..\src\Ares.Player\UpdateVersion.cs" Link="Linked\UpdateVersion.cs" />
   </ItemGroup>
 </Project>

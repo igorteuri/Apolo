@@ -609,9 +609,8 @@ namespace Ares.Player
                 if (dlg.ShowDialog(this) != DialogResult.OK)
                     return;
             }
-            int modeIndex = SelectedModeIndex;
-            string modeTitle = mode.Title;
-            ApplyProjectEdit(() => PlaylistEditing.Apply(m_Project.GetModes()[modeIndex].GetElements()[index].StartElement, settings), modeTitle);
+            int modeIndex = ModeIndexByTitle(mode.Title);
+            ApplyProjectEdit(() => PlaylistEditing.Apply(m_Project.GetModes()[modeIndex].GetElements()[index].StartElement, settings), null);
         }
     }
 }

@@ -83,7 +83,7 @@ namespace Ares.Player
             m_KeyboardHookManager.KeyDown += new KeyEventHandler(m_KeyboardHookManager_KeyDown);
 #endif
             InitializeComponent();
-            Ares.CommonGUI.ThemeManager.RevealWhenThemed(this);
+            BeginHiddenStart();
             if (!m_HideToTray)
             {
                 notifyIcon.Visible = false;
@@ -117,6 +117,7 @@ namespace Ares.Player
             InitDiscord();
             InitDeck();
             InitShortcuts();
+            InitUpdateCheck();
         }
 
         private void FitMusicBar()
@@ -1492,6 +1493,8 @@ namespace Ares.Player
         private void Player_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (TryHideToTray(e))
+                return;
+            if (CancelCloseForUnsaved(e))
                 return;
             notifyIcon.Visible = false;
             Shutdown();

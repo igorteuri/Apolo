@@ -479,6 +479,7 @@ namespace Ares.Player
         {
             m_EditMode = on;
             m_AddButton.Visible = on;
+            UpdateEditBorder(on);
             ClearElementSelection();
             // in edit mode a click on the music / effect badge of a button switches its kind
             foreach (Control c in elementsPanel.Controls)
@@ -774,6 +775,9 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
+                // the project in memory may be half changed and was not saved
+                if (m_Project != null)
+                    m_Project.Changed = true;
                 MessageBox.Show(this, T("Erro ao editar: ", "Edit error: ") + ex.Message, StringResources.Ares,
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }

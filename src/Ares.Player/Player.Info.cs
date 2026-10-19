@@ -403,6 +403,15 @@ NOT A CLUBISTA YET?
 The Clubistas support the channel and get the news first, such as the Apolo updates. To learn how to join, open the supporters page (button below).
 
 Apolo does not look for updates by itself and does not send any data over the internet because of this.");
+            if (UpdateCheckAvailable)
+            {
+                text = text.Replace("O Apolo não procura atualizações sozinho e não envia nenhum dado pela internet por causa disso.",
+                    "O Apolo consulta, no máximo uma vez por dia, um pequeno arquivo público com o número da versão mais nova e avisa na barra de baixo se houver. Nenhum dado seu é enviado. Dá para desligar em Extras.");
+                text = text.Replace("Apolo does not look for updates by itself and does not send any data over the internet because of this.",
+                    "Apolo reads, at most once a day, a small public file with the number of the newest version and tells you in the bottom bar. No data of yours is sent. You can turn it off in Extras.");
+                if (m_NewVersion != null)
+                    text = T("VERSÃO NOVA DISPONÍVEL: ", "NEW VERSION AVAILABLE: ") + m_NewVersion + "\r\n\r\n" + text;
+            }
             List<KeyValuePair<string, Action>> buttons = new List<KeyValuePair<string, Action>>();
             buttons.Add(new KeyValuePair<string, Action>(T("Abrir o Cofre de Conteúdo", "Open the Content Vault"), () => OpenAddress(VaultUrl)));
             buttons.Add(new KeyValuePair<string, Action>(T("Conhecer os Clubistas", "About the Clubistas"), () => OpenAddress(SupportersUrl)));

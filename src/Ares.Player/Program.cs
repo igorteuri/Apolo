@@ -72,6 +72,7 @@ namespace Ares.Player
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Ares.CommonGUI.ThemeManager.Install();
+            SplashForm.ShowSplash();
             try
             {
                 using (Ares.Playing.AudioInit bassInit = new Ares.Playing.AudioInit(-1, s => MessageBox.Show(s, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning)))
@@ -86,7 +87,12 @@ namespace Ares.Player
 #endif
             catch (Ares.Playing.AudioInitException ex)
             {
+                SplashForm.CloseSplash();
                 MessageBox.Show(ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Stop);
+            }
+            finally
+            {
+                SplashForm.CloseSplash();
             }
         }
     }

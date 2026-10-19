@@ -135,6 +135,10 @@
     <Compile Include="Player.Library.cs" />
     <Compile Include="Player.Groups.cs" />
     <Compile Include="Player.Kinds.cs" />
+    <Compile Include="Player.Window.cs" />
+    <Compile Include="SplashForm.cs" />
+    <Compile Include="Player.Update.cs" />
+    <Compile Include="UpdateVersion.cs" />
     <Compile Include="ToastPanel.cs" />
     <Compile Include="Player.Edit.cs" />
     <Compile Include="Player.Export.cs" />

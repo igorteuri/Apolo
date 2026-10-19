@@ -10,7 +10,7 @@ namespace Ares.Player
     public partial class Player
     {
         private StatusStrip m_StatusStrip;
-        private ToolStripStatusLabel m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatDiscord, m_StatProject;
+        private ToolStripStatusLabel m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatDiscord, m_StatProject, m_StatSaved;
         private Timer m_StatusTimer;
 
         private void InitStatusBar()
@@ -44,7 +44,16 @@ namespace Ares.Player
                     l.BorderSides = ToolStripStatusLabelBorderSides.Right;
                     l.Padding = new Padding(4, 0, 8, 0);
                 }
-                m_StatusStrip.Items.AddRange(new ToolStripItem[] { m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatDiscord, m_StatProject });
+                m_StatSaved = new ToolStripStatusLabel();
+                m_StatSaved.BorderSides = ToolStripStatusLabelBorderSides.Left;
+                m_StatSaved.Padding = new Padding(8, 0, 4, 0);
+                m_StatSaved.Visible = false;
+                m_StatSaved.Click += (s, e) =>
+                {
+                    if (IsProjectDirty())
+                        SaveProjectNow();
+                };
+                m_StatusStrip.Items.AddRange(new ToolStripItem[] { m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatDiscord, m_StatProject, m_StatSaved });
                 Controls.Add(m_StatusStrip);
 
                 m_StatusTimer = new Timer();
@@ -132,6 +141,7 @@ namespace Ares.Player
                 SetStat(m_StatDiscord, "🎧 " + discordText, discordActive && p != null && !p.IsClassic ? p.Accent
                     : (m_Discord != null && m_Discord.State == DiscordState.Off && p != null && !p.IsClassic ? p.TextDim : ForeColor));
                 SetStat(m_StatProject, m_Project != null ? m_Project.Title : "", ForeColor);
+                UpdateSavedLabel(p);
                 // the quick buttons in the menu bar are highlighted while the feature is on
                 if (m_DiscordButton != null)
                     m_DiscordButton.Checked = discordActive;
