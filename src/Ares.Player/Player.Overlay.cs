@@ -205,27 +205,7 @@ namespace Ares.Player
 
         private static string JsonString(string s)
         {
-            if (s == null)
-                return "\"\"";
-            StringBuilder sb = new StringBuilder("\"");
-            foreach (char c in s)
-            {
-                switch (c)
-                {
-                    case '"': sb.Append("\\\""); break;
-                    case '\\': sb.Append("\\\\"); break;
-                    case '\n': sb.Append("\\n"); break;
-                    case '\r': break;
-                    case '\t': sb.Append("\\t"); break;
-                    default:
-                        if (c < 32)
-                            sb.Append("\\u").Append(((int)c).ToString("x4"));
-                        else
-                            sb.Append(c);
-                        break;
-                }
-            }
-            return sb.Append('"').ToString();
+            return JsonText.Quote(s);
         }
 
         private void UpdateOverlayState()

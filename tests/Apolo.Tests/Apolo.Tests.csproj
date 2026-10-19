@@ -16,10 +16,12 @@
   <ItemGroup>
     <ProjectReference Include="..\..\net8\Ares.Tags.Net8.csproj" />
     <ProjectReference Include="..\..\net8\Ares.TagsImport.Net8.csproj" />
+    <ProjectReference Include="..\..\net8\Ares.Data.Net8.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- the logic under test is compiled straight from the player sources (no window code) -->
     <Compile Include="..\..\src\Ares.Player\TrackText.cs" Link="Linked\TrackText.cs" />
+    <Compile Include="..\..\src\Ares.Player\JsonText.cs" Link="Linked\JsonText.cs" />
     <Compile Include="..\..\src\Ares.Player\Player.Rights.cs" Link="Linked\Player.Rights.cs" />
   </ItemGroup>
 </Project>

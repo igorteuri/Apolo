@@ -54,10 +54,11 @@ jobs:
           Invoke-WebRequest "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile dist/cloudflared.exe
 
       - name: Automatic tests
-        # first rounds: a failing test is reported but does not stop the installer
-        continue-on-error: true
+        # a failing test stops the build, so no installer is made from a broken version
         shell: pwsh
-        run: dotnet test tests/Apolo.Tests/Apolo.Tests.csproj -c Release --nologo
+        run: |
+          dotnet test tests/Apolo.Tests/Apolo.Tests.csproj -c Release --nologo
+          if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: Setup Node.js (for the Discord bridge)
         uses: actions/setup-node@v4
