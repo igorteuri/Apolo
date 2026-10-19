@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -112,11 +113,38 @@ namespace Ares.Player
             string[] paths = e.Data.GetData(DataFormats.FileDrop) as string[];
             if (paths == null || paths.Length == 0)
                 return;
+            // the folder under the mouse (or the open one) receives the playlists; empty area of the list = new folders
+            string into = DropTargetFolder(new Point(e.X, e.Y));
             // do not block the explorer window that started the drag
-            BeginInvoke(new MethodInvoker(() => ImportDroppedPaths(paths)));
+            BeginInvoke(new MethodInvoker(() => ImportDroppedPaths(paths, into)));
         }
 
-        private void ImportDroppedPaths(string[] paths)
+        // title of the Apolo folder which receives what is dropped at the screen point; null = create new folders
+        private string DropTargetFolder(Point screen)
+        {
+            if (m_Project == null)
+                return null;
+            Point pt = modesList.PointToClient(screen);
+            if (modesList.ClientRectangle.Contains(pt))
+            {
+                int row = modesList.IndexFromPoint(pt);
+                return row >= 0 && row < m_ModeRows.Count ? m_ModeRows[row].Title : null;
+            }
+            return OpenFolderTitle();
+        }
+
+        // title of the folder which is open now (null when none)
+        private string OpenFolderTitle()
+        {
+            IMode open = m_Project != null ? CurrentMode() : null;
+            return open != null ? open.Title : null;
+        }
+
+        /// <summary>
+        /// Puts the dropped audio in the project. With "intoFolder" every dropped folder / file becomes a playlist (button)
+        /// inside that folder; without it (or when it does not exist) each dropped folder becomes a folder of its own.
+        /// </summary>
+        private void ImportDroppedPaths(string[] paths, string intoFolder = null)
         {
             try
             {
@@ -160,11 +188,12 @@ namespace Ares.Player
                         return;
                     StopAllPlaying();
 
+                    string targetFolder = intoFolder != null && m_Project.GetModes().Any(m => m.Title == intoFolder) ? intoFolder : null;
                     int added = 0;
                     string lastMode = null;
                     foreach (Ares.CommonGUI.DroppedGroup g in groups)
                     {
-                        string modeTitle = g.IsLoose ? looseModeTitle : g.Name;
+                        string modeTitle = targetFolder != null ? targetFolder : (g.IsLoose ? looseModeTitle : g.Name);
                         IMode mode = m_Project.GetModes().FirstOrDefault(m => m.Title == modeTitle);
                         if (mode == null)
                             mode = m_Project.AddMode(modeTitle);

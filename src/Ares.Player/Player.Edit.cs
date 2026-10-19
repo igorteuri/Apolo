@@ -799,7 +799,7 @@ namespace Ares.Player
             {
                 dlg.Description = T("Escolha a pasta com os arquivos de áudio", "Choose the folder with the audio files");
                 if (dlg.ShowDialog(this) == DialogResult.OK)
-                    ImportDroppedPaths(new[] { dlg.SelectedPath });
+                    ImportDroppedPaths(new[] { dlg.SelectedPath }, OpenFolderTitle());
             }
         }
 
@@ -811,7 +811,7 @@ namespace Ares.Player
                 dlg.Filter = T("Arquivos de áudio", "Audio files")
                     + "|*.mp3;*.wav;*.ogg;*.opus;*.flac;*.m4a;*.aac;*.wma;*.aif;*.aiff;*.mp2;*.mp1";
                 if (dlg.ShowDialog(this) == DialogResult.OK)
-                    ImportDroppedPaths(dlg.FileNames);
+                    ImportDroppedPaths(dlg.FileNames, OpenFolderTitle());
             }
         }
 
