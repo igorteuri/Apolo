@@ -159,7 +159,7 @@ namespace Ares.Player
         }
 
         // an extension without an icon: a circle in the accent color with the initial of the name
-        private static Bitmap InitialIcon(string name)
+        internal static Bitmap InitialIcon(string name)
         {
             string initial = string.IsNullOrEmpty(name) ? "?" : name.Trim().Substring(0, 1).ToUpperInvariant();
             Color accent = Ares.CommonGUI.ThemeManager.Current != null ? Ares.CommonGUI.ThemeManager.Current.Accent : Color.Orange;
@@ -312,7 +312,7 @@ namespace Ares.Player
                 if (entry.Icon != null)
                     b.Image = entry.Icon;
                 else
-                    b.Image = InitialIcon(entry.Name);
+                    b.Image = ExtensionCatalog.InitialIcon(entry.Name);
                 b.Padding = new Padding(0);
                 b.Click += (s, e) => ShowMenu((Control)s, captured);
                 m_Tip.SetToolTip(b, entry.Name + (entry.Enabled ? "" : T(" (desativada)", " (disabled)")));
