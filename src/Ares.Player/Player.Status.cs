@@ -55,6 +55,14 @@ namespace Ares.Player
                 };
                 m_StatusStrip.Items.AddRange(new ToolStripItem[] { m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatDiscord, m_StatProject, m_StatSaved });
                 Controls.Add(m_StatusStrip);
+                // line icons instead of emoji (emoji change with the system font and ignore the theme colors)
+                Ares.CommonGUI.IconLibrary.Bind(m_StatusStrip, new Dictionary<ToolStripItem, string>
+                {
+                    { m_StatRepeat, "repeat" },
+                    { m_StatOutput, "volume-2" },
+                    { m_StatShare, "globe" },
+                    { m_StatDiscord, "headphones" }
+                });
 
                 m_StatusTimer = new Timer();
                 m_StatusTimer.Interval = 500;
@@ -124,21 +132,21 @@ namespace Ares.Player
                         color = p.TextDim;
                 }
                 SetStat(m_StatState, state, color);
-                SetStat(m_StatRepeat, "↻ " + T("Repetição: ", "Repeat: ") + (repeatButton.Checked ? T("ligada", "on") : T("desligada", "off")), ForeColor);
-                SetStat(m_StatOutput, "🔊 " + (m_OutputButton != null ? m_OutputButton.Text : ""), ForeColor);
+                SetStat(m_StatRepeat, T("Repetição: ", "Repeat: ") + (repeatButton.Checked ? T("ligada", "on") : T("desligada", "off")), ForeColor);
+                SetStat(m_StatOutput, (m_OutputButton != null ? m_OutputButton.Text : ""), ForeColor);
                 if (m_Remote != null && m_Remote.Running)
                 {
                     bool ready = m_Tunnel != null && m_Tunnel.Url != null;
-                    SetStat(m_StatShare, "🔗 " + (ready ? T("Compartilhamento: ativo", "Sharing: on") : T("Compartilhamento: iniciando...", "Sharing: starting...")),
+                    SetStat(m_StatShare, (ready ? T("Compartilhamento: ativo", "Sharing: on") : T("Compartilhamento: iniciando...", "Sharing: starting...")),
                         ready && p != null && !p.IsClassic ? p.Accent : ForeColor);
                 }
                 else
                 {
-                    SetStat(m_StatShare, "🔗 " + T("Compartilhamento: inativo", "Sharing: off"), p != null && !p.IsClassic ? p.TextDim : ForeColor);
+                    SetStat(m_StatShare, T("Compartilhamento: inativo", "Sharing: off"), p != null && !p.IsClassic ? p.TextDim : ForeColor);
                 }
                 bool discordActive;
                 string discordText = DiscordStatusText(out discordActive);
-                SetStat(m_StatDiscord, "🎧 " + discordText, discordActive && p != null && !p.IsClassic ? p.Accent
+                SetStat(m_StatDiscord, discordText, discordActive && p != null && !p.IsClassic ? p.Accent
                     : (m_Discord != null && m_Discord.State == DiscordState.Off && p != null && !p.IsClassic ? p.TextDim : ForeColor));
                 SetStat(m_StatProject, m_Project != null ? m_Project.Title : "", ForeColor);
                 UpdateSavedLabel(p);

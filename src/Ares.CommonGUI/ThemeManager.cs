@@ -44,6 +44,12 @@ namespace Ares.CommonGUI
         public Color Accent;
         public Color Selection;
 
+        /// <summary>The border of controls (buttons, cards): at least 3:1 against the window, so that they can be seen (WCAG 1.4.11).</summary>
+        public Color ControlBorder
+        {
+            get { return ThemeManager.EnsureContrast(Border, Window, 3.0); }
+        }
+
         public string DisplayName
         {
             get
@@ -128,6 +134,59 @@ namespace Ares.CommonGUI
         /// <summary>The accent color of the "Custom" theme.</summary>
         public static Color CustomAccent { get { return s_CustomAccent; } }
 
+        // ---- contrast (WCAG): text needs 4.5:1, borders and icons which carry meaning 3:1 ----
+
+        private static double Luminance(Color c)
+        {
+            Func<int, double> f = v =>
+            {
+                double s = v / 255.0;
+                return s <= 0.03928 ? s / 12.92 : Math.Pow((s + 0.055) / 1.055, 2.4);
+            };
+            return 0.2126 * f(c.R) + 0.7152 * f(c.G) + 0.0722 * f(c.B);
+        }
+
+        /// <summary>Contrast ratio of two colors (1 to 21).</summary>
+        public static double ContrastRatio(Color a, Color b)
+        {
+            double la = Luminance(a), lb = Luminance(b);
+            if (la < lb)
+            {
+                double t = la;
+                la = lb;
+                lb = t;
+            }
+            return (la + 0.05) / (lb + 0.05);
+        }
+
+        /// <summary>Moves a color towards white (dark background) or black (light background) until it has the contrast wanted.</summary>
+        public static Color EnsureContrast(Color c, Color background, double minimum)
+        {
+            if (ContrastRatio(c, background) >= minimum)
+                return c;
+            Color target = Luminance(background) < 0.4 ? Color.White : Color.Black;
+            Color result = c;
+            for (int i = 1; i <= 40; i++)
+            {
+                result = MixColor(c, target, i / 40.0);
+                if (ContrastRatio(result, background) >= minimum)
+                    break;
+            }
+            return result;
+        }
+
+        // the colors which must read well are brought to the minimum contrast (also for the colors the user chooses)
+        private static void EnsureReadable()
+        {
+            foreach (ThemePalette p in s_Palettes)
+            {
+                p.TextDim = EnsureContrast(EnsureContrast(p.TextDim, p.Window, 4.5), p.Hover, 4.5);
+                p.TextDim = EnsureContrast(p.TextDim, p.Surface, 4.5);
+                // the accent is used for lines, icons and some texts
+                p.Accent = EnsureContrast(p.Accent, p.Window, 3.0);
+            }
+        }
+
         private static Color MixColor(Color a, Color b, double t)
         {
             return Color.FromArgb(255, (int)Math.Round(a.R + (b.R - a.R) * t), (int)Math.Round(a.G + (b.G - a.G) * t),
@@ -146,7 +205,8 @@ namespace Ares.CommonGUI
             custom.Border = basis.Border;
             custom.Text = basis.Text;
             custom.TextDim = basis.TextDim;
-            custom.Accent = s_CustomAccent;
+            custom.Accent = EnsureContrast(s_CustomAccent, custom.Window, 3.0);
+            custom.TextDim = EnsureContrast(EnsureContrast(basis.TextDim, custom.Window, 4.5), custom.Hover, 4.5);
             custom.Selection = s_CustomDark ? MixColor(basis.Window, s_CustomAccent, 0.40) : MixColor(Color.White, s_CustomAccent, 0.32);
         }
 
@@ -228,6 +288,7 @@ namespace Ares.CommonGUI
             RebuildCustom();
             LoadPreferences();
             RebuildCustom();
+            EnsureReadable();
             if (s_NeedsThemeMigration)
             {
                 // version 2 of the look: Apolo (dark) is the default for everybody once
@@ -611,7 +672,7 @@ namespace Ares.CommonGUI
                 Button b = (Button)c;
                 b.UseVisualStyleBackColor = false;
                 b.FlatStyle = FlatStyle.Flat;
-                b.FlatAppearance.BorderColor = p.Border;
+                b.FlatAppearance.BorderColor = p.ControlBorder;
                 b.FlatAppearance.MouseOverBackColor = p.Hover;
                 b.FlatAppearance.MouseDownBackColor = p.Selection;
                 b.BackColor = p.Surface;
@@ -627,7 +688,7 @@ namespace Ares.CommonGUI
                 tb2.UseVisualStyleBackColor = false;
                 tb2.FlatStyle = FlatStyle.Flat;
                 tb2.FlatAppearance.BorderSize = 1;
-                tb2.FlatAppearance.BorderColor = p.Border;
+                tb2.FlatAppearance.BorderColor = p.ControlBorder;
                 tb2.FlatAppearance.MouseOverBackColor = p.Hover;
                 tb2.FlatAppearance.MouseDownBackColor = p.Accent;
                 tb2.FlatAppearance.CheckedBackColor = p.Selection;
@@ -1120,7 +1181,8 @@ namespace Ares.CommonGUI
                 }
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                 bool hot = b.Focused || b.ClientRectangle.Contains(b.PointToClient(Cursor.Position)) && b.Enabled;
-                using (Pen pen = new Pen(hot ? p.Accent : p.Border, 1f))
+                // the border of a button is seen at 3:1; the focus of the keyboard is a thicker line in the accent color
+                using (Pen pen = new Pen(hot ? p.Accent : p.ControlBorder, b.Focused ? 2f : 1f))
                     g.DrawPath(pen, path);
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
             }

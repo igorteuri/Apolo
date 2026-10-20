@@ -188,6 +188,11 @@ namespace Ares.CommonGUI
                         g.DrawPath(pen, path);
                 }
 
+                if (Focused && ShowFocusCues)
+                {
+                    using (Pen fp = new Pen(text, 2f))
+                        g.DrawRectangle(fp, 4, 4, Width - 9, Height - 9);
+                }
                 int pad = (int)Math.Round(10 * scale);
                 int glyphWidth = (int)Math.Round(30 * scale);
                 using (Font gf = new Font("Segoe UI Symbol", 16f * scale, FontStyle.Regular))

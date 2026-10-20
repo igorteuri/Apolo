@@ -95,6 +95,7 @@ namespace Ares.Player
                 | ControlStyles.ResizeRedraw | ControlStyles.Selectable, true);
             Margin = new Padding(4);
             TextAlign = ContentAlignment.MiddleCenter;
+            Cursor = Cursors.Hand;
             ThemeManager.Changed += OnThemeChanged;
         }
 
@@ -341,7 +342,7 @@ namespace Ares.Player
             Color hover = p != null && !p.IsClassic ? p.Hover : SystemColors.ControlLightLight;
             Color selection = p != null && !p.IsClassic ? p.Selection : SystemColors.Highlight;
             Color accent = p != null && !p.IsClassic ? p.Accent : SystemColors.Highlight;
-            Color border = p != null && !p.IsClassic ? p.Border : SystemColors.ControlDark;
+            Color border = p != null && !p.IsClassic ? p.ControlBorder : SystemColors.ControlDark;
             Color text = p != null && !p.IsClassic ? p.Text : SystemColors.ControlText;
             if (!m_Tint.IsEmpty)
             {
@@ -425,6 +426,17 @@ namespace Ares.Player
                 Color line = Checked ? accent : (m_Hover ? accent : border);
                 using (Pen pen = new Pen(line, Checked ? 2f : 1f))
                     g.DrawPath(pen, path);
+                // keyboard focus: a visible ring inside the button (it must be seen on every theme and every color of button)
+                if (Focused && ShowFocusCues)
+                {
+                    Rectangle ring = Rectangle.Inflate(r, -4, -4);
+                    if (ring.Width > 8 && ring.Height > 8)
+                    {
+                        using (GraphicsPath rp = Rounded(ring, Math.Max(2, radius - 3)))
+                        using (Pen fp = new Pen(text, 2f))
+                            g.DrawPath(fp, rp);
+                    }
+                }
 
                 if (m_Kind != 0)
                 {

@@ -100,8 +100,8 @@ namespace Ares.CommonGUI
             Controls.Add(choose);
 
             Label hint = new Label();
-            hint.Text = T("A mudança aparece na hora. Para voltar ao visual original do Apolo, escolha o amarelo (primeira cor) com fundo escuro.",
-                "The change shows at once. To get the original Apolo look back, pick the yellow (first color) with a dark background.");
+            hint.Text = T("A mudança aparece na hora. Para voltar ao visual original do Apolo, escolha o amarelo (primeira cor) com fundo escuro. Cores difíceis de ler são ajustadas sozinhas.",
+                "The change shows at once. To get the original Apolo look back, pick the yellow (first color) with a dark background. Colors which would be hard to read are adjusted automatically.");
             hint.SetBounds(16, 196, 388, 36);
             Controls.Add(hint);
 

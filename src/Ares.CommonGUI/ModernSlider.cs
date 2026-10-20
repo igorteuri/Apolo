@@ -299,7 +299,8 @@ namespace Ares.CommonGUI
                 g.DrawEllipse(ring, knobX - r + 1, cy - r + 1, 2 * r - 2, 2 * r - 2);
             if (Focused && ShowFocusCues)
             {
-                using (Pen f = new Pen(Color.FromArgb(120, accent), 1f))
+                // keyboard focus: a solid line, as visible as the rest of the control (not a faint hint)
+                using (Pen f = new Pen(p != null && !p.IsClassic ? p.Text : SystemColors.ControlText, 2f))
                     g.DrawRectangle(f, 1, 1, Width - 3, Height - 3);
             }
         }
