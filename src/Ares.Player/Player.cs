@@ -117,7 +117,6 @@ namespace Ares.Player
             InitDiscord();
             InitDeck();
             InitShortcuts();
-            InitUpdateCheck();
             InitBankMenu();
             OrganizeExtrasMenu();
         }

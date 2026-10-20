@@ -275,7 +275,6 @@ namespace Ares.Player
             }
             Opacity = 1;
             SplashForm.CloseSplash();
-            StartUpdateCheckLater();
         }
     }
 }

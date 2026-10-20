@@ -1,0 +1,96 @@
+APOLO - AVISOS DE SOFTWARE DE TERCEIROS
+=======================================
+
+O Apolo é software livre, distribuído sob a GNU GPL (versão 2 ou posterior) - veja LICENSE.txt.
+Ele é uma modernização do Ares, de Jörg Ruedenauer (GPL v2+).
+O Apolo usa os componentes abaixo, cada um com a sua licença. Todos permitem uso e redistribuição,
+inclusive em projetos comerciais, desde que os avisos de direitos autorais sejam mantidos (é o que este arquivo faz).
+
+
+1) BIBLIOTECAS DENTRO DO PROGRAMA
+---------------------------------
+
+NAudio (NAudio.Core, NAudio.Wasapi) 2.2.1 ............ MIT   - (c) Mark Heath 2023 - https://github.com/naudio/NAudio
+NLayer 1.16.0 (leitura de MP3) ....................... MIT   - (c) Mark Heath, Andrew Ward - https://github.com/naudio/NLayer
+NVorbis 0.10.5 (leitura de OGG Vorbis) ............... MIT   - (c) 2020 Andrew Ward - https://github.com/NVorbis/NVorbis
+                                                              texto completo: NVorbis-MIT.txt
+Concentus 2.2.2 (leitura de Opus) .................... BSD   - (c) Xiph.Org Foundation, Skype Limited, CSIRO, Microsoft Corp.,
+                                                              Logan Stromberg e outros - https://github.com/lostromb/concentus
+                                                              texto completo: Concentus-BSD.txt
+Concentus.OggFile 1.0.6 .............................. MS-PL - (c) Logan Stromberg, Andrew Ward
+                                                              https://github.com/lostromb/concentus.oggfile
+TagLib# (TagLibSharp) 2.3.0 (tags dos arquivos) ...... LGPL 2.1 - (c) 2006-2007 Brian Nickel e outros colaboradores
+                                                              https://github.com/mono/taglib-sharp
+                                                              O Apolo usa a biblioteca como DLL separada, sem alterá-la; você pode
+                                                              trocá-la por outra versão compatível.
+SharpZipLib 1.4.2 (arquivos .zip) .................... MIT   - (c) 2000-2022 SharpZipLib Contributors
+                                                              https://github.com/icsharpcode/SharpZipLib
+SkiaSharp 2.88.9 (leitura de imagens WebP) ........... MIT   - (c) Microsoft Corporation, Xamarin Inc.
+                                                              texto completo: SkiaSharp-MIT.txt
+                                                              (inclui o Skia, do Google, e outros componentes, em BSD-3, MIT e afins)
+System.Data.SQLite 1.0.118 ........................... Domínio público - SQLite Development Team - https://system.data.sqlite.org/
+RestSharp 106.15.0 ................................... Apache 2.0 - (c) John Sheehan, Andrew Young, Alexey Zimarev e comunidade
+                                                              texto completo: RestSharpLicence.txt
+Microsoft WebView2 (páginas web embutidas) ........... Licença Microsoft (WebView2-LICENSE.txt) - (c) Microsoft Corporation
+Chromaprint (impressão digital de áudio) ............. LGPL 2.1 - ChromaprintLicence.txt - (c) Lukáš Lalinský
+FFmpeg (usado pelo Chromaprint) ...................... LGPL 2.1 - FfmpegLicence.txt - https://ffmpeg.org/
+Mouse/Keyboard Hooks (atalhos globais) ............... BSD - MouseKeyboardHooksLicence.txt - (c) 2004-2011 Application and Global Mouse and Keyboard Hooks .Net Library
+
+
+2) PROGRAMAS QUE ACOMPANHAM O INSTALADOR
+----------------------------------------
+
+cloudflared (túnel do controle remoto) ............... Apache 2.0 - (c) Cloudflare, Inc. - https://github.com/cloudflare/cloudflared
+Node.js (roda a ponte do Discord) .................... MIT e outras - https://nodejs.org/ (veja os avisos em https://github.com/nodejs/node/blob/main/LICENSE)
+discord.js / @discordjs/voice ........................ Apache 2.0 - https://github.com/discordjs/discord.js
+@snazzah/davey ....................................... MIT - https://github.com/Snazzah/davey
+(as bibliotecas do Discord trazem as próprias licenças dentro da pasta "discord" do programa instalado)
+
+
+3) IMAGENS, ÍCONES E DADOS
+--------------------------
+
+Lucide (ícones da interface) ......................... ISC - (c) Lucide Contributors; partes (c) Cole Bemis (Feather, MIT)
+                                                        https://lucide.dev/license
+Noto Emoji (desenhos de emojis, baixados sob demanda)  Apache 2.0 - (c) Google - https://github.com/googlefonts/noto-emoji
+Twemoji (segunda fonte de emojis) .................... CC-BY 4.0 - (c) Twitter, Inc. e colaboradores (jdecked/twemoji)
+                                                        https://github.com/jdecked/twemoji
+Unicode CLDR (nomes e palavras dos emojis) ........... Licença Unicode - (c) Unicode, Inc. - https://github.com/unicode-org/cldr-json
+Banco de imagens dos botões (pasta BancoDeImagens) ... ilustrações criadas para o Apolo, sob a mesma licença do programa (GPL v2+)
+
+
+4) SERVIÇOS DE INTERNET (usados só quando você pede)
+----------------------------------------------------
+
+AcoustID / MusicBrainz (identificar músicas), Openverse, Wikimedia Commons, Internet Archive e Freesound (busca de
+música, efeitos e imagens livres) e VDO.Ninja (envio de áudio). Cada serviço tem os próprios termos de uso; o Apolo
+guarda autor e licença do que você baixa e não envia dados pessoais. O AcoustID usa uma chave de aplicativo
+embutida; se quiser, você pode usar a sua (gratuita) em %APPDATA%\Apolocoustid.key. O Freesound exige a sua
+própria chave (freesound.key).
+
+
+5) TEXTOS DE LICENÇA CURTOS
+---------------------------
+
+MIT (NAudio, NLayer, SharpZipLib, entre outros):
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+  documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+  the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+  to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above
+  copyright notice and this permission notice shall be included in all copies or substantial portions of the
+  Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+  LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+  SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  DEALINGS IN THE SOFTWARE.
+
+ISC (Lucide):
+  Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
+  granted, provided that the above copyright notice and this permission notice appear in all copies.
+  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING
+  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
+
+CC-BY 4.0 (Twemoji): https://creativecommons.org/licenses/by/4.0/ - os desenhos podem ser usados e adaptados com
+  crédito aos autores, indicação de mudanças e link para a licença.
+
+GPL v2+ (Apolo e Ares): LICENSE.txt e license-gplv3.txt. LGPL 2.1: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html

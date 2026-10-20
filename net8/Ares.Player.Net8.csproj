@@ -31,13 +31,11 @@
     <Compile Include="..\src\Ares.Player\Player.Kinds.cs" Link="Player.Kinds.cs" />
     <Compile Include="..\src\Ares.Player\Player.Window.cs" Link="Player.Window.cs" />
     <Compile Include="..\src\Ares.Player\SplashForm.cs" Link="SplashForm.cs" />
-    <Compile Include="..\src\Ares.Player\Player.Update.cs" Link="Player.Update.cs" />
     <Compile Include="..\src\Ares.Player\Player.ImageLink.cs" Link="Player.ImageLink.cs" />
     <Compile Include="..\src\Ares.Player\ImageUrlParser.cs" Link="ImageUrlParser.cs" />
     <Compile Include="..\src\Ares.Player\Player.Bank.cs" Link="Player.Bank.cs" />
     <Compile Include="..\src\Ares.Player\ExtensionBar.cs" Link="ExtensionBar.cs" />
     <Compile Include="..\src\Ares.Player\ImageBankIndex.cs" Link="ImageBankIndex.cs" />
-    <Compile Include="..\src\Ares.Player\UpdateVersion.cs" Link="UpdateVersion.cs" />
     <Compile Include="..\src\Ares.Player\ToastPanel.cs" Link="ToastPanel.cs" />
     <Compile Include="..\src\Ares.Player\Player.Edit.cs" Link="Player.Edit.cs" />
     <Compile Include="..\src\Ares.Player\Player.Export.cs" Link="Player.Export.cs" />

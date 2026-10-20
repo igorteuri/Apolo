@@ -10,18 +10,23 @@ O Apolo é uma modernização do **[Ares](http://aresrpg.sourceforge.net/)** (*A
 
 - **Apolo** — criado e mantido por **Igor Teuri**, do canal **Dados Críticos** ([YouTube](https://youtube.com/dadoscriticos?sub_confirmation=1) · [itch.io](https://igorteuri.itch.io/)).
 - **Ares** — o programa original é de **Jörg Ruedenauer** e colaboradores. Todo o crédito pela base do programa (motor de áudio, projetos, Editor, Player e controladores) pertence a eles. O Apolo é um *fork* e mantém os nomes internos `Ares.*` no código. Os projetos agora são `.apolo` e os dados ficam em `%APPDATA%\Apolo`; projetos `.ares` e a pasta `%APPDATA%\Ares` antigos são copiados automaticamente na primeira abertura (os originais não são apagados).
-- **Áudio:** motor de áudio próprio do Apolo, feito com [NAudio](https://github.com/naudio/NAudio), [NLayer](https://github.com/naudio/NLayer) e [NVorbis](https://github.com/NVorbis/NVorbis) (licença MIT), [Concentus](https://github.com/lostromb/concentus) (licença BSD) e [TagLib#](https://github.com/mono/taglib-sharp) (licença LGPL). Todas livres, inclusive para uso comercial.
+- **Áudio:** motor de áudio próprio do Apolo, feito com [NAudio](https://github.com/naudio/NAudio), [NLayer](https://github.com/naudio/NLayer) e [NVorbis](https://github.com/NVorbis/NVorbis) (licença MIT), [Concentus](https://github.com/lostromb/concentus) (BSD) e [TagLib#](https://github.com/mono/taglib-sharp) (LGPL). Todas livres, inclusive para uso comercial.
+- **Imagens e arquivos:** [SkiaSharp](https://github.com/mono/SkiaSharp) (leitura de WebP, MIT), [SharpZipLib](https://github.com/icsharpcode/SharpZipLib) (arquivos .zip, MIT) e [System.Data.SQLite](https://system.data.sqlite.org/) (domínio público).
 - **Ícones:** [Lucide](https://lucide.dev/) (licença ISC).
 - **Emojis dos botões:** [Noto Emoji](https://github.com/googlefonts/noto-emoji), do Google (licença Apache 2.0), com o [Twemoji](https://github.com/jdecked/twemoji) (CC-BY 4.0) como segunda fonte. Os desenhos são baixados na primeira vez que um emoji é escolhido.
 - **Palavras dos emojis:** [Unicode CLDR](https://github.com/unicode-org/cldr-json) (nomes e palavras-chave em português e inglês, licença Unicode), baixadas uma vez para o reconhecimento automático e a busca de emojis.
 - **Páginas web embutidas:** Microsoft WebView2.
 - **Túnel do controle remoto:** [cloudflared](https://github.com/cloudflare/cloudflared), da Cloudflare.
 - **Discord:** [discord.js/voice](https://github.com/discordjs/discord.js) e [@snazzah/davey](https://github.com/Snazzah/davey), rodando em um processo Node.js que acompanha o programa.
-- Bibliotecas do projeto original ainda usadas: RestSharp, Chromaprint, FFmpeg e Mouse/Keyboard Hooks, cada uma com a sua licença (veja a pasta [Licencas](Licencas)). O Editor do Ares (com WeifenLuo DockPanel Suite, HtmlRenderer e ServiceStack) foi retirado desta versão do repositório; continua no histórico do Git e no projeto original.
+- Bibliotecas do projeto original ainda usadas: RestSharp (Apache 2.0), Chromaprint e FFmpeg (LGPL) e Mouse/Keyboard Hooks (BSD), cada uma com a sua licença (veja a pasta [Licencas](Licencas)). O Editor do Ares (com WeifenLuo DockPanel Suite, HtmlRenderer e ServiceStack) foi retirado desta versão do repositório; continua no histórico do Git e no projeto original.
 
 ## Licença
 
-Assim como o Ares, o Apolo é distribuído sob a **GNU GPL (versão 2 ou posterior)**. Veja [LICENSE.txt](LICENSE.txt) e [Licencas/license-gplv3.txt](Licencas/license-gplv3.txt).
+Assim como o Ares, o Apolo é distribuído sob a **GNU GPL (versão 2 ou posterior)**. Veja [LICENSE.txt](LICENSE.txt) e [Licencas/license-gplv3.txt](Licencas/license-gplv3.txt). Você pode usar, estudar, modificar e redistribuir o programa, inclusive em lives e vídeos monetizados, desde que mantenha a mesma licença e os créditos.
+
+Os componentes de terceiros (bibliotecas, ícones, emojis, túnel e ponte do Discord) têm licenças próprias, todas compatíveis. A lista completa, com autores e textos de licença, está em [Licencas/AVISOS-DE-TERCEIROS.txt](Licencas/AVISOS-DE-TERCEIROS.txt) e vai junto com o instalador.
+
+A música e as imagens que você coloca nos seus projetos **não** fazem parte do Apolo: os direitos dependem de cada arquivo (veja o verificador de direitos autorais no menu Extras).
 
 ## O que o Apolo faz
 

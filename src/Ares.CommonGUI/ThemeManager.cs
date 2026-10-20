@@ -703,6 +703,7 @@ namespace Ares.CommonGUI
                 bb.UseVisualStyleBackColor = false;
                 bb.BackColor = Color.Transparent;
                 bb.ForeColor = p.Text;
+                HookDisabledText(bb);
             }
             else if (c is GroupBox)
             {
@@ -736,7 +737,10 @@ namespace Ares.CommonGUI
                 c.ForeColor = p.Text;
                 TextBox tb = c as TextBox;
                 if (tb != null)
+                {
                     tb.BorderStyle = BorderStyle.FixedSingle;
+                    HookTextBoxBorder(tb);
+                }
             }
             else if (c is ComboBox)
             {
@@ -1185,7 +1189,142 @@ namespace Ares.CommonGUI
                 using (Pen pen = new Pen(hot ? p.Accent : p.ControlBorder, b.Focused ? 2f : 1f))
                     g.DrawPath(pen, path);
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
+                if (!b.Enabled && b.Image == null && !string.IsNullOrEmpty(b.Text))
+                {
+                    // Windows draws the text of a disabled flat button in a gray which almost vanishes: draw it again, readable but dim
+                    Rectangle inner = Rectangle.Inflate(b.ClientRectangle, -3, -3);
+                    using (SolidBrush back = new SolidBrush(b.BackColor))
+                        g.FillRectangle(back, inner);
+                    TextRenderer.DrawText(g, b.Text, b.Font, inner, p.TextDim,
+                        TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
+                }
             }
+        }
+
+        // ---- disabled check boxes and radio buttons ----
+
+        private static readonly ConditionalWeakTable<ButtonBase, object> s_DisabledText = new ConditionalWeakTable<ButtonBase, object>();
+
+        private static void HookDisabledText(ButtonBase b)
+        {
+            object marker;
+            if (s_DisabledText.TryGetValue(b, out marker))
+            {
+                b.Invalidate();
+                return;
+            }
+            s_DisabledText.Add(b, new object());
+            b.Paint += OnDisabledTextPaint;
+            b.EnabledChanged += delegate { b.Invalidate(); };
+            b.Invalidate();
+        }
+
+        // The text of a disabled radio button / check box is blurred by Windows (embossed gray): draw it again, crisp and dim.
+        private static void OnDisabledTextPaint(object sender, PaintEventArgs e)
+        {
+            ButtonBase b = (ButtonBase)sender;
+            ThemePalette p = Current;
+            if (p == null || p.IsClassic || b.Enabled || string.IsNullOrEmpty(b.Text) || b.Image != null)
+                return;
+            ContentAlignment check = b is CheckBox ? ((CheckBox)b).CheckAlign : ((RadioButton)b).CheckAlign;
+            if (check != ContentAlignment.MiddleLeft && check != ContentAlignment.TopLeft && check != ContentAlignment.BottomLeft)
+                return;
+            int glyph = b is CheckBox
+                ? CheckBoxRenderer.GetGlyphSize(e.Graphics, System.Windows.Forms.VisualStyles.CheckBoxState.UncheckedDisabled).Width
+                : RadioButtonRenderer.GetGlyphSize(e.Graphics, System.Windows.Forms.VisualStyles.RadioButtonState.UncheckedDisabled).Width;
+            Rectangle text = new Rectangle(glyph + 4, 0, Math.Max(1, b.Width - glyph - 4), b.Height);
+            using (SolidBrush back = new SolidBrush(OpaqueBack(b)))
+                e.Graphics.FillRectangle(back, text);
+            TextFormatFlags flags = TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix;
+            if (!b.AutoSize)
+                flags |= TextFormatFlags.WordBreak;
+            TextRenderer.DrawText(e.Graphics, b.Text, b.Font, text, p.TextDim, flags);
+        }
+
+        // ---- border of single-line text boxes ----
+
+        private static readonly ConditionalWeakTable<TextBox, object> s_TextBorders = new ConditionalWeakTable<TextBox, object>();
+
+        /// <summary>Draws the 1 px border of a text box in the border color of the theme (the system border is too faint on the light theme).</summary>
+        private sealed class TextBoxBorderPainter : NativeWindow
+        {
+            private const int WM_NCPAINT = 0x0085;
+            private readonly TextBox m_Box;
+
+            [DllImport("user32.dll")]
+            private static extern IntPtr GetWindowDC(IntPtr hWnd);
+
+            [DllImport("user32.dll")]
+            private static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
+            [DllImport("user32.dll")]
+            private static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprc, IntPtr hrgn, uint flags);
+
+            public TextBoxBorderPainter(TextBox tb)
+            {
+                m_Box = tb;
+                if (tb.IsHandleCreated)
+                    AssignHandle(tb.Handle);
+                tb.HandleCreated += delegate
+                {
+                    if (Handle != IntPtr.Zero)
+                        ReleaseHandle();
+                    AssignHandle(m_Box.Handle);
+                };
+                tb.HandleDestroyed += delegate
+                {
+                    if (Handle != IntPtr.Zero)
+                        ReleaseHandle();
+                };
+                tb.Enter += delegate { Redraw(); };
+                tb.Leave += delegate { Redraw(); };
+            }
+
+            private void Redraw()
+            {
+                if (m_Box.IsHandleCreated)
+                    RedrawWindow(m_Box.Handle, IntPtr.Zero, IntPtr.Zero, 0x0001 | 0x0400);   // RDW_INVALIDATE | RDW_FRAME
+            }
+
+            protected override void WndProc(ref Message m)
+            {
+                base.WndProc(ref m);
+                if (m.Msg == WM_NCPAINT)
+                    PaintBorder();
+            }
+
+            private void PaintBorder()
+            {
+                IntPtr dc = IntPtr.Zero;
+                try
+                {
+                    ThemePalette p = Current;
+                    if (p == null || p.IsClassic || m_Box.BorderStyle != BorderStyle.FixedSingle || m_Box.Width < 4 || m_Box.Height < 4)
+                        return;
+                    dc = GetWindowDC(m_Box.Handle);
+                    if (dc == IntPtr.Zero)
+                        return;
+                    using (Graphics g = Graphics.FromHdc(dc))
+                    using (Pen pen = new Pen(m_Box.Focused ? p.Accent : p.ControlBorder))
+                        g.DrawRectangle(pen, 0, 0, m_Box.Width - 1, m_Box.Height - 1);
+                }
+                catch (Exception)
+                {
+                }
+                finally
+                {
+                    if (dc != IntPtr.Zero)
+                        ReleaseDC(m_Box.Handle, dc);
+                }
+            }
+        }
+
+        private static void HookTextBoxBorder(TextBox tb)
+        {
+            object marker;
+            if (s_TextBorders.TryGetValue(tb, out marker))
+                return;
+            s_TextBorders.Add(tb, new TextBoxBorderPainter(tb));
         }
 
         private static void ApplyGroupBox(GroupBox g)
