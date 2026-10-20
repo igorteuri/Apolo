@@ -35,6 +35,7 @@
     <Compile Include="..\src\Ares.Player\Player.ImageLink.cs" Link="Player.ImageLink.cs" />
     <Compile Include="..\src\Ares.Player\ImageUrlParser.cs" Link="ImageUrlParser.cs" />
     <Compile Include="..\src\Ares.Player\Player.Bank.cs" Link="Player.Bank.cs" />
+    <Compile Include="..\src\Ares.Player\ExtensionBar.cs" Link="ExtensionBar.cs" />
     <Compile Include="..\src\Ares.Player\ImageBankIndex.cs" Link="ImageBankIndex.cs" />
     <Compile Include="..\src\Ares.Player\UpdateVersion.cs" Link="UpdateVersion.cs" />
     <Compile Include="..\src\Ares.Player\ToastPanel.cs" Link="ToastPanel.cs" />

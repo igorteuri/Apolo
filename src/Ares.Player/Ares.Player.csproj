@@ -141,6 +141,7 @@
     <Compile Include="Player.ImageLink.cs" />
     <Compile Include="ImageUrlParser.cs" />
     <Compile Include="Player.Bank.cs" />
+    <Compile Include="ExtensionBar.cs" />
     <Compile Include="ImageBankIndex.cs" />
     <Compile Include="UpdateVersion.cs" />
     <Compile Include="ToastPanel.cs" />

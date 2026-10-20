@@ -313,6 +313,7 @@ namespace Ares.Player
         private WebTab m_Selected;
         private TextBox m_Address;
         private Button m_Back, m_Forward, m_Reload, m_Add, m_ToAres, m_VdoSettings, m_VdoCopy, m_Mute, m_Extensions;
+        private ExtensionBar m_ExtBar;
         public static event Action StateChanged;
         public event Action TabsChanged;
         public event Action SelectionChanged;
@@ -462,7 +463,10 @@ namespace Ares.Player
                     GoToAddress();
                 }
             };
-            bar.Controls.AddRange(new Control[] { m_ToAres, m_Back, m_Forward, m_Reload, m_Address, m_Mute, m_Extensions, m_VdoCopy, m_VdoSettings, m_Add });
+            // one button for each installed extension (settings, window, disable, remove), at the right of the address
+            m_ExtBar = new ExtensionBar(() => GetEnvironment(), () => LayoutBar(bar), () => ManageExtensions());
+            m_ExtBar.Top = 5;
+            bar.Controls.AddRange(new Control[] { m_ToAres, m_Back, m_Forward, m_Reload, m_Address, m_Mute, m_Extensions, m_ExtBar, m_VdoCopy, m_VdoSettings, m_Add });
             bar.Resize += (s, e) => LayoutBar(bar);
 
             m_Host = new Panel();
@@ -507,6 +511,11 @@ namespace Ares.Player
             right = m_Mute.Left - 6;
             m_Extensions.Left = right - m_Extensions.Width;
             right = m_Extensions.Left - 6;
+            if (m_ExtBar != null && m_ExtBar.Visible)
+            {
+                m_ExtBar.Left = right - m_ExtBar.Width;
+                right = m_ExtBar.Left - 6;
+            }
             m_Address.Width = Math.Max(100, right - m_Address.Left);
         }
 
@@ -632,6 +641,7 @@ namespace Ares.Player
                 CoreWebView2Environment env = await GetEnvironment();
                 await tab.View.EnsureCoreWebView2Async(env);
                 CoreWebView2 core = tab.View.CoreWebView2;
+                RefreshExtensionBar(core);
                 core.IsDocumentPlayingAudioChanged += (s, e) =>
                 {
                     tab.Playing = core.IsDocumentPlayingAudio;
@@ -1013,9 +1023,22 @@ namespace Ares.Player
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            using (ExtensionsDialog dialog = new ExtensionsDialog(core))
+            using (ExtensionsDialog dialog = new ExtensionsDialog(core, () => GetEnvironment()))
             {
                 dialog.ShowDialog(FindForm());
+            }
+            RefreshExtensionBar(core);
+        }
+
+        private async void RefreshExtensionBar(CoreWebView2 core)
+        {
+            try
+            {
+                if (m_ExtBar != null)
+                    await m_ExtBar.RefreshAsync(core);
+            }
+            catch (Exception)
+            {
             }
         }
 
@@ -1123,6 +1146,7 @@ namespace Ares.Player
     internal class ExtensionsDialog : Form
     {
         private readonly CoreWebView2 m_Core;
+        private readonly Func<Task<CoreWebView2Environment>> m_Environment;
         private readonly ListBox m_List = new ListBox();
         private readonly Label m_Info = new Label();
         private List<CoreWebView2BrowserExtension> m_Items = new List<CoreWebView2BrowserExtension>();
@@ -1132,16 +1156,17 @@ namespace Ares.Player
             return System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt" ? pt : en;
         }
 
-        public ExtensionsDialog(CoreWebView2 core)
+        public ExtensionsDialog(CoreWebView2 core, Func<Task<CoreWebView2Environment>> environment)
         {
             m_Core = core;
+            m_Environment = environment;
             Text = T("Extensões do navegador", "Browser extensions");
             FormBorderStyle = FormBorderStyle.FixedDialog;
             StartPosition = FormStartPosition.CenterParent;
             MaximizeBox = false;
             MinimizeBox = false;
             ShowInTaskbar = false;
-            ClientSize = new Size(560, 380);
+            ClientSize = new Size(560, 424);
 
             Label help = new Label();
             help.SetBounds(12, 10, 536, 78);
@@ -1156,16 +1181,18 @@ namespace Ares.Player
             m_Info.SetBounds(12, 290, 536, 36);
             Controls.Add(m_Info);
 
-            Button addFolder = MakeButton(T("Adicionar pasta...", "Add folder..."), 12, 336, 150);
+            Button addFolder = MakeButton(T("Adicionar pasta...", "Add folder..."), 12, 336, 170);
             addFolder.Click += async (s, e) => await AddFolder();
-            Button addFile = MakeButton(T("Adicionar arquivo...", "Add file..."), 168, 336, 150);
+            Button addFile = MakeButton(T("Adicionar arquivo...", "Add file..."), 190, 336, 170);
             addFile.Click += async (s, e) => await AddFile();
-            Button remove = MakeButton(T("Remover", "Remove"), 324, 336, 110);
+            Button settings = MakeButton(T("Configurações da extensão", "Extension settings"), 12, 376, 220);
+            settings.Click += (s, e) => OpenSettingsOfSelected();
+            Button remove = MakeButton(T("Remover", "Remove"), 240, 376, 110);
             remove.Click += async (s, e) => await RemoveSelected();
-            Button close = MakeButton(T("Fechar", "Close"), 458, 336, 90);
+            Button close = MakeButton(T("Fechar", "Close"), 458, 376, 90);
             close.DialogResult = DialogResult.Cancel;
             CancelButton = close;
-            Controls.AddRange(new Control[] { addFolder, addFile, remove, close });
+            Controls.AddRange(new Control[] { addFolder, addFile, settings, remove, close });
 
             Shown += async (s, e) => await Refresh();
         }
@@ -1207,6 +1234,7 @@ namespace Ares.Player
                 }
                 m_Info.Text = T("Instalando...", "Installing...");
                 CoreWebView2BrowserExtension ext = await m_Core.Profile.AddBrowserExtensionAsync(folder);
+                ExtensionCatalog.Remember(ext.Id, folder);
                 m_Info.Text = T("Instalada: ", "Installed: ") + ext.Name + T(". Recarregue as abas para usar.", ". Reload the tabs to use it.");
                 await Refresh();
             }
@@ -1270,6 +1298,28 @@ namespace Ares.Player
                     m_Info.Text = T("Não foi possível abrir o arquivo: ", "Could not open the file: ") + ex.Message;
                 }
             }
+        }
+
+        // opens the page of settings of the extension which is selected in the list
+        private void OpenSettingsOfSelected()
+        {
+            int index = m_List.SelectedIndex;
+            if (index < 0 || index >= m_Items.Count)
+            {
+                m_Info.Text = T("Escolha uma extensão da lista.", "Choose an extension of the list.");
+                return;
+            }
+            ExtensionEntry entry = ExtensionCatalog.Describe(m_Items[index]);
+            if (entry.OptionsPage == null)
+            {
+                m_Info.Text = entry.Folder == null
+                    ? T("Não achei os arquivos desta extensão para abrir as configurações. Instale-a de novo por aqui (Adicionar pasta/arquivo).",
+                        "I could not find the files of this extension to open its settings. Install it again here (Add folder/file).")
+                    : T("Esta extensão não tem página de configurações.", "This extension has no settings page.");
+                return;
+            }
+            ExtensionPageWindow.Open(this, T("Configurações: ", "Settings: ") + entry.Name,
+                "chrome-extension://" + entry.Id + "/" + entry.OptionsPage.TrimStart('/'), m_Environment, new Size(900, 700));
         }
 
         private async Task RemoveSelected()
