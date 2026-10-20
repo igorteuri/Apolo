@@ -1293,10 +1293,12 @@ namespace Ares.Player
         private void UpdateStatus()
         {
             PlayingControl control = m_PlayingControl;
+            if (control == null)
+                return;
             m_Listen = false;
             IMode mode = control.CurrentMode;
             modeLabel.Text = mode != null ? mode.Title : String.Empty;
-            if (m_Project != null && mode.Title != lastMode)
+            if (m_Project != null && mode != null && mode.Title != lastMode)
             {
                 for (int i = 0; i < m_Project.GetModes().Count; ++i)
                 {
@@ -1328,7 +1330,9 @@ namespace Ares.Player
             {
                 if (soundElementsText.Length > 0)
                     soundElementsText.Append(", ");
-                soundElementsText.Append(Ares.Data.DataModule.ElementRepository.GetElement(element).Title);
+                Ares.Data.IElement soundElement = Ares.Data.DataModule.ElementRepository.GetElement(element);
+                if (soundElement != null)
+                    soundElementsText.Append(soundElement.Title);
             }
             soundsLabel.Text = soundElementsText.ToString();
             int musicElementId = control.CurrentMusicElement;
