@@ -438,6 +438,8 @@ namespace Ares.Player
 
         private void StopCapture()
         {
+            m_PcmStop = true;
+            lock (m_PcmQueue) { System.Threading.Monitor.PulseAll(m_PcmQueue); }
             AppAudioCapture capture;
             lock (m_Lock)
             {
@@ -448,9 +450,79 @@ namespace Ares.Player
                 capture.Dispose();
         }
 
+        // the sound is sent by a thread of its own: the mixer of the sound never waits for the connection to the bridge
+        private readonly System.Collections.Generic.Queue<byte[]> m_PcmQueue = new System.Collections.Generic.Queue<byte[]>();
+        private System.Threading.Thread m_PcmThread;
+        private volatile bool m_PcmStop;
+
         private void SendPcm(byte[] buffer, int count)
         {
-            Write(FramePcm, buffer, count);
+            // the caller reuses its buffer: a copy with the header of the frame (type + length) in front
+            byte[] frame = new byte[5 + count];
+            frame[0] = FramePcm;
+            frame[1] = (byte)(count >> 24);
+            frame[2] = (byte)(count >> 16);
+            frame[3] = (byte)(count >> 8);
+            frame[4] = (byte)count;
+            Buffer.BlockCopy(buffer, 0, frame, 5, count);
+            lock (m_PcmQueue)
+            {
+                while (m_PcmQueue.Count > 100)
+                    m_PcmQueue.Dequeue();
+                m_PcmQueue.Enqueue(frame);
+                if (m_PcmThread == null)
+                {
+                    m_PcmStop = false;
+                    m_PcmThread = new System.Threading.Thread(PcmLoop);
+                    m_PcmThread.IsBackground = true;
+                    m_PcmThread.Name = "Apolo Discord sender";
+                    m_PcmThread.Priority = System.Threading.ThreadPriority.AboveNormal;
+                    m_PcmThread.Start();
+                }
+                System.Threading.Monitor.Pulse(m_PcmQueue);
+            }
+        }
+
+        private void PcmLoop()
+        {
+            IntPtr boost = AudioThread.Boost();
+            try
+            {
+                while (!m_PcmStop)
+                {
+                    byte[] frame;
+                    lock (m_PcmQueue)
+                    {
+                        while (m_PcmQueue.Count == 0 && !m_PcmStop)
+                            System.Threading.Monitor.Wait(m_PcmQueue, 500);
+                        if (m_PcmQueue.Count == 0)
+                            continue;
+                        frame = m_PcmQueue.Dequeue();
+                    }
+                    NetworkStream stream = m_Stream;
+                    if (stream == null)
+                        continue;
+                    try
+                    {
+                        lock (m_WriteLock)
+                        {
+                            stream.Write(frame, 0, frame.Length);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+            }
+            finally
+            {
+                AudioThread.Release(boost);
+                lock (m_PcmQueue)
+                {
+                    m_PcmThread = null;
+                    m_PcmQueue.Clear();
+                }
+            }
         }
 
         // ---------- commands ----------

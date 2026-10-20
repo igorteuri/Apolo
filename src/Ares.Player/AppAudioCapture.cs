@@ -42,18 +42,28 @@ namespace Ares.Player
             private int m_Offset;
             private int m_Length;
             private bool m_Primed;
-            private readonly int m_Prime, m_Max, m_Keep;
+            private bool m_Flowed;
+            private readonly int m_Prime, m_Reprime, m_Max, m_Keep;
             public long TotalBytes;
             public bool Reported;
+            /// <summary>Times the source ran dry while sound was flowing (heard as a gap), and times the oldest sound was dropped.</summary>
+            public int Underruns;
+            public int Overflows;
 
             public Source() : this(PrimeBytes, MaxBytes, KeepBytes)
             {
             }
 
             // sources which arrive in bursts (the web pages) get a deeper buffer: a smooth sound is better than a short delay
-            public Source(int prime, int max, int keep)
+            public Source(int prime, int max, int keep) : this(prime, max, keep, prime)
+            {
+            }
+
+            // "reprime": how much sound is collected again after the source ran dry (less than at the start: the gap stays short)
+            public Source(int prime, int max, int keep, int reprime)
             {
                 m_Prime = prime;
+                m_Reprime = Math.Min(prime, reprime);
                 m_Max = max;
                 m_Keep = keep;
             }
@@ -71,6 +81,7 @@ namespace Ares.Player
                     TotalBytes += count;
                     if (m_Length > m_Max)
                     {
+                        Overflows++;
                         while (m_Length > m_Keep && m_Chunks.Count > 0)
                         {
                             byte[] old = m_Chunks.Dequeue();
@@ -88,7 +99,7 @@ namespace Ares.Player
                 {
                     if (!m_Primed)
                     {
-                        if (m_Length >= m_Prime)
+                        if (m_Length >= (m_Flowed ? m_Reprime : m_Prime))
                             m_Primed = true;
                         else
                             return false;
@@ -96,8 +107,10 @@ namespace Ares.Player
                     if (m_Length < FrameBytes)
                     {
                         m_Primed = false;
+                        Underruns++;
                         return false;
                     }
+                    m_Flowed = true;
                     int got = 0;
                     while (got < FrameBytes)
                     {
@@ -121,6 +134,12 @@ namespace Ares.Player
         private class WebSource : Source
         {
             public ProcessLoopbackCapture Capture;
+
+            // the sound of the web pages arrives in bursts (the browser, the encoder of VDO.Ninja and the other tabs share the PC):
+            // 100 ms before it starts, up to 600 ms kept, and after a gap only 40 ms are collected again
+            public WebSource() : base(FrameBytes * 5, FrameBytes * 30, FrameBytes * 12, FrameBytes * 2)
+            {
+            }
         }
 
         // sound which the web pages send from inside (see WebWindow: used when the PC does not play the pages)
@@ -151,7 +170,7 @@ namespace Ares.Player
                     return;
                 if (!m_Pages.TryGetValue(key, out source))
                 {
-                    source = new Source(FrameBytes * 12, FrameBytes * 40, FrameBytes * 14);
+                    source = new Source(FrameBytes * 12, FrameBytes * 40, FrameBytes * 14, FrameBytes * 5);
                     m_Pages[key] = source;
                     ProcessLoopbackCapture.Log("sound of Apolo: web page sound from inside the page started");
                 }
@@ -251,9 +270,13 @@ namespace Ares.Player
         {
             // Windows normally wakes a sleeping thread only every 15 ms: ask for 1 ms so that the frames come evenly
             try { timeBeginPeriod(1); } catch (Exception) { }
+            // an audio thread: Windows serves it before the ordinary work (the window, the browser) of the PC
+            try { Thread.CurrentThread.Priority = ThreadPriority.Highest; } catch (Exception) { }
+            IntPtr boost = AudioThread.Boost();
             try { MixLoopCore(); }
             finally
             {
+                AudioThread.Release(boost);
                 try { timeEndPeriod(1); } catch (Exception) { }
             }
         }
@@ -272,6 +295,7 @@ namespace Ares.Player
             byte[] output = new byte[FrameBytes];
             int[] sum = new int[FrameBytes / 2];
             long lastReport = 0;
+            long lastSound = long.MinValue;
             while (!m_Stop)
             {
                 long now = clock.ElapsedMilliseconds;
@@ -326,6 +350,10 @@ namespace Ares.Player
                     }
                 }
                 if (any)
+                    lastSound = now;
+                // the stream goes on without a break for 3 s after the last sound: a short gap of one source is then a short
+                // silence, and not a hole which makes the receivers (VDO.Ninja, Discord) start their buffers again
+                if (any || (lastSound != long.MinValue && now - lastSound < 3000))
                 {
                     for (int i = 0; i < sum.Length; ++i)
                     {
@@ -353,7 +381,22 @@ namespace Ares.Player
                         foreach (WebSource w in m_Web.Values)
                             webBytes += w.TotalBytes;
                     }
-                    ProcessLoopbackCapture.Log("sound of Apolo: engine " + (m_Engine.TotalBytes / 1024) + " KB, web pages (" + count + " capture(s)) " + (webBytes / 1024) + " KB");
+                    int webGaps = 0, webOverflows = 0;
+                    lock (m_Lock)
+                    {
+                        foreach (WebSource w in m_Web.Values)
+                        {
+                            webGaps += w.Underruns;
+                            webOverflows += w.Overflows;
+                        }
+                        foreach (Source pg in m_Pages.Values)
+                        {
+                            webGaps += pg.Underruns;
+                            webOverflows += pg.Overflows;
+                        }
+                    }
+                    ProcessLoopbackCapture.Log("sound of Apolo: engine " + (m_Engine.TotalBytes / 1024) + " KB (gaps " + m_Engine.Underruns + "), web pages ("
+                        + count + " capture(s)) " + (webBytes / 1024) + " KB (gaps " + webGaps + ", dropped bursts " + webOverflows + ")");
                 }
             }
         }
@@ -534,5 +577,40 @@ namespace Ares.Player
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool CloseHandle(IntPtr handle);
+    }
+
+    /// <summary>Puts a thread in the class "Pro Audio" of Windows (the way the sound programs do), so that it is not starved.</summary>
+    internal static class AudioThread
+    {
+        [System.Runtime.InteropServices.DllImport("avrt.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        private static extern IntPtr AvSetMmThreadCharacteristicsW(string task, ref uint index);
+
+        [System.Runtime.InteropServices.DllImport("avrt.dll")]
+        private static extern bool AvRevertMmThreadCharacteristics(IntPtr handle);
+
+        public static IntPtr Boost()
+        {
+            try
+            {
+                uint index = 0;
+                return AvSetMmThreadCharacteristicsW("Pro Audio", ref index);
+            }
+            catch (Exception)
+            {
+                return IntPtr.Zero;
+            }
+        }
+
+        public static void Release(IntPtr handle)
+        {
+            try
+            {
+                if (handle != IntPtr.Zero)
+                    AvRevertMmThreadCharacteristics(handle);
+            }
+            catch (Exception)
+            {
+            }
+        }
     }
 }

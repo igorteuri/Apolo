@@ -337,7 +337,7 @@ namespace Ares.Player
    var bin = atob(s), n = bin.length >> 1, u8 = new Uint8Array(n * 2);
    for (var i = 0; i < u8.length; i++) u8[i] = bin.charCodeAt(i);
    var arr = new Int16Array(u8.buffer); vq.push(arr); vlen += arr.length >> 1;
-   while (vlen > 14400 && vq.length > 1) { vlen -= vq.shift().length >> 1; }
+   while (vlen > 38400 && vq.length > 1) { vlen -= vq.shift().length >> 1; }
  }
  try { window.chrome.webview.addEventListener('message', function(e) { if (typeof e.data === 'string' && e.data.charAt(0) !== '!') vfeed(e.data); }); } catch (e) {}
  function vstart() {
@@ -349,7 +349,7 @@ namespace Ares.Player
    var pos = 0;
    node.onaudioprocess = function(ev) {
      var L = ev.outputBuffer.getChannelData(0), R = ev.outputBuffer.getChannelData(1), n = L.length;
-     if (!vprimed && vlen >= n * 2) vprimed = true;
+     if (!vprimed && vlen >= n * 4) vprimed = true;
      if (!vprimed) { L.fill(0); R.fill(0); return; }
      for (var i = 0; i < n; i++) {
        if (!vq.length) { vprimed = false; for (; i < n; i++) { L[i] = 0; R[i] = 0; } break; }

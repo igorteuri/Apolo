@@ -29,9 +29,9 @@ try {
 }
 
 const FRAME_BYTES = 3840;      // 20 ms of 48 kHz stereo 16 bit
-const MAX_QUEUE_BYTES = FRAME_BYTES * 20;   // 400 ms
-const KEEP_QUEUE_BYTES = FRAME_BYTES * 8;   // 160 ms
-const PRIME_BYTES = FRAME_BYTES * 4;        // 80 ms collected before the sound starts (and again after a gap)
+const MAX_QUEUE_BYTES = FRAME_BYTES * 30;   // 600 ms
+const KEEP_QUEUE_BYTES = FRAME_BYTES * 12;  // 240 ms
+const PRIME_BYTES = FRAME_BYTES * 6;        // 120 ms collected before the sound starts (and again after a gap)
 let primed = false;
 
 let socket = null;

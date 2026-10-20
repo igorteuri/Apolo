@@ -159,6 +159,21 @@ namespace Ares.Player
 
         private void CaptureLoop()
         {
+            // the capture must never wait for the rest of the PC: a late read is lost sound
+            try { System.Threading.Thread.CurrentThread.Priority = System.Threading.ThreadPriority.Highest; } catch (Exception) { }
+            IntPtr boost = AudioThread.Boost();
+            try
+            {
+                CaptureLoopCore();
+            }
+            finally
+            {
+                AudioThread.Release(boost);
+            }
+        }
+
+        private void CaptureLoopCore()
+        {
             IntPtr paramsPtr = IntPtr.Zero;
             IntPtr variant = IntPtr.Zero;
             IntPtr format = IntPtr.Zero;
