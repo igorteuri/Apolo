@@ -180,6 +180,7 @@ namespace Ares.Player
                 string showTitle = firstNew != null ? firstNew.Title : destination;
 
                 int added = 0;
+                List<KeyValuePair<string, string>> created = new List<KeyValuePair<string, string>>();
                 ApplyProjectEdit(() =>
                 {
                     foreach (Ares.CommonGUI.PlannedFolder planned in plan.Folders)
@@ -209,6 +210,7 @@ namespace Ares.Player
                             {
                                 mode.AddElement(me);
                                 added++;
+                                created.Add(new KeyValuePair<string, string>(mode.Title, me.Title));
                             }
                             foreach (string file in files)
                                 present.Add(file);
@@ -240,6 +242,7 @@ namespace Ares.Player
                     SaveModeTree();
                 }, showTitle);
                 ShowLibraryMessage(plan.Folders.Count(f => !f.Existing), added);
+                AutoBankAfterCreate(created, plan.Folders.Where(f => !f.Existing).Select(f => f.Title).ToList());
             }
             catch (Exception ex)
             {

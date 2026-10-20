@@ -81,6 +81,7 @@ namespace Ares.Player
                 foreach (IModeElement element in elements)
                     mode.AddElement(element);
             }, wanted);
+            AutoBankAfterCreate(new[] { new KeyValuePair<string, string>(wanted, name) }, null);
         }
 
         private static IFileElement CopyFileAs(IFileElement file, SoundFileType type)

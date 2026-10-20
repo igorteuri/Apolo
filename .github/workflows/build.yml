@@ -43,6 +43,12 @@ jobs:
           Get-ChildItem src/bin/Release -File | Where-Object { $_.Extension -ne ".pdb" -and $_.Extension -ne ".xml" } | ForEach-Object { Copy-Item $_.FullName dist/WinSecurity -Force }
           if (-not (Test-Path "dist/WinSecurity/Ares.WinSecurity.exe")) { throw "Ares.WinSecurity.exe was not built" }
 
+      - name: Image bank (pictures for the buttons)
+        shell: pwsh
+        run: |
+          Copy-Item BancoDeImagens dist/BancoDeImagens -Recurse -Force
+          if (-not (Test-Path "dist/BancoDeImagens/indice.txt")) { throw "BancoDeImagens/indice.txt is missing" }
+
       - name: Native libraries and the tunnel of the remote control
         shell: pwsh
         run: |

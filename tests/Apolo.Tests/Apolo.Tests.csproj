@@ -26,5 +26,6 @@
     <Compile Include="..\..\src\Ares.CommonGUI\DropPlan.cs" Link="Linked\DropPlan.cs" />
     <Compile Include="..\..\src\Ares.Player\UpdateVersion.cs" Link="Linked\UpdateVersion.cs" />
     <Compile Include="..\..\src\Ares.Player\ImageUrlParser.cs" Link="Linked\ImageUrlParser.cs" />
+    <Compile Include="..\..\src\Ares.Player\ImageBankIndex.cs" Link="Linked\ImageBankIndex.cs" />
   </ItemGroup>
 </Project>

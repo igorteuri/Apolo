@@ -200,6 +200,8 @@ namespace Ares.Player
             m_ElementMenu.Items.Add(T("Cor do botão", "Button color"), null, (s, e) => ChooseButtonColor());
             m_ElementMenu.Items.Add(T("Escolher ícone", "Choose icon"), null, (s, e) => ChooseButtonIcon());
             m_ElementMenu.Items.Add(T("Escolher imagem", "Choose picture"), null, (s, e) => ChooseButtonPicture());
+            m_ElementMenu.Items.Add(T("Imagem do banco (pelo nome do botão)", "Picture of the bank (from the button name)"), null, (s, e) => AutoBankForButton());
+            m_ElementMenu.Items.Add(T("Escolher no banco de imagens...", "Choose from the image bank..."), null, (s, e) => ChooseBankForButton());
             m_ElementMenu.Items.Add(T("Imagem por link da internet...", "Picture from a link..."), null, (s, e) => ChooseButtonImageFromLink());
             m_ElementMenu.Items.Add(T("Sugerir imagens na internet", "Suggest pictures from the internet"), null, (s, e) => SuggestButtonImages());
             m_ElementMenu.Items.Add(T("Remover imagem / ícone", "Remove picture / icon"), null, (s, e) => RemoveButtonImage());
