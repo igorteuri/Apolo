@@ -86,6 +86,20 @@ namespace Ares.Player
 
         // ---- unsaved changes ----
 
+        // time of the last change of the project (every edit, also of pictures and undo, is saved at once)
+        private DateTime m_LastChange = DateTime.MinValue;
+        private string m_LastChangeProject = "";
+
+        private void NoteChange()
+        {
+            if (m_Project == null)
+                return;
+            m_LastChange = DateTime.Now;
+            m_LastChangeProject = m_Project.FileName ?? "";
+            if (m_StatSaved != null)
+                UpdateSavedLabel(Ares.CommonGUI.ThemeManager.Current);
+        }
+
         // The edits are saved at once; the project stays "changed" only when saving did not work
         private bool IsProjectDirty()
         {
@@ -106,8 +120,13 @@ namespace Ares.Player
             }
             else
             {
-                SetStat(m_StatSaved, "✓ " + T("Salvo", "Saved"), p != null && !p.IsClassic ? p.TextDim : ForeColor);
-                m_StatSaved.ToolTipText = T("Tudo salvo. O Apolo salva sozinho a cada alteração.", "Everything is saved. Apolo saves after every change.");
+                bool changed = m_LastChange != DateTime.MinValue && string.Equals(m_LastChangeProject, m_Project.FileName ?? "", StringComparison.OrdinalIgnoreCase);
+                string when = changed ? m_LastChange.ToString("HH:mm:ss") : null;
+                SetStat(m_StatSaved, "✓ " + (when != null ? T("Salvo às ", "Saved at ") + when : T("Salvo", "Saved")),
+                    changed ? (p != null && !p.IsClassic ? p.Accent : ForeColor) : (p != null && !p.IsClassic ? p.TextDim : ForeColor));
+                m_StatSaved.ToolTipText = changed
+                    ? T("Última alteração salva às " + when + ". O Apolo salva sozinho a cada alteração.", "Last change saved at " + when + ". Apolo saves after every change.")
+                    : T("Tudo salvo. O Apolo salva sozinho a cada alteração.", "Everything is saved. Apolo saves after every change.");
             }
         }
 
@@ -188,6 +207,7 @@ namespace Ares.Player
             try
             {
                 Ares.CommonGUI.ThemeManager.Apply(this);
+                PreloadWebTabs();
                 if (Visible)
                     Refresh(); // paints everything with the theme while the window is still invisible
             }

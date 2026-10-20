@@ -138,23 +138,13 @@ namespace Ares.Player
             if (language != null)
                 extras.Remove(language);
             general.Add(language);
-            List<ToolStripItem> integrations = new List<ToolStripItem>();
-            integrations.Add(take("remoteMenuItem"));
-            integrations.Add(take("deckMenuItem"));
-            integrations.Add(take("discordMenuItem"));
-            integrations.Add(take("overlayMenuItem"));
+            // Stream Deck, remote control, Discord and the OBS overlay stay in Extras (they are tools, not settings)
 
             extras.Remove(settingsToolStripMenuItem1);
             extras.Remove(showKeysMenuItem);
             extras.Remove(globalKeyHookItem);
             foreach (ToolStripItem item in general.Where(i => i != null))
                 settings.DropDownItems.Add(item);
-            if (integrations.Any(i => i != null))
-            {
-                settings.DropDownItems.Add(new ToolStripSeparator());
-                foreach (ToolStripItem item in integrations.Where(i => i != null))
-                    settings.DropDownItems.Add(item);
-            }
             int at = menuStrip1.Items.IndexOf(extrasToolStripMenuItem) + 1;
             menuStrip1.Items.Insert(Math.Max(at, 0), settings);
 

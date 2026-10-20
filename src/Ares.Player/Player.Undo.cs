@@ -119,6 +119,7 @@ namespace Ares.Player
         {
             try
             {
+                NoteChange();
                 if (m_Project == null || m_UndoBusy)
                     return;
                 DateTime now = DateTime.UtcNow;
@@ -161,6 +162,7 @@ namespace Ares.Player
         {
             if (m_Project == null || from.Count == 0 || !string.Equals(m_UndoProject, m_Project.FileName, StringComparison.OrdinalIgnoreCase))
                 return;
+            NoteChange();
             bool oldWatch = fileSystemWatcher1.EnableRaisingEvents;
             fileSystemWatcher1.EnableRaisingEvents = false;
             try

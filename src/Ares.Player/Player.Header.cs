@@ -44,12 +44,15 @@ namespace Ares.Player
                 menuStrip1.Items.Add(m_HeaderSpacer);
                 m_DiscordButton = MakeQuickButton("discordButton", "Discord", T("Discord: conectar o Apolo a um canal de voz", "Discord: connect Apolo to a voice channel"), () => ShowDiscordDialog());
                 m_VdoButton = MakeQuickButton("vdoButton", T("Enviar áudio", "Send audio"), T("VDO.Ninja: enviar o áudio do Apolo pela internet (Foundry, jogadores)", "VDO.Ninja: send the Apolo audio over the internet (Foundry, players)"), () => ShowWebWindow(true));
+                m_ObsButton = MakeQuickButton("obsButton", "OBS", T("Overlay para o OBS: mostra a música que está tocando na sua live", "OBS overlay: shows the music which is playing on your stream"), () => ShowOverlayDialog());
                 m_NetButton = MakeQuickButton("netButton", T("Compartilhar", "Share"), T("Controle remoto e compartilhamento em rede (celular / internet)", "Remote control and network sharing (phone / internet)"), () => ShowRemoteDialog());
                 // thin separators make clear that these are three different buttons
                 menuStrip1.Items.Insert(menuStrip1.Items.IndexOf(m_VdoButton), new ToolStripSeparator());
                 menuStrip1.Items.Insert(menuStrip1.Items.IndexOf(m_NetButton), new ToolStripSeparator());
+                menuStrip1.Items.Insert(menuStrip1.Items.IndexOf(m_ObsButton), new ToolStripSeparator());
                 Ares.CommonGUI.IconLibrary.Bind(menuStrip1, new Dictionary<ToolStripItem, string>
                 {
+                    { m_ObsButton, "tv" },
                     { m_NetButton, "globe" },
                     { m_VdoButton, "send" },
                     { m_DiscordButton, "headphones" }
@@ -127,7 +130,7 @@ namespace Ares.Player
             }
         }
 
-        private ToolStripButton m_NetButton, m_VdoButton, m_DiscordButton;
+        private ToolStripButton m_NetButton, m_VdoButton, m_DiscordButton, m_ObsButton;
         private ToolStripLabel m_HeaderSpacer;
         private bool m_Centering;
         private bool m_MovingAppearance;
@@ -150,9 +153,11 @@ namespace Ares.Player
                     // the "Appearance" menu is added later by the theme: it belongs to the menus on the left
                     if (afterSpacer && item is ToolStripMenuItem && (item.Text == "Aparência" || item.Text == "Appearance"))
                         appearance = item;
-                    if (!item.Visible || item.Alignment != ToolStripItemAlignment.Left)
+                    // the Add button appears in edit mode: its room is kept, so that the other buttons do not move
+                    bool reserved = item == m_AddButton && !item.Visible;
+                    if ((!item.Visible && !reserved) || item.Alignment != ToolStripItemAlignment.Left)
                         continue;
-                    int w = item.Width + item.Margin.Horizontal;
+                    int w = (reserved ? item.GetPreferredSize(Size.Empty).Width : item.Width) + item.Margin.Horizontal;
                     if (afterSpacer) groupWidth += w; else before += w;
                 }
                 if (appearance != null && !m_MovingAppearance)

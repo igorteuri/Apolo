@@ -57,8 +57,12 @@ namespace Ares.Player
                 ToolStripMenuItem fill = new ToolStripMenuItem(T("Banco de imagens: preencher os botões sem imagem desta pasta", "Image bank: fill the buttons of this folder which have no picture"));
                 fill.Name = "fillBankItem";
                 fill.Click += (s, e) => FillFolderFromBank();
+                ToolStripMenuItem fillAll = new ToolStripMenuItem(T("Banco de imagens: preencher TODOS os botões do projeto sem imagem", "Image bank: fill ALL the buttons of the project which have no picture"));
+                fillAll.Name = "fillAllBankItem";
+                fillAll.Click += (s, e) => FillProjectFromBank();
                 extrasToolStripMenuItem.DropDownItems.Insert(2, auto);
                 extrasToolStripMenuItem.DropDownItems.Insert(3, fill);
+                extrasToolStripMenuItem.DropDownItems.Insert(4, fillAll);
             }
             catch (Exception ex)
             {
@@ -181,6 +185,44 @@ namespace Ares.Player
             BankEntry entry = BankPickerDialog.Pick(this, Bank, me.Title);
             if (entry != null && ApplyBankPicture(mode.Title, me.Title, entry))
                 UpdateElementsPanel();
+        }
+
+        // Extras > fills every button (and folder) of the project which has no picture yet
+        private void FillProjectFromBank()
+        {
+            if (m_Project == null || string.IsNullOrEmpty(m_CurrentProjectPath))
+                return;
+            if (Bank.Entries.Count == 0)
+            {
+                MessageBox.Show(this, T("O banco de imagens não foi encontrado nesta instalação.", "The image bank was not found in this installation."),
+                    StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            int done = 0, without = 0;
+            foreach (IMode mode in m_Project.GetModes())
+            {
+                if (Ares.CommonGUI.ButtonImageStore.Get(m_CurrentProjectPath, mode.Title, "") == null)
+                {
+                    BankEntry folderEntry = Bank.Match(mode.Title);
+                    if (folderEntry != null && ApplyBankPicture(mode.Title, "", folderEntry))
+                        done++;
+                }
+                foreach (IModeElement me in mode.GetElements())
+                {
+                    if (Ares.CommonGUI.ButtonImageStore.Get(m_CurrentProjectPath, mode.Title, me.Title) != null)
+                        continue;
+                    BankEntry entry = Bank.Match(me.Title);
+                    if (entry != null && ApplyBankPicture(mode.Title, me.Title, entry))
+                        done++;
+                    else
+                        without++;
+                }
+            }
+            UpdateElementsPanel();
+            modesList.Invalidate();
+            ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
+                T(done + " imagem(ns) do banco aplicada(s); " + without + " botão(ões) sem imagem que combine com o nome.",
+                  done + " picture(s) of the bank applied; " + without + " button(s) without a picture that fits the name.")));
         }
 
         // Extras > fills the buttons of the open folder (and of its subfolders under headings) which have no picture

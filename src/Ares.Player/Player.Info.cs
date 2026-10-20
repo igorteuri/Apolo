@@ -223,6 +223,8 @@ The code of Apolo is open and lives on GitHub:
 
         private void ShowFoundryHelp()
         {
+            // the ID comes from the VDO.Ninja tab ("Send audio"): it is opened for the user (it is needed while the Foundry plays)
+            try { ShowWebWindow(true); } catch (Exception) { }
             string id = ShareDialog.CleanStreamId(Ares.CommonGUI.Preferences.Get("VdoId", ""));
             string idLine = id.Length > 0
                 ? T("O seu ID da transmissão é: " + id + "  (o botão \"Copiar ID\" abaixo copia para você).",
@@ -239,6 +241,8 @@ Funciona no Foundry VTT v12 a v14.
 
 1. PREPARE O APOLO (mestre)
 Na barra de menus do Apolo, clique no ícone de envio (VDO.Ninja), confira as opções e clique em Aplicar. A entrada de áudio padrão é o ""Apolo Audio"", o microfone virtual do próprio Apolo, e não precisa instalar nada a mais (Windows 10 versão 2004 ou Windows 11). Deixe o Apolo aberto durante a sessão.
+
+ATENÇÃO: quem envia o som para o Foundry é a aba ""Enviar áudio"" (VDO.Ninja) do Apolo. O ID da transmissão só existe com ela e o Foundry só escuta enquanto ela estiver aberta: pode deixá-la em segundo plano, mas não feche essa aba durante a sessão. Ao abrir esta janela, o Apolo já abre essa aba para você.
 
 2. INSTALE O MÓDULO NO FOUNDRY
 Clique em ""Instalar o módulo..."" abaixo e escolha a pasta Data\modules do seu Foundry (normalmente C:\Users\SEU_NOME\AppData\Local\FoundryVTT\Data\modules). O Apolo copia o módulo para lá. Se você usa o Forge ou outra hospedagem, clique em ""Abrir a pasta do módulo"" e envie o conteúdo do arquivo apolo-audio.zip pelo gerenciador de arquivos deles.
@@ -267,6 +271,8 @@ It works with Foundry VTT v12 to v14.
 
 1. PREPARE APOLO (game master)
 In the menu bar of Apolo click the send icon (VDO.Ninja), check the options and click Apply. The default audio input is ""Apolo Audio"", the virtual microphone of Apolo itself, and nothing else has to be installed (Windows 10 version 2004 or Windows 11). Keep Apolo open during the session.
+
+ATTENTION: what sends the sound to Foundry is the ""Send audio"" (VDO.Ninja) tab of Apolo. The stream ID only exists with it and Foundry only hears while it is open: you can leave it in the background, but do not close that tab during the session. When you open this window, Apolo already opens that tab for you.
 
 2. INSTALL THE MODULE IN FOUNDRY
 Click ""Install the module..."" below and choose the Data\modules folder of your Foundry (usually C:\Users\YOUR_NAME\AppData\Local\FoundryVTT\Data\modules). Apolo copies the module there. If you use Forge or another host, click ""Open the module folder"" and upload the content of apolo-audio.zip with their file manager.

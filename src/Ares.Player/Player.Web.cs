@@ -195,6 +195,25 @@ namespace Ares.Player
         {
             ShowHome();
         }
+
+        // when the program starts (the window is still invisible): every web tab is opened once, so that the pages
+        // are loaded and the audio ones work without the user having to click them first
+        private void PreloadWebTabs()
+        {
+            try
+            {
+                if (m_WebWindow == null || m_WebWindow.Tabs.Count == 0 || !Visible)
+                    return;
+                List<WebTab> tabs = new List<WebTab>(m_WebWindow.Tabs);
+                foreach (WebTab tab in tabs)
+                    ShowWebTab(tab);
+                ShowHome();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message);
+            }
+        }
     }
 
     internal class WebTab

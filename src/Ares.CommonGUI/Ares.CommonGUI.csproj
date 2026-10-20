@@ -300,6 +300,7 @@
     <Compile Include="LibraryHelper.cs" />
     <Compile Include="DropPlan.cs" />
     <Compile Include="ImageDecoder.cs" />
+    <Compile Include="CustomThemeDialog.cs" />
     <Compile Include="LanguageManager.cs" />
     <Compile Include="ButtonImageStore.cs" />
     <Compile Include="Preferences.cs" />

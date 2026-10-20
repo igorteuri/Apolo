@@ -108,8 +108,61 @@ namespace Ares.CommonGUI
                 Window = ThemePalette.C(0xF5F6F8), Surface = ThemePalette.C(0xFFFFFF), Hover = ThemePalette.C(0xE6E9EE),
                 Border = ThemePalette.C(0xCDD2DA), Text = ThemePalette.C(0x1F2328), TextDim = ThemePalette.C(0x6B7280),
                 Accent = ThemePalette.C(0x2563EB), Selection = ThemePalette.C(0xBFD7FF)
+            },
+            // "Custom": a light or dark background and an accent color of the user (the fields are filled by RebuildCustom)
+            new ThemePalette
+            {
+                Id = "custom", NamePt = "Personalizado...", NameEn = "Custom...", IsDark = true,
+                Window = ThemePalette.C(0x16130F), Surface = ThemePalette.C(0x221E19), Hover = ThemePalette.C(0x352E26),
+                Border = ThemePalette.C(0x3D362D), Text = ThemePalette.C(0xF2ECE4), TextDim = ThemePalette.C(0x9A9186),
+                Accent = ThemePalette.C(0xFFB627), Selection = ThemePalette.C(0x6B4A12)
             }
         };
+
+        private static bool s_CustomDark = true;
+        private static Color s_CustomAccent = ThemePalette.C(0xFFB627);
+
+        /// <summary>The background of the "Custom" theme: true = dark.</summary>
+        public static bool CustomDark { get { return s_CustomDark; } }
+
+        /// <summary>The accent color of the "Custom" theme.</summary>
+        public static Color CustomAccent { get { return s_CustomAccent; } }
+
+        private static Color MixColor(Color a, Color b, double t)
+        {
+            return Color.FromArgb(255, (int)Math.Round(a.R + (b.R - a.R) * t), (int)Math.Round(a.G + (b.G - a.G) * t),
+                (int)Math.Round(a.B + (b.B - a.B) * t));
+        }
+
+        // the colors of the custom theme: the Apolo background (dark or light) with the accent color of the user
+        private static void RebuildCustom()
+        {
+            ThemePalette custom = s_Palettes.First(p => p.Id == "custom");
+            ThemePalette basis = s_Palettes.First(p => p.Id == (s_CustomDark ? "apolo" : "apolo-light"));
+            custom.IsDark = s_CustomDark;
+            custom.Window = basis.Window;
+            custom.Surface = basis.Surface;
+            custom.Hover = basis.Hover;
+            custom.Border = basis.Border;
+            custom.Text = basis.Text;
+            custom.TextDim = basis.TextDim;
+            custom.Accent = s_CustomAccent;
+            custom.Selection = s_CustomDark ? MixColor(basis.Window, s_CustomAccent, 0.40) : MixColor(Color.White, s_CustomAccent, 0.32);
+        }
+
+        /// <summary>Sets the custom theme (dark or light background, accent color), applies it at once and remembers it.</summary>
+        public static void SetCustom(bool dark, Color accent)
+        {
+            s_CustomDark = dark;
+            s_CustomAccent = Color.FromArgb(255, accent.R, accent.G, accent.B);
+            RebuildCustom();
+            ThemePalette custom = s_Palettes.First(p => p.Id == "custom");
+            Current = custom;
+            SavePreferences();
+            UpdateRenderer();
+            ApplyToAllForms();
+            RaiseChanged();
+        }
 
         private static readonly int[] s_ScaleOptions = new int[] { 100, 110, 125, 150 };
 
@@ -172,7 +225,9 @@ namespace Ares.CommonGUI
             s_Installed = true;
             Current = s_Palettes.First(p => p.Id == "apolo");
             ScalePercent = 110;
+            RebuildCustom();
             LoadPreferences();
+            RebuildCustom();
             if (s_NeedsThemeMigration)
             {
                 // version 2 of the look: Apolo (dark) is the default for everybody once
@@ -220,6 +275,20 @@ namespace Ares.CommonGUI
                         if (value == "2")
                             s_NeedsThemeMigration = false;
                     }
+                    else if (key == "customdark")
+                    {
+                        s_CustomDark = value != "0";
+                    }
+                    else if (key == "customaccent")
+                    {
+                        try
+                        {
+                            s_CustomAccent = ThemePalette.C(Convert.ToInt32(value.TrimStart('#'), 16));
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
                     else if (key == "scale")
                     {
                         int s;
@@ -239,7 +308,12 @@ namespace Ares.CommonGUI
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(PreferencesFile));
-                File.WriteAllLines(PreferencesFile, new string[] { "theme=" + Current.Id, "scale=" + ScalePercent, "themev=2" });
+                File.WriteAllLines(PreferencesFile, new string[]
+                {
+                    "theme=" + Current.Id, "scale=" + ScalePercent, "themev=2",
+                    "customdark=" + (s_CustomDark ? "1" : "0"),
+                    "customaccent=" + (s_CustomAccent.ToArgb() & 0xFFFFFF).ToString("X6")
+                });
             }
             catch (Exception)
             {
@@ -1724,7 +1798,10 @@ namespace Ares.CommonGUI
                     ThemePalette captured = palette;
                     ToolStripMenuItem item = new ToolStripMenuItem(palette.DisplayName);
                     item.Tag = palette.Id;
-                    item.Click += delegate { SetTheme(captured.Id); };
+                    if (captured.Id == "custom")
+                        item.Click += delegate { CustomThemeDialog.Edit(form); };
+                    else
+                        item.Click += delegate { SetTheme(captured.Id); };
                     root.DropDownItems.Add(item);
                 }
                 root.DropDownItems.Add(new ToolStripSeparator());
