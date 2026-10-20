@@ -500,7 +500,8 @@ function sendLibrary(userId) {
     modes: full.modes ?? [],
     tree: full.tree ?? [],
     mode: full.mode ?? -1,
-    elements: full.elements ?? []
+    elements: full.elements ?? [],
+    groups: full.groups ?? []
   };
   game.socket.emit(`module.${MODULE_ID}`, { type: "libraryData", lib }, { recipients: [userId] });
 }
@@ -579,9 +580,14 @@ function renderLibrary(lib) {
   folders.innerHTML = rows
     .map((r) => `<button type="button" data-lib="mode" data-index="${r.index}" class="${r.index === lib.mode ? "on" : ""}">${r.depth ? "\u21B3 ".repeat(1) : ""}${escapeHtml(lib.modes[r.index] ?? "")}</button>`)
     .join("");
-  elements.innerHTML = (lib.elements ?? []).length
-    ? lib.elements.map((e) => `<button type="button" data-lib="element" data-id="${e.id}" class="${e.active ? "on" : ""}">${escapeHtml(e.title)}</button>`).join("")
-    : `<p class="apolo-lib-empty">${t("LibraryEmpty")}</p>`;
+  // the playlists of the folder, then (under the name of each subfolder) the ones of its subfolders
+  const button = (e) => `<button type="button" data-lib="element" data-id="${e.id}" class="${e.active ? "on" : ""}">${escapeHtml(e.title)}</button>`;
+  const own = (lib.elements ?? []).map(button).join("");
+  const sub = (lib.groups ?? [])
+    .filter((g) => (g.elements ?? []).length)
+    .map((g) => `<h4 class="apolo-lib-group">${escapeHtml(g.title)}</h4>${g.elements.map(button).join("")}`)
+    .join("");
+  elements.innerHTML = own || sub ? own + sub : `<p class="apolo-lib-empty">${t("LibraryEmpty")}</p>`;
 }
 
 async function runControl(data) {

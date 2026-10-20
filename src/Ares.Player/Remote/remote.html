@@ -38,6 +38,7 @@ input[type=range]{width:100%;accent-color:var(--accent);height:34px}
 .more{display:none;text-align:center;color:var(--accent);font-size:13px;padding-top:6px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
 .grid button{min-height:64px;font-weight:600;word-break:break-word}
+.grid .grp{grid-column:1/-1;margin-top:8px;padding:2px 2px 4px;border-bottom:1px solid var(--hover);color:var(--dim);font-weight:700;font-size:13px;letter-spacing:.04em}
 .grid button img{display:block;width:32px;height:32px;margin:0 auto 4px;object-fit:contain}
 .grid button.on{box-shadow:0 0 0 2px var(--accent)}
 h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:0 0 10px}
@@ -128,13 +129,15 @@ function render(s){
   });
   renderFolders(s);
   $('elTitle').textContent=s.modes[s.mode]||'Playlists';
-  var g=$('els');var ek=JSON.stringify(s.elements);
+  var g=$('els');var groups=s.groups||[];var ek=JSON.stringify(s.elements)+'|'+JSON.stringify(groups);
   if(g.dataset.key!==ek){g.dataset.key=ek;g.innerHTML='';
-    s.elements.forEach(function(e){var b=document.createElement('button');
+    var addButton=function(e){var b=document.createElement('button');
       if(e.img){var im=document.createElement('img');im.alt='';im.src='/api/icon?n='+encodeURIComponent(e.img)+'&t='+encodeURIComponent(token||'');b.appendChild(im)}
       var tx=document.createElement('span');tx.textContent=e.title;b.appendChild(tx);
       if(e.color){b.style.borderColor=e.color;b.style.borderWidth='2px';b.style.background='linear-gradient(0deg,'+e.color+'33,'+e.color+'1a)'}
-      if(e.active)b.className='on';b.onclick=function(){send('element',e.id)};g.appendChild(b)})}
+      if(e.active)b.className='on';b.onclick=function(){send('element',e.id)};g.appendChild(b)};
+    s.elements.forEach(addButton);
+    groups.forEach(function(gr){var h=document.createElement('div');h.className='grp';h.textContent=gr.title;g.appendChild(h);gr.elements.forEach(addButton)})}
 }
 var browse=-1,lastMode=-2,folderKey='';
 function renderFolders(s){

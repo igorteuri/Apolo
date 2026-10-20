@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -652,12 +653,12 @@ namespace Ares.Player
                     }
                 }
                 json.Append("],\"mode\":").Append(modeIndex);
+                HashSet<int> active = new HashSet<int>();
+                foreach (Ares.Data.IModeElement playingElement in control.CurrentModeElements)
+                    active.Add(playingElement.Id);
                 json.Append(",\"elements\":[");
                 if (m_Project != null && modeIndex >= 0)
                 {
-                    HashSet<int> active = new HashSet<int>();
-                    foreach (Ares.Data.IModeElement me in control.CurrentModeElements)
-                        active.Add(me.Id);
                     Ares.Data.IMode mode = m_Project.GetModes()[modeIndex];
                     bool first = true;
                     foreach (Ares.Data.IModeElement me in mode.GetElements())
@@ -673,7 +674,40 @@ namespace Ares.Player
                         json.Append("}");
                     }
                 }
-                json.Append("]}");
+                // the buttons of the subfolders of the open folder, one group (with the name of the subfolder) after the other
+                json.Append("],\"groups\":[");
+                if (m_Project != null && modeIndex >= 0)
+                {
+                    Ares.Data.IMode shownMode = m_Project.GetModes()[modeIndex];
+                    bool firstGroup = true, openGroup = false, firstInGroup = true;
+                    foreach (ShownButton sub in CollectShownButtons(shownMode))
+                    {
+                        if (sub.OwnerTitle == shownMode.Title)
+                            continue;
+                        if (sub.Header != null)
+                        {
+                            if (openGroup)
+                                json.Append("]}");
+                            if (!firstGroup)
+                                json.Append(",");
+                            firstGroup = false;
+                            openGroup = true;
+                            firstInGroup = true;
+                            json.Append("{\"title\":").Append(JsonString(sub.Header)).Append(",\"elements\":[");
+                        }
+                        if (!firstInGroup)
+                            json.Append(",");
+                        firstInGroup = false;
+                        json.Append("{\"id\":").Append(sub.Element.Id).Append(",\"title\":").Append(JsonString(sub.Element.Title));
+                        json.Append(",\"active\":").Append(active.Contains(sub.Element.Id) ? "true" : "false");
+                        AppendLook(json, sub.OwnerTitle, sub.Element.Title);
+                        json.Append("}");
+                    }
+                    if (openGroup)
+                        json.Append("]}");
+                }
+                // ids of everything which is playing (also buttons of other folders): for the keys of the Stream Deck
+                json.Append("],\"active\":[").Append(string.Join(",", active.Select(a => a.ToString()).ToArray())).Append("]}");
                 string stateText = json.ToString();
                 if (remoteOn)
                     m_Remote.SetState(stateText);

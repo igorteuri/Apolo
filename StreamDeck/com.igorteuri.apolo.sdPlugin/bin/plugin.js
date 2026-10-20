@@ -424,9 +424,14 @@ function refreshOne(ctx, entry) {
             const title = settings.elementTitle || '';
             let active = false;
             if (connected && st.elements) {
-                const modeOk = !settings.modeTitle || (st.mode >= 0 && st.modes[st.mode] === settings.modeTitle);
-                if (modeOk)
-                    active = st.elements.some(e => e.id === settings.elementId && e.active);
+                if (Array.isArray(st.active)) {
+                    // everything which plays, whatever the folder: a key of a button in a subfolder lights up too
+                    active = st.active.includes(settings.elementId);
+                } else {
+                    const modeOk = !settings.modeTitle || (st.mode >= 0 && st.modes[st.mode] === settings.modeTitle);
+                    if (modeOk)
+                        active = st.elements.some(e => e.id === settings.elementId && e.active);
+                }
             }
             setIfChanged(ctx, entry, 'title', title, () => sd({ event: 'setTitle', context: ctx, payload: { title: shortText(title, 30), target: 0 } }));
             // emoji / color of the button, as set in the Apolo Player
