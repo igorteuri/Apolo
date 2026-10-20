@@ -49,20 +49,24 @@ namespace Ares.Player
         {
             try
             {
+                ToolStripMenuItem bank = new ToolStripMenuItem(T("Banco de imagens", "Image bank"));
+                bank.Name = "bankMenuItem";
                 ToolStripMenuItem auto = new ToolStripMenuItem(T("Colocar imagem do banco ao criar botões", "Put a picture of the bank on new buttons"));
                 auto.Name = "autoBankItem";
                 auto.CheckOnClick = true;
                 auto.Checked = AutoBankEnabled;
                 auto.CheckedChanged += (s, e) => Ares.CommonGUI.Preferences.SetBool("AutoBankImage", auto.Checked);
-                ToolStripMenuItem fill = new ToolStripMenuItem(T("Banco de imagens: preencher os botões sem imagem desta pasta", "Image bank: fill the buttons of this folder which have no picture"));
+                ToolStripMenuItem fill = new ToolStripMenuItem(T("Preencher os botões sem imagem desta pasta", "Fill the buttons of this folder which have no picture"));
                 fill.Name = "fillBankItem";
                 fill.Click += (s, e) => FillFolderFromBank();
-                ToolStripMenuItem fillAll = new ToolStripMenuItem(T("Banco de imagens: preencher TODOS os botões do projeto sem imagem", "Image bank: fill ALL the buttons of the project which have no picture"));
+                ToolStripMenuItem fillAll = new ToolStripMenuItem(T("Preencher TODOS os botões do projeto sem imagem", "Fill ALL the buttons of the project which have no picture"));
                 fillAll.Name = "fillAllBankItem";
                 fillAll.Click += (s, e) => FillProjectFromBank();
-                extrasToolStripMenuItem.DropDownItems.Insert(2, auto);
-                extrasToolStripMenuItem.DropDownItems.Insert(3, fill);
-                extrasToolStripMenuItem.DropDownItems.Insert(4, fillAll);
+                bank.DropDownItems.Add(fill);
+                bank.DropDownItems.Add(fillAll);
+                bank.DropDownItems.Add(new ToolStripSeparator());
+                bank.DropDownItems.Add(auto);
+                extrasToolStripMenuItem.DropDownItems.Insert(2, bank);
             }
             catch (Exception ex)
             {

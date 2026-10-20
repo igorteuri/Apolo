@@ -21,7 +21,7 @@ namespace Apolo.Tests
         {
             Assert.Equal(8, Index.Entries.Count);
             Assert.Equal("floresta", Index.Entries[0].Id);
-            Assert.Equal("floresta", Index.Entries[0].Label);
+            Assert.Equal("Floresta", Index.Entries[0].Label);
         }
 
         [Theory]

@@ -263,10 +263,12 @@ namespace Ares.CommonGUI
             return Tx("Destino: pasta ", "Destination: folder ") + Q(destination);
         }
 
+        // the text of a choice: a short title and (after \u0001) an explanation which is shown below it
         private static string LayoutText(DropScan scan, DropLayout layout, string destination)
         {
             bool pt = IsPt;
             string single = scan.Folders.Count == 1 ? Q(scan.Folders[0].Name) : null;
+            const string Sep = "\u0001";
             switch (layout)
             {
                 case DropLayout.Here:
@@ -274,8 +276,8 @@ namespace Ares.CommonGUI
                         return pt ? "Colocar na pasta " + Q(destination) : "Put it in the folder " + Q(destination);
                     AudioFolder first = scan.Folders.First(f => !f.IsLeaf);
                     string example = Q(first.Name + " - " + first.Subfolders[0].Name);
-                    return pt ? "Tudo na pasta " + Q(destination) + ": um botão por pasta de músicas (ex.: " + example + ")"
-                              : "Everything in the folder " + Q(destination) + ": one button per folder of music (e.g. " + example + ")";
+                    return pt ? "Tudo na pasta " + Q(destination) + Sep + "Um botão por pasta de músicas, com o nome da subpasta junto (ex.: " + example + ")."
+                              : "Everything in the folder " + Q(destination) + Sep + "One button per folder of music, with the name of the subfolder (e.g. " + example + ").";
                 case DropLayout.Tree:
                     if (scan.Folders.Count == 0)
                         return pt ? "Criar a pasta " + Q("Músicas soltas") : "Create the folder " + Q("Loose music");
@@ -283,16 +285,17 @@ namespace Ares.CommonGUI
                         return single != null
                             ? (pt ? "Criar uma pasta nova " + single : "Create a new folder " + single)
                             : (pt ? "Criar uma pasta nova para cada pasta arrastada" : "Create a new folder for each dropped folder");
-                    return pt ? "Criar as mesmas pastas do computador: cada subpasta vira uma pasta, com seus botões"
-                              : "Create the same folders as on the computer: each subfolder becomes a folder with its buttons";
+                    return pt ? "Criar as mesmas pastas do computador" + Sep + "Cada subpasta vira uma pasta do Apolo, com os seus botões."
+                              : "Create the same folders as on the computer" + Sep + "Each subfolder becomes a folder of Apolo, with its buttons.";
                 case DropLayout.Compact:
                     return single != null
-                        ? (pt ? "Criar a pasta " + single + " com um botão para cada subpasta" : "Create the folder " + single + " with one button per subfolder")
-                        : (pt ? "Criar uma pasta para cada pasta arrastada, com um botão para cada subpasta"
-                              : "Create a folder for each dropped folder, with one button per subfolder");
+                        ? (pt ? "Uma pasta só, com um botão por subpasta" + Sep + "Cria a pasta " + single + "; cada subpasta vira um botão dentro dela."
+                              : "One folder with one button per subfolder" + Sep + "Creates the folder " + single + "; each subfolder becomes a button inside it.")
+                        : (pt ? "Uma pasta para cada pasta arrastada" + Sep + "Cada subpasta vira um botão dentro da pasta dela."
+                              : "A folder for each dropped folder" + Sep + "Each subfolder becomes a button inside its folder.");
                 default:
-                    return pt ? "Na pasta " + Q(destination) + ": um botão só por pasta arrastada, com todas as músicas de dentro"
-                              : "In the folder " + Q(destination) + ": one button per dropped folder, with all the music inside";
+                    return pt ? "Um botão só por pasta arrastada" + Sep + "Fica na pasta " + Q(destination) + ", com todas as músicas de dentro (inclusive subpastas)."
+                              : "One button per dropped folder" + Sep + "It goes in the folder " + Q(destination) + ", with all the music inside (subfolders too).";
             }
         }
 
@@ -372,14 +375,31 @@ namespace Ares.CommonGUI
                     var layoutFlow = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, Dock = DockStyle.Fill, WrapContents = false };
                     foreach (DropLayout option in layouts)
                     {
+                        string[] parts = LayoutText(scan, option, destination).Split('\u0001');
                         var radio = new RadioButton
                         {
                             AutoSize = true,
                             MaximumSize = new Size(450, 0),
                             Checked = option == wanted,
-                            Text = LayoutText(scan, option, destination)
+                            Text = parts[0],
+                            Margin = new Padding(3, 4, 3, 0)
                         };
                         layoutFlow.Controls.Add(radio);
+                        if (parts.Length > 1)
+                        {
+                            // the explanation is a label (a label wraps its text; a radio button cuts it)
+                            RadioButton owner = radio;
+                            var detail = new Label
+                            {
+                                AutoSize = true,
+                                MaximumSize = new Size(430, 0),
+                                Text = parts[1],
+                                Margin = new Padding(24, 0, 3, 2),
+                                Cursor = Cursors.Hand
+                            };
+                            detail.Click += (s, e) => owner.Checked = true;
+                            layoutFlow.Controls.Add(detail);
+                        }
                         m_LayoutChoices.Add(new KeyValuePair<RadioButton, DropLayout>(radio, option));
                     }
                     layoutBox.Controls.Add(layoutFlow);

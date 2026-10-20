@@ -96,6 +96,7 @@ namespace Ares.Player
 
         private void InitTrackPanel()
         {
+            Ares.CommonGUI.ThemeManager.Changed += (s, e) => RefreshRightsColors();
             try
             {
                 Control host = this;

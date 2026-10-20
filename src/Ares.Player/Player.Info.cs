@@ -102,7 +102,7 @@ namespace Ares.Player
         // window "Sobre": version, credits, links
         private void ShowAboutApolo()
         {
-            string version = System.Windows.Forms.Application.ProductVersion;
+            string version = DisplayVersion();
             string text = T(
 @"APOLO
 
@@ -153,6 +153,33 @@ The code of Apolo is open and lives on GitHub:
         }
 
         // a window with a text and a row of buttons (the last button closes it)
+        // "0.82.140.0" (version + number of the build) as "0.82 (build 140)"
+        private static string DisplayVersion()
+        {
+            string v = System.Windows.Forms.Application.ProductVersion;
+            string[] p = v.Split('.');
+            return p.Length >= 3 && p[2] != "0" ? p[0] + "." + p[1] + " (build " + p[2] + ")" : (p.Length >= 2 ? p[0] + "." + p[1] : v);
+        }
+
+        // a line which is a heading: all capitals ("O MÓDULO DO FOUNDRY VTT", "1. PREPARE O APOLO (mestre)")
+        private static bool IsHeadingLine(string line)
+        {
+            string t = line.Trim();
+            if (t.Length < 3 || t.Length > 70)
+                return false;
+            int letters = 0, upper = 0;
+            foreach (char c in t)
+            {
+                if (char.IsLetter(c))
+                {
+                    letters++;
+                    if (char.IsUpper(c))
+                        upper++;
+                }
+            }
+            return letters >= 3 && upper >= letters * 0.8;
+        }
+
         private void ShowInfoWindow(string title, string text, List<KeyValuePair<string, Action>> buttons)
         {
             using (Form form = new Form())
@@ -166,15 +193,39 @@ The code of Apolo is open and lives on GitHub:
                 form.MinimumSize = new Size(560, 400);
                 try { form.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0); } catch (Exception) { }
 
-                TextBox body = new TextBox();
-                body.Multiline = true;
+                RichTextBox body = new RichTextBox();
                 body.ReadOnly = true;
-                body.ScrollBars = ScrollBars.Vertical;
+                body.ScrollBars = RichTextBoxScrollBars.Vertical;
                 body.BorderStyle = BorderStyle.None;
                 body.Dock = DockStyle.Fill;
                 body.Font = new Font(form.Font.FontFamily, 10.5f);
-                body.Text = text.Replace("\r\n", "\n").Replace("\n", "\r\n");
+                body.DetectUrls = true;
                 body.TabStop = false;
+                Ares.CommonGUI.ThemePalette palette = Ares.CommonGUI.ThemeManager.Current;
+                if (palette != null && !palette.IsClassic)
+                {
+                    body.BackColor = palette.Surface;
+                    body.ForeColor = palette.Text;
+                }
+                body.Text = text.Replace("\r\n", "\n").Replace("\n", "\r\n");
+                // headings in bold and in the accent color: a long text is easier to scan
+                using (Font bold = new Font(body.Font, FontStyle.Bold))
+                {
+                    int position = 0;
+                    foreach (string line in body.Text.Split('\n'))
+                    {
+                        string clean = line.TrimEnd('\r');
+                        if (IsHeadingLine(clean))
+                        {
+                            body.Select(position, clean.Length);
+                            body.SelectionFont = bold;
+                            if (palette != null && !palette.IsClassic)
+                                body.SelectionColor = palette.Accent;
+                        }
+                        position += line.Length + 1;
+                    }
+                    body.Select(0, 0);
+                }
 
                 Panel pad = new Panel();
                 pad.Dock = DockStyle.Fill;
@@ -377,7 +428,7 @@ TIPS
 
         private void ShowUpdateInfo()
         {
-            string version = System.Windows.Forms.Application.ProductVersion;
+            string version = DisplayVersion();
             string text = T(
 @"COMO ATUALIZAR O APOLO
 

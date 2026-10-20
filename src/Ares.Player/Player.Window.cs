@@ -103,7 +103,7 @@ namespace Ares.Player
                 string[][] groups =
                 {
                     new[] { "remoteMenuItem", "deckMenuItem", "discordMenuItem", "overlayMenuItem", "foundryMenuItem" },
-                    new[] { "Ícones automáticos", "Automatic icons", "fillBankItem", "fillAllBankItem", "autoBankItem" },
+                    new[] { "Ícones automáticos", "Automatic icons", "bankMenuItem" },
                     new[] { "Renomeador", "Music renamer", "Verificador", "Copyright check", "Baixar música", "Download free", "Arquivos de áudio ausentes", "Missing audio" }
                 };
                 List<List<ToolStripItem>> ordered = new List<List<ToolStripItem>>();

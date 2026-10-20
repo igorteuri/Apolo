@@ -158,6 +158,29 @@ namespace Ares.Player
             return null;
         }
 
+        // an extension without an icon: a circle in the accent color with the initial of the name
+        private static Bitmap InitialIcon(string name)
+        {
+            string initial = string.IsNullOrEmpty(name) ? "?" : name.Trim().Substring(0, 1).ToUpperInvariant();
+            Color accent = Ares.CommonGUI.ThemeManager.Current != null ? Ares.CommonGUI.ThemeManager.Current.Accent : Color.Orange;
+            Color ink = Ares.CommonGUI.ThemeManager.ContrastRatio(accent, Color.Black) >= Ares.CommonGUI.ThemeManager.ContrastRatio(accent, Color.White) ? Color.Black : Color.White;
+            Bitmap bmp = new Bitmap(20, 20);
+            using (Graphics g = Graphics.FromImage(bmp))
+            using (SolidBrush fill = new SolidBrush(accent))
+            using (SolidBrush text = new SolidBrush(ink))
+            using (Font font = new Font("Segoe UI", 9f, FontStyle.Bold))
+            using (StringFormat format = new StringFormat())
+            {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+                format.Alignment = StringAlignment.Center;
+                format.LineAlignment = StringAlignment.Center;
+                g.FillEllipse(fill, 0, 0, 19, 19);
+                g.DrawString(initial, font, text, new RectangleF(0, 0, 20, 21), format);
+            }
+            return bmp;
+        }
+
         private static Bitmap IconOf(string folder, IDictionary manifest)
         {
             List<string> files = new List<string>();
@@ -289,7 +312,7 @@ namespace Ares.Player
                 if (entry.Icon != null)
                     b.Image = entry.Icon;
                 else
-                    b.Text = string.IsNullOrEmpty(entry.Name) ? "?" : entry.Name.Substring(0, 1).ToUpperInvariant();
+                    b.Image = InitialIcon(entry.Name);
                 b.Padding = new Padding(0);
                 b.Click += (s, e) => ShowMenu((Control)s, captured);
                 m_Tip.SetToolTip(b, entry.Name + (entry.Enabled ? "" : T(" (desativada)", " (disabled)")));

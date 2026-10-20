@@ -10,10 +10,20 @@ namespace Ares.Player
     {
         public string Id;
         public string[] Words;
+        /// <summary>The name shown to the user ("Água", "Dragão"); empty = the first word.</summary>
+        public string Display;
 
         public string Label
         {
-            get { return Words.Length > 0 ? Words[0] : Id; }
+            get
+            {
+                if (!string.IsNullOrEmpty(Display))
+                    return Display;
+                if (Words.Length == 0)
+                    return Id;
+                string w = Words[0];
+                return char.ToUpperInvariant(w[0]) + w.Substring(1);
+            }
         }
     }
 
@@ -54,15 +64,24 @@ namespace Ares.Player
                 if (bar <= 0)
                     continue;
                 string id = line.Substring(0, bar).Trim();
+                string rest = line.Substring(bar + 1);
+                // "id|words|Name": the third part (optional) is the name shown to the user
+                string display = null;
+                int bar2 = rest.IndexOf('|');
+                if (bar2 >= 0)
+                {
+                    display = rest.Substring(bar2 + 1).Trim();
+                    rest = rest.Substring(0, bar2);
+                }
                 List<string> words = new List<string>();
-                foreach (string w in Fold(line.Substring(bar + 1)).Split(','))
+                foreach (string w in Fold(rest).Split(','))
                 {
                     string word = w.Trim();
                     if (word.Length > 0 && !words.Contains(word))
                         words.Add(word);
                 }
                 if (id.Length > 0 && words.Count > 0)
-                    index.Entries.Add(new BankEntry { Id = id, Words = words.ToArray() });
+                    index.Entries.Add(new BankEntry { Id = id, Words = words.ToArray(), Display = display });
             }
             return index;
         }

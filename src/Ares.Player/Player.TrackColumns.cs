@@ -149,6 +149,35 @@ namespace Ares.Player
             }
         }
 
+        // the color of the mark of the rights: green / yellow / red must be readable on the background of the theme (also the light ones)
+        private System.Drawing.Color RightsColor(char code)
+        {
+            Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
+            bool themed = p != null && !p.IsClassic;
+            System.Drawing.Color back = themed ? p.Surface : System.Drawing.SystemColors.Window;
+            System.Drawing.Color text = themed ? p.Text : System.Drawing.SystemColors.WindowText;
+            return Ares.CommonGUI.ThemeManager.EnsureContrast(RightsCheck.ColorOf(code, text), back, 4.5);
+        }
+
+        private void RefreshRightsColors()
+        {
+            try
+            {
+                m_TrackList.BeginUpdate();
+                foreach (ListViewItem item in m_TrackList.Items)
+                {
+                    TrackRow row = item.Tag as TrackRow;
+                    if (row != null)
+                        item.SubItems[ColRights].ForeColor = RightsColor(row.Rights);
+                }
+                m_TrackList.EndUpdate();
+                m_TrackList.Invalidate();
+            }
+            catch (Exception)
+            {
+            }
+        }
+
         private ListViewItem MakeTrackItem(TrackRow row)
         {
             ListViewItem item = new ListViewItem(row.Number.ToString());
@@ -160,7 +189,7 @@ namespace Ares.Player
             item.SubItems.Add(FormatDuration(row.Seconds));
             item.SubItems.Add(row.Plays.ToString());
             ListViewItem.ListViewSubItem rightsCell = item.SubItems.Add(RightsCheck.Label(row.Rights));
-            rightsCell.ForeColor = RightsCheck.ColorOf(row.Rights, m_TrackList.ForeColor);
+            rightsCell.ForeColor = RightsColor(row.Rights);
             item.ToolTipText = row.RightsWhy.Length > 0 ? row.RightsWhy + "  (" + T("indicativo, não garantia", "indication, not a guarantee") + ")" : "";
             item.SubItems.Add(row.File.FilePath ?? "");
             item.Tag = row;
@@ -264,7 +293,7 @@ namespace Ares.Player
                 item.SubItems[ColAlbum].Text = row.Album ?? "";
                 item.SubItems[ColDuration].Text = FormatDuration(row.Seconds);
                 item.SubItems[ColRights].Text = RightsCheck.Label(row.Rights);
-                item.SubItems[ColRights].ForeColor = RightsCheck.ColorOf(row.Rights, m_TrackList.ForeColor);
+                item.SubItems[ColRights].ForeColor = RightsColor(row.Rights);
                 if (row.RightsWhy.Length > 0)
                     item.ToolTipText = row.RightsWhy;
             }
@@ -370,7 +399,7 @@ namespace Ares.Player
                                 if (ReferenceEquals(item.Tag, captured))
                                 {
                                     item.SubItems[ColRights].Text = RightsCheck.Label(capturedCode);
-                                    item.SubItems[ColRights].ForeColor = RightsCheck.ColorOf(capturedCode, m_TrackList.ForeColor);
+                                    item.SubItems[ColRights].ForeColor = RightsColor(capturedCode);
                                     item.ToolTipText = capturedWhy;
                                 }
                             }

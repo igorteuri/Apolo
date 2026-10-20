@@ -13,6 +13,21 @@ sys.path.insert(0, os.path.dirname(__file__))
 import cenas
 from base import W
 
+# nome mostrado ao usuario (com acento); o que nao esta aqui aparece com a primeira letra maiuscula
+NOMES = {
+    'agua': 'Água / rio', 'aguia': 'Águia', 'alien': 'Alienígena', 'ancora': 'Âncora', 'arco': 'Arco e flecha',
+    'bussola': 'Bússola', 'carvalho': 'Árvore', 'cemiterio': 'Cemitério', 'demonio': 'Demônio', 'dragao': 'Dragão',
+    'drama': 'Teatro', 'erva': 'Ervas', 'escorpiao': 'Escorpião', 'estatua': 'Estátua e ruínas', 'fabrica': 'Fábrica',
+    'flor': 'Flores', 'fogueira': 'Fogo', 'galaxia': 'Galáxia', 'genio': 'Gênio', 'heroi': 'Herói',
+    'investigacao': 'Investigação', 'justica': 'Justiça', 'mago_torre': 'Torre do mago', 'martelo': 'Forja',
+    'musica': 'Música', 'osso': 'Ossos', 'ovni': 'OVNI', 'pantano': 'Pântano', 'pata': 'Pegadas', 'pescar': 'Pesca',
+    'piramide': 'Pirâmide', 'porto': 'Cais', 'robo': 'Robô', 'triste': 'Tristeza', 'troll': 'Troll / gigante',
+    'tubarao': 'Tubarão', 'unicornio': 'Unicórnio', 'vaso': 'Vaso grego', 'vitoria': 'Vitória', 'vulcao': 'Vulcão',
+    'kraken': 'Kraken / polvo', 'tocha': 'Tocha / lanterna', 'cadeado': 'Cadeado / prisão', 'sino': 'Sino / alerta',
+    'tempo': 'Tempo / ampulheta', 'cura': 'Cura', 'caminhada': 'Caminhada / estrada', 'correr': 'Correr / fuga',
+}
+
+
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
@@ -43,7 +58,7 @@ def main():
         im.save(path, 'WEBP', quality=82, method=6)
         total += os.path.getsize(path)
         pt, en = cenas.PALAVRAS[ident]
-        lines.append('%s|%s' % (ident, pt))
+        lines.append('%s|%s|%s' % (ident, pt, NOMES.get(ident, ident.capitalize())))
     with open(os.path.join(out, 'indice.txt'), 'w', encoding='utf-8', newline='\n') as f:
         f.write('\n'.join(lines) + '\n')
     print(len(ids), 'imagens,', total // 1024, 'KB no total,', total // max(1, len(ids)), 'bytes por imagem em média ->', out)

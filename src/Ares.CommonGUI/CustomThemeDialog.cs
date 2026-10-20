@@ -11,7 +11,8 @@ namespace Ares.CommonGUI
 
         private readonly RadioButton m_Dark = new RadioButton();
         private readonly RadioButton m_Light = new RadioButton();
-        private readonly Panel m_Swatch = new Panel();
+        private readonly Swatch m_Swatch = new Swatch();
+        private readonly System.Collections.Generic.List<Swatch> m_Presets = new System.Collections.Generic.List<Swatch>();
         private Color m_Accent;
         private bool m_Loading = true;
 
@@ -45,7 +46,7 @@ namespace Ares.CommonGUI
             MinimizeBox = false;
             ShowInTaskbar = false;
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(420, 262);
+            ClientSize = new Size(420, 296);
             m_Accent = ThemeManager.CustomAccent;
 
             Label background = new Label();
@@ -68,21 +69,23 @@ namespace Ares.CommonGUI
             for (int i = 0; i < s_Presets.Length; i++)
             {
                 Color color = ColorFromRgb(s_Presets[i]);
-                Button preset = new Button();
-                preset.FlatStyle = FlatStyle.Flat;
-                preset.FlatAppearance.BorderSize = 1;
-                preset.BackColor = color;
-                preset.SetBounds(20 + i * 46, 106, 38, 30);
-                preset.TabStop = false;
+                // the swatches paint themselves: the theme repaints the BackColor of buttons and panels, which hid the colors
+                Swatch preset = new Swatch();
+                preset.Fill = color;
+                preset.AccessibleName = T("Cor ", "Color ") + "#" + s_Presets[i].ToString("X6");
+                preset.SetBounds(20 + i * 46, 106, 38, 32);
                 preset.Click += (s, e) => { m_Accent = color; UpdateSwatch(); Apply(); };
+                m_Presets.Add(preset);
                 Controls.Add(preset);
             }
-            m_Swatch.SetBounds(20, 150, 60, 34);
-            m_Swatch.BorderStyle = BorderStyle.FixedSingle;
+            m_Swatch.SetBounds(20, 152, 60, 34);
+            m_Swatch.Clickable = false;
+            m_Swatch.TabStop = false;
+            m_Swatch.AccessibleName = T("Cor escolhida", "Chosen color");
             Controls.Add(m_Swatch);
             Button choose = new Button();
             choose.Text = T("Escolher outra cor...", "Choose another color...");
-            choose.SetBounds(92, 150, 180, 34);
+            choose.SetBounds(92, 152, 190, 34);
             choose.Click += (s, e) =>
             {
                 using (ColorDialog cd = new ColorDialog())
@@ -102,18 +105,18 @@ namespace Ares.CommonGUI
             Label hint = new Label();
             hint.Text = T("A mudança aparece na hora. Para voltar ao visual original do Apolo, escolha o amarelo (primeira cor) com fundo escuro. Cores difíceis de ler são ajustadas sozinhas.",
                 "The change shows at once. To get the original Apolo look back, pick the yellow (first color) with a dark background. Colors which would be hard to read are adjusted automatically.");
-            hint.SetBounds(16, 196, 388, 36);
+            hint.SetBounds(16, 198, 388, 56);
             Controls.Add(hint);
 
             Button ok = new Button();
             ok.Text = T("Pronto", "Done");
             ok.DialogResult = DialogResult.OK;
-            ok.SetBounds(ClientSize.Width - 16 - 100 - 8 - 90, 224, 100, 28);
+            ok.SetBounds(ClientSize.Width - 16 - 100 - 8 - 90, 260, 100, 28);
             Controls.Add(ok);
             Button cancel = new Button();
             cancel.Text = T("Cancelar", "Cancel");
             cancel.DialogResult = DialogResult.Cancel;
-            cancel.SetBounds(ClientSize.Width - 16 - 90, 224, 90, 28);
+            cancel.SetBounds(ClientSize.Width - 16 - 90, 260, 90, 28);
             Controls.Add(cancel);
             AcceptButton = ok;
             CancelButton = cancel;
@@ -131,7 +134,104 @@ namespace Ares.CommonGUI
 
         private void UpdateSwatch()
         {
-            m_Swatch.BackColor = m_Accent;
+            m_Swatch.Fill = m_Accent;
+            foreach (Swatch preset in m_Presets)
+                preset.Selected = preset.Fill.ToArgb() == m_Accent.ToArgb();
+        }
+
+        /// <summary>A square of color which paints itself (also usable as a button, with the keyboard too).</summary>
+        private class Swatch : Control
+        {
+            private Color m_Fill = Color.Gray;
+            private bool m_Selected;
+            private bool m_Clickable = true;
+
+            public Swatch()
+            {
+                SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer
+                    | ControlStyles.ResizeRedraw | ControlStyles.Selectable | ControlStyles.StandardClick, true);
+                TabStop = true;
+                Cursor = Cursors.Hand;
+            }
+
+            public Color Fill
+            {
+                get { return m_Fill; }
+                set { m_Fill = value; Invalidate(); }
+            }
+
+            public bool Selected
+            {
+                get { return m_Selected; }
+                set { m_Selected = value; Invalidate(); }
+            }
+
+            public bool Clickable
+            {
+                get { return m_Clickable; }
+                set
+                {
+                    m_Clickable = value;
+                    SetStyle(ControlStyles.Selectable, value);
+                    Cursor = value ? Cursors.Hand : Cursors.Default;
+                }
+            }
+
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                Graphics g = e.Graphics;
+                Color back = Parent != null ? Parent.BackColor : SystemColors.Control;
+                g.Clear(back);
+                // the ring uses the color of the text of the window: it is visible on the dark and on the light background
+                Color ring = Parent != null ? Parent.ForeColor : SystemColors.ControlText;
+                Rectangle box = new Rectangle(3, 3, Width - 7, Height - 7);
+                using (SolidBrush fill = new SolidBrush(m_Fill))
+                    g.FillRectangle(fill, box);
+                using (Pen border = new Pen(Color.FromArgb(160, ring), 1))
+                    g.DrawRectangle(border, box);
+                if (m_Selected)
+                {
+                    using (Pen selected = new Pen(ring, 2))
+                        g.DrawRectangle(selected, 1, 1, Width - 3, Height - 3);
+                }
+                if (Focused && m_Clickable && ShowFocusCues)
+                    ControlPaint.DrawFocusRectangle(g, new Rectangle(0, 0, Width, Height), ring, back);
+            }
+
+            protected override bool IsInputKey(Keys keyData)
+            {
+                return keyData == Keys.Space || base.IsInputKey(keyData);
+            }
+
+            protected override void OnKeyDown(KeyEventArgs e)
+            {
+                base.OnKeyDown(e);
+                if (m_Clickable && (e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter))
+                {
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    OnClick(EventArgs.Empty);
+                }
+            }
+
+            protected override void OnMouseDown(MouseEventArgs e)
+            {
+                if (m_Clickable)
+                    Focus();
+                base.OnMouseDown(e);
+            }
+
+            protected override void OnGotFocus(EventArgs e)
+            {
+                base.OnGotFocus(e);
+                Invalidate();
+            }
+
+            protected override void OnLostFocus(EventArgs e)
+            {
+                base.OnLostFocus(e);
+                Invalidate();
+            }
         }
 
         private void Apply()
