@@ -54,6 +54,9 @@ namespace Ares.CommonGUI
             appDirLabel.Text = basicSettings.GetSettingsDir(BasicSettings.SettingsLocation.AppDir);
             appDirButton.Enabled = BasicSettings.IsAppDirAllowed();
             updateCheckBox.Checked = settings.CheckForUpdate;
+            // Apolo has its own way of telling about new versions: this old option of the Ares does nothing
+            if (updateCheckBox.Parent != null)
+                updateCheckBox.Parent.Visible = false;
             m_Settings = settings;
             m_BasicSettings = basicSettings;
         }

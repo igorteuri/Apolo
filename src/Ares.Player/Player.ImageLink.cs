@@ -153,30 +153,195 @@ namespace Ares.Player
                 MessageBox.Show(this, problem, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+            ApplyPictureBytes(mode.Title, me.Title, picture);
+        }
+
+        // the bytes of a picture (any format Apolo reads) become the picture of a button
+        private bool ApplyPictureBytes(string modeTitle, string elementTitle, byte[] picture)
+        {
             byte[] readable = Ares.CommonGUI.ImageDecoder.ToReadable(picture);
             if (readable == null)
             {
                 MessageBox.Show(this, T("Não consegui ler essa imagem (formato com problema).", "I could not read that picture (damaged format)."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                return false;
             }
             string temp = Path.Combine(Path.GetTempPath(), "apolo-link-" + Guid.NewGuid().ToString("N") + ".img");
             try
             {
                 File.WriteAllBytes(temp, readable);
                 string spec = Ares.CommonGUI.ButtonImageStore.ImportImage(m_CurrentProjectPath, temp);
-                Ares.CommonGUI.ButtonImageStore.Set(m_CurrentProjectPath, mode.Title, me.Title, spec);
+                Ares.CommonGUI.ButtonImageStore.Set(m_CurrentProjectPath, modeTitle, elementTitle, spec);
                 UpdateElementsPanel();
+                return true;
             }
             catch (Exception)
             {
                 MessageBox.Show(this, T("Não consegui usar essa imagem.", "I could not use that picture."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
             }
             finally
             {
                 try { File.Delete(temp); } catch (Exception) { }
             }
+        }
+
+        // ---- a picture dragged onto a button (from a folder of Windows or from the browser) ----
+
+        private enum PictureDrop { None, ImageFiles, Other }
+
+        private class PictureDropData
+        {
+            public string[] Files;
+            public byte[] Bitmap;
+            public string Text;
+        }
+
+        private static readonly string[] s_PictureExtensions = { ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp" };
+
+        private static string DragText(IDataObject data, string format)
+        {
+            try
+            {
+                if (!data.GetDataPresent(format))
+                    return "";
+                object o = data.GetData(format);
+                string s = o as string;
+                if (s == null && o is MemoryStream)
+                    s = System.Text.Encoding.Unicode.GetString(((MemoryStream)o).ToArray()).TrimEnd('\0');
+                return s ?? "";
+            }
+            catch (Exception)
+            {
+                return "";
+            }
+        }
+
+        // what is dragged: image files of the computer; a picture / link / page of the browser; or nothing for pictures
+        private PictureDrop ReadPictureDrop(IDataObject data, out PictureDropData info)
+        {
+            info = new PictureDropData();
+            try
+            {
+                if (data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    string[] files = data.GetData(DataFormats.FileDrop) as string[];
+                    if (files == null || files.Length == 0)
+                        return PictureDrop.None;
+                    foreach (string f in files)
+                    {
+                        if (!File.Exists(f) || Array.IndexOf(s_PictureExtensions, Path.GetExtension(f).ToLowerInvariant()) < 0)
+                            return PictureDrop.None;
+                    }
+                    info.Files = files;
+                    return PictureDrop.ImageFiles;
+                }
+                string text = DragText(data, DataFormats.Html) + "\n" + DragText(data, DataFormats.UnicodeText) + "\n" + DragText(data, "UniformResourceLocatorW")
+                    + "\n" + DragText(data, "text/x-moz-url") + "\n" + DragText(data, "text/uri-list");
+                if (ImageUrlParser.Candidates(text).Count > 0)
+                {
+                    info.Text = text;
+                    return PictureDrop.Other;
+                }
+                Bitmap bmp = null;
+                try { bmp = data.GetDataPresent(DataFormats.Bitmap) ? data.GetData(DataFormats.Bitmap) as Bitmap : null; }
+                catch (Exception) { }
+                if (bmp != null)
+                {
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                        info.Bitmap = ms.ToArray();
+                    }
+                    return PictureDrop.Other;
+                }
+            }
+            catch (Exception)
+            {
+            }
+            return PictureDrop.None;
+        }
+
+        // cheap look while the mouse moves: could this be a picture? (the real reading is done when it is dropped)
+        private static bool MaybePicture(IDataObject data)
+        {
+            try
+            {
+                if (data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    string[] files = data.GetData(DataFormats.FileDrop) as string[];
+                    if (files == null || files.Length == 0)
+                        return false;
+                    foreach (string f in files)
+                    {
+                        if (Array.IndexOf(s_PictureExtensions, Path.GetExtension(f).ToLowerInvariant()) < 0)
+                            return false;
+                    }
+                    return true;
+                }
+                return data.GetDataPresent(DataFormats.Bitmap) || data.GetDataPresent(DataFormats.Html)
+                    || data.GetDataPresent("UniformResourceLocatorW") || data.GetDataPresent("text/uri-list") || data.GetDataPresent("text/x-moz-url");
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private ElementButton ButtonAtScreen(Point screen)
+        {
+            if (elementsPanel == null || !elementsPanel.Visible)
+                return null;
+            Point pt = elementsPanel.PointToClient(screen);
+            foreach (Control c in elementsPanel.Controls)
+            {
+                ElementButton b = c as ElementButton;
+                if (b != null && b.Visible && b.Tag is int && b.Bounds.Contains(pt))
+                    return b;
+            }
+            return null;
+        }
+
+        private void DropPictureOnButton(int elementId, PictureDropData info)
+        {
+            if (m_Project == null || string.IsNullOrEmpty(m_CurrentProjectPath))
+                return;
+            IMode mode = OwnerModeOf(elementId);
+            IModeElement me = mode != null ? mode.GetElements().FirstOrDefault(x => x.Id == elementId) : null;
+            if (me == null)
+                return;
+            byte[] picture = null;
+            if (info.Files != null && info.Files.Length > 0)
+            {
+                try { picture = File.ReadAllBytes(info.Files[0]); }
+                catch (Exception)
+                {
+                    MessageBox.Show(this, T("Não consegui ler o arquivo de imagem.", "I could not read the picture file."),
+                        StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+            else if (info.Bitmap != null)
+            {
+                picture = info.Bitmap;
+            }
+            else
+            {
+                Cursor old = Cursor;
+                Cursor = Cursors.WaitCursor;
+                string problem;
+                try { problem = FetchPictureFromText(info.Text, out picture); }
+                finally { Cursor = old; }
+                if (problem != null)
+                {
+                    MessageBox.Show(this, problem, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+            if (ApplyPictureBytes(mode.Title, me.Title, picture))
+                ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
+                    T("Imagem colocada no botão \"" + me.Title + "\".", "Picture put on the button \"" + me.Title + "\".")));
         }
     }
 

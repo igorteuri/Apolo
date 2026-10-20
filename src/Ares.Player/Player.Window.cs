@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace Ares.Player
@@ -82,6 +84,62 @@ namespace Ares.Player
             m_EditBorder[1].SetBounds(0, h - t, w, t);
             m_EditBorder[2].SetBounds(0, 0, t, h);
             m_EditBorder[3].SetBounds(w - t, 0, t, h);
+        }
+
+        // ---- the Extras menu: grouped by what the items are for ----
+
+        private void OrganizeExtrasMenu()
+        {
+            try
+            {
+                ToolStripItemCollection items = extrasToolStripMenuItem.DropDownItems;
+                List<ToolStripItem> pool = new List<ToolStripItem>();
+                foreach (ToolStripItem item in items)
+                {
+                    if (!(item is ToolStripSeparator))
+                        pool.Add(item);
+                }
+                // each group: names of the items (or the beginning of their text)
+                string[][] groups =
+                {
+                    new[] { "remoteMenuItem", "deckMenuItem", "discordMenuItem", "overlayMenuItem", "foundryMenuItem" },
+                    new[] { "Ícones automáticos", "Automatic icons", "fillBankItem", "fillAllBankItem", "autoBankItem" },
+                    new[] { "Renomeador", "Music renamer", "Verificador", "Copyright check", "Baixar música", "Download free", "Arquivos de áudio ausentes", "Missing audio" }
+                };
+                List<List<ToolStripItem>> ordered = new List<List<ToolStripItem>>();
+                foreach (string[] group in groups)
+                {
+                    List<ToolStripItem> list = new List<ToolStripItem>();
+                    foreach (string key in group)
+                    {
+                        ToolStripItem found = pool.FirstOrDefault(i => i.Name == key || (i.Text ?? "").StartsWith(key, StringComparison.OrdinalIgnoreCase));
+                        if (found != null)
+                        {
+                            list.Add(found);
+                            pool.Remove(found);
+                        }
+                    }
+                    ordered.Add(list);
+                }
+                // what is left (the lists, the left panel, the library, the notices) stays at the top
+                ordered.Insert(0, pool);
+                items.Clear();
+                bool first = true;
+                foreach (List<ToolStripItem> list in ordered)
+                {
+                    if (list.Count == 0)
+                        continue;
+                    if (!first)
+                        items.Add(new ToolStripSeparator());
+                    foreach (ToolStripItem item in list)
+                        items.Add(item);
+                    first = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message);
+            }
         }
 
         // ---- unsaved changes ----

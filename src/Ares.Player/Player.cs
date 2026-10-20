@@ -119,6 +119,7 @@ namespace Ares.Player
             InitShortcuts();
             InitUpdateCheck();
             InitBankMenu();
+            OrganizeExtrasMenu();
         }
 
         private void FitMusicBar()

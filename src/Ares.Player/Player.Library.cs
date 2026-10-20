@@ -101,14 +101,42 @@ namespace Ares.Player
 
         private void LibraryDragEnter(object sender, DragEventArgs e)
         {
-            // only file drops are handled here; other (internal) drags are left to their own handlers
-            if (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
+            if (e.Data == null)
+                return;
+            // a picture over a playlist button changes the picture of the button
+            if (ButtonAtScreen(new Point(e.X, e.Y)) != null && MaybePicture(e.Data))
+            {
+                e.Effect = DragDropEffects.Copy;
+                return;
+            }
+            // other file drops are audio; the internal drags are left to their own handlers
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
                 e.Effect = DragDropEffects.Copy;
         }
 
         private void LibraryDragDrop(object sender, DragEventArgs e)
         {
-            if (e.Data == null || !e.Data.GetDataPresent(DataFormats.FileDrop))
+            if (e.Data == null)
+                return;
+            PictureDropData picture;
+            PictureDrop kind = ReadPictureDrop(e.Data, out picture);
+            if (kind != PictureDrop.None)
+            {
+                ElementButton button = ButtonAtScreen(new Point(e.X, e.Y));
+                if (button != null)
+                {
+                    int id = (int)button.Tag;
+                    BeginInvoke(new MethodInvoker(() => DropPictureOnButton(id, picture)));
+                }
+                else if (kind == PictureDrop.ImageFiles)
+                {
+                    ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Warning,
+                        IsPt ? "Para trocar a imagem de um botão, solte a imagem em cima dele."
+                             : "To change the picture of a button, drop the picture on top of it."));
+                }
+                return;
+            }
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop))
                 return;
             string[] paths = e.Data.GetData(DataFormats.FileDrop) as string[];
             if (paths == null || paths.Length == 0)
