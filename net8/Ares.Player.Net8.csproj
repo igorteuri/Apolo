@@ -39,6 +39,9 @@
     <Compile Include="..\src\Ares.Player\ToastPanel.cs" Link="ToastPanel.cs" />
     <Compile Include="..\src\Ares.Player\Player.Edit.cs" Link="Player.Edit.cs" />
     <Compile Include="..\src\Ares.Player\Player.Export.cs" Link="Player.Export.cs" />
+    <Compile Include="..\src\Ares.Player\Player.Packs.cs" Link="Player.Packs.cs" />
+    <Compile Include="..\src\Ares.Player\PackCatalog.cs" Link="PackCatalog.cs" />
+    <Compile Include="..\src\Ares.Player\ProjectCredits.cs" Link="ProjectCredits.cs" />
     <Compile Include="..\src\Ares.Player\Player.MusicTools.cs" Link="Player.MusicTools.cs" />
     <Compile Include="..\src\Ares.Player\Player.OnlineMedia.cs" Link="Player.OnlineMedia.cs" />
     <Compile Include="..\src\Ares.Player\OpenMedia.cs" Link="OpenMedia.cs" />

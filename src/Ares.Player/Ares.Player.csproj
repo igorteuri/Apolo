@@ -145,6 +145,9 @@
     <Compile Include="ToastPanel.cs" />
     <Compile Include="Player.Edit.cs" />
     <Compile Include="Player.Export.cs" />
+    <Compile Include="Player.Packs.cs" />
+    <Compile Include="PackCatalog.cs" />
+    <Compile Include="ProjectCredits.cs" />
     <Compile Include="Player.MusicTools.cs" />
     <Compile Include="Player.OnlineMedia.cs" />
     <Compile Include="OpenMedia.cs" />

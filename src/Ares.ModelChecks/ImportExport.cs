@@ -89,9 +89,10 @@ namespace Ares.ModelInfo
                     for (int i = 0; i < file.Count; ++i)
                     {
                         ZipEntry entry = file[i];
-                        if (entry.IsDirectory)
+                        if (entry.IsDirectory || IsUnsafeName(entry.Name))
                             continue;
-                        if (entry.Name.StartsWith(Exporter.ICONS_DIR + "/", StringComparison.Ordinal))
+                        if (entry.Name.StartsWith(Exporter.ICONS_DIR + "/", StringComparison.Ordinal) ||
+                            entry.Name.StartsWith(Exporter.PROJECT_DIR + "/", StringComparison.Ordinal))
                         {
                             overallSize += entry.Size;
                             continue;
@@ -214,6 +215,8 @@ namespace Ares.ModelInfo
                 while ((entry = stream.GetNextEntry()) != null)
                 {
                     bool isTagsDBFile = false;
+                    if (IsUnsafeName(entry.Name))
+                        continue;
                     String iconsFileName = GetIconsFileName(entry, data.TargetFile);
                     String fileName = iconsFileName != null ? iconsFileName : GetFileName(entry, out isTagsDBFile);
                     if (iconsFileName != null)
@@ -290,6 +293,19 @@ namespace Ares.ModelInfo
             public String InnerName { get; set; }
         }
 
+        // a name that climbs out of the folder (with "..") or starts at a drive or the root: such entries are never written
+        private static bool IsUnsafeName(String name)
+        {
+            if (name.Length > 1 && name[1] == ':')
+                return true;
+            foreach (String part in name.Split('/', (char)92))
+            {
+                if (part == "..")
+                    return true;
+            }
+            return name.StartsWith("/", StringComparison.Ordinal) || name[0] == (char)92;
+        }
+
         private static bool IsProjectName(String name)
         {
             if (name.IndexOf('/') >= 0 || name.IndexOf('\\') >= 0)
@@ -300,6 +316,17 @@ namespace Ares.ModelInfo
         // where an entry with a picture of a button goes (null if the entry is something else)
         private static String GetIconsFileName(ZipEntry entry, String targetFile)
         {
+            // the folder tree and the credits text go beside the project too
+            String projectPrefix = Exporter.PROJECT_DIR + "/";
+            if (entry.Name.StartsWith(projectPrefix, StringComparison.Ordinal) && !String.IsNullOrEmpty(targetFile))
+            {
+                String sidecar = entry.Name.Substring(projectPrefix.Length);
+                if (sidecar.Equals("pastas.json", StringComparison.OrdinalIgnoreCase))
+                    return targetFile + ".pastas.json";
+                if (sidecar.Equals("creditos.txt", StringComparison.OrdinalIgnoreCase))
+                    return targetFile + ".creditos.txt";
+                return null;
+            }
             String prefix = Exporter.ICONS_DIR + "/";
             if (!entry.Name.StartsWith(prefix, StringComparison.Ordinal) || String.IsNullOrEmpty(targetFile))
                 return null;
@@ -367,6 +394,9 @@ namespace Ares.ModelInfo
 
         /// <summary>The names of the entries for the pictures of the buttons (importing puts them beside the project).</summary>
         public static String ICONS_DIR = "Icons";
+
+        /// <summary>Entries for what the project keeps beside its file: Project/pastas.json (folder tree), Project/creditos.txt (credits).</summary>
+        public static String PROJECT_DIR = "Project";
 
         /// <param name="extraFiles">more files for the package: zip entry name, file on the disk (pictures of buttons)</param>
         public static void Export(IProgressMonitor monitor, Object data, String innerFileName, String exportFileName, Action<Exception> finishedAction,

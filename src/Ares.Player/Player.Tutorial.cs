@@ -176,6 +176,8 @@ Apolo updates: menu About > How to update.") }
                 form.ShowDialog(this);
                 Ares.CommonGUI.Preferences.SetBool("TutorialSeen", !again.Checked);
             }
+            // first start: after the tutorial, offer the ready-made packs (only once)
+            BeginInvoke((MethodInvoker)(() => OfferPacksFirstTime()));
         }
     }
 }

@@ -46,6 +46,7 @@ namespace Ares.Player
             source.Click += (s, e) => OpenAddress(SourceUrl);
             helpToolStripMenuItem.DropDownItems.Add(source);
             InitTutorial();
+            InitPacks();
         }
 
         // creates an empty project (with one first folder) in a file chosen by the user and opens it

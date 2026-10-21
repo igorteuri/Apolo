@@ -231,12 +231,34 @@ namespace Ares.Player
                     {
                         extras.Clear();
                     }
+                    // the nesting of the folders and the credits (authors and licences) travel in the package too
+                    string creditsTempFile = null;
+                    try
+                    {
+                        string treeFile = ModeTree.FileFor(m_Project.FileName);
+                        if (File.Exists(treeFile))
+                            extras[Ares.ModelInfo.Exporter.PROJECT_DIR + "/pastas.json"] = treeFile;
+                        string credits = BuildCreditsText();
+                        if (credits.Length > 0)
+                        {
+                            creditsTempFile = Path.Combine(Path.GetTempPath(), "apolo-credits-" + Guid.NewGuid().ToString("N") + ".txt");
+                            File.WriteAllText(creditsTempFile, credits, new System.Text.UTF8Encoding(false));
+                            extras[Ares.ModelInfo.Exporter.PROJECT_DIR + "/creditos.txt"] = creditsTempFile;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                    }
                     Ares.ModelInfo.Exporter.Export(monitor, m_Project, m_Project.FileName, target, error =>
                     {
                         monitor.Close();
                         if (iconsTempFile != null)
                         {
                             try { File.Delete(iconsTempFile); } catch (Exception) { }
+                        }
+                        if (creditsTempFile != null)
+                        {
+                            try { File.Delete(creditsTempFile); } catch (Exception) { }
                         }
                         if (error != null)
                         {
@@ -256,6 +278,41 @@ namespace Ares.Player
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+        }
+
+        // the credits of the project: the hand-written file beside it plus what the tags of its sounds say
+        private string BuildCreditsText()
+        {
+            string manual = "";
+            try
+            {
+                string file = ProjectCredits.FileFor(m_Project.FileName);
+                if (File.Exists(file))
+                    manual = File.ReadAllText(file, System.Text.Encoding.UTF8);
+            }
+            catch (Exception)
+            {
+            }
+            List<CreditEntry> entries = new List<CreditEntry>();
+            foreach (Ares.Data.IFileElement element in new Ares.ModelInfo.FileLists().GetAllFiles(m_Project))
+            {
+                try
+                {
+                    string dir = element.SoundFileType == Ares.Data.SoundFileType.Music ?
+                        Ares.Settings.Settings.Instance.MusicDirectory : Ares.Settings.Settings.Instance.SoundDirectory;
+                    string path = Path.Combine(dir, element.FilePath);
+                    if (!File.Exists(path))
+                        continue;
+                    Ares.Tags.AudioTagInfo tag = Ares.Tags.AudioTags.Read(path);
+                    if (tag == null)
+                        continue;
+                    entries.Add(new CreditEntry { File = element.FilePath, Title = tag.title, Artist = tag.artist, Copyright = tag.copyright, Comment = tag.comment });
+                }
+                catch (Exception)
+                {
+                }
+            }
+            return ProjectCredits.Build(manual, entries);
         }
 
         // ---- backup of the settings ----
