@@ -109,6 +109,7 @@
     <Compile Include="Audio\AudioChannel.cs" />
     <Compile Include="Audio\AudioCore.cs" />
     <Compile Include="Audio\AudioEngine.cs" />
+    <Compile Include="Audio\LevelCompressor.cs" />
     <Compile Include="Audio\Sources.cs" />
     <Compile Include="AudioDecoding.cs" />
     <Compile Include="AudioInit.cs" />

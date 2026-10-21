@@ -23,6 +23,7 @@
     <Compile Include="..\src\Ares.CommonGUI\ThemedComboBox.cs" Link="ThemedComboBox.cs" />
     <Compile Include="..\src\Ares.CommonGUI\ApoloBrand.cs" Link="ApoloBrand.cs" />
     <Compile Include="..\src\Ares.CommonGUI\ModernSlider.cs" Link="ModernSlider.cs" />
+    <Compile Include="..\src\Ares.CommonGUI\ModernToggle.cs" Link="ModernToggle.cs" />
     <Compile Include="..\src\Ares.CommonGUI\LibraryHelper.cs" Link="LibraryHelper.cs" />
     <Compile Include="..\src\Ares.CommonGUI\DropPlan.cs" Link="DropPlan.cs" />
     <Compile Include="..\src\Ares.CommonGUI\ImageDecoder.cs" Link="ImageDecoder.cs" />

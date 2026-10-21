@@ -252,6 +252,8 @@ namespace Ares.Playing.Audio
 
         // ------------------------------------------------------------------ properties
 
+        private readonly LevelCompressor m_Leveler = new LevelCompressor();
+
         public float MasterVolume
         {
             get { return m_Master; }
@@ -497,6 +499,8 @@ namespace Ares.Playing.Audio
                     }
                 }
             }
+            // leveler: brings quiet and loud material to about the same loudness (and limits the peaks)
+            m_Leveler.Process(m_Mix, BlockFrames, n, SampleRate, Ares.Playing.AudioLeveler.Enabled);
             // master volume (smooth over the block), and keep the signal in range
             float v0 = m_LastMaster;
             float v1 = m_Master;

@@ -13,6 +13,9 @@ namespace Ares.Player
     {
         private Panel m_VolumePanel;
         private const int VolumeColumnWidth = 124;
+        private const int LevelColumnWidth = 70;
+        private Label m_LevelLabel;
+        private Ares.CommonGUI.ModernToggle m_LevelToggle;
 
         private int HeaderHeight
         {
@@ -112,6 +115,7 @@ namespace Ares.Player
                         m_VolumePanel.Controls.Add(c);
                     }
                 }
+                InitLeveler();
                 Controls.Add(m_VolumePanel);
                 groupBox2.Visible = false;
 
@@ -242,7 +246,7 @@ namespace Ares.Player
             int headerTop = menuStrip1.Bottom + 6;
             int hh = HeaderHeight;
 
-            int vw = 3 * VolumeColumnWidth + 8;
+            int vw = 3 * VolumeColumnWidth + 8 + LevelColumnWidth;
             m_VolumePanel.SetBounds(width - margin - vw, headerTop, vw, hh);
             int labelHeight = Math.Max(16, Font.Height + 2);
             int sliderTop = labelHeight + 2;
@@ -259,6 +263,13 @@ namespace Ares.Player
                 columns[i][0].AutoSize = false;
                 columns[i][0].SetBounds(x + 4, 2, VolumeColumnWidth - 12, labelHeight);
                 columns[i][1].SetBounds(x, sliderTop, VolumeColumnWidth - 8, sliderHeight);
+            }
+
+            if (m_LevelLabel != null && m_LevelToggle != null)
+            {
+                int lx = 4 + 3 * VolumeColumnWidth;
+                m_LevelLabel.SetBounds(lx + 4, 2, LevelColumnWidth - 8, labelHeight);
+                m_LevelToggle.SetBounds(lx + 4, sliderTop, LevelColumnWidth - 12, Math.Min(sliderHeight, 30));
             }
 
             int left = margin;

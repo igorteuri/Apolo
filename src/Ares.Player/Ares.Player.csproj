@@ -146,6 +146,8 @@
     <Compile Include="Player.Edit.cs" />
     <Compile Include="Player.Export.cs" />
     <Compile Include="Player.Packs.cs" />
+    <Compile Include="Player.Tour.cs" />
+    <Compile Include="Player.Leveler.cs" />
     <Compile Include="PackCatalog.cs" />
     <Compile Include="ProjectCredits.cs" />
     <Compile Include="Player.MusicTools.cs" />

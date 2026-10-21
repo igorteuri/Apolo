@@ -14,15 +14,32 @@ namespace Ares.Player
     {
         private void InitTutorial()
         {
-            ToolStripMenuItem item = new ToolStripMenuItem(T("Tutorial do Apolo...", "Apolo tutorial..."));
+            ToolStripMenuItem item = new ToolStripMenuItem(T("Tutorial em texto...", "Text tutorial..."));
             item.Name = "tutorialMenuItem";
             item.Click += (s, e) => ShowTutorial();
             helpToolStripMenuItem.DropDownItems.Insert(0, item);
+            ToolStripMenuItem tour = new ToolStripMenuItem(T("Tour guiado do Apolo...", "Apolo guided tour..."));
+            tour.Name = "guidedTourMenuItem";
+            tour.Click += (s, e) => ShowGuidedTour(false);
+            helpToolStripMenuItem.DropDownItems.Insert(0, tour);
             Shown += (s, e) =>
             {
                 if (Ares.CommonGUI.Preferences.GetBool("TutorialSeen", false))
                     return;
-                BeginInvoke((MethodInvoker)(() => ShowTutorial()));
+                // the first time: the guided tour, once the window is on screen (it can be skipped; it is in the menu Sobre)
+                Timer wait = new Timer();
+                wait.Interval = 250;
+                int tries = 0;
+                wait.Tick += (s2, e2) =>
+                {
+                    tries++;
+                    if (!m_StartupDone && tries < 40)
+                        return;
+                    wait.Stop();
+                    wait.Dispose();
+                    ShowGuidedTour(true);
+                };
+                wait.Start();
             };
         }
 

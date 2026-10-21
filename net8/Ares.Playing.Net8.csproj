@@ -18,6 +18,7 @@
     <Compile Include="..\src\Ares.Playing\Audio\AudioChannel.cs" Link="Audio\AudioChannel.cs" />
     <Compile Include="..\src\Ares.Playing\Audio\AudioCore.cs" Link="Audio\AudioCore.cs" />
     <Compile Include="..\src\Ares.Playing\Audio\AudioEngine.cs" Link="Audio\AudioEngine.cs" />
+    <Compile Include="..\src\Ares.Playing\Audio\LevelCompressor.cs" Link="Audio\LevelCompressor.cs" />
     <Compile Include="..\src\Ares.Playing\Audio\Sources.cs" Link="Audio\Sources.cs" />
     <Compile Include="..\src\Ares.Playing\AudioDecoding.cs" Link="AudioDecoding.cs" />
     <Compile Include="..\src\Ares.Playing\AudioInit.cs" Link="AudioInit.cs" />
