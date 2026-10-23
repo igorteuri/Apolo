@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -461,6 +461,24 @@ namespace Apolo.Desktop
             {
                 OnOpen(this, new RoutedEventArgs());
                 e.Handled = true;
+            }
+            else if (e.Key == Key.N && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+            {
+                if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+                    OnNewFolder(this, new RoutedEventArgs());
+                else
+                    OnNewProject(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+            else if (!(e.Source is TextBox) && m_Host != null && m_Host.Control != null)
+            {
+                // the keys of the buttons (and: Esc stops everything, Left / Right = previous / next music)
+                int code = KeyMap.ToCode(e.Key, e.KeyModifiers);
+                if (code != 0 && m_Host.Control.KeyReceived(code))
+                {
+                    m_Model.Tick();
+                    e.Handled = true;
+                }
             }
             base.OnKeyDown(e);
         }
