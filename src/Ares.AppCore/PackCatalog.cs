@@ -18,7 +18,7 @@ using System.IO;
 
 namespace Ares.Player
 {
-    internal class PackInfo
+    public class PackInfo
     {
         public string Id = "";
         public string Title = "";
@@ -30,7 +30,7 @@ namespace Ares.Player
         public string Sha256 = "";
     }
 
-    internal static class PackCatalog
+    public static class PackCatalog
     {
         /// <summary>Reads the list. Packs without a title or a usable file are left out.</summary>
         public static List<PackInfo> Parse(string text, string catalogUrl)
@@ -125,6 +125,37 @@ namespace Ares.Player
             if (mb < 1024)
                 return mb.ToString(mb < 10 ? "0.0" : "0", CultureInfo.InvariantCulture) + " MB";
             return (mb / 1024.0).ToString("0.0", CultureInfo.InvariantCulture) + " GB";
+        }
+
+        /// <summary>Checks a downloaded pack (size and signature); null when it looks right, otherwise a message for the person.</summary>
+        public static string Verify(string file, PackInfo pack, bool portuguese)
+        {
+            try
+            {
+                long length = new FileInfo(file).Length;
+                if (length < 1024)
+                    return portuguese ? "O arquivo baixado está incompleto." : "The downloaded file is incomplete.";
+                if (pack.Bytes > 0 && length != pack.Bytes)
+                    return portuguese ? "O arquivo baixado não tem o tamanho esperado. Tente de novo." : "The downloaded file does not have the expected size. Try again.";
+                if (pack.Sha256.Length > 0)
+                {
+                    using (FileStream fs = File.OpenRead(file))
+                    using (System.Security.Cryptography.SHA256 sha = System.Security.Cryptography.SHA256.Create())
+                    {
+                        System.Text.StringBuilder hex = new System.Text.StringBuilder();
+                        foreach (byte b in sha.ComputeHash(fs))
+                            hex.Append(b.ToString("x2"));
+                        if (!string.Equals(hex.ToString(), pack.Sha256, System.StringComparison.OrdinalIgnoreCase))
+                            return portuguese ? "O arquivo baixado não confere com o esperado (assinatura diferente). Tente de novo."
+                                : "The downloaded file does not match what is expected (different signature). Try again.";
+                    }
+                }
+                return null;
+            }
+            catch (System.Exception ex)
+            {
+                return ex.Message;
+            }
         }
     }
 }

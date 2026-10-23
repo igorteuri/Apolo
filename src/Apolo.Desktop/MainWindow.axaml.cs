@@ -77,6 +77,8 @@ namespace Apolo.Desktop
             Find<MenuItem>("ProjectMenu").Header = AppHost.T("Projeto", "Project");
             Find<MenuItem>("NewItem").Header = AppHost.T("Novo projeto...", "New project...");
             Find<MenuItem>("OpenItem").Header = AppHost.T("Abrir...", "Open...");
+            Find<MenuItem>("PacksItem").Header = AppHost.T("Pacotes de conteúdo prontos...", "Ready-made content packs...");
+            Find<Button>("WelcomePacks").Content = AppHost.T("Baixar pacotes prontos...", "Download ready-made packs...");
             Find<MenuItem>("ImportFolderItem").Header = AppHost.T("Adicionar pasta de músicas...", "Add a folder of music...");
             Find<MenuItem>("ImportFilesItem").Header = AppHost.T("Adicionar arquivos de áudio...", "Add audio files...");
             Find<MenuItem>("RecentMenu").Header = AppHost.T("Recentes", "Recent");
@@ -250,6 +252,14 @@ namespace Apolo.Desktop
             {
                 new MessageWindow(AppHost.T("Erro ao adicionar", "Error while adding"), ex.Message).Show(this);
             }
+        }
+
+        private async void OnPacks(object sender, RoutedEventArgs e)
+        {
+            PacksWindow window = new PacksWindow(m_Host);
+            await window.ShowDialog(this);
+            if (window.ImportedProject != null)
+                OpenProject(window.ImportedProject);
         }
 
         private void OnSettings(object sender, RoutedEventArgs e)

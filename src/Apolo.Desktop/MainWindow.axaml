@@ -12,6 +12,7 @@
         <MenuItem Name="NewItem" Header="Novo projeto..." InputGesture="Ctrl+N" Click="OnNewProject" />
         <MenuItem Name="OpenItem" Header="Abrir..." InputGesture="Ctrl+O" Click="OnOpen" />
         <MenuItem Name="RecentMenu" Header="Recentes" />
+        <MenuItem Name="PacksItem" Header="Pacotes de conteúdo prontos..." Click="OnPacks" />
         <Separator />
         <MenuItem Name="ImportFolderItem" Header="Adicionar pasta de músicas..." Click="OnImportFolder" />
         <MenuItem Name="ImportFilesItem" Header="Adicionar arquivos de áudio..." Click="OnImportFiles" />
@@ -146,6 +147,7 @@
             <TextBlock Name="WelcomeTitle" Text="Bem-vindo ao Apolo" FontSize="24" FontWeight="SemiBold" HorizontalAlignment="Center" />
             <TextBlock Name="WelcomeText" TextWrapping="Wrap" TextAlignment="Center" Classes="dim" />
             <Button Name="WelcomeOpen" HorizontalAlignment="Center" Padding="22,10" Click="OnOpen" />
+            <Button Name="WelcomePacks" HorizontalAlignment="Center" Padding="22,10" Click="OnPacks" />
           </StackPanel>
         </Grid>
       </Border>

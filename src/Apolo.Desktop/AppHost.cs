@@ -167,7 +167,9 @@ namespace Apolo.Desktop
         /// <summary>Unpacks a pack (.apkg) into Documents/Apolo/Pacotes; "done" is called when it ends (error = null if all went well).</summary>
         public void Import(string packFile, Action<Exception> done)
         {
-            string folder = Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Apolo"), "Pacotes");
+            string forced = Environment.GetEnvironmentVariable("APOLO_DATA_DIR");
+            string folder = !string.IsNullOrEmpty(forced) ? Path.Combine(forced, "Pacotes")
+                : Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Apolo"), "Pacotes");
             Directory.CreateDirectory(folder);
             string name = Path.GetFileNameWithoutExtension(packFile);
             string target = Path.Combine(folder, name + ".apolo");
