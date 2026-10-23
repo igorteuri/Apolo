@@ -286,20 +286,23 @@ namespace Apolo.Desktop
         }
 
         // the sound cards: the menu is made when it opens, as cards can be plugged in meanwhile
-        private void OnOutputOpening(object sender, EventArgs e)
+        private void OnOutputClick(object sender, RoutedEventArgs e)
         {
-            MenuFlyout flyout = sender as MenuFlyout;
-            if (flyout == null)
+            Button button = sender as Button;
+            if (button == null)
                 return;
-            flyout.Items.Clear();
+            ContextMenu menu = new ContextMenu();
             int current = Ares.Settings.Settings.Instance.OutputDeviceIndex;
             foreach (Ares.Playing.AudioInit.OutputDevice device in Ares.Playing.AudioInit.GetActiveDevices())
             {
                 int index = device.Index;
                 MenuItem item = new MenuItem { Header = (index == current ? "✓  " : "     ") + device.Name };
                 item.Click += (s, a) => ChangeOutput(index);
-                flyout.Items.Add(item);
+                menu.Items.Add(item);
             }
+            menu.PlacementTarget = button;
+            menu.Placement = PlacementMode.BottomEdgeAlignedRight;
+            menu.Open(button);
         }
 
         private void ChangeOutput(int index)

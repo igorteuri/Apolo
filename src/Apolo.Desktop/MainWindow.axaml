@@ -30,11 +30,7 @@
         <MenuItem Name="TracksItem" Header="Lista de faixas" InputGesture="F9" Click="OnToggleTracks" />
       </MenuItem>
     </Menu>
-    <Button Grid.Column="1" Name="OutputButton" Classes="link" Margin="0,0,10,0" VerticalAlignment="Center" Content="{Binding OutputText}">
-      <Button.Flyout>
-        <MenuFlyout Placement="BottomEdgeAlignedRight" Opening="OnOutputOpening" />
-      </Button.Flyout>
-    </Button>
+    <Button Grid.Column="1" Name="OutputButton" Classes="link" Margin="0,0,10,0" VerticalAlignment="Center" Content="{Binding OutputText}" Click="OnOutputClick" />
     </Grid>
 
     <!-- playback, progress and volumes -->
@@ -223,7 +219,7 @@
       <Border Grid.Column="3" Classes="panel" Padding="8" Margin="6,0,0,0" Width="340" IsVisible="{Binding ShowTracks}">
         <Grid RowDefinitions="Auto,*">
           <TextBlock Text="{Binding TracksTitle}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,0,0,6" />
-          <ListBox Grid.Row="1" ItemsSource="{Binding Tracks}" Background="Transparent">
+          <ListBox Grid.Row="1" ItemsSource="{Binding Tracks}" Background="Transparent" SelectionMode="Single">
             <ListBox.ItemTemplate>
               <DataTemplate>
                 <Grid ColumnDefinitions="*,Auto">

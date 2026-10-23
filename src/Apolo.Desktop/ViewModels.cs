@@ -400,6 +400,18 @@ namespace Apolo.Desktop
             if (m_Selected != null)
                 m_Host.Control.SetMode(m_Selected.Title);
             m_Host.Control.SwitchElement(id);
+            if (m_Host.Project != null)
+            {
+                string shown = null;
+                foreach (IMode mode in m_Host.Project.GetModes())
+                {
+                    IModeElement el = mode.GetElements().FirstOrDefault(x => x.Id == id);
+                    if (el != null)
+                        shown = el.Title;
+                }
+                if (shown != null)
+                    ShowTracksOf(id, shown);
+            }
             m_Flash[id] = DateTime.UtcNow.AddMilliseconds(900);
             UpdatePlaying();
         }
@@ -615,7 +627,7 @@ namespace Apolo.Desktop
         public ObservableCollection<TrackVM> Tracks { get; private set; } = new ObservableCollection<TrackVM>();
         private string m_TracksTitle = "";
         public string TracksTitle { get { return m_TracksTitle; } private set { Set(ref m_TracksTitle, value); } }
-        private bool m_ShowTracks;
+        private bool m_ShowTracks = true;
         public bool ShowTracks { get { return m_ShowTracks; } set { Set(ref m_ShowTracks, value); } }
 
         public void ShowTracksOf(int id, string title)
@@ -634,7 +646,6 @@ namespace Apolo.Desktop
             if (element != null)
                 CollectTracks(element.StartElement, 0);
             TracksTitle = title + "  (" + Tracks.Count + ")";
-            ShowTracks = true;
         }
 
         private void CollectTracks(IElement element, int depth)
