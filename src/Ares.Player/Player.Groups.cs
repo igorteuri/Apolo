@@ -106,39 +106,11 @@ namespace Ares.Player
         /// </summary>
         private static List<ShownButton> LimitShown(List<ShownButton> shown, int limit, out List<CollapsedGroup> collapsed, out int hiddenInFirst)
         {
+            List<List<ShownButton>> groups;
+            List<ShownButton> kept = ShownLimit.Apply(shown, limit, sb => sb.Header != null, out groups, out hiddenInFirst);
             collapsed = new List<CollapsedGroup>();
-            hiddenInFirst = 0;
-            if (shown.Count <= limit)
-                return shown;
-            // the groups: a new one starts at every button which carries a heading (the first group has none)
-            List<List<ShownButton>> groups = new List<List<ShownButton>>();
-            foreach (ShownButton sb in shown)
-            {
-                if (groups.Count == 0 || sb.Header != null)
-                    groups.Add(new List<ShownButton>());
-                groups[groups.Count - 1].Add(sb);
-            }
-            List<ShownButton> kept = new List<ShownButton>();
-            bool full = false;
             foreach (List<ShownButton> group in groups)
-            {
-                if (!full && kept.Count == 0 && group.Count > limit)
-                {
-                    // the first group alone is too big
-                    kept.AddRange(group.GetRange(0, limit));
-                    hiddenInFirst = group.Count - limit;
-                    full = true;
-                }
-                else if (!full && kept.Count + group.Count <= limit)
-                {
-                    kept.AddRange(group);
-                }
-                else
-                {
-                    full = true;
-                    collapsed.Add(new CollapsedGroup { Header = group[0].Header, OwnerTitle = group[0].OwnerTitle, Count = group.Count });
-                }
-            }
+                collapsed.Add(new CollapsedGroup { Header = group[0].Header, OwnerTitle = group[0].OwnerTitle, Count = group.Count });
             return kept;
         }
 
