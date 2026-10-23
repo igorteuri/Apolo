@@ -2,14 +2,12 @@
  Apolo - a fork of Ares (Copyright (c) Joerg Ruedenauer), distributed under the GPL.
 
  The audio engine of Apolo: mixes all playing sounds in software and sends the result to a sound card
- (WASAPI, through NAudio) or - for "do not listen on this PC" - nowhere. Replaces the BASS library.
+ (WASAPI on Windows, OpenAL on Linux and macOS) or - for "do not listen on this PC" - nowhere. Replaces the BASS library.
 */
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using NAudio.CoreAudioApi;
-using NAudio.Wave;
 
 namespace Ares.Playing.Audio
 {
@@ -28,115 +26,6 @@ namespace Ares.Playing.Audio
         private const int TargetFrames = SampleRate / 12;  // about 80 ms are always mixed in advance
 
         public static AudioEngine Instance { get; private set; }
-
-        // ------------------------------------------------------------------ sinks
-
-        private abstract class Sink : IDisposable
-        {
-            public int Channels = 2;
-            public string DeviceId;
-            public volatile bool Failed;
-            public abstract int BufferedFrames { get; }
-            public abstract void Write(byte[] data, int count);
-            public abstract void Dispose();
-        }
-
-        /// <summary>No sound card: only a clock, so that the mixer runs in real time.</summary>
-        private sealed class NullSink : Sink
-        {
-            private readonly Stopwatch m_Clock = Stopwatch.StartNew();
-            private long m_Produced;
-
-            public override int BufferedFrames
-            {
-                get
-                {
-                    long played = (long)(m_Clock.Elapsed.TotalSeconds * SampleRate);
-                    if (m_Produced < played)
-                        m_Produced = played;
-                    return (int)(m_Produced - played);
-                }
-            }
-
-            public override void Write(byte[] data, int count)
-            {
-                m_Produced += count / (4 * Channels);
-            }
-
-            public override void Dispose()
-            {
-            }
-        }
-
-        private sealed class WasapiSink : Sink
-        {
-            private readonly BufferedWaveProvider m_Buffer;
-            private WasapiOut m_Out;
-
-            public WasapiSink(string deviceId, int channels)
-            {
-                Channels = channels;
-                DeviceId = deviceId;
-                WaveFormat format = channels > 2
-                    ? new WaveFormatExtensible(SampleRate, 32, channels)
-                    : WaveFormat.CreateIeeeFloatWaveFormat(SampleRate, channels);
-                m_Buffer = new BufferedWaveProvider(format);
-                m_Buffer.BufferDuration = TimeSpan.FromMilliseconds(1500);
-                m_Buffer.DiscardOnBufferOverflow = true;
-                m_Buffer.ReadFully = true;
-                MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
-                try
-                {
-                    MMDevice device = enumerator.GetDevice(deviceId);
-                    WasapiOut output = new WasapiOut(device, AudioClientShareMode.Shared, true, 60);
-                    try
-                    {
-                        output.PlaybackStopped += OnStopped;
-                        output.Init(m_Buffer);
-                        output.Play();
-                    }
-                    catch (Exception)
-                    {
-                        output.PlaybackStopped -= OnStopped;
-                        try { output.Dispose(); } catch (Exception) { }
-                        throw;
-                    }
-                    m_Out = output;
-                }
-                finally
-                {
-                    enumerator.Dispose();
-                }
-            }
-
-            private void OnStopped(object sender, StoppedEventArgs e)
-            {
-                if (e != null && e.Exception != null)
-                    Failed = true;
-            }
-
-            public override int BufferedFrames
-            {
-                get { return m_Buffer.BufferedBytes / (4 * Channels); }
-            }
-
-            public override void Write(byte[] data, int count)
-            {
-                m_Buffer.AddSamples(data, 0, count);
-            }
-
-            public override void Dispose()
-            {
-                WasapiOut output = m_Out;
-                m_Out = null;
-                if (output != null)
-                {
-                    output.PlaybackStopped -= OnStopped;
-                    try { output.Stop(); } catch (Exception) { }
-                    try { output.Dispose(); } catch (Exception) { }
-                }
-            }
-        }
 
         // ------------------------------------------------------------------ state
 
@@ -547,31 +436,16 @@ namespace Ares.Playing.Audio
             List<AudioDeviceInfo> result = new List<AudioDeviceInfo>();
             try
             {
-                MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
-                try
+                List<AudioDeviceInfo> cards = AudioBackend.Current.ListCards();
+                cards.Sort(delegate (AudioDeviceInfo x, AudioDeviceInfo y)
                 {
-                    List<AudioDeviceInfo> cards = new List<AudioDeviceInfo>();
-                    foreach (MMDevice device in enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
-                    {
-                        string name;
-                        try { name = device.FriendlyName; }
-                        catch (Exception) { name = device.ID; }
-                        cards.Add(new AudioDeviceInfo { Name = name, Id = device.ID });
-                    }
-                    cards.Sort(delegate (AudioDeviceInfo a, AudioDeviceInfo b)
-                    {
-                        int c = string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
-                        return c != 0 ? c : string.CompareOrdinal(a.Id, b.Id);
-                    });
-                    for (int i = 0; i < cards.Count; i++)
-                    {
-                        cards[i].Index = i + 1;
-                        result.Add(cards[i]);
-                    }
-                }
-                finally
+                    int c = string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
+                    return c != 0 ? c : string.CompareOrdinal(x.Id, y.Id);
+                });
+                for (int i = 0; i < cards.Count; i++)
                 {
-                    enumerator.Dispose();
+                    cards[i].Index = i + 1;
+                    result.Add(cards[i]);
                 }
             }
             catch (Exception)
@@ -580,60 +454,15 @@ namespace Ares.Playing.Audio
             return result;
         }
 
-        private static string DefaultDeviceId()
-        {
-            try
-            {
-                MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
-                try
-                {
-                    MMDevice device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
-                    return device.ID;
-                }
-                finally
-                {
-                    enumerator.Dispose();
-                }
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
-        private static int MixChannels(string deviceId)
-        {
-            try
-            {
-                MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
-                try
-                {
-                    MMDevice device = enumerator.GetDevice(deviceId);
-                    int channels = device.AudioClient.MixFormat.Channels;
-                    device.Dispose();
-                    if (channels >= 8) return 8;
-                    if (channels == 6) return 6;
-                    return 2;
-                }
-                finally
-                {
-                    enumerator.Dispose();
-                }
-            }
-            catch (Exception)
-            {
-                return 2;
-            }
-        }
-
         private static Sink OpenSink(int index)
         {
             if (index == 0)
                 return new NullSink();
+            AudioBackend backend = AudioBackend.Current;
             string id;
             if (index < 0)
             {
-                id = DefaultDeviceId();
+                id = backend.DefaultDeviceId();
             }
             else
             {
@@ -646,12 +475,12 @@ namespace Ares.Playing.Audio
             }
             if (id == null)
                 throw new AudioInitException(StringResources.BassDeviceInvalid);
-            int channels = MixChannels(id);
+            int channels = backend.MixChannels(id);
             if (channels > 2)
             {
                 try
                 {
-                    return new WasapiSink(id, channels);
+                    return backend.Open(id, channels);
                 }
                 catch (Exception)
                 {
@@ -660,7 +489,7 @@ namespace Ares.Playing.Audio
             }
             try
             {
-                return new WasapiSink(id, 2);
+                return backend.Open(id, 2);
             }
             catch (Exception ex)
             {
@@ -701,7 +530,7 @@ namespace Ares.Playing.Audio
                     reopen = true;
                 else if (m_DeviceIndex < 0)
                 {
-                    string id = DefaultDeviceId();
+                    string id = AudioBackend.Current.DefaultDeviceId();
                     if (id != null && current.DeviceId != null && id != current.DeviceId)
                         reopen = true;
                 }
