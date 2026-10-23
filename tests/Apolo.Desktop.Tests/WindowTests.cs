@@ -47,12 +47,14 @@ namespace Apolo.Desktop.Tests
             window.OpenProject(project);
             Assert.NotEmpty(window.Model.Folders);
             Shot(window, "projeto-aberto");
-            foreach (string name in new[] { "Humores", "Clima", "Animais" })
+            foreach (string name in new[] { "Humores", "Clima", "Animais", "Soundpads" })
             {
                 Apolo.Desktop.FolderVM folder = Find(window.Model.Folders, name);
                 if (folder == null)
                     continue;
+                System.Diagnostics.Stopwatch watch = System.Diagnostics.Stopwatch.StartNew();
                 window.Model.SelectedFolder = folder;
+                Assert.True(watch.ElapsedMilliseconds < 3000, name + " took " + watch.ElapsedMilliseconds + " ms");
                 Shot(window, "pasta-" + name);
             }
             window.Close();

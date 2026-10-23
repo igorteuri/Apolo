@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace Ares.Player
 {
-    internal static class ShownLimit
+    public static class ShownLimit
     {
         /// <summary>
         /// "items" are the buttons in order; "startsGroup" says whether an item is the first one of a group (a folder or one of its

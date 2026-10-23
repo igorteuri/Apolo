@@ -79,6 +79,21 @@
     <Setter Property="Margin" Value="8,14,8,2" />
   </Style>
 
+  <!-- a heading which can be clicked (it opens the folder) -->
+  <Style Selector="Button.link">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Foreground" Value="{StaticResource DimBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Margin" Value="4,12,4,2" />
+    <Setter Property="Padding" Value="6,4" />
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Button.link:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource CardHoverBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+  </Style>
+
   <Style Selector="TreeViewItem">
     <Setter Property="Padding" Value="2" />
     <Setter Property="MinHeight" Value="30" />

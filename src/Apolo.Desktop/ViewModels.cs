@@ -122,12 +122,19 @@ namespace Apolo.Desktop
         }
     }
 
-    /// <summary>The buttons of a folder, or of one of its subfolders (with a heading).</summary>
+    /// <summary>The buttons of a folder, or of one of its subfolders (with a heading). A group which did not fit is only its heading.</summary>
     public sealed class GroupVM
     {
         public string Header { get; set; }
-        public bool HasHeader { get { return !string.IsNullOrEmpty(Header); } }
+        public string OwnerTitle { get; set; }
+        public string HeaderText { get; set; }
+        public bool HasHeader { get { return !string.IsNullOrEmpty(HeaderText); } }
         public ObservableCollection<CardVM> Cards { get; private set; }
+        public ICommand OpenCommand { get; set; }
+        /// <summary>The line "show more buttons" of a folder with more buttons than the limit (empty if none).</summary>
+        public string MoreText { get; set; }
+        public bool HasMore { get { return !string.IsNullOrEmpty(MoreText); } }
+        public ICommand MoreCommand { get; set; }
         public GroupVM() { Cards = new ObservableCollection<CardVM>(); }
     }
 
@@ -246,49 +253,121 @@ namespace Apolo.Desktop
             }
         }
 
-        // the buttons of the folder, then (under a heading each) the ones of its subfolders
+        // a button of the folder which is shown, with the heading of its group (the first button of a group)
+        private sealed class Entry
+        {
+            public IModeElement Element;
+            public string Owner;
+            public string Header;
+        }
+
+        private const int ShownLimitStep = 200;
+        private int m_ShownLimit = ShownLimitStep;
+        private string m_ShownLimitFolder;
+
+        // the buttons of the folder, then (under a heading each) the ones of its subfolders. Only the first ones are made:
+        // a thousand cards take seconds to build; the groups which do not fit are a heading which opens the folder.
         private void ShowFolder()
         {
             Groups.Clear();
             if (m_Selected == null || m_Host.Project == null)
                 return;
+            if (m_Selected.Title != m_ShownLimitFolder)
+            {
+                m_ShownLimitFolder = m_Selected.Title;
+                m_ShownLimit = ShownLimitStep;
+            }
             Dictionary<string, IMode> byTitle = new Dictionary<string, IMode>(StringComparer.Ordinal);
             foreach (IMode mode in m_Host.Project.GetModes())
             {
                 if (!byTitle.ContainsKey(mode.Title))
                     byTitle.Add(mode.Title, mode);
             }
-            AddGroup(m_Selected.Node, null, byTitle);
-            AddChildren(m_Selected.Node, "", byTitle, 0);
+            List<Entry> entries = new List<Entry>();
+            Collect(m_Selected.Node, null, byTitle, entries);
+            CollectChildren(m_Selected.Node, "", byTitle, entries, 0);
+
+            List<List<Entry>> collapsed;
+            int hiddenInFirst;
+            List<Entry> kept = ShownLimit.Apply(entries, m_ShownLimit, e => e.Header != null, out collapsed, out hiddenInFirst);
+
+            GroupVM group = null;
+            foreach (Entry entry in kept)
+            {
+                if (group == null || entry.Header != null)
+                {
+                    group = NewGroup(entry.Header, entry.Owner);
+                    Groups.Add(group);
+                }
+                group.Cards.Add(new CardVM(entry.Element, entry.Owner, m_Host.ProjectPath, Play));
+            }
+            if (hiddenInFirst > 0 && group != null)
+            {
+                int more = Math.Min(ShownLimitStep, hiddenInFirst);
+                group.MoreText = AppHost.T("▼ Mostrar mais " + more + " botões (faltam " + hiddenInFirst + ")", "▼ Show " + more + " more buttons (" + hiddenInFirst + " left)");
+                group.MoreCommand = new RelayCommand(() => { m_ShownLimit += ShownLimitStep; ShowFolder(); });
+            }
+            foreach (List<Entry> rest in collapsed)
+            {
+                GroupVM stub = NewGroup(rest[0].Header, rest[0].Owner);
+                stub.HeaderText = (rest[0].Header ?? rest[0].Owner) + "  —  " + rest.Count + AppHost.T(" botões (clique para abrir)", " buttons (click to open)");
+                Groups.Add(stub);
+            }
             UpdatePlaying();
         }
 
-        private void AddChildren(ModeNode parent, string prefix, Dictionary<string, IMode> byTitle, int depth)
+        private GroupVM NewGroup(string header, string owner)
+        {
+            GroupVM group = new GroupVM { Header = header, OwnerTitle = owner, HeaderText = header };
+            string title = owner;
+            group.OpenCommand = new RelayCommand(() => OpenFolder(title));
+            return group;
+        }
+
+        private void OpenFolder(string title)
+        {
+            FolderVM found = FindFolder(Folders, title);
+            if (found != null)
+                SelectedFolder = found;
+        }
+
+        private static FolderVM FindFolder(IEnumerable<FolderVM> list, string title)
+        {
+            foreach (FolderVM f in list)
+            {
+                if (f.Title == title)
+                    return f;
+                FolderVM inner = FindFolder(f.Children, title);
+                if (inner != null)
+                    return inner;
+            }
+            return null;
+        }
+
+        private void CollectChildren(ModeNode parent, string prefix, Dictionary<string, IMode> byTitle, List<Entry> into, int depth)
         {
             if (depth > 32)
                 return;
             foreach (ModeNode child in parent.Children)
             {
                 string label = prefix.Length == 0 ? child.Title : prefix + " › " + child.Title;
-                AddGroup(child, label, byTitle);
-                AddChildren(child, label, byTitle, depth + 1);
+                Collect(child, label, byTitle, into);
+                CollectChildren(child, label, byTitle, into, depth + 1);
             }
         }
 
-        private void AddGroup(ModeNode node, string header, Dictionary<string, IMode> byTitle)
+        private void Collect(ModeNode node, string header, Dictionary<string, IMode> byTitle, List<Entry> into)
         {
             IMode mode;
             if (!byTitle.TryGetValue(node.Title, out mode))
                 return;
-            GroupVM group = new GroupVM { Header = header };
             foreach (IModeElement element in mode.GetElements())
             {
                 if (!element.IsVisibleInPlayer)
                     continue;
-                group.Cards.Add(new CardVM(element, mode.Title, m_Host.ProjectPath, Play));
+                into.Add(new Entry { Element = element, Owner = mode.Title, Header = header });
+                header = null;
             }
-            if (group.Cards.Count > 0 || header == null)
-                Groups.Add(group);
         }
 
         private void Play(int id)

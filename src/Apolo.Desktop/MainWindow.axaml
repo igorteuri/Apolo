@@ -99,7 +99,7 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
                   <StackPanel>
-                    <TextBlock Classes="heading" Text="{Binding Header}" IsVisible="{Binding HasHeader}" />
+                    <Button Classes="link" Content="{Binding HeaderText}" Command="{Binding OpenCommand}" IsVisible="{Binding HasHeader}" />
                     <ItemsControl ItemsSource="{Binding Cards}">
                       <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -127,6 +127,7 @@
                         </DataTemplate>
                       </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                    <Button Classes="link" Content="{Binding MoreText}" Command="{Binding MoreCommand}" IsVisible="{Binding HasMore}" />
                   </StackPanel>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
