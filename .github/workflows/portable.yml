@@ -1,0 +1,28 @@
+name: Portable core (Linux, macOS)
+
+# The core of Apolo (data, settings, tags, audio engine, players) builds as plain .NET 8, without Windows.
+# This workflow keeps it that way and runs the automatic tests on Linux and macOS.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  portable:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build the portable projects
+        run: |
+          dotnet build src/Ares.Playing/Ares.Playing.csproj -c Release --nologo -v:q -clp:ErrorsOnly
+          dotnet build src/Ares.Players/Ares.Players.csproj -c Release --nologo -v:q -clp:ErrorsOnly
+          dotnet build src/Ares.ModelChecks/Ares.ModelInfo.csproj -c Release --nologo -v:q -clp:ErrorsOnly
+      - name: Automatic tests
+        run: dotnet test tests/Apolo.Tests/Apolo.Tests.csproj -c Release --nologo
