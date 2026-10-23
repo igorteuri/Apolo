@@ -2,7 +2,7 @@
 
 Esta é a versão do Apolo que roda em **Linux, macOS e Windows** com a mesma janela (feita com Avalonia) e o **mesmo motor de áudio** do Apolo para Windows. Ela fica na pasta `src/Apolo.Desktop`. O Apolo para Windows de sempre (WinForms) continua sendo o principal enquanto a versão nova não tiver tudo.
 
-> **Estado:** primeira etapa. Toca projetos prontos, mas ainda não edita. Veja a tabela no fim.
+> **Estado:** em andamento. Já toca, importa, edita o básico e baixa pacotes. Veja a tabela no fim.
 
 ## Como baixar
 
@@ -45,12 +45,15 @@ Os projetos `.apolo` e os pacotes `.apkg` são os mesmos do Windows: dá para mo
 | Efeitos que repetem com crossfade | sim | **sim** (mesmo motor) |
 | Barra de progresso com pulo, lista de efeitos tocando | sim | **sim** |
 | Escolher pasta de músicas e placa de som | sim | **sim** |
-| Modo de edição (criar/mudar pastas e botões), arrastar arquivos | sim | falta |
-| Lista de faixas, importar pastas, desfazer | sim | falta |
+| Criar projeto, adicionar pastas e arquivos (arrastar e soltar, com as mesmas perguntas do Windows) | sim | **sim** |
+| Renomear, mover, excluir, ícone, cor e imagem de botões e pastas; pastas e subpastas novas | sim | **sim** (sem "desfazer" ainda) |
+| Baixar pacotes prontos | sim | **sim** |
+| Teclas dos botões e Esc / setas (com a janela em foco) | sim | **sim** (atalho global só no Windows) |
+| Arrastar para reorganizar, lista de faixas, propriedades da playlist, desfazer | sim | falta |
 | Controle remoto pelo celular, Stream Deck, Foundry | sim | falta |
 | Discord, envio de áudio (VDO.Ninja), overlay do OBS | sim | falta |
 | Pad flutuante com atalho global | sim | falta |
-| Tour guiado, tutorial, baixar pacotes prontos | sim | falta |
+| Tour guiado e tutorial | sim | falta |
 | Abas de web, captura de áudio de outros programas | sim | só no Windows |
 
 Ver também `docs/PORTABILIDADE.md` (a ordem planejada).
