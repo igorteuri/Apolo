@@ -518,11 +518,12 @@ namespace Ares.Player
                     m_MusicProgressBar.Clear();
 
                 List<Ares.Playing.PlayingFileInfo> sounds = control.GetRunningSounds();
+                // the repeat set in the playlist shows in both places (the bars on the left and the chips)
+                ShowConfiguredRepeat(sounds);
                 if (sounds.Count > 0)
                     m_SoundPanel.UpdateSounds(sounds);
                 else
                     m_SoundPanel.ClearSounds();
-                ShowConfiguredRepeat(sounds);
                 if (m_NowPlaying != null && m_NowPlaying.SetSounds(sounds))
                     LayoutMainColumns();
 

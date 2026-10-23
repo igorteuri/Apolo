@@ -125,6 +125,11 @@ namespace Ares.Playing.Audio
         private bool m_StopAtSilence;
         private bool m_Loop;
         private double m_LoopStart;
+        private int m_XfFrames;            // length of the crossfade of a loop (frames, 0 = none)
+        private float[] m_HeadCache;       // the first m_XfFrames frames of the sound (stereo), kept to blend the end into the start
+        private int m_CacheFill;
+        private bool m_HeadPass;           // the sound is being played from its start: the head is being kept
+        private int m_XfIndex = -1;        // >= 0 while the end is blended with the start
         private double m_CueOut = -1;
         private double m_FadeAt = -1;
 
@@ -188,6 +193,23 @@ namespace Ares.Playing.Audio
         }
 
         /// <summary>Where a repeated sound starts again (seconds).</summary>
+        /// <summary>Crossfade of a repeated sound with itself, in milliseconds (0 = a plain jump back to the start).</summary>
+        public int LoopCrossfadeMs
+        {
+            get { lock (m_Lock) { return (int)(m_XfFrames * 1000L / AudioEngine.SampleRate); } }
+            set
+            {
+                lock (m_Lock)
+                {
+                    m_XfFrames = Math.Max(0, (int)(value * 0.001 * AudioEngine.SampleRate));
+                    m_HeadCache = m_XfFrames > 0 ? new float[m_XfFrames * 2] : null;
+                    m_CacheFill = 0;
+                    m_XfIndex = -1;
+                    m_HeadPass = m_XfFrames > 0 && m_BasePos == m_LoopStart && m_Played == 0;
+                }
+            }
+        }
+
         public double LoopStart
         {
             get { lock (m_Lock) { return m_LoopStart; } }
@@ -326,6 +348,15 @@ namespace Ares.Playing.Audio
                 m_Head.Reset();
                 m_BasePos = seconds;
                 m_Played = 0;
+                m_XfIndex = -1;
+                if (m_XfFrames > 0)
+                {
+                    // the head of the sound can only be kept while it plays from its start
+                    bool atStart = Math.Abs(seconds - m_LoopStart) < 0.001;
+                    if (atStart || m_CacheFill < m_XfFrames)
+                        m_CacheFill = 0;
+                    m_HeadPass = atStart && m_CacheFill < m_XfFrames;
+                }
                 if (m_FadeAt >= 0 && seconds < m_FadeAt)
                     m_Fired = false;
                 return true;
@@ -333,6 +364,12 @@ namespace Ares.Playing.Audio
         }
 
         // ------------------------------------------------------------------ control
+
+        /// <summary>For the tests: the channel plays, but only when somebody calls Mix (the engine does not know it).</summary>
+        internal void MarkPlayingForTest()
+        {
+            lock (m_Lock) { m_State = ChannelState.Playing; }
+        }
 
         public bool Start()
         {
@@ -425,9 +462,47 @@ namespace Ares.Playing.Audio
                             reachedEnd = true;
                         }
                     }
+                    // a repeated sound blends its end into its start: the last m_XfFrames frames play together with the head
+                    if (m_XfIndex >= 0 && !m_Loop)
+                        m_XfIndex = -1;
+                    bool blend = m_XfFrames > 0 && m_Loop && m_Source.CanSeek && m_CacheFill >= m_XfFrames && m_Speed == 1.0
+                        && m_Stretch == null && m_FadeAt < 0 && m_CueOut <= 0 && m_Length > 0;
+                    if (blend && m_XfIndex < 0)
+                    {
+                        double remainingFrames = (m_Length - posNow) * AudioEngine.SampleRate;
+                        if (remainingFrames <= m_XfFrames)
+                            m_XfIndex = Math.Max(0, m_XfFrames - (int)remainingFrames);
+                        else if (remainingFrames - want < m_XfFrames)
+                            want = Math.Max(1, (int)(remainingFrames - m_XfFrames));
+                    }
                     int got = want > 0 ? ReadStage(m_Scratch, want) : 0;
                     if (got < want)
                         reachedEnd = true;
+                    if (got > 0 && m_XfIndex >= 0 && m_HeadCache != null)
+                    {
+                        for (int i = 0; i < got; i++)
+                        {
+                            int idx = m_XfIndex + i;
+                            if (idx >= m_XfFrames)
+                            {
+                                got = i; // the rest of the file is not played: the head takes over
+                                break;
+                            }
+                            double angle = (double)idx / m_XfFrames * (Math.PI / 2);
+                            float fadeOut = (float)Math.Cos(angle), fadeIn = (float)Math.Sin(angle);
+                            m_Scratch[2 * i] = m_Scratch[2 * i] * fadeOut + m_HeadCache[2 * idx] * fadeIn;
+                            m_Scratch[2 * i + 1] = m_Scratch[2 * i + 1] * fadeOut + m_HeadCache[2 * idx + 1] * fadeIn;
+                        }
+                        m_XfIndex += got;
+                    }
+                    else if (got > 0 && m_HeadPass && m_HeadCache != null && m_CacheFill < m_XfFrames)
+                    {
+                        int take = Math.Min(got, m_XfFrames - m_CacheFill);
+                        Array.Copy(m_Scratch, 0, m_HeadCache, m_CacheFill * 2, take * 2);
+                        m_CacheFill += take;
+                        if (m_CacheFill >= m_XfFrames)
+                            m_HeadPass = false;
+                    }
                     if (got > 0)
                     {
                         Process(m_Scratch, got);
@@ -450,6 +525,29 @@ namespace Ares.Playing.Audio
                             break;
                         }
                     }
+                    if (m_XfIndex >= 0 && m_Loop && (m_XfIndex >= m_XfFrames || reachedEnd))
+                    {
+                        // the blend is over: go on in the file right after the part of the head which was already played
+                        double resume = m_LoopStart + Math.Min(m_XfIndex, m_XfFrames) / (double)AudioEngine.SampleRate;
+                        try
+                        {
+                            m_Source.Seek(resume);
+                            m_Head.Reset();
+                            m_BasePos = resume;
+                            m_Played = 0;
+                            m_Fired = false;
+                            m_XfIndex = -1;
+                            loopedNow = true;
+                        }
+                        catch (Exception)
+                        {
+                            Finish();
+                            endedNow = true;
+                            alive = false;
+                            break;
+                        }
+                        continue;
+                    }
                     if (!reachedEnd)
                         continue;
                     // the end of the sound
@@ -463,6 +561,11 @@ namespace Ares.Playing.Audio
                             m_Played = 0;
                             m_Fired = false;
                             loopedNow = true;
+                            if (m_XfFrames > 0 && m_CacheFill < m_XfFrames)
+                            {
+                                m_CacheFill = 0;
+                                m_HeadPass = true;
+                            }
                         }
                         catch (Exception)
                         {

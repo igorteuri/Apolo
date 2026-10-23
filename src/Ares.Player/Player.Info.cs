@@ -48,6 +48,7 @@ namespace Ares.Player
             InitTutorial();
             InitPacks();
             InitPad();
+            InitFolderZoom();
         }
 
         // creates an empty project (with one first folder) in a file chosen by the user and opens it

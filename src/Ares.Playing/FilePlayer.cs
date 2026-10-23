@@ -32,6 +32,10 @@ namespace Ares.Playing
             return engine != null ? engine.GetChannel(handle) : null;
         }
 
+        /// <summary>Set by the element player while it starts a sound which will be played again afterwards (a repetition by new plays).</summary>
+        [ThreadStatic]
+        internal static bool s_RepeatIntent;
+
         public int PlayFile(ISoundFile file, int fadeInTime, PlayingFinished callback, bool loop)
         {
             AudioEngine engine = AudioEngine.Instance;
@@ -70,11 +74,27 @@ namespace Ares.Playing
                 channel.CueOut = effects.CueOut.Position;
             if (cueInActive)
                 channel.LoopStart = effects.CueIn.Position;
-            SetStartVolume(file, fadeInTime, channel, info);
-            info.CrossFade = false;
             double length = channel.Length;
+            // a repeated sound effect is blended with itself: a loop inside the channel, a repetition by new plays with a crossfade
+            int selfMs = 0;
+            if (SoundRepeat.CrossfadeEnabled && file.SoundFileType == SoundFileType.SoundEffect && length > 0)
+                selfMs = (int)Math.Min(SoundRepeat.CrossfadeMs, length * 1000 / 3);
+            if (selfMs < 100)
+                selfMs = 0;
+            int selfFade = !loop && s_RepeatIntent && (effects == null || effects.FadeOutTime == 0) ? selfMs : 0;
+            if (loop && selfMs > 0 && (effects == null || effects.FadeOutTime == 0))
+                channel.LoopCrossfadeMs = selfMs;
+            else if (selfMs > 0 && !loop)
+                channel.LoopCrossfadeMs = selfMs; // the repeat button may be switched on later
+            SetStartVolume(file, Math.Max(fadeInTime, selfFade), channel, info);
+            info.CrossFade = false;
             int fadeOutTime = effects != null ? effects.FadeOutTime : 0;
             bool crossFading = effects != null && effects.CrossFading;
+            if (selfFade > 0)
+            {
+                fadeOutTime = selfFade;
+                crossFading = true;
+            }
             int settingTime;
             if (!loop && file.SoundFileType == SoundFileType.Music && PlayingModule.ThePlayer.GetMusicCrossFade(out settingTime))
             {

@@ -500,7 +500,12 @@ namespace Ares.Playing
             }
             else if ((fileElement.SoundFileType == Data.SoundFileType.SoundEffect) && !stopSounds)
             {
-                int handle = Client.PlayFile(fileElement, 0, (success) =>
+                // a sound which comes again (a repetition by new plays) is blended with itself by the file player
+                FilePlayer.s_RepeatIntent = m_RepeatState && !m_LoopElement;
+                int handle;
+                try
+                {
+                handle = Client.PlayFile(fileElement, 0, (success) =>
                     {
                         lock (syncObject)
                         {
@@ -511,6 +516,11 @@ namespace Ares.Playing
                         }
                         Next();
                     }, m_LoopElement);
+                }
+                finally
+                {
+                    FilePlayer.s_RepeatIntent = false;
+                }
                 lock (syncObject)
                 {
                     CurrentPlayedHandle = handle;
