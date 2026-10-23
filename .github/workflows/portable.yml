@@ -25,4 +25,6 @@ jobs:
           dotnet build src/Ares.Players/Ares.Players.csproj -c Release --nologo -v:q -clp:ErrorsOnly
           dotnet build src/Ares.ModelChecks/Ares.ModelInfo.csproj -c Release --nologo -v:q -clp:ErrorsOnly
       - name: Automatic tests
+        env:
+          ALSOFT_DRIVERS: "null"   # OpenAL Soft makes no sound on the machines of the build
         run: dotnet test tests/Apolo.Tests/Apolo.Tests.csproj -c Release --nologo

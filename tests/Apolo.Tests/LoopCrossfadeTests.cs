@@ -6,6 +6,7 @@ namespace Apolo.Tests
 {
     // The loop of a sound effect blends its end into its beginning. The sound here has three parts of constant level
     // (head 0.2, body 0.5, tail 0.8), so the level tells where the playback is inside the blend.
+    [Collection("DataModule")]
     public class LoopCrossfadeTests
     {
         private const int Rate = AudioEngine.SampleRate;

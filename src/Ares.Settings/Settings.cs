@@ -268,7 +268,8 @@ namespace Ares.Settings
 #if MONO
 			bool success = false;
 #else
-            bool success = ReadFromSharedMemory();
+            // the settings are shared with other programs of Ares only on Windows (named events do not exist on Linux and macOS)
+            bool success = UseSharedMemory && ReadFromSharedMemory();
 #endif
 			#if !ANDROID
             if (!success && !String.IsNullOrEmpty(directory))
@@ -310,6 +311,8 @@ namespace Ares.Settings
                 UseWebNetwork = false;
             }
 #if !MONO
+            if (UseSharedMemory)
+            {
             bool createdOwn;
             bool createdOther;
             m_OwnWaitHandle = new System.Threading.EventWaitHandle(false, System.Threading.EventResetMode.ManualReset, "AresSettingsEvent" + m_ID, out createdOwn);
@@ -317,6 +320,7 @@ namespace Ares.Settings
             m_SharedMemoryThread = new System.Threading.Thread(ListenForSMChanges);
             m_ContinueSMThread = true;
             m_SharedMemoryThread.Start();
+            }
 #endif
             return success;
         }
@@ -324,6 +328,8 @@ namespace Ares.Settings
         public void Shutdown()
         {
 #if !MONO
+            if (!UseSharedMemory || m_OwnWaitHandle == null)
+                return;
             m_OwnWaitHandle.Close();
             m_OtherWaitHandle.Close();
             if (m_SharedMemory != null)
@@ -340,8 +346,14 @@ namespace Ares.Settings
         public void Commit()
         {
 #if !MONO
-            WriteToSharedMemory();
+            if (UseSharedMemory)
+                WriteToSharedMemory();
 #endif
+        }
+
+        private static bool UseSharedMemory
+        {
+            get { return OperatingSystem.IsWindows(); }
         }
 
         private Settings()

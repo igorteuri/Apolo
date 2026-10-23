@@ -8,6 +8,7 @@ namespace Apolo.Tests
 {
     // The sound output of Linux and macOS (OpenAL Soft). The tests use the "null" driver of the library: nothing is heard,
     // but the library is loaded, buffers are queued and the position of the playback is followed.
+    [Collection("DataModule")]
     public class OpenAlSinkTests
     {
         [DllImport("libc", EntryPoint = "setenv")]
