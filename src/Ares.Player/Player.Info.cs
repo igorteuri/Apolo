@@ -47,6 +47,7 @@ namespace Ares.Player
             helpToolStripMenuItem.DropDownItems.Add(source);
             InitTutorial();
             InitPacks();
+            InitPad();
         }
 
         // creates an empty project (with one first folder) in a file chosen by the user and opens it
@@ -109,7 +110,7 @@ namespace Ares.Player
 
 Versão " + version + @"
 
-Player de áudio para mesas de RPG, feito para tocar música e efeitos sonoros ao mesmo tempo, com controle pelo celular, Stream Deck, Discord e Foundry VTT.
+Controlador de músicas para mesas de RPG, feito para tocar música e efeitos sonoros ao mesmo tempo (não vem com músicas: use as suas ou baixe pacotes prontos), com controle pelo celular, Stream Deck, Discord e Foundry VTT.
 
 O Apolo é mantido pelo canal Dados Críticos. As novidades chegam primeiro aos Clubistas, os apoiadores do canal.
 
@@ -123,7 +124,7 @@ O código do Apolo é aberto e está no GitHub:
 
 Version " + version + @"
 
-Audio player for tabletop RPG, made to play music and sound effects at the same time, with control from a phone, Stream Deck, Discord and Foundry VTT.
+Music controller for tabletop RPG, made to play music and sound effects at the same time (it does not come with music: use your own or download ready-made packs), with control from a phone, Stream Deck, Discord and Foundry VTT.
 
 Apolo is kept by the Dados Críticos channel. The news reach the Clubistas, the supporters of the channel, first.
 

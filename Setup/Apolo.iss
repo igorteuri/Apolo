@@ -98,8 +98,8 @@ brazilianportuguese.FileTypeProject=Projeto do Apolo
 english.FileTypeProject=Apolo project
 brazilianportuguese.FileTypePacked=Projeto empacotado do Apolo
 english.FileTypePacked=Apolo packed project
-brazilianportuguese.WelcomeCredits=O Apolo é um player de áudio para mesas de RPG, criado por Igor Teuri (Dados Críticos). Ele é uma modernização do Ares, de Jörg Ruedenauer, a quem pertence o crédito pela base do programa. Software livre, sob a licença GNU GPL (versão 2 ou posterior).
-english.WelcomeCredits=Apolo is an audio player for tabletop RPG sessions, created by Igor Teuri (Dados Críticos). It is a modernization of Ares by Jörg Ruedenauer, who deserves the credit for the foundation of the program. Free software under the GNU GPL (version 2 or later).
+brazilianportuguese.WelcomeCredits=O Apolo é um controlador de músicas para mesas de RPG. Ele não vem com músicas: use as suas ou baixe pacotes prontos pelo próprio programa. Criado por Igor Teuri (Dados Críticos), é uma modernização do Ares, de Jörg Ruedenauer, a quem pertence o crédito pela base. Software livre, sob a licença GNU GPL (versão 2 ou posterior).
+english.WelcomeCredits=Apolo is a music controller for tabletop RPG sessions. It does not come with music: use your own or download ready-made packs inside the program. Created by Igor Teuri (Dados Críticos), it is a modernization of Ares by Jörg Ruedenauer, who deserves the credit for the foundation of the program. Free software under the GNU GPL (version 2 or later).
 
 [Code]
 // O Apolo vem com o .NET 8 junto (nao precisa instalar nada alem do Windows 10 ou 11).

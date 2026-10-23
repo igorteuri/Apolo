@@ -48,7 +48,9 @@ namespace Ares.Player
             return new string[][]
             {
                 new string[] { T("Bem-vindo ao Apolo", "Welcome to Apolo"), T(
-@"O Apolo toca música e efeitos sonoros AO MESMO TEMPO, para mesas de RPG, lives e jogos.
+@"O Apolo é um controlador de músicas para mesas de RPG, lives e jogos. Ele toca música e efeitos sonoros AO MESMO TEMPO.
+
+ATENÇÃO: o Apolo NÃO vem com músicas. Você usa as suas ou baixa pacotes prontos (veja a página ""Pacotes prontos"").
 
 COMO ELE SE ORGANIZA
 • Projeto: o arquivo com tudo o que você montou (menu Projeto > Novo projeto).
@@ -56,7 +58,9 @@ COMO ELE SE ORGANIZA
 • Playlist (botão): cada cartão grande. Clique para tocar, clique de novo para parar.
 
 Um botão pode ser uma playlist de MÚSICA (selo ♫ no canto), um EFEITO SONORO (selo ⚡) ou os dois. A música toca em segundo plano e os efeitos tocam por cima dela.",
-@"Apolo plays music and sound effects AT THE SAME TIME, for tabletop RPG, streams and games.
+@"Apolo is a music controller for tabletop RPG, streams and games. It plays music and sound effects AT THE SAME TIME.
+
+NOTE: Apolo does NOT come with music. You use your own or download ready-made packs (see the page ""Ready-made packs"").
 
 HOW IT IS ORGANIZED
 • Project: the file with everything you built (menu Project > New project).
@@ -81,6 +85,26 @@ In the small window, choose what to do:
 
 To organize, enter edit mode (button at the top): you can drag buttons around, change emoji and colour, rename and delete. If you make a mistake, press Ctrl+Z.") },
 
+                new string[] { T("Pacotes prontos", "Ready-made packs"), T(
+@"Quer começar sem montar tudo? Use os PACOTES: projetos prontos, com pastas, botões, imagens e músicas livres.
+
+COMO BAIXAR
+• Menu Projeto > Pacotes de conteúdo prontos...
+• Escolha o pacote, clique em baixar e espere. O Apolo confere o arquivo, importa tudo e abre o projeto.
+
+As músicas dos pacotes têm licença livre e os créditos dos autores vão junto: veja em Projeto > Créditos do projeto. Se usar na live ou em vídeo, credite também lá.
+
+Para abrir um pacote que você recebeu (arquivo .apkg), use Projeto > Importar.",
+@"Want to start without building everything? Use the PACKS: ready projects with folders, buttons, pictures and free music.
+
+HOW TO DOWNLOAD
+• Menu Project > Ready-made content packs...
+• Pick the pack, click download and wait. Apolo checks the file, imports everything and opens the project.
+
+The music in the packs has a free licence and the credits of the authors come with it: see Project > Project credits. If you use it in a stream or video, credit it there too.
+
+To open a pack you received (an .apkg file), use Project > Import.") },
+
                 new string[] { T("Tocando e acompanhando", "Playing and following"), T(
 @"• Barra de progresso (no topo): mostra a música atual, com o nome embaixo. Clique ou arraste para pular para outro ponto.
 • Faixa ""Tocando agora"": cada efeito que está tocando vira um chip com pausar, parar e repetir. Abas com som (YouTube, VDO.Ninja) aparecem à direita, com botão de mutar.
@@ -97,6 +121,7 @@ The RIGHTS dot (green, yellow or red) is only an INDICATION, never a guarantee. 
 @"• Discord: leva o som do Apolo para um canal de voz.
 • Enviar áudio (VDO.Ninja): manda o som pela internet, para o Foundry e para os jogadores.
 • Compartilhar: controle remoto pelo celular (QR code) e na rede.
+• Pad flutuante (menu Extras): os botões de uma pasta aparecem por cima da tela, meio transparentes, com um atalho de teclado. Clique num botão para trocar de música e o pad fecha.
 
 Também há o módulo para o Foundry VTT e o plugin do Stream Deck (menu Extras). As abas do topo abrem páginas da web, como o YouTube, que tocam junto com o Apolo.
 
@@ -104,6 +129,7 @@ Atualizações do Apolo: menu Sobre > Como atualizar.",
 @"• Discord: takes the Apolo sound to a voice channel.
 • Send audio (VDO.Ninja): sends the sound over the internet, to Foundry and to the players.
 • Share: remote control from the phone (QR code) and on the network.
+• Floating pad (Extras menu): the buttons of a folder appear on top of the screen, slightly transparent, with a keyboard shortcut. Click a button to change the music and the pad closes.
 
 There is also the Foundry VTT module and the Stream Deck plugin (menu Extras). The tabs at the top open web pages, like YouTube, which play together with Apolo.
 

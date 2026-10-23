@@ -149,6 +149,7 @@
     <Compile Include="Player.Tour.cs" />
     <Compile Include="Player.AddToPlaylist.cs" />
     <Compile Include="Player.Leveler.cs" />
+    <Compile Include="Player.Pad.cs" />
     <Compile Include="PackCatalog.cs" />
     <Compile Include="ProjectCredits.cs" />
     <Compile Include="Player.MusicTools.cs" />

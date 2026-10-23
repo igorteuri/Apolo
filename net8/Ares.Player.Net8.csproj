@@ -43,6 +43,7 @@
     <Compile Include="..\src\Ares.Player\Player.Tour.cs" Link="Player.Tour.cs" />
     <Compile Include="..\src\Ares.Player\Player.AddToPlaylist.cs" Link="Player.AddToPlaylist.cs" />
     <Compile Include="..\src\Ares.Player\Player.Leveler.cs" Link="Player.Leveler.cs" />
+    <Compile Include="..\src\Ares.Player\Player.Pad.cs" Link="Player.Pad.cs" />
     <Compile Include="..\src\Ares.Player\PackCatalog.cs" Link="PackCatalog.cs" />
     <Compile Include="..\src\Ares.Player\ProjectCredits.cs" Link="ProjectCredits.cs" />
     <Compile Include="..\src\Ares.Player\Player.MusicTools.cs" Link="Player.MusicTools.cs" />

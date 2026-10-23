@@ -386,8 +386,8 @@ namespace Ares.Player
             {
                 Centered = true,
                 Title = T("Bem-vindo ao Apolo!", "Welcome to Apolo!"),
-                Text = T("Este tour mostra, passo a passo, as partes principais do programa. Leva uns 2 minutos.\n\nSe preferir, pule agora: você pode refazer quando quiser em Sobre > Tour guiado.",
-                         "This tour shows the main parts of the program, step by step. It takes about 2 minutes.\n\nYou can skip it now and do it again whenever you want in About > Guided tour.")
+                Text = T("O Apolo é um controlador de músicas para mesas de RPG: você organiza músicas e efeitos em pastas e botões e toca tudo com um clique.\n\nEle NÃO vem com músicas. Você traz as suas ou baixa pacotes prontos (veja mais adiante).\n\nEste tour leva uns 2 minutos. Se preferir, pule agora: dá para refazer quando quiser em Sobre > Tour guiado.",
+                         "Apolo is a music controller for tabletop RPG: you organize music and effects in folders and buttons and play everything with one click.\n\nIt does NOT come with music. You bring your own or download ready-made packs (see further on).\n\nThis tour takes about 2 minutes. You can skip it now and do it again whenever you want in About > Guided tour.")
             });
             add(T("Menu Projeto", "Project menu"),
                 T("Aqui você cria e abre projetos, importa, exporta e baixa pacotes prontos (pastas, botões e músicas livres) para começar mais rápido.",
@@ -427,13 +427,20 @@ namespace Ares.Player
                 Text = T("Arraste arquivos ou pastas de áudio do Explorer para a janela do Apolo. Na janelinha que aparece, escolha se viram playlists de música ou efeitos sonoros.\n\nO Apolo guarda tudo sozinho a cada mudança.",
                          "Drag audio files or folders from Explorer into the Apolo window. In the small window that appears, choose whether they become music playlists or sound effects.\n\nApolo saves everything by itself after each change.")
             });
+            steps.Add(new TourStep
+            {
+                Centered = true,
+                Title = T("Pacotes prontos", "Ready-made packs"),
+                Text = T("Sem músicas ainda? Abra Projeto > Pacotes de conteúdo prontos. Escolha um pacote na lista e clique em baixar: o Apolo traz pastas, botões, imagens e músicas livres (com os créditos dos autores) e já abre o projeto.\n\nOs pacotes ficam na internet, por isso o instalador continua pequeno.",
+                         "No music yet? Open Project > Ready-made content packs. Pick a pack from the list and click download: Apolo brings folders, buttons, pictures and free music (with the credits of the authors) and opens the project.\n\nPacks live on the internet, which is why the installer stays small.")
+            });
             add(T("Saída de áudio", "Audio output"),
                 T("Escolha em qual placa de som o Apolo toca, ou \"não ouvir neste PC\" para só enviar o som para a live (Discord, VDO.Ninja, OBS).",
                   "Choose which sound card Apolo plays on, or \"do not listen on this PC\" to only send the sound to the stream (Discord, VDO.Ninja, OBS)."),
                 () => TourOf(menuStrip1, m_OutputButton));
             add(T("Menu Extras", "Extras menu"),
-                T("Controle remoto pelo celular, Stream Deck, Discord, OBS, banco de imagens para os botões, ferramentas para renomear músicas e checar direitos autorais.",
-                  "Remote control from your phone, Stream Deck, Discord, OBS, the image bank for the buttons, tools to rename music and check copyright."),
+                T("Pad flutuante (botões da pasta por cima da tela, com um atalho), controle remoto pelo celular, Stream Deck, Discord, OBS, banco de imagens para os botões, ferramentas para renomear músicas e checar direitos autorais.",
+                  "Floating pad (the buttons of a folder on top of the screen, with a shortcut), remote control from your phone, Stream Deck, Discord, OBS, the image bank for the buttons, tools to rename music and check copyright."),
                 () => TourOf(menuStrip1, extrasToolStripMenuItem));
             add(T("Lista de faixas", "Track list"),
                 T("As músicas do botão selecionado, com busca. A coluna Direitos é um semáforo que indica o risco de a música dar problema em lives (é só uma indicação). F9 abre e fecha este painel.",
