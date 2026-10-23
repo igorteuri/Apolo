@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Ares.Playing.Audio;
 using Xunit;
@@ -9,9 +10,15 @@ namespace Apolo.Tests
     // but the library is loaded, buffers are queued and the position of the playback is followed.
     public class OpenAlSinkTests
     {
+        [DllImport("libc", EntryPoint = "setenv")]
+        private static extern int SetEnv(string name, string value, int overwrite);
+
         public OpenAlSinkTests()
         {
+            // the library reads the real environment of the process (on Linux and macOS .NET keeps its own copy)
             Environment.SetEnvironmentVariable("ALSOFT_DRIVERS", "null");
+            if (!OperatingSystem.IsWindows())
+                SetEnv("ALSOFT_DRIVERS", "null", 1);
         }
 
         private static byte[] Block(int frames)
