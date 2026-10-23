@@ -11,16 +11,16 @@ body { margin: 0; background: var(--bg); color: var(--text); font: 14px 'Segoe U
 header { padding: 18px 24px; border-bottom: 1px solid var(--line); }
 h1 { margin: 0; font-size: 20px; }
 header p { margin: 4px 0 0; color: var(--dim); }
-main { display: flex; gap: 20px; padding: 20px 24px; flex-wrap: wrap; }
+main { display: flex; gap: 20px; padding: 20px 24px; flex-wrap: wrap; align-items: flex-start; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
-#form { flex: 0 0 340px; }
-#side { flex: 1 1 420px; min-width: 320px; }
+#form { flex: 0 0 360px; max-height: calc(100vh - 110px); overflow-y: auto; }
+#side { flex: 1 1 420px; min-width: 320px; position: sticky; top: 12px; }
 fieldset { border: 0; padding: 0; margin: 0 0 14px; }
 legend { color: var(--accent); font-weight: 600; margin-bottom: 8px; padding: 0; }
 label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0; }
 label span { color: var(--dim); }
-input[type=text], input[type=number], select { background: #10141c; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; width: 170px; }
-input[type=range] { width: 170px; }
+input[type=text], input[type=number], select { background: #10141c; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; width: 180px; }
+input[type=range] { width: 180px; }
 input[type=color] { width: 54px; height: 28px; border: 1px solid var(--line); background: #10141c; border-radius: 6px; padding: 2px; }
 .check { justify-content: flex-start; }
 .check span { color: var(--text); }
@@ -28,12 +28,15 @@ input[type=color] { width: 54px; height: 28px; border: 1px solid var(--line); ba
   background-image: linear-gradient(45deg, #343b4c 25%, transparent 25%), linear-gradient(-45deg, #343b4c 25%, transparent 25%),
   linear-gradient(45deg, transparent 75%, #343b4c 75%), linear-gradient(-45deg, transparent 75%, #343b4c 75%);
   background-size: 24px 24px; background-position: 0 0, 0 12px, 12px -12px, -12px 0; }
+#preview.short { height: 110px; }
 #preview iframe { width: 100%; height: 100%; border: 0; background: transparent; }
 #link { width: 100%; background: #10141c; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 8px; font-family: Consolas, monospace; }
 button { background: var(--accent); color: #1a1205; border: 0; border-radius: 6px; padding: 8px 14px; font-weight: 600; cursor: pointer; margin: 8px 8px 0 0; }
 button.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
 ol { color: var(--dim); padding-left: 20px; line-height: 1.6; }
 .small { color: var(--dim); font-size: 12px; margin-top: 6px; }
+a { color: var(--accent); }
+.hint { color: var(--dim); font-size: 12px; margin: 2px 0 6px; }
 </style>
 </head>
 <body>
@@ -44,20 +47,54 @@ ol { color: var(--dim); padding-left: 20px; line-height: 1.6; }
 <main>
   <section id="form" class="panel">
     <fieldset>
+      <legend>Formato</legend>
+      <label><span>Modelo</span>
+        <select id="layout">
+          <option value="stack">Em blocos (título e artista em linhas)</option>
+          <option value="line">Horizontal (tudo numa linha só)</option>
+        </select></label>
+      <div id="lineOptions">
+        <label><span>Separador título / artista</span><input type="text" id="sep" value=" — "></label>
+        <label class="check"><input type="checkbox" id="fit" checked><span>Encolher a letra para caber na largura</span></label>
+        <label class="check"><input type="checkbox" id="scroll"><span>Se não couber, rolar o texto</span></label>
+        <p class="hint">No modo horizontal use uma fonte de navegador larga e baixa no OBS (por exemplo 1920 × 100).</p>
+      </div>
+    </fieldset>
+    <fieldset>
       <legend>Texto</legend>
-      <label><span>Tamanho</span><input type="range" id="size" min="16" max="120" value="42"></label>
-      <label><span>Fonte</span>
+      <label><span>Tamanho</span><input type="range" id="size" min="12" max="160" value="42"></label>
+      <label><span>Fonte do sistema</span>
         <select id="font">
           <option>Segoe UI</option><option>Arial</option><option>Verdana</option><option>Trebuchet MS</option>
           <option>Georgia</option><option>Cambria</option><option>Impact</option><option>Courier New</option>
         </select></label>
+      <label><span>Fonte do Google Fonts</span><input type="text" id="gfont" list="gfonts" placeholder="ex.: Cinzel" autocomplete="off"></label>
+      <p class="hint">Escreva o nome de qualquer fonte de <a href="https://fonts.google.com" target="_blank">fonts.google.com</a> (deixe vazio para usar a do sistema). Precisa de internet no OBS.</p>
+      <datalist id="gfonts"></datalist>
+      <label><span>Peso da letra</span>
+        <select id="weight"><option value="300">Fina</option><option value="400">Normal</option><option value="500">Média</option>
+          <option value="600">Seminegrito</option><option value="700" selected>Negrito</option><option value="900">Extra negrito</option></select></label>
+      <label class="check"><input type="checkbox" id="italic"><span>Itálico</span></label>
+      <label><span>Espaço entre letras</span><input type="range" id="spacing" min="-5" max="30" value="0"></label>
+      <label><span>Tamanho do artista (%)</span><input type="range" id="artistsize" min="30" max="100" value="60"></label>
       <label><span>Cor do texto</span><input type="color" id="color" value="#ffffff"></label>
       <label><span>Cor de destaque</span><input type="color" id="accent" value="#ffb347"></label>
       <label><span>Texto de apresentação</span><input type="text" id="prefix" value="Tocando agora"></label>
       <label class="check"><input type="checkbox" id="icon" checked><span>Mostrar ícone ♪</span></label>
       <label class="check"><input type="checkbox" id="artist" checked><span>Mostrar artista / álbum</span></label>
       <label class="check"><input type="checkbox" id="upper"><span>Tudo em maiúsculas</span></label>
-      <label class="check"><input type="checkbox" id="shadow" checked><span>Sombra no texto</span></label>
+    </fieldset>
+    <fieldset>
+      <legend>Contorno e sombra do texto</legend>
+      <label><span>Contorno (espessura)</span><input type="range" id="stroke" min="0" max="12" step="0.5" value="0"></label>
+      <label><span>Cor do contorno</span><input type="color" id="strokecolor" value="#000000"></label>
+      <label class="check"><input type="checkbox" id="shadow" checked><span>Sombra (drop shadow)</span></label>
+      <label><span>Sombra: horizontal</span><input type="range" id="shx" min="-30" max="30" value="0"></label>
+      <label><span>Sombra: vertical</span><input type="range" id="shy" min="-30" max="30" value="2"></label>
+      <label><span>Sombra: desfoque</span><input type="range" id="shblur" min="0" max="40" value="5"></label>
+      <label><span>Sombra: opacidade</span><input type="range" id="shalpha" min="0" max="100" value="90"></label>
+      <label><span>Sombra: cor</span><input type="color" id="shcolor" value="#000000"></label>
+      <p class="hint">Dica: sombra sem desfoque e com deslocamento dá um efeito de "letra recortada"; cor clara e desfoque alto dá brilho (glow).</p>
     </fieldset>
     <fieldset>
       <legend>Fundo e posição</legend>
@@ -65,6 +102,10 @@ ol { color: var(--dim); padding-left: 20px; line-height: 1.6; }
       <label><span>Opacidade do fundo</span><input type="range" id="bga" min="0" max="100" value="0"></label>
       <label><span>Cantos arredondados</span><input type="range" id="radius" min="0" max="60" value="0"></label>
       <label><span>Margem interna</span><input type="range" id="pad" min="0" max="60" value="0"></label>
+      <label><span>Contorno do fundo (espessura)</span><input type="range" id="border" min="0" max="20" value="0"></label>
+      <label><span>Cor do contorno do fundo</span><input type="color" id="bordercolor" value="#ffffff"></label>
+      <label><span>Sombra do fundo (desfoque)</span><input type="range" id="boxshadow" min="0" max="60" value="0"></label>
+      <label><span>Cor da sombra do fundo</span><input type="color" id="boxshadowcolor" value="#000000"></label>
       <label><span>Alinhamento</span>
         <select id="align"><option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option></select></label>
       <label><span>Posição vertical</span>
@@ -94,7 +135,7 @@ ol { color: var(--dim); padding-left: 20px; line-height: 1.6; }
       <ol>
         <li>No OBS, em <b>Fontes</b>, clique em <b>+</b> e escolha <b>Navegador</b>.</li>
         <li>Cole o link no campo <b>URL</b> (deixe "Arquivo local" desmarcado).</li>
-        <li>Use largura <b>800</b> e altura <b>200</b> (ou o tamanho que preferir) e confirme.</li>
+        <li id="sizeTip">Use largura <b>800</b> e altura <b>200</b> (ou o tamanho que preferir) e confirme.</li>
         <li>Se mudar a aparência aqui, copie o link de novo e troque a URL na fonte do OBS.</li>
       </ol>
     </div>
@@ -102,31 +143,68 @@ ol { color: var(--dim); padding-left: 20px; line-height: 1.6; }
 </main>
 <script>
 (function () {
-  var D = { size: '42', font: 'Segoe UI', color: 'ffffff', accent: 'ffb347', prefix: 'Tocando agora', icon: '1', artist: '1',
-    upper: '0', shadow: '1', bg: '00000000', radius: '0', pad: '0', align: 'left', valign: 'bottom', progress: '0',
-    hidepause: '0', showfor: '0', anim: 'fade' };
-  var ids = ['size', 'font', 'color', 'accent', 'prefix', 'icon', 'artist', 'upper', 'shadow', 'bgc', 'bga', 'radius', 'pad',
-    'align', 'valign', 'progress', 'hidepause', 'showfor', 'anim'];
-  var checks = { icon: 1, artist: 1, upper: 1, shadow: 1, progress: 1, hidepause: 1 };
+  // every setting: id of the control, name in the link, kind and default (what is not changed stays out of the link)
+  var F = [
+    { id: 'layout', key: 'layout', d: 'stack' }, { id: 'sep', key: 'sep', d: ' — ' },
+    { id: 'fit', key: 'fit', d: '1', check: 1 }, { id: 'scroll', key: 'scroll', d: '0', check: 1 },
+    { id: 'size', key: 'size', d: '42' }, { id: 'font', key: 'font', d: 'Segoe UI' }, { id: 'gfont', key: 'gfont', d: '' },
+    { id: 'weight', key: 'weight', d: '700' }, { id: 'italic', key: 'italic', d: '0', check: 1 }, { id: 'spacing', key: 'spacing', d: '0' },
+    { id: 'artistsize', key: 'artistsize', d: '60' }, { id: 'color', key: 'color', d: 'ffffff', hex: 1 }, { id: 'accent', key: 'accent', d: 'ffb347', hex: 1 },
+    { id: 'prefix', key: 'prefix', d: 'Tocando agora' }, { id: 'icon', key: 'icon', d: '1', check: 1 }, { id: 'artist', key: 'artist', d: '1', check: 1 },
+    { id: 'upper', key: 'upper', d: '0', check: 1 },
+    { id: 'stroke', key: 'stroke', d: '0' }, { id: 'strokecolor', key: 'strokecolor', d: '000000', hex: 1 },
+    { id: 'shadow', key: 'shadow', d: '1', check: 1 },
+    { id: 'shx', key: 'shx', d: '0' }, { id: 'shy', key: 'shy', d: '2' }, { id: 'shblur', key: 'shblur', d: '5' },
+    { id: 'shalpha', key: 'shalpha', d: '90' }, { id: 'shcolor', key: 'shcolor', d: '000000', hex: 1 },
+    { id: 'radius', key: 'radius', d: '0' }, { id: 'pad', key: 'pad', d: '0' },
+    { id: 'border', key: 'border', d: '0' }, { id: 'bordercolor', key: 'bordercolor', d: 'ffffff', hex: 1 },
+    { id: 'boxshadow', key: 'boxshadow', d: '0' }, { id: 'boxshadowcolor', key: 'boxshadowcolor', d: '000000', hex: 1 },
+    { id: 'align', key: 'align', d: 'left' }, { id: 'valign', key: 'valign', d: 'bottom' },
+    { id: 'progress', key: 'progress', d: '0', check: 1 }, { id: 'hidepause', key: 'hidepause', d: '0', check: 1 },
+    { id: 'showfor', key: 'showfor', d: '0' }, { id: 'anim', key: 'anim', d: 'fade' }
+  ];
+  var shadowKeys = { shx: 1, shy: 1, shblur: 1, shalpha: 1, shcolor: 1 };
+  var GOOGLE = ['Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Oswald', 'Raleway', 'Poppins', 'Merriweather', 'Playfair Display', 'Nunito',
+    'Ubuntu', 'Rubik', 'Bebas Neue', 'Anton', 'Cinzel', 'Cinzel Decorative', 'MedievalSharp', 'Uncial Antiqua', 'Almendra', 'Metamorphous',
+    'IM Fell English', 'IM Fell DW Pica', 'Pirata One', 'Jim Nightshade', 'Eagle Lake', 'Macondo', 'Unica One', 'Orbitron', 'Audiowide',
+    'Press Start 2P', 'VT323', 'Special Elite', 'Creepster', 'Nosifer', 'Butcherman', 'Eater', 'Henny Penny', 'Fondamento', 'Kaushan Script',
+    'Pacifico', 'Lobster', 'Dancing Script', 'Caveat', 'Permanent Marker', 'Amatic SC', 'Bangers', 'Righteous', 'Fredoka', 'Quicksand',
+    'Josefin Sans', 'Abril Fatface', 'Alegreya', 'Cormorant Garamond', 'EB Garamond', 'Crimson Text', 'Lora', 'PT Serif', 'Libre Baskerville',
+    'Spectral', 'Exo 2', 'Teko', 'Rajdhani', 'Saira Condensed', 'Barlow Condensed', 'Fjalla One', 'Archivo Black', 'Staatliches', 'Russo One'];
+
   function $(id) { return document.getElementById(id); }
   function hex(v) { return v.replace('#', '').toLowerCase(); }
   function two(n) { var s = Math.round(n).toString(16); return s.length < 2 ? '0' + s : s; }
 
+  var list = $('gfonts');
+  for (var g = 0; g < GOOGLE.length; g++) { var op = document.createElement('option'); op.value = GOOGLE[g]; list.appendChild(op); }
+
   function values() {
     var v = {};
-    v.size = $('size').value; v.font = $('font').value; v.color = hex($('color').value); v.accent = hex($('accent').value);
-    v.prefix = $('prefix').value;
-    for (var k in checks) v[k] = $(k).checked ? '1' : '0';
+    for (var i = 0; i < F.length; i++) {
+      var f = F[i], el = $(f.id);
+      v[f.key] = f.check ? (el.checked ? '1' : '0') : (f.hex ? hex(el.value) : el.value);
+    }
     v.bg = hex($('bgc').value) + two($('bga').value * 2.55);
-    v.radius = $('radius').value; v.pad = $('pad').value; v.align = $('align').value; v.valign = $('valign').value;
-    v.showfor = $('showfor').value || '0'; v.anim = $('anim').value;
+    if (!v.showfor) v.showfor = '0';
     return v;
   }
 
+  var base = { bg: '00000000' };
+  for (var b = 0; b < F.length; b++) base[F[b].key] = F[b].d;
+
   function query(extra) {
     var v = values(), parts = [];
+    var shadowOn = v.shadow === '1';
+    var shadowChanged = false;
+    for (var k in shadowKeys) if (v[k] !== base[k]) shadowChanged = true;
     for (var k in v) {
-      if (v[k] !== D[k]) parts.push(k + '=' + encodeURIComponent(v[k]));
+      if (shadowKeys[k]) continue;
+      if (v[k] !== base[k]) parts.push(k + '=' + encodeURIComponent(v[k]));
+    }
+    // the five values of the shadow go together (the overlay keeps its usual shadow when none of them is in the link)
+    if (shadowOn && shadowChanged) {
+      for (var s in shadowKeys) parts.push(s + '=' + encodeURIComponent(v[s]));
     }
     if (extra) parts.push(extra);
     return parts.length ? '?' + parts.join('&') : '';
@@ -134,33 +212,43 @@ ol { color: var(--dim); padding-left: 20px; line-height: 1.6; }
 
   var timer = null;
   function update() {
+    var line = $('layout').value === 'line';
+    $('lineOptions').style.display = line ? '' : 'none';
+    $('preview').className = line ? 'short' : '';
+    $('sizeTip').innerHTML = line ? 'Use largura <b>1920</b> e altura <b>100</b> (ou a largura do seu espaço) e confirme.'
+      : 'Use largura <b>800</b> e altura <b>200</b> (ou o tamanho que preferir) e confirme.';
     $('link').value = location.origin + '/overlay' + query('');
     clearTimeout(timer);
-    timer = setTimeout(function () { $('frame').src = '/overlay' + query('demo=1'); }, 150);
-    try { localStorage.setItem('aresOverlay', JSON.stringify(values())); } catch (e) {}
+    timer = setTimeout(function () { $('frame').src = '/overlay' + query('demo=1'); }, 200);
+    try { localStorage.setItem('aresOverlay2', JSON.stringify(values())); } catch (e) {}
   }
 
   function apply(v) {
-    $('size').value = v.size; $('font').value = v.font; $('color').value = '#' + v.color; $('accent').value = '#' + v.accent;
-    $('prefix').value = v.prefix;
-    for (var k in checks) $(k).checked = v[k] === '1';
+    for (var i = 0; i < F.length; i++) {
+      var f = F[i], el = $(f.id), val = v[f.key];
+      if (val === undefined) val = f.d;
+      if (f.check) el.checked = val === '1';
+      else if (f.hex) el.value = '#' + val;
+      else el.value = val;
+    }
     var bg = v.bg || '00000000';
     $('bgc').value = '#' + bg.substr(0, 6);
     $('bga').value = Math.round(parseInt(bg.substr(6, 2) || '00', 16) / 2.55);
-    $('radius').value = v.radius; $('pad').value = v.pad; $('align').value = v.align; $('valign').value = v.valign;
-    $('showfor').value = v.showfor; $('anim').value = v.anim;
   }
 
+  apply(base);
   try {
-    var saved = JSON.parse(localStorage.getItem('aresOverlay') || 'null');
-    if (saved) { for (var k in D) if (saved[k] === undefined) saved[k] = D[k]; apply(saved); }
+    var saved = JSON.parse(localStorage.getItem('aresOverlay2') || localStorage.getItem('aresOverlay') || 'null');
+    if (saved) apply(saved);
   } catch (e) {}
 
+  var ids = ['bgc', 'bga'];
+  for (var n = 0; n < F.length; n++) ids.push(F[n].id);
   for (var i = 0; i < ids.length; i++) {
     $(ids[i]).addEventListener('input', update);
     $(ids[i]).addEventListener('change', update);
   }
-  $('reset').addEventListener('click', function () { apply(D); update(); });
+  $('reset').addEventListener('click', function () { apply(base); update(); });
   $('copy').addEventListener('click', function () {
     var l = $('link'); l.select();
     try { document.execCommand('copy'); $('copied').textContent = 'Copiado!'; } catch (e) { $('copied').textContent = 'Selecione e copie (Ctrl+C).'; }

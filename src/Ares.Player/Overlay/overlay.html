@@ -10,19 +10,29 @@ html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
 #card.on { opacity: 1; transform: none; }
 .anim-slide #card.off { transform: translateY(24px); }
 .anim-none #card { transition: none; }
+#prefix, #title, #artist { display: block; }
 #prefix { font-size: .45em; letter-spacing: .08em; text-transform: uppercase; opacity: .95; margin-bottom: .15em; }
 #title { font-weight: 700; line-height: 1.1; overflow-wrap: anywhere; }
 #artist { font-size: .6em; opacity: .9; margin-top: .15em; overflow-wrap: anywhere; }
 #bar { height: .12em; margin-top: .5em; background: rgba(255,255,255,.25); border-radius: .1em; overflow: hidden; }
 #fill { height: 100%; width: 0; }
+/* one line: everything side by side, never wrapping */
+.line #card { white-space: nowrap; overflow: hidden; }
+.line #row { display: inline-block; white-space: nowrap; }
+.line #prefix, .line #title, .line #artist { display: inline; margin: 0; overflow-wrap: normal; }
+.line #prefix { font-size: .5em; vertical-align: .15em; margin-right: .6em; }
+.line #artist { font-size: .65em; }
+.line #bar { margin-top: .25em; }
 </style>
 </head>
 <body>
 <div id="stage">
   <div id="card" class="off">
-    <div id="prefix"></div>
-    <div id="title"></div>
-    <div id="artist"></div>
+    <div id="row">
+      <span id="prefix"></span>
+      <span id="title"></span>
+      <span id="artist"></span>
+    </div>
     <div id="bar"><div id="fill"></div></div>
   </div>
 </div>
@@ -32,16 +42,31 @@ html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
   function p(n, d) { var v = q.get(n); return v === null ? d : v; }
   function col(v) { return /^[0-9a-f]{3,8}$/i.test(v) ? '#' + v : v; }
   function flag(n, d) { return p(n, d ? '1' : '0') === '1'; }
+  function rgba(hex, alpha) {
+    var h = String(hex).replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    var r = parseInt(h.substr(0, 2), 16) || 0, g = parseInt(h.substr(2, 2), 16) || 0, b = parseInt(h.substr(4, 2), 16) || 0;
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + Math.max(0, Math.min(1, alpha)) + ')';
+  }
 
   var o = {
     size: parseFloat(p('size', '42')),
     font: p('font', 'Segoe UI'),
+    gfont: p('gfont', ''),
+    weight: p('weight', '700'),
+    italic: flag('italic', false),
+    spacing: parseFloat(p('spacing', '0')),
     color: col(p('color', 'ffffff')),
     accent: col(p('accent', 'ffb347')),
     bg: col(p('bg', '00000000')),
     align: p('align', 'left'),
     valign: p('valign', 'bottom'),
+    layout: p('layout', 'stack'),
+    sep: p('sep', ' — '),
+    fit: flag('fit', true),
+    scroll: flag('scroll', false),
     artist: flag('artist', true),
+    artistsize: parseFloat(p('artistsize', '60')),
     prefix: p('prefix', 'Tocando agora'),
     icon: flag('icon', true),
     progress: flag('progress', false),
@@ -49,6 +74,10 @@ html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
     showfor: parseFloat(p('showfor', '0')),
     anim: p('anim', 'fade'),
     shadow: flag('shadow', true),
+    shx: p('shx', ''), shy: p('shy', ''), shblur: p('shblur', ''), shcolor: p('shcolor', '000000'), shalpha: parseFloat(p('shalpha', '90')),
+    stroke: parseFloat(p('stroke', '0')), strokecolor: p('strokecolor', '000000'),
+    border: parseFloat(p('border', '0')), bordercolor: p('bordercolor', 'ffffff'),
+    boxshadow: parseFloat(p('boxshadow', '0')), boxshadowcolor: p('boxshadowcolor', '000000'),
     upper: flag('upper', false),
     radius: parseFloat(p('radius', '0')),
     pad: parseFloat(p('pad', '0')),
@@ -57,30 +86,79 @@ html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
 
   var stage = document.getElementById('stage');
   var card = document.getElementById('card');
+  var row = document.getElementById('row');
   var elPrefix = document.getElementById('prefix');
   var elTitle = document.getElementById('title');
   var elArtist = document.getElementById('artist');
   var bar = document.getElementById('bar');
   var fill = document.getElementById('fill');
+  var isLine = o.layout === 'line';
+  var anim = null;
 
+  // ---- font: a system font, or one of Google Fonts (needs the internet in the browser / in OBS)
+  var family = o.gfont ? o.gfont : o.font;
+  function loadGoogleFont() {
+    if (!o.gfont) return;
+    var name = encodeURIComponent(o.gfont).replace(/%20/g, '+');
+    var spec = o.italic ? ':ital,wght@1,' + o.weight : ':wght@' + o.weight;
+    function add(href, onfail) {
+      var l = document.createElement('link');
+      l.rel = 'stylesheet';
+      l.href = href;
+      if (onfail) l.onerror = onfail;
+      document.head.appendChild(l);
+    }
+    // not every font has every weight: if the exact one fails, the plain family is asked for
+    add('https://fonts.googleapis.com/css2?family=' + name + spec + '&display=swap', function () {
+      add('https://fonts.googleapis.com/css2?family=' + name + '&display=swap');
+    });
+  }
+  loadGoogleFont();
+
+  // ---- look
   var justify = { left: 'flex-start', center: 'center', right: 'flex-end' };
   var items = { top: 'flex-start', middle: 'center', bottom: 'flex-end' };
   stage.style.justifyContent = justify[o.align] || 'flex-start';
   stage.style.alignItems = items[o.valign] || 'flex-end';
-  stage.className = 'anim-' + o.anim;
+  stage.className = 'anim-' + o.anim + (isLine ? ' line' : '');
   card.style.textAlign = o.align;
-  card.style.fontFamily = "'" + o.font + "', 'Segoe UI', Arial, sans-serif";
+  card.style.fontFamily = "'" + family + "', 'Segoe UI', Arial, sans-serif";
   card.style.fontSize = o.size + 'px';
+  card.style.fontStyle = o.italic ? 'italic' : 'normal';
+  card.style.letterSpacing = o.spacing ? (o.spacing / 100) + 'em' : 'normal';
   card.style.color = o.color;
   card.style.background = o.bg;
   card.style.borderRadius = o.radius + 'px';
   card.style.padding = o.pad + 'px';
+  if (o.border > 0) card.style.border = o.border + 'px solid ' + col(o.bordercolor);
+  if (o.boxshadow > 0) card.style.boxShadow = '0 ' + (o.boxshadow / 3) + 'px ' + o.boxshadow + 'px ' + rgba(o.boxshadowcolor, 0.8);
   if (o.upper) card.style.textTransform = 'uppercase';
-  if (o.shadow) card.style.textShadow = '0 0 .12em rgba(0,0,0,.9), 0 .04em .12em rgba(0,0,0,.8)';
+  elTitle.style.fontWeight = o.weight;
+
+  // shadows of the text: the outline is a ring of small shadows around each letter, then the drop shadow
+  var shadows = [];
+  if (o.stroke > 0) {
+    var sc = rgba(o.strokecolor, 1), steps = 16;
+    for (var i = 0; i < steps; i++) {
+      var a = 2 * Math.PI * i / steps;
+      shadows.push((Math.cos(a) * o.stroke).toFixed(2) + 'px ' + (Math.sin(a) * o.stroke).toFixed(2) + 'px 0 ' + sc);
+    }
+  }
+  if (o.shadow) {
+    if (o.shx === '' && o.shy === '' && o.shblur === '') {
+      shadows.push('0 0 .12em rgba(0,0,0,.9)', '0 .04em .12em rgba(0,0,0,.8)');
+    } else {
+      var sx = parseFloat(o.shx || '0'), sy = parseFloat(o.shy || '0'), sb = parseFloat(o.shblur || '0');
+      shadows.push(sx + 'px ' + sy + 'px ' + sb + 'px ' + rgba(o.shcolor, o.shalpha / 100));
+    }
+  }
+  if (shadows.length) card.style.textShadow = shadows.join(', ');
+
   elPrefix.style.color = o.accent;
+  elArtist.style.fontSize = (isLine ? o.artistsize * 1.08 : o.artistsize) / 100 + 'em';
   fill.style.background = o.accent;
   bar.style.display = o.progress ? 'block' : 'none';
-  elPrefix.style.display = (o.prefix || o.icon) ? 'block' : 'none';
+  elPrefix.style.display = (o.prefix || o.icon) ? '' : 'none';
   elArtist.style.display = 'none';
 
   var last = '';
@@ -90,13 +168,39 @@ html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
     card.className = on ? 'on' : 'off';
   }
 
+  // one line which does not fit: the letters shrink to fit, or the line slides back and forth
+  function adjust() {
+    if (anim) { anim.cancel(); anim = null; }
+    card.style.fontSize = o.size + 'px';
+    row.style.transform = '';
+    if (!isLine) return;
+    var outer = stage.clientWidth - 24;
+    card.style.maxWidth = outer + 'px';
+    var avail = outer - 2 * o.pad - 2 * o.border;
+    var width = row.scrollWidth;
+    if (width <= avail) return;
+    if (o.fit) {
+      var size = Math.max(8, o.size * (avail - 4) / width);
+      card.style.fontSize = size + 'px';
+      return;
+    }
+    if (o.scroll) {
+      var extra = width - avail + 8;
+      if (extra > 0 && row.animate) {
+        anim = row.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(' + (-extra) + 'px)' }],
+          { duration: Math.max(4000, extra * 25), iterations: Infinity, direction: 'alternate', easing: 'linear', delay: 1500, endDelay: 1500 });
+      }
+    }
+  }
+
   function setText(s) {
     var pre = (o.icon ? '♪ ' : '') + (o.prefix || '');
     elPrefix.textContent = pre.trim();
     elTitle.textContent = s.title || '';
     var hasArtist = o.artist && s.artist;
-    elArtist.style.display = hasArtist ? 'block' : 'none';
-    elArtist.textContent = hasArtist ? s.artist : '';
+    elArtist.style.display = hasArtist ? (isLine ? 'inline' : 'block') : 'none';
+    elArtist.textContent = hasArtist ? (isLine ? o.sep + s.artist : s.artist) : '';
+    adjust();
   }
 
   function handle(s) {
@@ -140,6 +244,12 @@ html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
     };
     x.send();
   }
+
+  // the font may arrive after the first text: measure again
+  if (document.fonts && document.fonts.addEventListener) {
+    document.fonts.addEventListener('loadingdone', adjust);
+  }
+  window.addEventListener('resize', adjust);
 
   tick();
   setInterval(tick, 1000);
