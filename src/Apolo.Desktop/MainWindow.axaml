@@ -10,6 +10,7 @@
       <MenuItem Name="ProjectMenu" Header="Projeto">
         <MenuItem Name="OpenItem" Header="Abrir..." InputGesture="Ctrl+O" Click="OnOpen" />
         <MenuItem Name="RecentMenu" Header="Recentes" />
+        <MenuItem Name="SettingsItem" Header="Configurações..." Click="OnSettings" />
         <Separator />
         <MenuItem Name="QuitItem" Header="Sair" Click="OnQuit" />
       </MenuItem>

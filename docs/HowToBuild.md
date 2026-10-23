@@ -19,7 +19,9 @@ O arquivo `.github/workflows/build.yml` compila tudo a cada envio (`push`): publ
 São projetos .NET 8 no formato moderno (SDK): **todo `.cs` e todo `.resx` da pasta entra sozinho**, então criar, mover ou apagar um arquivo não exige mexer em nenhum `.csproj`. Só são listados à mão os arquivos que não são código (por exemplo, o HTML do overlay em `Ares.Player.csproj`) e os pacotes NuGet. Configurações comuns (avisos, idiomas) ficam em `Directory.Build.props`, na raiz.
 
 - Bibliotecas portáteis (`net8.0`): `Ares.Data`, `Ares.Settings`, `Ares.Tags`, `Ares.ModelInfo` (pasta `Ares.ModelChecks`), `Ares.Playing`, `Ares.Players`, `Ares.Ipc`, `Ares.TagsImport`. **Não use WinForms nelas**: o compilador recusa.
-- Só de Windows (`net8.0-windows`): `Ares.CommonGUI` e `Ares.Player` (o programa).
+- Só de Windows (`net8.0-windows`): `Ares.CommonGUI` e `Ares.Player` (o programa de Windows, WinForms).
+- `Ares.AppCore` (`net8.0`): o que não depende de janela e serve às duas versões (preferências, árvore de pastas, enfeites dos botões).
+- `Apolo.Desktop` (`net8.0`): a versão para Linux, macOS e Windows com Avalonia (`docs/LINUX-MAC.md`). Os GitHub Actions `portable.yml` e `desktop.yml` constroem e testam em Linux e macOS.
 - `Ares.WinSecurity` é o único que continua em .NET Framework 4.8 (usa o COM do firewall); compila as poucas fontes de `Ares.Settings` e `Ares.Ipc` de que precisa.
 - Se o arquivo tem lógica que dá para testar sem janela, ligue-o também em `tests/Apolo.Tests/Apolo.Tests.csproj`.
 

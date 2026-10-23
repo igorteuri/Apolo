@@ -3,7 +3,12 @@
              x:Class="Apolo.Desktop.App"
              RequestedThemeVariant="Dark">
   <Application.Styles>
-    <FluentTheme />
+    <FluentTheme>
+      <FluentTheme.Palettes>
+        <ColorPaletteResources x:Key="Dark" Accent="#8E5BD1" RegionColor="#17181D" />
+        <ColorPaletteResources x:Key="Light" Accent="#8E5BD1" />
+      </FluentTheme.Palettes>
+    </FluentTheme>
     <StyleInclude Source="avares://Apolo.Desktop/Styles.axaml" />
   </Application.Styles>
 </Application>

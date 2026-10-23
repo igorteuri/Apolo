@@ -75,6 +75,7 @@ namespace Apolo.Desktop
             Find<MenuItem>("ProjectMenu").Header = AppHost.T("Projeto", "Project");
             Find<MenuItem>("OpenItem").Header = AppHost.T("Abrir...", "Open...");
             Find<MenuItem>("RecentMenu").Header = AppHost.T("Recentes", "Recent");
+            Find<MenuItem>("SettingsItem").Header = AppHost.T("Configurações...", "Settings...");
             Find<MenuItem>("QuitItem").Header = AppHost.T("Sair", "Quit");
             Find<MenuItem>("HelpMenu").Header = AppHost.T("Ajuda", "Help");
             Find<MenuItem>("AboutItem").Header = AppHost.T("Sobre o Apolo", "About Apolo");
@@ -141,6 +142,11 @@ namespace Apolo.Desktop
                         OpenProject(m_Host.ImportedProject);
                 });
             });
+        }
+
+        private void OnSettings(object sender, RoutedEventArgs e)
+        {
+            new SettingsWindow(m_Host).ShowDialog(this);
         }
 
         private void OnQuit(object sender, RoutedEventArgs e)

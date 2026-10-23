@@ -42,9 +42,53 @@ namespace Apolo.Desktop
             m_Audio = new Ares.Playing.AudioInit(noDevice ? 0 : -1, s => Warning = s);
             Control = new PlayingControl();
             ApplySettings();
+            if (!noDevice)
+                UseSavedOutput();
             Ares.Playing.AudioLeveler.Enabled = Ares.CommonGUI.Preferences.GetBool("LevelerOn", true);
             Ares.Playing.SoundRepeat.CrossfadeEnabled = Ares.CommonGUI.Preferences.GetBool("SfxLoopCrossfade", true);
             Tree = new ModeTree();
+        }
+
+        // sound cards are saved with their name, because their numbers change when devices are plugged in or removed
+        private void UseSavedOutput()
+        {
+            try
+            {
+                Ares.Settings.Settings s = Ares.Settings.Settings.Instance;
+                int index = Ares.Playing.AudioInit.ResolveIndex(s.OutputDeviceIndex, s.OutputDeviceName);
+                if (index != -1)
+                    m_Audio.SwitchDevice(index);
+                s.OutputDeviceIndex = index;
+                s.OutputDeviceName = Ares.Playing.AudioInit.NameOf(index);
+            }
+            catch (Exception)
+            {
+                Ares.Settings.Settings.Instance.OutputDeviceIndex = -1;
+                Ares.Settings.Settings.Instance.OutputDeviceName = string.Empty;
+            }
+        }
+
+        /// <summary>Uses the folders of the settings and switches to the chosen sound card; null if all went well, else a message.</summary>
+        public string ApplySettings(int outputDevice)
+        {
+            Control.UpdateDirectories();
+            string problem = null;
+            Ares.Settings.Settings s = Ares.Settings.Settings.Instance;
+            if (outputDevice != s.OutputDeviceIndex)
+            {
+                try
+                {
+                    m_Audio.SwitchDeviceKeepPlaying(outputDevice);
+                    s.OutputDeviceIndex = outputDevice;
+                    s.OutputDeviceName = Ares.Playing.AudioInit.NameOf(outputDevice);
+                }
+                catch (Ares.Playing.AudioInitException ex)
+                {
+                    problem = ex.Message;
+                }
+            }
+            SaveSettings();
+            return problem;
         }
 
         private void ApplySettings()

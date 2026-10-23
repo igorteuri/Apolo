@@ -1,6 +1,9 @@
 # Apolo para Mac e Linux — estado do código e plano
 
-Documento de preparação (23/10/2026). Resume o que já é portátil, o que é só de Windows e em que ordem atacar.
+Documento de preparação (23/10/2026), atualizado no início da migração. Resume o que já é portátil, o que é só de Windows e em que ordem atacar.
+
+## Andamento (23/10/2026)
+Feito: saída de som por backend (WASAPI no Windows, **OpenAL Soft** no Linux e macOS, testado nos dois no GitHub); banco de tags com **Microsoft.Data.Sqlite** (inclui Apple Silicon); decodificador por **ffmpeg** para M4A/FLAC/AIFF; configurações sem memória compartilhada fora do Windows; núcleo comum **`Ares.AppCore`**; primeira janela em **Avalonia** (`src/Apolo.Desktop`, ver `docs/LINUX-MAC.md`); testes em Linux, macOS e Windows; pacotes `.tar.gz` / `.app` / `.zip` montados pelo GitHub Actions. Falta: edição, controle remoto, Discord/OBS/VDO.Ninja, pad, tour, baixar pacotes (ver a tabela em `docs/LINUX-MAC.md`).
 
 ## 1. Como o código está dividido hoje
 
