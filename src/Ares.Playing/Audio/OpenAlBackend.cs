@@ -7,6 +7,9 @@
 */
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices;
+using Silk.NET.Core.Contexts;
 using Silk.NET.OpenAL;
 using Silk.NET.OpenAL.Extensions.Creative;
 
@@ -30,14 +33,50 @@ namespace Ares.Playing.Audio
             get { EnsureApi(); return s_Al; }
         }
 
+        private static string[] NativeNames()
+        {
+            string file = OperatingSystem.IsWindows() ? "soft_oal.dll" : (OperatingSystem.IsMacOS() ? "libopenal.dylib" : "libopenal.so");
+            string os = OperatingSystem.IsWindows() ? "win" : (OperatingSystem.IsMacOS() ? "osx" : "linux");
+            string cpu;
+            switch (RuntimeInformation.ProcessArchitecture)
+            {
+                case Architecture.Arm64: cpu = "arm64"; break;
+                case Architecture.Arm: cpu = "arm"; break;
+                case Architecture.X86: cpu = "x86"; break;
+                default: cpu = "x64"; break;
+            }
+            List<string> names = new List<string>();
+            string baseDir = AppContext.BaseDirectory;
+            foreach (string dir in new[] { baseDir, Path.Combine(baseDir, "runtimes", os + "-" + cpu, "native") })
+            {
+                string path = Path.Combine(dir, file);
+                if (File.Exists(path))
+                    names.Add(path);
+            }
+            // the library of the system, if there is one
+            if (OperatingSystem.IsLinux())
+            {
+                names.Add("libopenal.so.1");
+                names.Add("libopenal.so");
+            }
+            else if (OperatingSystem.IsMacOS())
+            {
+                names.Add("/System/Library/Frameworks/OpenAL.framework/OpenAL");
+            }
+            return names.ToArray();
+        }
+
         private static void EnsureApi()
         {
             lock (s_ApiLock)
             {
                 if (s_Alc == null)
                 {
-                    s_Alc = ALContext.GetApi(true);
-                    s_Al = AL.GetApi(true);
+                    // the library is loaded from the exact file which comes with the program (the default search of the
+                    // packages does not look in the "runtimes" folder when the program is not published)
+                    string[] names = NativeNames();
+                    s_Alc = new ALContext(new DefaultNativeContext(names));
+                    s_Al = new AL(new DefaultNativeContext(names));
                 }
             }
         }
