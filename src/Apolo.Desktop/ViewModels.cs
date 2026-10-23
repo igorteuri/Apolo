@@ -234,6 +234,8 @@ namespace Apolo.Desktop
         }
 
         /// <summary>After an edit of the project: the folders are made again and the given one is shown.</summary>
+        public string SelectedFolderTitle { get { return m_Selected != null ? m_Selected.Title : null; } }
+
         public void ProjectChanged(string showTitle)
         {
             ProjectName = m_Host.Project != null ? m_Host.Project.Title : ProjectName;
@@ -281,6 +283,24 @@ namespace Apolo.Desktop
             public string Owner;
             public string Header;
         }
+
+        // zoom of the list of folders (70 % ... 220 %)
+        private int m_FolderZoom = ReadZoom();
+        private static int ReadZoom()
+        {
+            int value;
+            if (int.TryParse(Ares.CommonGUI.Preferences.Get("FolderZoom", "100"), out value))
+                return Math.Max(70, Math.Min(220, value));
+            return 100;
+        }
+        public double FolderFontSize { get { return 14.0 * m_FolderZoom / 100.0; } }
+        public void SetFolderZoom(int percent)
+        {
+            m_FolderZoom = Math.Max(70, Math.Min(220, percent));
+            Ares.CommonGUI.Preferences.Set("FolderZoom", m_FolderZoom.ToString());
+            Raise("FolderFontSize");
+        }
+        public void ChangeFolderZoom(int delta) { SetFolderZoom(m_FolderZoom + delta); }
 
         // search box and "cards / list" switch above the buttons
         private string m_SearchText = "";

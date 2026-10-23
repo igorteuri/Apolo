@@ -13,6 +13,9 @@
         <MenuItem Name="NewItem" Header="Novo projeto..." InputGesture="Ctrl+N" Click="OnNewProject" />
         <MenuItem Name="OpenItem" Header="Abrir..." InputGesture="Ctrl+O" Click="OnOpen" />
         <MenuItem Name="RecentMenu" Header="Recentes" />
+        <MenuItem Name="UndoItem" Header="Desfazer" InputGesture="Ctrl+Z" Click="OnUndo" />
+        <MenuItem Name="RedoItem" Header="Refazer" InputGesture="Ctrl+Y" Click="OnRedo" />
+        <Separator />
         <MenuItem Name="NewFolderItem" Header="Nova pasta..." InputGesture="Ctrl+Shift+N" Click="OnNewFolder" />
         <MenuItem Name="PacksItem" Header="Pacotes de conteúdo prontos..." Click="OnPacks" />
         <Separator />
@@ -28,6 +31,13 @@
       </MenuItem>
       <MenuItem Name="ViewMenu" Header="Exibir">
         <MenuItem Name="TracksItem" Header="Lista de faixas" InputGesture="F9" Click="OnToggleTracks" />
+        <Separator />
+        <MenuItem Name="ZoomMenu" Header="Tamanho do texto das pastas">
+          <MenuItem Name="ZoomBigger" Header="Maior" InputGesture="Ctrl+OemPlus" Click="OnZoomBigger" />
+          <MenuItem Name="ZoomSmaller" Header="Menor" InputGesture="Ctrl+OemMinus" Click="OnZoomSmaller" />
+          <MenuItem Name="ZoomNormal" Header="Normal" InputGesture="Ctrl+0" Click="OnZoomNormal" />
+        </MenuItem>
+        <MenuItem Name="SoftenItem" Header="Suavizar a repetição dos efeitos (crossfade)" Click="OnSoften" />
       </MenuItem>
     </Menu>
     <Button Grid.Column="1" Name="OutputButton" Classes="link" Margin="0,0,10,0" VerticalAlignment="Center" Content="{Binding OutputText}" Click="OnOutputClick" />
@@ -124,7 +134,7 @@
     <!-- folders, buttons and the list of tracks -->
     <Grid Grid.Row="3" ColumnDefinitions="270,6,*" Margin="8,0,8,0">
       <Border Classes="panel" Padding="6">
-        <TreeView ItemsSource="{Binding Folders}" SelectedItem="{Binding SelectedFolder, Mode=TwoWay}" Background="Transparent">
+        <TreeView Name="FolderTree" ItemsSource="{Binding Folders}" FontSize="{Binding FolderFontSize}" SelectedItem="{Binding SelectedFolder, Mode=TwoWay}" Background="Transparent">
           <TreeView.Styles>
             <Style Selector="TreeViewItem">
               <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
@@ -155,9 +165,10 @@
       <Grid Grid.Column="2" RowDefinitions="*,Auto">
       <Border Classes="panel" Padding="6">
         <Grid RowDefinitions="Auto,*">
-          <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6" IsVisible="{Binding HasProject}">
+          <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,6" IsVisible="{Binding HasProject}">
             <TextBox Name="SearchBox" Text="{Binding SearchText, Mode=TwoWay}" Watermark="Buscar playlist..." />
-            <Button Grid.Column="1" Name="ListToggle" Margin="6,0,0,0" Padding="12,5" Content="{Binding ListToggleText}" Click="OnListToggle" />
+            <Button Grid.Column="1" Name="AddButtonMenu" Margin="6,0,0,0" Padding="12,5" Content="+ Adicionar ▾" Click="OnAddMenu" />
+            <Button Grid.Column="2" Name="ListToggle" Margin="6,0,0,0" Padding="12,5" Content="{Binding ListToggleText}" Click="OnListToggle" />
           </Grid>
           <Grid Grid.Row="1">
           <ScrollViewer HorizontalScrollBarVisibility="Disabled">
@@ -178,6 +189,7 @@
                             <Button.ContextMenu>
                               <ContextMenu>
                                 <MenuItem Header="{x:Static local:Texts.Tracks}" Click="OnCardTracks" />
+                                <MenuItem Header="{x:Static local:Texts.SwitchKind}" Click="OnCardKind" />
                                 <MenuItem Header="{x:Static local:Texts.Rename}" Click="OnCardRename" />
                                 <MenuItem Header="{x:Static local:Texts.Look}" Click="OnCardLook" />
                                 <MenuItem Header="{x:Static local:Texts.MoveBefore}" Click="OnCardLeft" />

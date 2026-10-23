@@ -17,6 +17,7 @@ namespace Apolo.Desktop
     public static class Texts
     {
         public static string Tracks { get { return AppHost.T("Ver faixas (F9)", "Show tracks (F9)"); } }
+        public static string SwitchKind { get { return AppHost.T("Trocar música / efeito sonoro", "Switch music / sound effect"); } }
         public static string Rename { get { return AppHost.T("Renomear...", "Rename..."); } }
         public static string Look { get { return AppHost.T("Ícone e cor...", "Icon and color..."); } }
         public static string MoveBefore { get { return AppHost.T("Mover para antes", "Move earlier"); } }

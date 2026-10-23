@@ -77,6 +77,17 @@ namespace Apolo.Desktop
             Find<MenuItem>("ProjectMenu").Header = AppHost.T("Projeto", "Project");
             Find<MenuItem>("NewItem").Header = AppHost.T("Novo projeto...", "New project...");
             Find<MenuItem>("OpenItem").Header = AppHost.T("Abrir...", "Open...");
+            Find<MenuItem>("UndoItem").Header = AppHost.T("Desfazer", "Undo");
+            Find<MenuItem>("RedoItem").Header = AppHost.T("Refazer", "Redo");
+            Find<MenuItem>("ViewMenu").Header = AppHost.T("Exibir", "View");
+            Find<MenuItem>("TracksItem").Header = AppHost.T("Lista de faixas", "Track list");
+            Find<MenuItem>("ZoomMenu").Header = AppHost.T("Tamanho do texto das pastas", "Folder text size");
+            Find<MenuItem>("ZoomBigger").Header = AppHost.T("Maior", "Bigger");
+            Find<MenuItem>("ZoomSmaller").Header = AppHost.T("Menor", "Smaller");
+            Find<MenuItem>("ZoomNormal").Header = AppHost.T("Normal", "Normal");
+            UpdateSoftenMark();
+            Find<Button>("AddButtonMenu").Content = AppHost.T("+ Adicionar ▾", "+ Add ▾");
+            Find<TextBox>("SearchBox").Watermark = AppHost.T("Buscar playlist...", "Search playlist...");
             Find<MenuItem>("NewFolderItem").Header = AppHost.T("Nova pasta...", "New folder...");
             Find<MenuItem>("PacksItem").Header = AppHost.T("Pacotes de conteúdo prontos...", "Ready-made content packs...");
             Find<Button>("WelcomePacks").Content = AppHost.T("Baixar pacotes prontos...", "Download ready-made packs...");
@@ -278,6 +289,117 @@ namespace Apolo.Desktop
             CardVM card = Context<CardVM>(sender);
             if (card != null)
                 m_Model.ShowTracksOf(card.Id, card.Title);
+        }
+
+        // ---- undo / redo
+
+        private void OnUndo(object sender, RoutedEventArgs e) { Travel(false); }
+        private void OnRedo(object sender, RoutedEventArgs e) { Travel(true); }
+
+        private void Travel(bool redo)
+        {
+            if (m_Host.Project == null)
+                return;
+            string title = m_Host.Travel(redo, m_Model.SelectedFolderTitle);
+            if (title == null)
+                return;
+            m_Model.ProjectChanged(title.Length > 0 ? title : null);
+        }
+
+        // ---- zoom of the folders, the crossfade of the effects
+
+        private void OnZoomBigger(object sender, RoutedEventArgs e) { m_Model.ChangeFolderZoom(10); }
+        private void OnZoomSmaller(object sender, RoutedEventArgs e) { m_Model.ChangeFolderZoom(-10); }
+        private void OnZoomNormal(object sender, RoutedEventArgs e) { m_Model.SetFolderZoom(100); }
+
+        private void OnSoften(object sender, RoutedEventArgs e)
+        {
+            bool on = !Ares.Playing.SoundRepeat.CrossfadeEnabled;
+            Ares.Playing.SoundRepeat.CrossfadeEnabled = on;
+            Ares.CommonGUI.Preferences.SetBool("SfxLoopCrossfade", on);
+            UpdateSoftenMark();
+        }
+
+        private void UpdateSoftenMark()
+        {
+            Find<MenuItem>("SoftenItem").Header = (Ares.Playing.SoundRepeat.CrossfadeEnabled ? "✓  " : "     ")
+                + AppHost.T("Suavizar a repetição dos efeitos (crossfade)", "Smooth the repetition of effects (crossfade)");
+        }
+
+        // ---- the button "+ Add"
+
+        private void OnAddMenu(object sender, RoutedEventArgs e)
+        {
+            Button button = sender as Button;
+            ContextMenu menu = new ContextMenu();
+            MenuItem music = new MenuItem { Header = AppHost.T("Playlist de música...", "Music playlist...") };
+            music.Click += (s, a) => AddButtonOfKind(false);
+            MenuItem sfx = new MenuItem { Header = AppHost.T("Efeito sonoro (SFX)...", "Sound effect (SFX)...") };
+            sfx.Click += (s, a) => AddButtonOfKind(true);
+            MenuItem files = new MenuItem { Header = AppHost.T("Vários arquivos (escolher como organizar)...", "Several files (choose how to organize)...") };
+            files.Click += OnImportFiles;
+            MenuItem folder = new MenuItem { Header = AppHost.T("Pasta do computador (escolher como organizar)...", "Folder of the computer (choose how to organize)...") };
+            folder.Click += OnImportFolder;
+            menu.Items.Add(music);
+            menu.Items.Add(sfx);
+            menu.Items.Add(new Separator());
+            menu.Items.Add(files);
+            menu.Items.Add(folder);
+            menu.Open(button);
+        }
+
+        private async void AddButtonOfKind(bool sfx)
+        {
+            IReadOnlyList<IStorageFile> picked = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = sfx ? AppHost.T("Escolher o arquivo do efeito sonoro", "Choose the file of the sound effect")
+                    : AppHost.T("Escolher as músicas da playlist", "Choose the tracks of the playlist"),
+                AllowMultiple = true,
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType(AppHost.T("Arquivos de áudio", "Audio files")) { Patterns = new[] { "*.mp3", "*.ogg", "*.opus", "*.wav", "*.flac", "*.m4a", "*.aac", "*.wma", "*.aif", "*.aiff" } }
+                }
+            });
+            List<string> files = picked.Select(f => f.Path.LocalPath).Where(Ares.CommonGUI.DropScan.IsAudioFile).ToList();
+            if (files.Count == 0)
+                return;
+            string suggestion = files.Count == 1 ? Path.GetFileNameWithoutExtension(files[0]) : Path.GetFileName(Path.GetDirectoryName(files[0]));
+            string name = await PromptWindow.Ask(this, sfx ? AppHost.T("Novo efeito sonoro", "New sound effect") : AppHost.T("Nova playlist", "New playlist"),
+                AppHost.T("Nome do botão:", "Button name:"), suggestion);
+            if (name == null)
+                return;
+            string shown = m_Host.AddButton(files, name, sfx, m_Model.SelectedFolderTitle);
+            m_Model.ProjectChanged(shown);
+        }
+
+        private async void OnCardKind(object sender, RoutedEventArgs e)
+        {
+            CardVM card = Context<CardVM>(sender);
+            if (card == null)
+                return;
+            bool toSfx;
+            int count;
+            int need = m_Host.KindSwitch(card.Id, out toSfx, out count);
+            if (need == 0)
+            {
+                new MessageWindow(AppHost.T("Trocar o tipo", "Switch the kind"), AppHost.T(
+                    "Este botão tem uma estrutura especial (por exemplo, mistura música e efeitos, ou tem vários níveis). Não dá para trocar o tipo automaticamente.",
+                    "This button has a special structure (for example it mixes music and effects, or has several levels). Its kind cannot be switched automatically.")).Show(this);
+                return;
+            }
+            if (need == 2)
+            {
+                string text = toSfx
+                    ? AppHost.T("A playlist \"" + card.Title + "\" tem " + count + " músicas.\n\nComo efeito sonoro, TODAS vão tocar ao mesmo tempo quando você clicar no botão. Tem certeza?",
+                        "The playlist \"" + card.Title + "\" has " + count + " tracks.\n\nAs a sound effect, ALL of them play at the same time when you click the button. Are you sure?")
+                    : AppHost.T("Este efeito sonoro toca " + count + " sons juntos.\n\nComo música, os arquivos passam a tocar um de cada vez (em ordem sorteada). Continuar?",
+                        "This sound effect plays " + count + " sounds together.\n\nAs music, the files play one at a time (in random order). Continue?");
+                if (!await ConfirmWindow.Ask(this, AppHost.T("Trocar o tipo", "Switch the kind"), text))
+                    return;
+            }
+            string shown = ShownTitle();
+            m_Host.ToggleButtonKind(card.Id);
+            AfterEdit(shown);
         }
 
         private void OnListToggle(object sender, RoutedEventArgs e)
@@ -554,6 +676,31 @@ namespace Apolo.Desktop
                     OnNewFolder(this, new RoutedEventArgs());
                 else
                     OnNewProject(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Z && e.KeyModifiers.HasFlag(KeyModifiers.Control) && !(e.Source is TextBox))
+            {
+                Travel(false);
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Y && e.KeyModifiers.HasFlag(KeyModifiers.Control) && !(e.Source is TextBox))
+            {
+                Travel(true);
+                e.Handled = true;
+            }
+            else if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && (e.Key == Key.OemPlus || e.Key == Key.Add))
+            {
+                m_Model.ChangeFolderZoom(10);
+                e.Handled = true;
+            }
+            else if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && (e.Key == Key.OemMinus || e.Key == Key.Subtract))
+            {
+                m_Model.ChangeFolderZoom(-10);
+                e.Handled = true;
+            }
+            else if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && (e.Key == Key.D0 || e.Key == Key.NumPad0))
+            {
+                m_Model.SetFolderZoom(100);
                 e.Handled = true;
             }
             else if (e.Key == Key.F9)

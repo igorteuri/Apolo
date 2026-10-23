@@ -75,6 +75,48 @@ namespace Apolo.Desktop.Tests
         }
 
         [AvaloniaFact]
+        public void Undo_BringsBackWhatWasDeleted_AndRedoDeletesAgain()
+        {
+            AppHost host = NewProjectWithTwoButtons();
+            IMode mode = host.ModeByTitle("Pasta A");
+            int id = mode.GetElements().First(e => e.Title == "um").Id;
+            System.Threading.Thread.Sleep(2100); // changes within two seconds are one step
+            host.RenameButton(id, "primeiro");
+            Assert.True(host.CanUndo);
+            string shown = host.Travel(false, "Pasta A");
+            Assert.Equal("Pasta A", shown);
+            mode = host.ModeByTitle("Pasta A");
+            Assert.Contains(mode.GetElements(), e => e.Title == "um");
+            Assert.DoesNotContain(mode.GetElements(), e => e.Title == "primeiro");
+            Assert.True(host.CanRedo);
+            host.Travel(true, "Pasta A");
+            Assert.Contains(host.ModeByTitle("Pasta A").GetElements(), e => e.Title == "primeiro");
+            host.Dispose();
+        }
+
+        [AvaloniaFact]
+        public void AddButton_MakesAPlaylistOrAnEffect_AndTheKindCanBeSwitched()
+        {
+            AppHost host = NewProjectWithTwoButtons();
+            string shown = host.AddButton(new[] { Touch("a.mp3"), Touch("b.mp3") }, "Lista nova", false, "Pasta A");
+            Assert.Equal("Pasta A", shown);
+            IModeElement list = host.ModeByTitle("Pasta A").GetElements().First(e => e.Title == "Lista nova");
+            Assert.Equal(ElementKinds.Music, ElementKinds.Of(list.StartElement));
+            bool toSfx;
+            int count;
+            Assert.Equal(2, host.KindSwitch(list.Id, out toSfx, out count));
+            Assert.True(toSfx);
+            Assert.Equal(2, count);
+            host.AddButton(new[] { Touch("golpe.wav") }, "Golpe", true, "Pasta A");
+            IModeElement hit = host.ModeByTitle("Pasta A").GetElements().First(e => e.Title == "Golpe");
+            Assert.Equal(ElementKinds.Effect, ElementKinds.Of(hit.StartElement));
+            host.ToggleButtonKind(hit.Id);
+            hit = host.ModeByTitle("Pasta A").GetElements().First(e => e.Title == "Golpe");
+            Assert.Equal(ElementKinds.Music, ElementKinds.Of(hit.StartElement));
+            host.Dispose();
+        }
+
+        [AvaloniaFact]
         public void FoldersCanBeCreatedNestedRenamedAndDeleted()
         {
             AppHost host = NewProjectWithTwoButtons();
