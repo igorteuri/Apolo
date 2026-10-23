@@ -38,6 +38,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
@@ -60,11 +61,27 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
+  <!-- The helper is a separate .NET Framework 4.8 program (it needs the firewall COM library). From the rest of Apolo it
+       takes only the settings reader (port of the remote control), compiled here straight from the sources. -->
   <ItemGroup>
-    <ProjectReference Include="..\Ares.Settings\Ares.Settings.csproj">
-      <Project>{e99e229e-2d6a-4c49-8e6f-c06e3f346606}</Project>
-      <Name>Ares.Settings</Name>
-    </ProjectReference>
+    <Compile Include="..\Ares.Settings\AppFolders.cs"><Link>Settings\AppFolders.cs</Link></Compile>
+    <Compile Include="..\Ares.Settings\BasicSettings.cs"><Link>Settings\BasicSettings.cs</Link></Compile>
+    <Compile Include="..\Ares.Settings\RecentFiles.cs"><Link>Settings\RecentFiles.cs</Link></Compile>
+    <Compile Include="..\Ares.Settings\Settings.cs"><Link>Settings\Settings.cs</Link></Compile>
+    <Compile Include="..\Ares.Settings\StringResources.Designer.cs"><Link>Settings\StringResources.Designer.cs</Link></Compile>
+    <Compile Include="..\Ares.Settings\XmlHelpers.cs"><Link>Settings\XmlHelpers.cs</Link></Compile>
+    <Compile Include="..\Ares.Ipc\ApplicationInfo.cs"><Link>Ipc\ApplicationInfo.cs</Link></Compile>
+    <Compile Include="..\Ares.Ipc\ApplicationInstance.cs"><Link>Ipc\ApplicationInstance.cs</Link></Compile>
+    <Compile Include="..\Ares.Ipc\Enums.cs"><Link>Ipc\Enums.cs</Link></Compile>
+    <Compile Include="..\Ares.Ipc\NamedMutexHelper.cs"><Link>Ipc\NamedMutexHelper.cs</Link></Compile>
+    <Compile Include="..\Ares.Ipc\NativeMethods.cs"><Link>Ipc\NativeMethods.cs</Link></Compile>
+    <Compile Include="..\Ares.Ipc\NativeWindowMethods.cs"><Link>Ipc\NativeWindowMethods.cs</Link></Compile>
+    <Compile Include="..\Ares.Ipc\SharedMemory.cs"><Link>Ipc\SharedMemory.cs</Link></Compile>
+    <Compile Include="..\Ares.Ipc\SharedMemoryException.cs"><Link>Ipc\SharedMemoryException.cs</Link></Compile>
+    <EmbeddedResource Include="..\Ares.Settings\StringResources.resx">
+      <Link>Settings\StringResources.resx</Link>
+      <LogicalName>Ares.Settings.StringResources.resources</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

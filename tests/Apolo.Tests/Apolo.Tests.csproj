@@ -14,9 +14,9 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\net8\Ares.Tags.Net8.csproj" />
-    <ProjectReference Include="..\..\net8\Ares.TagsImport.Net8.csproj" />
-    <ProjectReference Include="..\..\net8\Ares.Data.Net8.csproj" />
+    <ProjectReference Include="..\..\src\Ares.Tags\Ares.Tags.csproj" />
+    <ProjectReference Include="..\..\src\Ares.TagsImport\Ares.TagsImport.csproj" />
+    <ProjectReference Include="..\..\src\Ares.Data\Ares.Data.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- the logic under test is compiled straight from the player sources (no window code) -->

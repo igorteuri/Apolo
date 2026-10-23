@@ -10,13 +10,20 @@ O arquivo `.github/workflows/build.yml` compila tudo a cada envio (`push`): publ
 
 1. Instale o [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 2. Rode os testes: `dotnet test tests/Apolo.Tests`.
-3. Gere o programa: `dotnet publish net8/Ares.Player.Net8.csproj -c Release -r win-x86 --self-contained true -o dist`.
+3. Gere o programa: `dotnet publish src/Ares.Player/Ares.Player.csproj -c Release -r win-x86 --self-contained true -o dist`.
 4. Copie para `dist` as bibliotecas nativas da pasta `Libraries` (`chromaprint.dll`, `avcodec-54.dll`, `avutil-52.dll`, `msvcp100.dll`, `msvcr100.dll`).
 5. O ajudante de firewall precisa do MSBuild (Visual Studio ou Build Tools): `msbuild tools/WinSecurity.slnf /p:Configuration=Release /p:Platform=x86`.
 
-## Os projetos `net8/*.csproj`
+## Os projetos (`src/*/*.csproj`)
 
-Eles são **gerados** por `python tools/gen_net8.py` a partir da lista de arquivos dos projetos antigos (`src/*/*.csproj`). Ao criar, mover ou apagar um arquivo `.cs`, edite o `.csproj` de `src` e rode o gerador (ou edite o de `net8` igual). Se o arquivo tem lógica que dá para testar sem janela, ligue-o também em `tests/Apolo.Tests/Apolo.Tests.csproj`.
+São projetos .NET 8 no formato moderno (SDK): **todo `.cs` e todo `.resx` da pasta entra sozinho**, então criar, mover ou apagar um arquivo não exige mexer em nenhum `.csproj`. Só são listados à mão os arquivos que não são código (por exemplo, o HTML do overlay em `Ares.Player.csproj`) e os pacotes NuGet. Configurações comuns (avisos, idiomas) ficam em `Directory.Build.props`, na raiz.
+
+- Bibliotecas portáteis (`net8.0`): `Ares.Data`, `Ares.Settings`, `Ares.Tags`, `Ares.ModelInfo` (pasta `Ares.ModelChecks`), `Ares.Playing`, `Ares.Players`, `Ares.Ipc`, `Ares.TagsImport`. **Não use WinForms nelas**: o compilador recusa.
+- Só de Windows (`net8.0-windows`): `Ares.CommonGUI` e `Ares.Player` (o programa).
+- `Ares.WinSecurity` é o único que continua em .NET Framework 4.8 (usa o COM do firewall); compila as poucas fontes de `Ares.Settings` e `Ares.Ipc` de que precisa.
+- Se o arquivo tem lógica que dá para testar sem janela, ligue-o também em `tests/Apolo.Tests/Apolo.Tests.csproj`.
+
+Ver também `docs/PORTABILIDADE.md` (o que falta para Mac e Linux).
 
 ## Observações
 

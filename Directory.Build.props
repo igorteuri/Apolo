@@ -1,0 +1,14 @@
+<Project>
+  <!-- Common settings of every project of Apolo. -->
+  <PropertyGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <NoWarn>$(NoWarn);CS0649;CS0168;CS0169;CS0414;CS0618;CS0219;CS0108;CS0114;CA1416;CA1418;SYSLIB0003;SYSLIB0011;SYSLIB0050;SYSLIB0051;WFO1000;NU1701</NoWarn>
+  </PropertyGroup>
+  <!-- Languages of the interface: Portuguese, German, English. The .NET runtime brings translations of its own messages in
+       13 languages, each in a folder beside Apolo.exe; only the languages Apolo has are kept. -->
+  <PropertyGroup>
+    <SatelliteResourceLanguages>pt;pt-BR;de;en</SatelliteResourceLanguages>
+  </PropertyGroup>
+</Project>
