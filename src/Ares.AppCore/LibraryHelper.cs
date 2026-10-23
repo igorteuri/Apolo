@@ -107,7 +107,7 @@ namespace Ares.CommonGUI
             if (options.OneElement && !(group.IsLoose && list.Count == 1))
             {
                 if (group.IsLoose)
-                    name = DropOptionsDialog.IsPt ? "Músicas soltas" : "Loose files";
+                    name = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt" ? "Músicas soltas" : "Loose files";
                 IElement container;
                 if (options.Sounds)
                 {
@@ -160,6 +160,20 @@ namespace Ares.CommonGUI
                 }
             }
             return result;
+        }
+
+        /// <summary>The Windows program sets this to the reader of the old sidecar files (it knows the pictures); null elsewhere.</summary>
+        public static Action<string> ReadIcons;
+
+        private static void CopyFolder(string from, string to)
+        {
+            Directory.CreateDirectory(to);
+            foreach (string file in Directory.GetFiles(from))
+            {
+                string target = Path.Combine(to, Path.GetFileName(file));
+                if (!File.Exists(target))
+                    File.Copy(file, target);
+            }
         }
 
         // ---- Library folder (where Biblioteca.apolo lives) ----
@@ -253,12 +267,19 @@ namespace Ares.CommonGUI
                     {
                         File.Copy(sidecar, tempSidecar, false);
                         if (Directory.Exists(pictures))
-                            ButtonImageStore.CopyFolder(pictures, tempPictures);
-                        // reading them makes the new files (<project>.apolo.icons, "apolo_icons")
-                        ButtonImageStore.Get(current, "", "");
-                        File.Delete(tempSidecar);
-                        if (!hadPictures && Directory.Exists(tempPictures))
-                            Directory.Delete(tempPictures, true);
+                            CopyFolder(pictures, tempPictures);
+                        if (ReadIcons != null)
+                        {
+                            // the Windows program reads them: that makes the new files (<project>.apolo.icons, "apolo_icons")
+                            ReadIcons(current);
+                            File.Delete(tempSidecar);
+                            if (!hadPictures && Directory.Exists(tempPictures))
+                                Directory.Delete(tempPictures, true);
+                        }
+                        else
+                        {
+                            File.Move(tempSidecar, current + ".icons");
+                        }
                     }
                 }
             }

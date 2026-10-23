@@ -225,6 +225,19 @@ namespace Apolo.Desktop
             SelectedFolder = first;
         }
 
+        /// <summary>After an edit of the project: the folders are made again and the given one is shown.</summary>
+        public void ProjectChanged(string showTitle)
+        {
+            ProjectName = m_Host.Project != null ? m_Host.Project.Title : ProjectName;
+            Raise("HasProject");
+            Raise("NoProject");
+            Folders.Clear();
+            BuildFolders(m_Host.Tree.Root, Folders);
+            FolderVM shown = showTitle != null ? FindFolder(Folders, showTitle) : null;
+            m_Selected = null;
+            SelectedFolder = shown ?? Folders.FirstOrDefault();
+        }
+
         private void BuildFolders(ModeNode parent, ObservableCollection<FolderVM> into)
         {
             foreach (ModeNode node in parent.Children)

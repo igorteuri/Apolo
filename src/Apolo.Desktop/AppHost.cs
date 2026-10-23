@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Ares.AppCore;
+using Ares.CommonGUI;
 using Ares.Data;
 using Ares.Players;
 using Ares.Player;
@@ -178,6 +179,119 @@ namespace Apolo.Desktop
                 ImportedProject = error == null && !cancelled && File.Exists(target) ? target : null;
                 done(error);
             });
+        }
+
+        // ---- editing: new project, import of files and folders
+
+        /// <summary>Makes an empty project file (and opens it).</summary>
+        public void CreateProject(string path, string title)
+        {
+            StopAll();
+            IProject created = DataModule.ProjectManager.CreateProject(title);
+            created.FileName = path;
+            DataModule.ProjectManager.SaveProject(created);
+            DataModule.ProjectManager.UnloadProject(created);
+            Open(path);
+        }
+
+        private void EnsureProjectFile(string path)
+        {
+            if (File.Exists(path))
+                return;
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            IProject created = DataModule.ProjectManager.CreateProject("Biblioteca");
+            created.FileName = path;
+            DataModule.ProjectManager.SaveProject(created);
+            DataModule.ProjectManager.UnloadProject(created);
+        }
+
+        public sealed class ImportSummary
+        {
+            public int NewFolders;
+            public int Buttons;
+            /// <summary>The folder to show after the import.</summary>
+            public string ShowTitle;
+        }
+
+        /// <summary>
+        /// Puts what was dropped in the open project (the Library is used when no project is open): the same plan as the
+        /// Windows program. destination = title of the folder which receives the audio (null = new folders).
+        /// </summary>
+        public ImportSummary ImportDropped(DropScan scan, DropOptions options, string destination)
+        {
+            if (Project == null)
+            {
+                string library = LibraryHelper.LibraryProjectPath;
+                EnsureProjectFile(library);
+                Open(library);
+            }
+            StopAll();
+            if (destination != null && ModeByTitle(destination) == null)
+                destination = null;
+            string loose = IsPt ? "Músicas soltas" : "Loose music";
+            DropPlan plan = DropPlan.Build(scan, options.Layout, destination, Project.GetModes().Select(m => m.Title).ToList(), loose);
+            PlannedFolder firstNew = plan.Folders.FirstOrDefault(f => !f.Existing);
+            ImportSummary summary = new ImportSummary { ShowTitle = firstNew != null ? firstNew.Title : destination };
+            summary.NewFolders = plan.Folders.Count(f => !f.Existing);
+
+            foreach (PlannedFolder planned in plan.Folders)
+            {
+                IMode mode = ModeByTitle(planned.Title);
+                if (mode == null)
+                {
+                    if (planned.Existing)
+                        continue;
+                    mode = Project.AddMode(planned.Title);
+                }
+                // what is in the folder already is not added twice
+                HashSet<string> present = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                if (planned.Existing)
+                {
+                    foreach (IModeElement old in mode.GetElements())
+                    {
+                        IFileElement oldFile = old.StartElement as IFileElement;
+                        if (oldFile != null)
+                            present.Add(oldFile.FilePath);
+                    }
+                }
+                foreach (DroppedGroup group in planned.Groups)
+                {
+                    List<string> files = group.Files.Where(f => !present.Contains(f)).ToList();
+                    foreach (IModeElement element in LibraryHelper.BuildModeElements(group, files, options))
+                    {
+                        mode.AddElement(element);
+                        summary.Buttons++;
+                    }
+                    foreach (string file in files)
+                        present.Add(file);
+                }
+            }
+
+            // nest the new folders: inside their parent, or (top level) at the end
+            Tree.Sync(Project.GetModes().Select(m => m.Title).ToList());
+            foreach (PlannedFolder planned in plan.Folders)
+            {
+                if (planned.Existing)
+                    continue;
+                ModeNode node = Tree.Find(planned.Title);
+                ModeNode parent = planned.Parent != null ? Tree.Find(planned.Parent) : null;
+                if (node != null && parent != null && parent != node)
+                {
+                    Tree.Attach(node, parent, -1);
+                    parent.Collapsed = false;
+                }
+            }
+            SaveProjectNow();
+            return summary;
+        }
+
+        /// <summary>Writes the project and its folder tree.</summary>
+        public void SaveProjectNow()
+        {
+            if (Project == null)
+                return;
+            DataModule.ProjectManager.SaveProject(Project);
+            Tree.Save(ProjectPath);
         }
 
         public IMode ModeByTitle(string title)

@@ -3,13 +3,19 @@
         xmlns:local="clr-namespace:Apolo.Desktop"
         x:Class="Apolo.Desktop.MainWindow"
         Title="Apolo" Width="1240" Height="780" MinWidth="860" MinHeight="520"
-        Icon="avares://Apolo.Desktop/Assets/apolo.ico">
+        Icon="avares://Apolo.Desktop/Assets/apolo.ico"
+        DragDrop.AllowDrop="True">
   <Grid RowDefinitions="Auto,Auto,*,Auto">
 
     <Menu Grid.Row="0" Name="MainMenu">
       <MenuItem Name="ProjectMenu" Header="Projeto">
+        <MenuItem Name="NewItem" Header="Novo projeto..." InputGesture="Ctrl+N" Click="OnNewProject" />
         <MenuItem Name="OpenItem" Header="Abrir..." InputGesture="Ctrl+O" Click="OnOpen" />
         <MenuItem Name="RecentMenu" Header="Recentes" />
+        <Separator />
+        <MenuItem Name="ImportFolderItem" Header="Adicionar pasta de músicas..." Click="OnImportFolder" />
+        <MenuItem Name="ImportFilesItem" Header="Adicionar arquivos de áudio..." Click="OnImportFiles" />
+        <Separator />
         <MenuItem Name="SettingsItem" Header="Configurações..." Click="OnSettings" />
         <Separator />
         <MenuItem Name="QuitItem" Header="Sair" Click="OnQuit" />

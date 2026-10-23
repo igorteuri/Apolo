@@ -27,7 +27,6 @@
     <Compile Include="..\..\src\Ares.Player\TrackText.cs" Link="Linked\TrackText.cs" />
     <Compile Include="..\..\src\Ares.Player\JsonText.cs" Link="Linked\JsonText.cs" />
     <Compile Include="..\..\src\Ares.Player\Player.Rights.cs" Link="Linked\Player.Rights.cs" />
-    <Compile Include="..\..\src\Ares.CommonGUI\DropPlan.cs" Link="Linked\DropPlan.cs" />
     <Compile Include="..\..\src\Ares.Player\ImageUrlParser.cs" Link="Linked\ImageUrlParser.cs" />
     <Compile Include="..\..\src\Ares.Player\ImageBankIndex.cs" Link="Linked\ImageBankIndex.cs" />
     <Compile Include="..\..\src\Ares.Playing\Audio\LevelCompressor.cs" Link="Linked\LevelCompressor.cs" />

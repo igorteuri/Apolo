@@ -34,6 +34,8 @@ namespace Apolo.Desktop
             m_Timer.Start();
             if (restoreLast)
                 Opened += (s, e) => OpenLast();
+            AddHandler(DragDrop.DropEvent, OnDrop);
+            AddHandler(DragDrop.DragOverEvent, OnDragOver);
         }
 
         /// <summary>Opens a project (also used by the tests and the screenshots).</summary>
@@ -73,7 +75,10 @@ namespace Apolo.Desktop
         private void Localize()
         {
             Find<MenuItem>("ProjectMenu").Header = AppHost.T("Projeto", "Project");
+            Find<MenuItem>("NewItem").Header = AppHost.T("Novo projeto...", "New project...");
             Find<MenuItem>("OpenItem").Header = AppHost.T("Abrir...", "Open...");
+            Find<MenuItem>("ImportFolderItem").Header = AppHost.T("Adicionar pasta de músicas...", "Add a folder of music...");
+            Find<MenuItem>("ImportFilesItem").Header = AppHost.T("Adicionar arquivos de áudio...", "Add audio files...");
             Find<MenuItem>("RecentMenu").Header = AppHost.T("Recentes", "Recent");
             Find<MenuItem>("SettingsItem").Header = AppHost.T("Configurações...", "Settings...");
             Find<MenuItem>("QuitItem").Header = AppHost.T("Sair", "Quit");
@@ -142,6 +147,109 @@ namespace Apolo.Desktop
                         OpenProject(m_Host.ImportedProject);
                 });
             });
+        }
+
+        // ---- new project and import of audio
+
+        private async void OnNewProject(object sender, RoutedEventArgs e)
+        {
+            IStorageFile file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = AppHost.T("Novo projeto", "New project"),
+                SuggestedFileName = AppHost.T("Meu projeto", "My project"),
+                DefaultExtension = "apolo",
+                FileTypeChoices = new[] { new FilePickerFileType(AppHost.T("Projeto do Apolo", "Apolo project")) { Patterns = new[] { "*.apolo" } } }
+            });
+            if (file == null)
+                return;
+            string path = file.Path.LocalPath;
+            if (!path.EndsWith(".apolo", StringComparison.OrdinalIgnoreCase))
+                path += ".apolo";
+            try
+            {
+                m_Host.CreateProject(path, Path.GetFileNameWithoutExtension(path));
+                m_Model.ProjectOpened();
+                RefreshRecentMenu();
+            }
+            catch (Exception ex)
+            {
+                new MessageWindow(AppHost.T("Não foi possível criar o projeto", "The project could not be created"), ex.Message).Show(this);
+            }
+        }
+
+        private async void OnImportFolder(object sender, RoutedEventArgs e)
+        {
+            IReadOnlyList<IStorageFolder> folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = AppHost.T("Escolha a pasta com os áudios", "Choose the folder with the audio"),
+                AllowMultiple = true
+            });
+            if (folders.Count > 0)
+                ImportPaths(folders.Select(f => f.Path.LocalPath).ToArray());
+        }
+
+        private async void OnImportFiles(object sender, RoutedEventArgs e)
+        {
+            IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = AppHost.T("Escolha os arquivos de áudio", "Choose the audio files"),
+                AllowMultiple = true,
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType(AppHost.T("Arquivos de áudio", "Audio files")) { Patterns = new[] { "*.mp3", "*.ogg", "*.opus", "*.wav", "*.flac", "*.m4a", "*.aac", "*.wma", "*.aif", "*.aiff" } },
+                    FilePickerFileTypes.All
+                }
+            });
+            if (files.Count > 0)
+                ImportPaths(files.Select(f => f.Path.LocalPath).ToArray());
+        }
+
+        private void OnDragOver(object sender, DragEventArgs e)
+        {
+            e.DragEffects = e.Data.Contains(DataFormats.Files) ? DragDropEffects.Copy : DragDropEffects.None;
+        }
+
+        private void OnDrop(object sender, DragEventArgs e)
+        {
+            IEnumerable<IStorageItem> items = e.Data.GetFiles();
+            if (items == null)
+                return;
+            string[] paths = items.Select(i => i.TryGetLocalPath()).Where(p => !string.IsNullOrEmpty(p)).ToArray();
+            if (paths.Length == 0)
+                return;
+            // a project or a pack dropped on the window is opened; audio is added to the project
+            if (paths.Length == 1 && (paths[0].EndsWith(".apolo", StringComparison.OrdinalIgnoreCase) || paths[0].EndsWith(".apkg", StringComparison.OrdinalIgnoreCase)))
+                OpenAny(paths[0]);
+            else
+                ImportPaths(paths);
+            e.Handled = true;
+        }
+
+        /// <summary>Looks at the files and folders, asks what to do (only what is open) and puts them in the project.</summary>
+        public async void ImportPaths(string[] paths)
+        {
+            Ares.CommonGUI.DropScan scan = Ares.CommonGUI.DropScan.Read(paths);
+            if (scan.IsEmpty)
+            {
+                new MessageWindow(AppHost.T("Adicionar ao Apolo", "Add to Apolo"),
+                    AppHost.T("Nenhum arquivo de áudio encontrado no que foi escolhido.", "No audio files found in what was chosen.")).Show(this);
+                return;
+            }
+            string destination = m_Model.SelectedFolder != null && m_Host.Project != null ? m_Model.SelectedFolder.Title : null;
+            DropOptionsWindow dialog = new DropOptionsWindow(scan, destination);
+            await dialog.ShowDialog(this);
+            if (dialog.Result == null)
+                return;
+            try
+            {
+                AppHost.ImportSummary summary = m_Host.ImportDropped(scan, dialog.Result, destination);
+                m_Model.ProjectChanged(summary.ShowTitle);
+                RefreshRecentMenu();
+            }
+            catch (Exception ex)
+            {
+                new MessageWindow(AppHost.T("Erro ao adicionar", "Error while adding"), ex.Message).Show(this);
+            }
         }
 
         private void OnSettings(object sender, RoutedEventArgs e)

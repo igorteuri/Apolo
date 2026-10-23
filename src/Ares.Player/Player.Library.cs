@@ -27,6 +27,7 @@ namespace Ares.Player
 
         private void InitLibraryDrop()
         {
+            Ares.CommonGUI.LibraryHelper.ReadIcons = project => Ares.CommonGUI.ButtonImageStore.Get(project, "", "");
             HookDrop(this);
             try
             {
