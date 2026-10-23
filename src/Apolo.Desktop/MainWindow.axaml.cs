@@ -280,9 +280,55 @@ namespace Apolo.Desktop
                 m_Model.ShowTracksOf(card.Id, card.Title);
         }
 
+        private void OnListToggle(object sender, RoutedEventArgs e)
+        {
+            m_Model.ToggleListMode();
+        }
+
+        private void OnTrackHeader(object sender, RoutedEventArgs e)
+        {
+            Button button = sender as Button;
+            if (button != null && button.Tag != null)
+                m_Model.TrackList.SortBy(button.Tag.ToString());
+        }
+
+        private void OnTrackPlay(object sender, RoutedEventArgs e)
+        {
+            m_Model.TrackList.Play(m_Model.TrackList.Selected);
+        }
+
+        private void OnTrackShow(object sender, RoutedEventArgs e)
+        {
+            TrackRowVM row = m_Model.TrackList.Selected;
+            if (row == null)
+                return;
+            try
+            {
+                string path = row.FullPath;
+                System.Diagnostics.ProcessStartInfo info;
+                if (OperatingSystem.IsWindows())
+                    info = new System.Diagnostics.ProcessStartInfo("explorer.exe", "/select,\"" + path + "\"");
+                else if (OperatingSystem.IsMacOS())
+                    info = new System.Diagnostics.ProcessStartInfo("open", "-R \"" + path + "\"");
+                else
+                    info = new System.Diagnostics.ProcessStartInfo("xdg-open", "\"" + Path.GetDirectoryName(path) + "\"");
+                info.UseShellExecute = false;
+                System.Diagnostics.Process.Start(info);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private void OnTrackRights(object sender, RoutedEventArgs e)
+        {
+            m_Model.TrackList.Title2 = AppHost.T("Verificando direitos na internet...", "Checking rights on the internet...");
+            m_Model.TrackList.CheckRights(() => m_Model.TrackList.Title2 = null);
+        }
+
         private void OnToggleTracks(object sender, RoutedEventArgs e)
         {
-            m_Model.ShowTracks = !m_Model.ShowTracks;
+            m_Model.TrackList.Visible = !m_Model.TrackList.Visible;
         }
 
         // the sound cards: the menu is made when it opens, as cards can be plugged in meanwhile

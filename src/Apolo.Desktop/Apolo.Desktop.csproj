@@ -20,6 +20,13 @@
     <ProjectReference Include="..\Ares.Players\Ares.Players.csproj" />
     <ProjectReference Include="..\Ares.Playing\Ares.Playing.csproj" />
     <ProjectReference Include="..\Ares.Settings\Ares.Settings.csproj" />
+    <ProjectReference Include="..\Ares.Tags\Ares.Tags.csproj" />
+    <ProjectReference Include="..\Ares.TagsImport\Ares.TagsImport.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- code of the Windows program which does not need Windows: the check of the rights and the count of plays -->
+    <Compile Include="..\Ares.Player\Player.Rights.cs" Link="Shared\Player.Rights.cs" />
+    <Compile Include="..\Ares.Player\PlayCounts.cs" Link="Shared\PlayCounts.cs" />
   </ItemGroup>
   <ItemGroup>
     <!-- the line icons of the buttons are the same files as the Windows program uses -->

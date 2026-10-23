@@ -55,7 +55,9 @@ namespace Apolo.Desktop.Tests
                 window.Model.SelectedFolder = humores;
                 Apolo.Desktop.CardVM first = window.Model.Groups[0].Cards[0];
                 window.Model.ShowTracksOf(first.Id, first.Title);
-                Assert.NotEmpty(window.Model.Tracks);
+                Assert.NotEmpty(window.Model.TrackList.Rows);
+                System.Threading.Thread.Sleep(1500);
+                Avalonia.Threading.Dispatcher.UIThread.RunJobs();
             }
             Assert.True(window.Model.MusicLow);
             Shot(window, "faixas-e-volume-baixo");

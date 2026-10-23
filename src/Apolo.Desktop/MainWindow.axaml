@@ -122,7 +122,7 @@
       </ScrollViewer>
     </Border>
     <!-- folders, buttons and the list of tracks -->
-    <Grid Grid.Row="3" ColumnDefinitions="270,6,*,Auto" Margin="8,0,8,0">
+    <Grid Grid.Row="3" ColumnDefinitions="270,6,*" Margin="8,0,8,0">
       <Border Classes="panel" Padding="6">
         <TreeView ItemsSource="{Binding Folders}" SelectedItem="{Binding SelectedFolder, Mode=TwoWay}" Background="Transparent">
           <TreeView.Styles>
@@ -152,8 +152,14 @@
         </TreeView>
       </Border>
 
-      <Border Grid.Column="2" Classes="panel" Padding="6">
-        <Grid>
+      <Grid Grid.Column="2" RowDefinitions="*,Auto">
+      <Border Classes="panel" Padding="6">
+        <Grid RowDefinitions="Auto,*">
+          <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6" IsVisible="{Binding HasProject}">
+            <TextBox Name="SearchBox" Text="{Binding SearchText, Mode=TwoWay}" Watermark="Buscar playlist..." />
+            <Button Grid.Column="1" Name="ListToggle" Margin="6,0,0,0" Padding="12,5" Content="{Binding ListToggleText}" Click="OnListToggle" />
+          </Grid>
+          <Grid Grid.Row="1">
           <ScrollViewer HorizontalScrollBarVisibility="Disabled">
             <ItemsControl ItemsSource="{Binding Groups}">
               <ItemsControl.ItemTemplate>
@@ -168,7 +174,7 @@
                       </ItemsControl.ItemsPanel>
                       <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                          <Button Classes="card" Command="{Binding Click}" Width="172" Height="108">
+                          <Button Classes="card" Command="{Binding Click}" Width="{Binding CardWidth}" Height="{Binding CardHeight}">
                             <Button.ContextMenu>
                               <ContextMenu>
                                 <MenuItem Header="{x:Static local:Texts.Tracks}" Click="OnCardTracks" />
@@ -180,7 +186,21 @@
                                 <MenuItem Header="{x:Static local:Texts.Delete}" Click="OnCardDelete" />
                               </ContextMenu>
                             </Button.ContextMenu>
-                            <Border Classes="cardface" Background="{Binding Face}" BorderBrush="{Binding Edge}">
+                            <Panel>
+                            <Border Classes="cardface" Background="{Binding Face}" BorderBrush="{Binding Edge}" IsVisible="{Binding IsRow}">
+                              <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                                <Panel Width="28" Height="28" Margin="0,0,10,0">
+                                  <Rectangle Width="22" Height="22" Fill="{Binding Tint}" OpacityMask="{Binding IconMask}" IsVisible="{Binding HasIcon}" />
+                                  <Image Width="26" Height="26" Source="{Binding Picture}" IsVisible="{Binding HasPicture}" />
+                                </Panel>
+                                <TextBlock Grid.Column="1" Text="{Binding Title}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="3">
+                                  <Rectangle Width="13" Height="13" Fill="{StaticResource DimBrush}" OpacityMask="{x:Static local:Glyphs.Music}" IsVisible="{Binding IsMusic}" />
+                                  <Rectangle Width="13" Height="13" Fill="{StaticResource DimBrush}" OpacityMask="{x:Static local:Glyphs.Effect}" IsVisible="{Binding IsEffect}" />
+                                </StackPanel>
+                              </Grid>
+                            </Border>
+                            <Border Classes="cardface" Background="{Binding Face}" BorderBrush="{Binding Edge}" IsVisible="{Binding IsCard}">
                               <Grid RowDefinitions="*,Auto">
                                 <Panel>
                                   <Rectangle Width="38" Height="38" Fill="{Binding Tint}" OpacityMask="{Binding IconMask}" IsVisible="{Binding HasIcon}" />
@@ -194,6 +214,7 @@
                                 </StackPanel>
                               </Grid>
                             </Border>
+                            </Panel>
                           </Button>
                         </DataTemplate>
                       </ItemsControl.ItemTemplate>
@@ -213,24 +234,59 @@
             <Button Name="WelcomeOpen" HorizontalAlignment="Center" Padding="22,10" Click="OnOpen" />
             <Button Name="WelcomePacks" HorizontalAlignment="Center" Padding="22,10" Click="OnPacks" />
           </StackPanel>
+          </Grid>
         </Grid>
       </Border>
 
-      <Border Grid.Column="3" Classes="panel" Padding="8" Margin="6,0,0,0" Width="340" IsVisible="{Binding ShowTracks}">
-        <Grid RowDefinitions="Auto,*">
-          <TextBlock Text="{Binding TracksTitle}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,0,0,6" />
-          <ListBox Grid.Row="1" ItemsSource="{Binding Tracks}" Background="Transparent" SelectionMode="Single">
-            <ListBox.ItemTemplate>
-              <DataTemplate>
-                <Grid ColumnDefinitions="*,Auto">
-                  <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Path}" />
-                  <TextBlock Grid.Column="1" Text="{Binding Kind}" Classes="dim" FontSize="12" Margin="8,0,0,0" />
-                </Grid>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-          </ListBox>
+      <Border Grid.Row="1" Classes="panel" Padding="8" Margin="0,6,0,0" Height="250" IsVisible="{Binding TrackList.Visible}">
+        <Grid RowDefinitions="Auto,Auto,*">
+          <Grid ColumnDefinitions="*,220">
+            <TextBlock Text="{Binding TrackList.Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+            <TextBox Grid.Column="1" Text="{Binding TrackList.Search, Mode=TwoWay}" Watermark="Buscar música..." Margin="0,0,0,6" />
+          </Grid>
+          <ScrollViewer Grid.Row="1" Grid.RowSpan="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,28,0,0">
+            <Grid RowDefinitions="Auto,*">
+              <Grid Name="TrackHeader" ColumnDefinitions="44,46,250,150,150,70,70,110,300" Width="1170" HorizontalAlignment="Left">
+                <Button Grid.Column="0" Classes="link" Tag="Number" Click="OnTrackHeader" Content="{Binding TrackList.Headers[0]}" HorizontalAlignment="Stretch" Padding="2,2" />
+                <Button Grid.Column="1" Classes="link" Tag="Kind" Click="OnTrackHeader" Content="{Binding TrackList.Headers[1]}" HorizontalAlignment="Stretch" Padding="2,2" />
+                <Button Grid.Column="2" Classes="link" Tag="Title" Click="OnTrackHeader" Content="{Binding TrackList.Headers[2]}" HorizontalAlignment="Stretch" Padding="2,2" />
+                <Button Grid.Column="3" Classes="link" Tag="Artist" Click="OnTrackHeader" Content="{Binding TrackList.Headers[3]}" HorizontalAlignment="Stretch" Padding="2,2" />
+                <Button Grid.Column="4" Classes="link" Tag="Album" Click="OnTrackHeader" Content="{Binding TrackList.Headers[4]}" HorizontalAlignment="Stretch" Padding="2,2" />
+                <Button Grid.Column="5" Classes="link" Tag="Duration" Click="OnTrackHeader" Content="{Binding TrackList.Headers[5]}" HorizontalAlignment="Stretch" Padding="2,2" />
+                <Button Grid.Column="6" Classes="link" Tag="Plays" Click="OnTrackHeader" Content="{Binding TrackList.Headers[6]}" HorizontalAlignment="Stretch" Padding="2,2" />
+                <Button Grid.Column="7" Classes="link" Tag="Rights" Click="OnTrackHeader" Content="{Binding TrackList.Headers[7]}" HorizontalAlignment="Stretch" Padding="2,2" />
+                <Button Grid.Column="8" Classes="link" Tag="File" Click="OnTrackHeader" Content="{Binding TrackList.Headers[8]}" HorizontalAlignment="Stretch" Padding="2,2" />
+              </Grid>
+              <ListBox Grid.Row="1" Name="TrackListBox" ItemsSource="{Binding TrackList.Rows}" SelectedItem="{Binding TrackList.Selected, Mode=TwoWay}"
+                       Background="Transparent" SelectionMode="Single" DoubleTapped="OnTrackPlay" Width="1170" HorizontalAlignment="Left">
+                <ListBox.ContextMenu>
+                  <ContextMenu>
+                    <MenuItem Header="Tocar" Click="OnTrackPlay" />
+                    <MenuItem Header="Mostrar na pasta" Click="OnTrackShow" />
+                    <MenuItem Header="Verificar direitos autorais desta lista (internet)" Click="OnTrackRights" />
+                  </ContextMenu>
+                </ListBox.ContextMenu>
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <Grid ColumnDefinitions="44,46,250,150,150,70,70,110,300" Background="{Binding Back}">
+                      <TextBlock Text="{Binding Number}" TextAlignment="Right" Margin="0,0,8,0" Classes="dim" />
+                      <TextBlock Grid.Column="1" Text="{Binding Kind}" TextAlignment="Center" />
+                      <TextBlock Grid.Column="2" Text="{Binding Title}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" />
+                      <TextBlock Grid.Column="3" Text="{Binding Artist}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" Classes="dim" />
+                      <TextBlock Grid.Column="4" Text="{Binding Album}" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" Classes="dim" />
+                      <TextBlock Grid.Column="5" Text="{Binding Duration}" TextAlignment="Right" Margin="0,0,8,0" Classes="dim" />
+                      <TextBlock Grid.Column="6" Text="{Binding Plays}" TextAlignment="Right" Margin="0,0,8,0" Classes="dim" />
+                      <TextBlock Grid.Column="7" Text="{Binding RightsText}" Foreground="{Binding RightsBrush}" ToolTip.Tip="{Binding RightsWhy}" />
+                      <TextBlock Grid.Column="8" Text="{Binding FilePath}" TextTrimming="CharacterEllipsis" Classes="dim" ToolTip.Tip="{Binding FullPath}" />
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </Grid>
+          </ScrollViewer>
         </Grid>
       </Border>
+      </Grid>
     </Grid>
 
     <!-- state, repeat, output, project -->

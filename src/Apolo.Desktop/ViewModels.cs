@@ -97,8 +97,14 @@ namespace Apolo.Desktop
         public IBrush Edge { get { return m_Playing ? s_PlayingEdge : m_Edge; } }
         public IBrush Face { get { return m_Playing ? s_PlayingFace : s_Face; } }
 
-        public CardVM(IModeElement element, string ownerTitle, string projectPath, Action<int> play)
+        public bool IsRow { get; private set; }
+        public bool IsCard { get { return !IsRow; } }
+        public double CardWidth { get { return IsRow ? 560 : 172; } }
+        public double CardHeight { get { return IsRow ? 44 : 108; } }
+
+        public CardVM(IModeElement element, string ownerTitle, string projectPath, Action<int> play, bool row)
         {
+            IsRow = row;
             Id = element.Id;
             Title = element.Title;
             int kinds = ElementKinds.Of(element.StartElement);
@@ -136,14 +142,6 @@ namespace Apolo.Desktop
         public bool HasMore { get { return !string.IsNullOrEmpty(MoreText); } }
         public ICommand MoreCommand { get; set; }
         public GroupVM() { Cards = new ObservableCollection<CardVM>(); }
-    }
-
-    /// <summary>A line of the list of tracks.</summary>
-    public sealed class TrackVM
-    {
-        public string Name { get; set; }
-        public string Kind { get; set; }
-        public string Path { get; set; }
     }
 
     /// <summary>A sound effect which is playing.</summary>
@@ -184,6 +182,7 @@ namespace Apolo.Desktop
             Folders = new ObservableCollection<FolderVM>();
             Groups = new ObservableCollection<GroupVM>();
             Chips = new ObservableCollection<ChipVM>();
+            TrackList = new TrackListVM(host);
             Recent = new ObservableCollection<RecentVM>();
             PauseCommand = new RelayCommand(() => { if (m_Host.Control != null) m_Host.Control.TogglePause(); });
             StopCommand = new RelayCommand(() => Key(Ares.Data.Keys.Escape));
@@ -283,6 +282,20 @@ namespace Apolo.Desktop
             public string Header;
         }
 
+        // search box and "cards / list" switch above the buttons
+        private string m_SearchText = "";
+        public string SearchText { get { return m_SearchText; } set { if (Set(ref m_SearchText, value ?? "")) ShowFolder(); } }
+
+        private bool m_ListMode = Ares.CommonGUI.Preferences.GetBool("ListMode", false);
+        public string ListToggleText { get { return m_ListMode ? AppHost.T("▦ Cartões", "▦ Cards") : AppHost.T("☰ Lista", "☰ List"); } }
+        public void ToggleListMode()
+        {
+            m_ListMode = !m_ListMode;
+            Ares.CommonGUI.Preferences.SetBool("ListMode", m_ListMode);
+            Raise("ListToggleText");
+            ShowFolder();
+        }
+
         private const int ShownLimitStep = 200;
         private int m_ShownLimit = ShownLimitStep;
         private string m_ShownLimitFolder;
@@ -296,6 +309,11 @@ namespace Apolo.Desktop
                 return;
             if (m_Selected.Title != m_ShownLimitFolder)
             {
+                if (m_SearchText.Length > 0)
+                {
+                    m_SearchText = "";
+                    Raise("SearchText");
+                }
                 m_ShownLimitFolder = m_Selected.Title;
                 m_ShownLimit = ShownLimitStep;
             }
@@ -308,6 +326,24 @@ namespace Apolo.Desktop
             List<Entry> entries = new List<Entry>();
             Collect(m_Selected.Node, null, byTitle, entries);
             CollectChildren(m_Selected.Node, "", byTitle, entries, 0);
+            if (m_SearchText.Trim().Length > 0)
+            {
+                // the heading of a group goes to the first button which is left
+                string q = m_SearchText.Trim();
+                List<Entry> found = new List<Entry>();
+                string pending = null;
+                foreach (Entry entry in entries)
+                {
+                    if (entry.Header != null)
+                        pending = entry.Header;
+                    if (entry.Element.Title.IndexOf(q, StringComparison.CurrentCultureIgnoreCase) < 0)
+                        continue;
+                    entry.Header = pending;
+                    pending = null;
+                    found.Add(entry);
+                }
+                entries = found;
+            }
 
             List<List<Entry>> collapsed;
             int hiddenInFirst;
@@ -321,7 +357,7 @@ namespace Apolo.Desktop
                     group = NewGroup(entry.Header, entry.Owner);
                     Groups.Add(group);
                 }
-                group.Cards.Add(new CardVM(entry.Element, entry.Owner, m_Host.ProjectPath, Play));
+                group.Cards.Add(new CardVM(entry.Element, entry.Owner, m_Host.ProjectPath, Play, m_ListMode));
             }
             if (hiddenInFirst > 0 && group != null)
             {
@@ -400,20 +436,24 @@ namespace Apolo.Desktop
             if (m_Selected != null)
                 m_Host.Control.SetMode(m_Selected.Title);
             m_Host.Control.SwitchElement(id);
-            if (m_Host.Project != null)
-            {
-                string shown = null;
-                foreach (IMode mode in m_Host.Project.GetModes())
-                {
-                    IModeElement el = mode.GetElements().FirstOrDefault(x => x.Id == id);
-                    if (el != null)
-                        shown = el.Title;
-                }
-                if (shown != null)
-                    ShowTracksOf(id, shown);
-            }
+            string shown = TitleOf(id);
+            if (shown != null)
+                ShowTracksOf(id, shown);
             m_Flash[id] = DateTime.UtcNow.AddMilliseconds(900);
             UpdatePlaying();
+        }
+
+        private string TitleOf(int id)
+        {
+            if (m_Host.Project == null)
+                return null;
+            foreach (IMode mode in m_Host.Project.GetModes())
+            {
+                IModeElement el = mode.GetElements().FirstOrDefault(x => x.Id == id);
+                if (el != null)
+                    return el.Title;
+            }
+            return null;
         }
 
         // buttons clicked a moment ago stay lit for a while: a short sound effect ends before the next poll
@@ -459,6 +499,13 @@ namespace Apolo.Desktop
                 m_Updating = false;
             }
             int musicId = m_Host.Control.CurrentMusicElement;
+            if (musicId != m_LastMusicId)
+            {
+                m_LastMusicId = musicId;
+                if (musicId != -1)
+                    TrackList.CountPlay(musicId);
+                TrackList.MusicChanged(musicId);
+            }
             double position, length;
             if (musicId != -1 && m_Host.Control.GetMusicPosition(out position, out length) && length > 0)
             {
@@ -480,6 +527,8 @@ namespace Apolo.Desktop
             Raise("StateText");
             Raise("RepeatText");
         }
+
+        private int m_LastMusicId = -1;
 
         private static string Format(double seconds)
         {
@@ -624,64 +673,11 @@ namespace Apolo.Desktop
 
         // ---- the track list of a button (F9)
 
-        public ObservableCollection<TrackVM> Tracks { get; private set; } = new ObservableCollection<TrackVM>();
-        private string m_TracksTitle = "";
-        public string TracksTitle { get { return m_TracksTitle; } private set { Set(ref m_TracksTitle, value); } }
-        private bool m_ShowTracks = true;
-        public bool ShowTracks { get { return m_ShowTracks; } set { Set(ref m_ShowTracks, value); } }
+        public TrackListVM TrackList { get; private set; }
 
         public void ShowTracksOf(int id, string title)
         {
-            Tracks.Clear();
-            IModeElement element = null;
-            if (m_Host.Project != null)
-            {
-                foreach (IMode mode in m_Host.Project.GetModes())
-                {
-                    element = mode.GetElements().FirstOrDefault(e => e.Id == id);
-                    if (element != null)
-                        break;
-                }
-            }
-            if (element != null)
-                CollectTracks(element.StartElement, 0);
-            TracksTitle = title + "  (" + Tracks.Count + ")";
-        }
-
-        private void CollectTracks(IElement element, int depth)
-        {
-            if (element == null || depth > 12 || Tracks.Count > 5000)
-                return;
-            IFileElement file = element as IFileElement;
-            if (file != null)
-            {
-                Tracks.Add(new TrackVM
-                {
-                    Name = file.Title,
-                    Kind = file.SoundFileType == SoundFileType.Music ? AppHost.T("Música", "Music") : AppHost.T("Efeito", "Effect"),
-                    Path = file.FilePath
-                });
-                return;
-            }
-            IReferenceElement reference = element as IReferenceElement;
-            if (reference != null)
-            {
-                CollectTracks(DataModule.ElementRepository.GetElement(reference.ReferencedId), depth + 1);
-                return;
-            }
-            IGeneralElementContainer container = element as IGeneralElementContainer;
-            if (container != null)
-            {
-                foreach (IFileElement f in container.GetFileElements())
-                    CollectTracks(f, depth + 1);
-                foreach (IContainerElement inner in container.GetGeneralElements())
-                    CollectTracks(inner, depth + 1);
-                if (Tracks.Count > 0)
-                    return;
-            }
-            IContainerElement wrapper = element as IContainerElement;
-            if (wrapper != null && !ReferenceEquals(wrapper.InnerElement, element))
-                CollectTracks(wrapper.InnerElement, depth + 1);
+            TrackList.Load(id, title);
         }
 
         public void SeekMusic(double seconds)
