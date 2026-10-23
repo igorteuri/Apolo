@@ -273,6 +273,43 @@ namespace Apolo.Desktop
             return m_Model.SelectedFolder != null ? m_Model.SelectedFolder.Title : null;
         }
 
+        private void OnCardTracks(object sender, RoutedEventArgs e)
+        {
+            CardVM card = Context<CardVM>(sender);
+            if (card != null)
+                m_Model.ShowTracksOf(card.Id, card.Title);
+        }
+
+        private void OnToggleTracks(object sender, RoutedEventArgs e)
+        {
+            m_Model.ShowTracks = !m_Model.ShowTracks;
+        }
+
+        // the sound cards: the menu is made when it opens, as cards can be plugged in meanwhile
+        private void OnOutputOpening(object sender, EventArgs e)
+        {
+            MenuFlyout flyout = sender as MenuFlyout;
+            if (flyout == null)
+                return;
+            flyout.Items.Clear();
+            int current = Ares.Settings.Settings.Instance.OutputDeviceIndex;
+            foreach (Ares.Playing.AudioInit.OutputDevice device in Ares.Playing.AudioInit.GetActiveDevices())
+            {
+                int index = device.Index;
+                MenuItem item = new MenuItem { Header = (index == current ? "✓  " : "     ") + device.Name };
+                item.Click += (s, a) => ChangeOutput(index);
+                flyout.Items.Add(item);
+            }
+        }
+
+        private void ChangeOutput(int index)
+        {
+            string problem = m_Host.ApplySettings(index);
+            m_Model.RefreshOutput();
+            if (problem != null)
+                new MessageWindow("Apolo", problem).Show(this);
+        }
+
         private async void OnCardRename(object sender, RoutedEventArgs e)
         {
             CardVM card = Context<CardVM>(sender);
@@ -468,6 +505,11 @@ namespace Apolo.Desktop
                     OnNewFolder(this, new RoutedEventArgs());
                 else
                     OnNewProject(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+            else if (e.Key == Key.F9)
+            {
+                OnToggleTracks(this, new RoutedEventArgs());
                 e.Handled = true;
             }
             else if (!(e.Source is TextBox) && m_Host != null && m_Host.Control != null)

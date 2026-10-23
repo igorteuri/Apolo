@@ -47,6 +47,19 @@ namespace Apolo.Desktop.Tests
             window.OpenProject(project);
             Assert.NotEmpty(window.Model.Folders);
             Shot(window, "projeto-aberto");
+            // volume under 10 % (red) and the list of tracks of a button
+            window.Model.MusicVol = 5;
+            Apolo.Desktop.FolderVM humores = Find(window.Model.Folders, "Humores");
+            if (humores != null)
+            {
+                window.Model.SelectedFolder = humores;
+                Apolo.Desktop.CardVM first = window.Model.Groups[0].Cards[0];
+                window.Model.ShowTracksOf(first.Id, first.Title);
+                Assert.NotEmpty(window.Model.Tracks);
+            }
+            Assert.True(window.Model.MusicLow);
+            Shot(window, "faixas-e-volume-baixo");
+            window.Model.MusicVol = 50;
             foreach (string name in new[] { "Humores", "Clima", "Animais", "Soundpads" })
             {
                 Apolo.Desktop.FolderVM folder = Find(window.Model.Folders, name);

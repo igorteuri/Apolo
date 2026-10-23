@@ -138,6 +138,14 @@ namespace Apolo.Desktop
         public GroupVM() { Cards = new ObservableCollection<CardVM>(); }
     }
 
+    /// <summary>A line of the list of tracks.</summary>
+    public sealed class TrackVM
+    {
+        public string Name { get; set; }
+        public string Kind { get; set; }
+        public string Path { get; set; }
+    }
+
     /// <summary>A sound effect which is playing.</summary>
     public sealed class ChipVM : Observable
     {
@@ -190,6 +198,7 @@ namespace Apolo.Desktop
             }
             m_Leveler = Ares.Playing.AudioLeveler.Enabled;
             RefreshRecent();
+            try { RefreshOutput(); } catch (Exception) { OutputName = ""; }
         }
 
         public ICommand PauseCommand { get; private set; }
@@ -207,7 +216,7 @@ namespace Apolo.Desktop
         // ---- the project
 
         private string m_ProjectName = AppHost.T("Nenhum projeto aberto", "No project open");
-        public string ProjectName { get { return m_ProjectName; } private set { Set(ref m_ProjectName, value); } }
+        public string ProjectName { get { return m_ProjectName; } private set { if (Set(ref m_ProjectName, value)) Raise("ProjectText"); } }
 
         public bool HasProject { get { return m_Host.Project != null; } }
         public bool NoProject { get { return m_Host.Project == null; } }
@@ -391,8 +400,12 @@ namespace Apolo.Desktop
             if (m_Selected != null)
                 m_Host.Control.SetMode(m_Selected.Title);
             m_Host.Control.SwitchElement(id);
+            m_Flash[id] = DateTime.UtcNow.AddMilliseconds(900);
             UpdatePlaying();
         }
+
+        // buttons clicked a moment ago stay lit for a while: a short sound effect ends before the next poll
+        private readonly Dictionary<int, DateTime> m_Flash = new Dictionary<int, DateTime>();
 
         // ---- what plays now (called by a timer)
 
@@ -452,6 +465,8 @@ namespace Apolo.Desktop
                 MusicTime = "";
             }
             UpdateChips();
+            Raise("StateText");
+            Raise("RepeatText");
         }
 
         private static string Format(double seconds)
@@ -465,6 +480,14 @@ namespace Apolo.Desktop
             if (m_Host.Control == null)
                 return;
             HashSet<int> playing = new HashSet<int>(m_Host.Control.CurrentModeElements.Select(e => e.Id));
+            DateTime now = DateTime.UtcNow;
+            foreach (int key in m_Flash.Keys.ToList())
+            {
+                if (m_Flash[key] > now)
+                    playing.Add(key);
+                else
+                    m_Flash.Remove(key);
+            }
             foreach (GroupVM group in Groups)
             {
                 foreach (CardVM card in group.Cards)
@@ -514,18 +537,23 @@ namespace Apolo.Desktop
         public int Global
         {
             get { return m_Global; }
-            set { if (Set(ref m_Global, value) && !m_Updating && m_Host.Control != null) m_Host.Control.GlobalVolume = value; }
+            set { if (Set(ref m_Global, value)) { Raise("GlobalLow"); if (!m_Updating && m_Host.Control != null) m_Host.Control.GlobalVolume = value; } }
         }
         public int MusicVol
         {
             get { return m_Music; }
-            set { if (Set(ref m_Music, value) && !m_Updating && m_Host.Control != null) m_Host.Control.MusicVolume = value; }
+            set { if (Set(ref m_Music, value)) { Raise("MusicLow"); if (!m_Updating && m_Host.Control != null) m_Host.Control.MusicVolume = value; } }
         }
         public int SoundVol
         {
             get { return m_Sound; }
-            set { if (Set(ref m_Sound, value) && !m_Updating && m_Host.Control != null) m_Host.Control.SoundVolume = value; }
+            set { if (Set(ref m_Sound, value)) { Raise("SoundLow"); if (!m_Updating && m_Host.Control != null) m_Host.Control.SoundVolume = value; } }
         }
+
+        // under 10 % the bar is red (as in the Windows version)
+        public bool GlobalLow { get { return m_Global < 10; } }
+        public bool MusicLow { get { return m_Music < 10; } }
+        public bool SoundLow { get { return m_Sound < 10; } }
 
         private bool m_Leveler;
         public bool LevelerOn
@@ -539,6 +567,110 @@ namespace Apolo.Desktop
                     Ares.CommonGUI.Preferences.SetBool("LevelerOn", value);
                 }
             }
+        }
+
+        // ---- the bar below: state, repeat, output, project
+
+        public string ProjectText
+        {
+            get { return AppHost.T("Projeto: ", "Project: ") + ProjectName; }
+        }
+
+        public string StateText
+        {
+            get
+            {
+                if (m_Host.Control == null || m_Host.Project == null)
+                    return "";
+                string music = MusicTitle.Length > 0 ? AppHost.T("Música: ", "Music: ") + MusicTitle : AppHost.T("Sem música", "No music");
+                return music + "   |   " + AppHost.T("Sons tocando: ", "Sounds playing: ") + Chips.Count;
+            }
+        }
+
+        public string RepeatText
+        {
+            get { return RepeatMusic ? AppHost.T("Repetir música: ligado", "Repeat music: on") : AppHost.T("Repetir música: desligado", "Repeat music: off"); }
+        }
+
+        private string m_OutputName = "";
+        public string OutputName { get { return m_OutputName; } private set { Set(ref m_OutputName, value); } }
+        public string OutputText { get { return AppHost.T("Saída: ", "Output: ") + m_OutputName; } }
+
+        /// <summary>The name of the sound card in use.</summary>
+        public void RefreshOutput()
+        {
+            int index = Ares.Settings.Settings.Instance.OutputDeviceIndex;
+            string name = null;
+            foreach (Ares.Playing.AudioInit.OutputDevice device in Ares.Playing.AudioInit.GetActiveDevices())
+            {
+                if (device.Index == index)
+                    name = device.Name;
+            }
+            OutputName = name ?? AppHost.T("Padrão do sistema", "System default");
+            Raise("OutputText");
+        }
+
+        // ---- the track list of a button (F9)
+
+        public ObservableCollection<TrackVM> Tracks { get; private set; } = new ObservableCollection<TrackVM>();
+        private string m_TracksTitle = "";
+        public string TracksTitle { get { return m_TracksTitle; } private set { Set(ref m_TracksTitle, value); } }
+        private bool m_ShowTracks;
+        public bool ShowTracks { get { return m_ShowTracks; } set { Set(ref m_ShowTracks, value); } }
+
+        public void ShowTracksOf(int id, string title)
+        {
+            Tracks.Clear();
+            IModeElement element = null;
+            if (m_Host.Project != null)
+            {
+                foreach (IMode mode in m_Host.Project.GetModes())
+                {
+                    element = mode.GetElements().FirstOrDefault(e => e.Id == id);
+                    if (element != null)
+                        break;
+                }
+            }
+            if (element != null)
+                CollectTracks(element.StartElement, 0);
+            TracksTitle = title + "  (" + Tracks.Count + ")";
+            ShowTracks = true;
+        }
+
+        private void CollectTracks(IElement element, int depth)
+        {
+            if (element == null || depth > 12 || Tracks.Count > 5000)
+                return;
+            IFileElement file = element as IFileElement;
+            if (file != null)
+            {
+                Tracks.Add(new TrackVM
+                {
+                    Name = file.Title,
+                    Kind = file.SoundFileType == SoundFileType.Music ? AppHost.T("Música", "Music") : AppHost.T("Efeito", "Effect"),
+                    Path = file.FilePath
+                });
+                return;
+            }
+            IReferenceElement reference = element as IReferenceElement;
+            if (reference != null)
+            {
+                CollectTracks(DataModule.ElementRepository.GetElement(reference.ReferencedId), depth + 1);
+                return;
+            }
+            IGeneralElementContainer container = element as IGeneralElementContainer;
+            if (container != null)
+            {
+                foreach (IFileElement f in container.GetFileElements())
+                    CollectTracks(f, depth + 1);
+                foreach (IContainerElement inner in container.GetGeneralElements())
+                    CollectTracks(inner, depth + 1);
+                if (Tracks.Count > 0)
+                    return;
+            }
+            IContainerElement wrapper = element as IContainerElement;
+            if (wrapper != null && !ReferenceEquals(wrapper.InnerElement, element))
+                CollectTracks(wrapper.InnerElement, depth + 1);
         }
 
         public void SeekMusic(double seconds)

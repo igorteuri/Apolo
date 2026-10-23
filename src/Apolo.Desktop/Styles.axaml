@@ -105,4 +105,11 @@
     <Setter Property="Padding" Value="8,4" />
     <Setter Property="Margin" Value="4,0" />
   </Style>
+  <!-- a volume under 10 % is red -->
+  <Style Selector="Slider.low /template/ RepeatButton#PART_DecreaseButton">
+    <Setter Property="Background" Value="#E5484D" />
+  </Style>
+  <Style Selector="Slider.low /template/ Thumb">
+    <Setter Property="Background" Value="#E5484D" />
+  </Style>
 </Styles>

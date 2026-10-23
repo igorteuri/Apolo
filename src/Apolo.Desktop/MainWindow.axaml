@@ -5,9 +5,10 @@
         Title="Apolo" Width="1240" Height="780" MinWidth="860" MinHeight="520"
         Icon="avares://Apolo.Desktop/Assets/apolo.ico"
         DragDrop.AllowDrop="True">
-  <Grid RowDefinitions="Auto,Auto,*,Auto">
+  <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
 
-    <Menu Grid.Row="0" Name="MainMenu">
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+    <Menu Name="MainMenu">
       <MenuItem Name="ProjectMenu" Header="Projeto">
         <MenuItem Name="NewItem" Header="Novo projeto..." InputGesture="Ctrl+N" Click="OnNewProject" />
         <MenuItem Name="OpenItem" Header="Abrir..." InputGesture="Ctrl+O" Click="OnOpen" />
@@ -25,7 +26,16 @@
       <MenuItem Name="HelpMenu" Header="Ajuda">
         <MenuItem Name="AboutItem" Header="Sobre o Apolo" Click="OnAbout" />
       </MenuItem>
+      <MenuItem Name="ViewMenu" Header="Exibir">
+        <MenuItem Name="TracksItem" Header="Lista de faixas" InputGesture="F9" Click="OnToggleTracks" />
+      </MenuItem>
     </Menu>
+    <Button Grid.Column="1" Name="OutputButton" Classes="link" Margin="0,0,10,0" VerticalAlignment="Center" Content="{Binding OutputText}">
+      <Button.Flyout>
+        <MenuFlyout Placement="BottomEdgeAlignedRight" Opening="OnOutputOpening" />
+      </Button.Flyout>
+    </Button>
+    </Grid>
 
     <!-- playback, progress and volumes -->
     <Border Grid.Row="1" Classes="panel" Margin="8,4,8,6" Padding="10,8">
@@ -62,15 +72,15 @@
         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Spacing="14">
           <StackPanel Width="120">
             <TextBlock Name="GlobalLabel" Text="Geral" Classes="dim" FontSize="12" />
-            <Slider Minimum="0" Maximum="100" Value="{Binding Global}" />
+            <Slider Minimum="0" Maximum="100" Value="{Binding Global}" Classes.low="{Binding GlobalLow}" />
           </StackPanel>
           <StackPanel Width="120">
             <TextBlock Name="MusicLabel" Text="Música" Classes="dim" FontSize="12" />
-            <Slider Minimum="0" Maximum="100" Value="{Binding MusicVol}" />
+            <Slider Minimum="0" Maximum="100" Value="{Binding MusicVol}" Classes.low="{Binding MusicLow}" />
           </StackPanel>
           <StackPanel Width="120">
             <TextBlock Name="SoundLabel" Text="Sons" Classes="dim" FontSize="12" />
-            <Slider Minimum="0" Maximum="100" Value="{Binding SoundVol}" />
+            <Slider Minimum="0" Maximum="100" Value="{Binding SoundVol}" Classes.low="{Binding SoundLow}" />
           </StackPanel>
           <StackPanel>
             <TextBlock Name="LevelLabel" Text="Nivelar" Classes="dim" FontSize="12" />
@@ -81,7 +91,42 @@
     </Border>
 
     <!-- folders and buttons -->
-    <Grid Grid.Row="2" ColumnDefinitions="270,6,*" Margin="8,0,8,0">
+        <!-- the sound effects which are playing -->
+    <Border Grid.Row="2" Classes="panel" Margin="8,0,8,6" Padding="6" IsVisible="{Binding HasChips}">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+        <ItemsControl ItemsSource="{Binding Chips}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Classes="chip" Width="250">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                  <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                  <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Classes="tool" Width="30" Height="26" Command="{Binding PauseCommand}">
+                      <Rectangle Width="14" Height="14" Fill="{StaticResource TextBrush}" OpacityMask="{Binding PauseMask}" />
+                    </Button>
+                    <Button Classes="tool" Width="30" Height="26" Command="{Binding RepeatCommand}">
+                      <Rectangle Width="14" Height="14" Fill="{Binding RepeatBrush}" OpacityMask="{x:Static local:Glyphs.Repeat}" />
+                    </Button>
+                    <Button Classes="tool" Width="30" Height="26" Command="{Binding StopCommand}">
+                      <Rectangle Width="14" Height="14" Fill="{StaticResource TextBrush}" OpacityMask="{x:Static local:Glyphs.Stop}" />
+                    </Button>
+                  </StackPanel>
+                  <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Height="4" Margin="0,4,0,0" Minimum="0" Maximum="1" Value="{Binding Progress}"
+                               Background="#1F2129" Foreground="{StaticResource AccentBrush}" />
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Border>
+    <!-- folders, buttons and the list of tracks -->
+    <Grid Grid.Row="3" ColumnDefinitions="270,6,*,Auto" Margin="8,0,8,0">
       <Border Classes="panel" Padding="6">
         <TreeView ItemsSource="{Binding Folders}" SelectedItem="{Binding SelectedFolder, Mode=TwoWay}" Background="Transparent">
           <TreeView.Styles>
@@ -130,6 +175,7 @@
                           <Button Classes="card" Command="{Binding Click}" Width="172" Height="108">
                             <Button.ContextMenu>
                               <ContextMenu>
+                                <MenuItem Header="{x:Static local:Texts.Tracks}" Click="OnCardTracks" />
                                 <MenuItem Header="{x:Static local:Texts.Rename}" Click="OnCardRename" />
                                 <MenuItem Header="{x:Static local:Texts.Look}" Click="OnCardLook" />
                                 <MenuItem Header="{x:Static local:Texts.MoveBefore}" Click="OnCardLeft" />
@@ -173,41 +219,33 @@
           </StackPanel>
         </Grid>
       </Border>
+
+      <Border Grid.Column="3" Classes="panel" Padding="8" Margin="6,0,0,0" Width="340" IsVisible="{Binding ShowTracks}">
+        <Grid RowDefinitions="Auto,*">
+          <TextBlock Text="{Binding TracksTitle}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,0,0,6" />
+          <ListBox Grid.Row="1" ItemsSource="{Binding Tracks}" Background="Transparent">
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Path}" />
+                  <TextBlock Grid.Column="1" Text="{Binding Kind}" Classes="dim" FontSize="12" Margin="8,0,0,0" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Grid>
+      </Border>
     </Grid>
 
-    <!-- the sound effects which are playing -->
-    <Border Grid.Row="3" Classes="panel" Margin="8,6,8,8" Padding="6" IsVisible="{Binding HasChips}">
-      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-        <ItemsControl ItemsSource="{Binding Chips}">
-          <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate>
-              <StackPanel Orientation="Horizontal" />
-            </ItemsPanelTemplate>
-          </ItemsControl.ItemsPanel>
-          <ItemsControl.ItemTemplate>
-            <DataTemplate>
-              <Border Classes="chip" Width="250">
-                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                  <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                  <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Classes="tool" Width="30" Height="26" Command="{Binding PauseCommand}">
-                      <Rectangle Width="14" Height="14" Fill="{StaticResource TextBrush}" OpacityMask="{Binding PauseMask}" />
-                    </Button>
-                    <Button Classes="tool" Width="30" Height="26" Command="{Binding RepeatCommand}">
-                      <Rectangle Width="14" Height="14" Fill="{Binding RepeatBrush}" OpacityMask="{x:Static local:Glyphs.Repeat}" />
-                    </Button>
-                    <Button Classes="tool" Width="30" Height="26" Command="{Binding StopCommand}">
-                      <Rectangle Width="14" Height="14" Fill="{StaticResource TextBrush}" OpacityMask="{x:Static local:Glyphs.Stop}" />
-                    </Button>
-                  </StackPanel>
-                  <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Height="4" Margin="0,4,0,0" Minimum="0" Maximum="1" Value="{Binding Progress}"
-                               Background="#1F2129" Foreground="{StaticResource AccentBrush}" />
-                </Grid>
-              </Border>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </ScrollViewer>
+    <!-- state, repeat, output, project -->
+    <Border Grid.Row="4" Classes="panel" Margin="8,6,8,8" Padding="10,4">
+      <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+        <TextBlock Text="{Binding StateText}" Classes="dim" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Column="1" Text="{Binding RepeatText}" Classes="dim" Margin="16,0,0,0" />
+        <TextBlock Grid.Column="2" Text="{Binding OutputText}" Classes="dim" Margin="16,0,0,0" />
+        <TextBlock Grid.Column="3" Text="{Binding ProjectText}" Classes="dim" Margin="16,0,0,0" />
+      </Grid>
     </Border>
+
   </Grid>
 </Window>

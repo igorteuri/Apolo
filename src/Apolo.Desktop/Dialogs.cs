@@ -16,6 +16,7 @@ namespace Apolo.Desktop
     /// <summary>The words of the menus (Portuguese or English by the language of the system).</summary>
     public static class Texts
     {
+        public static string Tracks { get { return AppHost.T("Ver faixas (F9)", "Show tracks (F9)"); } }
         public static string Rename { get { return AppHost.T("Renomear...", "Rename..."); } }
         public static string Look { get { return AppHost.T("Ícone e cor...", "Icon and color..."); } }
         public static string MoveBefore { get { return AppHost.T("Mover para antes", "Move earlier"); } }

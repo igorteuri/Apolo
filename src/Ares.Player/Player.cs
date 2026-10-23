@@ -64,13 +64,15 @@ namespace Ares.Player
                 projectName = Environment.GetCommandLineArgs().Length > 3 ? Environment.GetCommandLineArgs()[3] : String.Empty;
             }
 #if !MONO
+            // APOLO_INSTANCE_TAG: a second copy of the program may run beside the first (to look at it, tests)
+            string instanceName = "Ares.Player" + (Environment.GetEnvironmentVariable("APOLO_INSTANCE_TAG") ?? "");
             if (String.IsNullOrEmpty(projectName))
             {
-                m_Instance = Ares.Ipc.ApplicationInstance.CreateOrActivate("Ares.Player");
+                m_Instance = Ares.Ipc.ApplicationInstance.CreateOrActivate(instanceName);
             }
             else
             {
-                m_Instance = Ares.Ipc.ApplicationInstance.CreateOrActivate("Ares.Player", projectName);
+                m_Instance = Ares.Ipc.ApplicationInstance.CreateOrActivate(instanceName, projectName);
             }
             if (m_Instance == null)
             {
