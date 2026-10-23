@@ -541,6 +541,11 @@ namespace Ares.Player
 #if !MONO
         void m_KeyboardHookManager_KeyDown(object sender, KeyEventArgs e)
         {
+            // with the global capture of keys on: Esc, left and right (stop, previous, next) are keys of every other program
+            // too, so they only count while a window of Apolo is the active one; the keys of the buttons stay global
+            if ((e.KeyCode == System.Windows.Forms.Keys.Escape || e.KeyCode == System.Windows.Forms.Keys.Left || e.KeyCode == System.Windows.Forms.Keys.Right)
+                && e.Modifiers == System.Windows.Forms.Keys.None && Form.ActiveForm == null)
+                return;
             if (!tagFadeUpDown.ContainsFocus)
             {
                 m_PlayingControl.KeyReceived(GetPlayersKey(e.KeyData));
