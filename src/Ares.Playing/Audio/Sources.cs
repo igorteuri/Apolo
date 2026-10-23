@@ -814,7 +814,11 @@ namespace Ares.Playing.Audio
             Func<IAudioSource> vorbis = () => new VorbisSource(path);
             Func<IAudioSource> opus = () => new OpusSource(path);
             Func<IAudioSource> wav = () => new WaveStreamSource(new NAudio.Wave.WaveFileReader(path));
+            // the media library of Windows reads the many formats; on Linux and macOS (and as the last chance) ffmpeg, if it is installed
             Func<IAudioSource> media = () => new WaveStreamSource(new NAudio.Wave.MediaFoundationReader(path));
+            Func<IAudioSource> ffmpeg = () => FfmpegSource.TryOpen(path);
+            if (!OperatingSystem.IsWindows())
+                media = ffmpeg;
             switch (ext)
             {
                 case ".mp3":
@@ -837,6 +841,8 @@ namespace Ares.Playing.Audio
                     attempts.AddRange(new[] { media, mpeg, vorbis, opus, wav });
                     break;
             }
+            if (OperatingSystem.IsWindows())
+                attempts.Add(ffmpeg);
             foreach (Func<IAudioSource> attempt in attempts)
             {
                 try
