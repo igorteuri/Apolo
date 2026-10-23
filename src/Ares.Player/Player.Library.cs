@@ -143,6 +143,13 @@ namespace Ares.Player
                 return;
             // the folder under the mouse (or the open one) receives the playlists; empty area of the list = new folders
             string into = DropTargetFolder(new Point(e.X, e.Y));
+            // on a playlist button (or on the track list) the audio may go into that playlist
+            int playlist = PlaylistAtScreen(new Point(e.X, e.Y));
+            if (playlist >= 0)
+            {
+                BeginInvoke(new MethodInvoker(() => OfferAddToPlaylist(paths, playlist, into)));
+                return;
+            }
             // do not block the explorer window that started the drag
             BeginInvoke(new MethodInvoker(() => ImportDroppedPaths(paths, into)));
         }

@@ -72,7 +72,8 @@ namespace Ares.Player
             }
             m_TrackList.ColumnClick += (s, e) => SortTracksBy(e.Column);
             m_TrackList.ItemDrag += (s, e) => StartTrackDrag(e.Item as ListViewItem);
-            m_TrackList.DragEnter += (s, e) => e.Effect = e.Data.GetDataPresent(typeof(ListViewItem)) ? DragDropEffects.Move : DragDropEffects.None;
+            m_TrackList.DragEnter += (s, e) => e.Effect = e.Data.GetDataPresent(typeof(ListViewItem)) ? DragDropEffects.Move
+                : (e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None);
             m_TrackList.DragOver += (s, e) => TrackDragOver(e);
             m_TrackList.DragLeave += (s, e) => ClearTrackDropMark();
             m_TrackList.DragDrop += (s, e) => TrackDragDrop(e);
@@ -458,7 +459,8 @@ namespace Ares.Player
         {
             if (!e.Data.GetDataPresent(typeof(ListViewItem)))
             {
-                e.Effect = DragDropEffects.None;
+                // audio files from outside go into the playlist (handled by the library drop)
+                e.Effect = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
                 return;
             }
             e.Effect = DragDropEffects.Move;

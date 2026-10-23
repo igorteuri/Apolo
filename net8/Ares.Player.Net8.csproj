@@ -41,6 +41,7 @@
     <Compile Include="..\src\Ares.Player\Player.Export.cs" Link="Player.Export.cs" />
     <Compile Include="..\src\Ares.Player\Player.Packs.cs" Link="Player.Packs.cs" />
     <Compile Include="..\src\Ares.Player\Player.Tour.cs" Link="Player.Tour.cs" />
+    <Compile Include="..\src\Ares.Player\Player.AddToPlaylist.cs" Link="Player.AddToPlaylist.cs" />
     <Compile Include="..\src\Ares.Player\Player.Leveler.cs" Link="Player.Leveler.cs" />
     <Compile Include="..\src\Ares.Player\PackCatalog.cs" Link="PackCatalog.cs" />
     <Compile Include="..\src\Ares.Player\ProjectCredits.cs" Link="ProjectCredits.cs" />
