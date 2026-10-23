@@ -353,7 +353,7 @@ namespace Ares.Settings
 
         private static bool UseSharedMemory
         {
-            get { return OperatingSystem.IsWindows(); }
+            get { return Environment.OSVersion.Platform == PlatformID.Win32NT; }
         }
 
         private Settings()
