@@ -41,7 +41,7 @@ jobs:
         run: |
           dotnet publish src/Apolo.Desktop/Apolo.Desktop.csproj -c Release -r ${{ matrix.rid }} --self-contained true \
             -p:PublishSingleFile=false -p:DebugType=none --nologo -v:q -o publish
-          ls publish | head -50
+          ls publish | wc -l
 
       - name: Pack for Linux
         if: startsWith(matrix.rid, 'linux')
