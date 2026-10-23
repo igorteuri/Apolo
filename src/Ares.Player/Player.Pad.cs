@@ -239,6 +239,67 @@ namespace Ares.Player
             }
         }
 
+        // a flat button with a line icon of the interface (same icons as the toolbar of the player)
+        private class PadIconButton : Control
+        {
+            private readonly int m_IconPx;
+            private string m_IconName;
+            private bool m_Hover;
+            private bool m_Down;
+            private bool m_Toggled;
+
+            public PadIconButton(string iconName, int iconPx)
+            {
+                m_IconName = iconName;
+                m_IconPx = iconPx;
+                SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer
+                    | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor, true);
+                Cursor = Cursors.Hand;
+                TabStop = false;
+                BackColor = Color.Transparent;
+            }
+
+            public int PreferredWidth { get { return m_IconPx + 14; } }
+            public int PreferredHeight { get { return m_IconPx + 12; } }
+
+            public string IconName
+            {
+                get { return m_IconName; }
+                set { m_IconName = value; Invalidate(); }
+            }
+
+            public bool Toggled
+            {
+                get { return m_Toggled; }
+                set { m_Toggled = value; Invalidate(); }
+            }
+
+            protected override void OnMouseEnter(EventArgs e) { m_Hover = true; Invalidate(); base.OnMouseEnter(e); }
+            protected override void OnMouseLeave(EventArgs e) { m_Hover = false; m_Down = false; Invalidate(); base.OnMouseLeave(e); }
+            protected override void OnMouseDown(MouseEventArgs e) { m_Down = true; Invalidate(); base.OnMouseDown(e); }
+            protected override void OnMouseUp(MouseEventArgs e) { m_Down = false; Invalidate(); base.OnMouseUp(e); }
+
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
+                bool themed = p != null && !p.IsClassic;
+                Color back = Parent != null ? Ares.CommonGUI.ThemeManager.EffectiveBack(this) : SystemColors.Control;
+                e.Graphics.Clear(back);
+                if (m_Hover || m_Down || m_Toggled)
+                {
+                    Color fill = themed ? (m_Down ? p.Selection : (m_Toggled ? p.Selection : p.Hover)) : SystemColors.ControlLight;
+                    e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    using (SolidBrush brush = new SolidBrush(fill))
+                        e.Graphics.FillRectangle(brush, 1, 1, Width - 2, Height - 2);
+                }
+                using (Bitmap icon = Ares.CommonGUI.IconLibrary.Get(m_IconName, new Size(m_IconPx, m_IconPx)))
+                {
+                    if (icon != null)
+                        e.Graphics.DrawImage(icon, (Width - m_IconPx) / 2, (Height - m_IconPx) / 2, m_IconPx, m_IconPx);
+                }
+            }
+        }
+
         // the pad itself: a header (folder, playback, pin, close) and the buttons of the folder
         private class FloatingPad : Form
         {
@@ -253,8 +314,10 @@ namespace Ares.Player
             private readonly FlowLayoutPanel m_Flow = new FlowLayoutPanel();
             private readonly System.Windows.Forms.Timer m_Timer = new System.Windows.Forms.Timer();
             private readonly Dictionary<ElementButton, int> m_Ids = new Dictionary<ElementButton, int>();
-            private readonly List<Label> m_HeaderButtons = new List<Label>();
-            private Label m_Pin;
+            private readonly List<PadIconButton> m_HeaderButtons = new List<PadIconButton>();
+            private PadIconButton m_Pin;
+            private PadIconButton m_PauseIcon;
+            private bool m_PauseIconIsPlay;
             private int m_ModeIndex;
             private bool m_Pinned;
 
@@ -277,7 +340,8 @@ namespace Ares.Player
                 ForeColor = themed ? p.Text : SystemColors.ControlText;
 
                 m_Header.Dock = DockStyle.Top;
-                m_Header.Height = (int)Math.Round(58 * Math.Max(80, Ares.CommonGUI.ThemeManager.ScalePercent) / 110.0);
+                int icon = Ares.CommonGUI.IconLibrary.ToolbarIconSize().Width;
+                m_Header.Height = (int)Math.Round(icon * 1.6) + icon + 6 * 4 + 12;
                 m_Header.BackColor = themed ? p.Surface : SystemColors.ControlLight;
                 m_Header.MouseDown += DragStart;
 
@@ -290,13 +354,17 @@ namespace Ares.Player
                 m_Title.MouseDown += DragStart;
                 m_Header.Controls.Add(m_Title);
 
-                AddHeaderButton("◀", T("Pasta anterior", "Previous folder"), () => ChangeMode(-1), false);
-                AddHeaderButton("▶", T("Próxima pasta", "Next folder"), () => ChangeMode(1), false);
-                AddHeaderButton(T("Pausar", "Pause"), T("Pausar ou continuar", "Pause or resume"), () => m_Player.m_PauseButton.PerformClick(), true);
-                AddHeaderButton(T("Próxima", "Next"), T("Próxima música", "Next track"), () => m_Player.nextButton_Click(this, EventArgs.Empty), true);
-                AddHeaderButton(T("Parar", "Stop"), T("Parar tudo", "Stop all"), () => m_Player.stopButton_Click(this, EventArgs.Empty), true);
-                m_Pin = AddHeaderButton(T("Fixar", "Pin"), T("Fixar: o pad não fecha depois de um clique", "Pin: the pad stays open after a click"), TogglePin, true);
-                AddHeaderButton("✕", T("Fechar o pad", "Close the pad"), Close, false);
+                // arrows and the other small buttons are bigger than the toolbar; the playback buttons use the very same
+                // icons and size as the player area of the main window
+                AddHeaderButton("chevron-left", 1.6, T("Pasta anterior", "Previous folder"), () => ChangeMode(-1));
+                AddHeaderButton("chevron-right", 1.6, T("Próxima pasta", "Next folder"), () => ChangeMode(1));
+                AddHeaderButton("skip-back", 1.0, T("Música anterior", "Previous track"), () => m_Player.previousButton_Click(this, EventArgs.Empty));
+                m_PauseIcon = AddHeaderButton("pause", 1.0, T("Pausar ou continuar", "Pause or resume"), () => m_Player.m_PauseButton.PerformClick());
+                AddHeaderButton("square", 1.0, T("Parar tudo", "Stop all"), () => m_Player.stopButton_Click(this, EventArgs.Empty));
+                AddHeaderButton("skip-forward", 1.0, T("Próxima música", "Next track"), () => m_Player.nextButton_Click(this, EventArgs.Empty));
+                AddHeaderButton("repeat", 1.0, T("Repetir a música atual", "Repeat the current track"), () => m_Player.repeatButton_Click(this, EventArgs.Empty));
+                m_Pin = AddHeaderButton("lock", 1.0, T("Fixar: o pad não fecha depois de um clique", "Pin: the pad stays open after a click"), TogglePin);
+                AddHeaderButton("x", 1.2, T("Fechar o pad", "Close the pad"), Close);
 
                 m_Flow.Dock = DockStyle.Fill;
                 m_Flow.WrapContents = true;
@@ -370,19 +438,11 @@ namespace Ares.Player
                 SendMessage(Handle, 0xA1, 2, 0); // WM_NCLBUTTONDOWN, HTCAPTION: move the window
             }
 
-            private Label AddHeaderButton(string text, string tip, Action click, bool second)
+            private PadIconButton AddHeaderButton(string icon, double factor, string tip, Action click)
             {
-                Label b = new Label();
-                b.Text = text;
-                b.AutoSize = false;
-                b.TextAlign = ContentAlignment.MiddleCenter;
-                b.Cursor = Cursors.Hand;
-                b.ForeColor = ForeColor;
-                b.BackColor = Color.Transparent;
-                b.Tag = second;
+                int px = (int)Math.Round(Ares.CommonGUI.IconLibrary.ToolbarIconSize().Width * factor);
+                PadIconButton b = new PadIconButton(icon, px);
                 b.Click += (s, e) => click();
-                b.MouseEnter += (s, e) => b.BackColor = Color.FromArgb(60, 128, 128, 128);
-                b.MouseLeave += (s, e) => b.BackColor = (b == m_Pin && m_Pinned) ? Color.FromArgb(110, 128, 128, 128) : Color.Transparent;
                 new ToolTip().SetToolTip(b, tip);
                 m_Header.Controls.Add(b);
                 m_HeaderButtons.Add(b);
@@ -392,7 +452,7 @@ namespace Ares.Player
             private void TogglePin()
             {
                 m_Pinned = !m_Pinned;
-                m_Pin.BackColor = m_Pinned ? Color.FromArgb(110, 128, 128, 128) : Color.Transparent;
+                m_Pin.Toggled = m_Pinned;
             }
 
             private void ChangeMode(int delta)
@@ -404,34 +464,34 @@ namespace Ares.Player
                 Rebuild();
             }
 
+            // row 1: arrows, folder name, pin, close; row 2: previous, pause, stop, next, repeat (centered)
             private void LayoutHeader()
             {
                 int pad = 6;
-                int h1 = (m_Header.Height - 3 * pad) / 2;
-                int x = pad;
-                int rowTop1 = pad;
-                int rowTop2 = pad + h1 + pad;
                 int width = m_Header.Width;
-                // row 1: arrows, folder name, close
-                Label prev = m_HeaderButtons[0], next = m_HeaderButtons[1], close = m_HeaderButtons[6];
-                prev.SetBounds(x, rowTop1, h1 + 6, h1);
-                next.SetBounds(width - pad - (h1 + 6) * 2 - 2, rowTop1, h1 + 6, h1);
-                close.SetBounds(width - pad - (h1 + 6), rowTop1, h1 + 6, h1);
-                m_Title.SetBounds(prev.Right + 4, rowTop1, next.Left - prev.Right - 8, h1);
-                // row 2: pause, next, stop, pin
-                int bx = pad;
-                int bw = (width - 2 * pad - 3 * 4) / 4;
-                for (int i = 2; i <= 5; i++)
+                PadIconButton prev = m_HeaderButtons[0], next = m_HeaderButtons[1], close = m_HeaderButtons[8], pin = m_HeaderButtons[7];
+                int row1 = prev.PreferredHeight;
+                prev.SetBounds(pad, pad, prev.PreferredWidth, row1);
+                close.SetBounds(width - pad - close.PreferredWidth, pad + (row1 - close.PreferredHeight) / 2, close.PreferredWidth, close.PreferredHeight);
+                pin.SetBounds(close.Left - 2 - pin.PreferredWidth, pad + (row1 - pin.PreferredHeight) / 2, pin.PreferredWidth, pin.PreferredHeight);
+                next.SetBounds(pin.Left - 4 - next.PreferredWidth, pad, next.PreferredWidth, row1);
+                m_Title.SetBounds(prev.Right + 6, pad, Math.Max(20, next.Left - prev.Right - 12), row1);
+                int total = 0;
+                for (int i = 2; i <= 6; i++)
+                    total += m_HeaderButtons[i].PreferredWidth + (i < 6 ? 6 : 0);
+                int x = Math.Max(pad, (width - total) / 2);
+                int y = pad + row1 + pad;
+                for (int i = 2; i <= 6; i++)
                 {
-                    m_HeaderButtons[i].SetBounds(bx, rowTop2, bw, h1);
-                    bx += bw + 4;
+                    m_HeaderButtons[i].SetBounds(x, y, m_HeaderButtons[i].PreferredWidth, m_HeaderButtons[i].PreferredHeight);
+                    x += m_HeaderButtons[i].PreferredWidth + 6;
                 }
             }
 
             protected override void OnResize(EventArgs e)
             {
                 base.OnResize(e);
-                if (m_HeaderButtons.Count == 7)
+                if (m_HeaderButtons.Count == 9)
                     LayoutHeader();
             }
 
@@ -575,6 +635,12 @@ namespace Ares.Player
                 }
                 if (m_Player.m_PlayingControl == null)
                     return;
+                bool paused = m_Player.m_PlayingControl.IsPaused();
+                if (m_PauseIcon != null && paused != m_PauseIconIsPlay)
+                {
+                    m_PauseIconIsPlay = paused;
+                    m_PauseIcon.IconName = paused ? "play" : "pause";
+                }
                 IList<IModeElement> playing = m_Player.m_PlayingControl.CurrentModeElements;
                 foreach (KeyValuePair<ElementButton, int> pair in m_Ids)
                 {
