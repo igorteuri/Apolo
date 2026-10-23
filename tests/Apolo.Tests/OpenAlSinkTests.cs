@@ -34,7 +34,20 @@ namespace Apolo.Tests
         public void PlaysTheQueuedBlocks_AndTheBufferedFramesFollowThePlayback()
         {
             OpenAlBackend backend = new OpenAlBackend();
-            using (Sink sink = backend.Open(backend.DefaultDeviceId(), 2))
+            Sink opened;
+            try
+            {
+                opened = backend.Open(backend.DefaultDeviceId(), 2);
+            }
+            catch (InvalidOperationException)
+            {
+                // Windows uses WASAPI, not OpenAL: a machine of the build without a sound card (and without the "null" driver
+                // in the Windows copy of the library) has nothing to test here. On Linux and macOS this must work.
+                if (OperatingSystem.IsWindows())
+                    return;
+                throw;
+            }
+            using (Sink sink = opened)
             {
                 Assert.Equal(0, sink.BufferedFrames);
                 byte[] block = Block(AudioEngine.BlockFrames);
