@@ -2,9 +2,8 @@ name: Portable core (Linux, macOS)
 
 # The core of Apolo (data, settings, tags, audio engine, players) builds as plain .NET 8, without Windows.
 # This workflow keeps it that way and runs the automatic tests on Linux and macOS.
+# Paused: it only runs when started by hand (Actions > this workflow > Run workflow).
 on:
-  push:
-  pull_request:
   workflow_dispatch:
 
 jobs:

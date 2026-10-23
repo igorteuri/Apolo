@@ -2,9 +2,8 @@ name: Apolo Desktop (Linux, macOS, Windows)
 
 # The program for Linux and macOS (made with Avalonia, same engine as the Windows program).
 # Each system builds, tests (without a screen) and packs its own version; the packs are in the "Artifacts" of the run.
+# Paused: it only runs when started by hand (Actions > this workflow > Run workflow).
 on:
-  push:
-  pull_request:
   workflow_dispatch:
 
 jobs:
