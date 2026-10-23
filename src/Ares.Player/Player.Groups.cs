@@ -70,6 +70,114 @@ namespace Ares.Player
             }
         }
 
+        // ---- a limit of buttons shown at once (the buttons are heavy controls: a thousand of them take seconds)
+
+        private const int ShownLimitStep = 200;
+        private int m_ShownLimit = ShownLimitStep;
+        private string m_ShownLimitFolder;
+
+        private class CollapsedGroup
+        {
+            public string Header;
+            public string OwnerTitle;
+            public int Count;
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
+        private static void SuspendRedraw(Control control)
+        {
+            if (control.IsHandleCreated)
+                SendMessage(control.Handle, 0x000B, IntPtr.Zero, IntPtr.Zero); // WM_SETREDRAW off
+        }
+
+        private static void ResumeRedraw(Control control)
+        {
+            if (!control.IsHandleCreated)
+                return;
+            SendMessage(control.Handle, 0x000B, (IntPtr)1, IntPtr.Zero); // WM_SETREDRAW on
+            control.Invalidate(true);
+        }
+
+        /// <summary>
+        /// Keeps the first buttons (up to "limit"): the groups (a folder and its subfolders) which fit entirely, the first group
+        /// partly; the other groups are only headings with their number of buttons (a click opens that folder).
+        /// </summary>
+        private static List<ShownButton> LimitShown(List<ShownButton> shown, int limit, out List<CollapsedGroup> collapsed, out int hiddenInFirst)
+        {
+            collapsed = new List<CollapsedGroup>();
+            hiddenInFirst = 0;
+            if (shown.Count <= limit)
+                return shown;
+            // the groups: a new one starts at every button which carries a heading (the first group has none)
+            List<List<ShownButton>> groups = new List<List<ShownButton>>();
+            foreach (ShownButton sb in shown)
+            {
+                if (groups.Count == 0 || sb.Header != null)
+                    groups.Add(new List<ShownButton>());
+                groups[groups.Count - 1].Add(sb);
+            }
+            List<ShownButton> kept = new List<ShownButton>();
+            bool full = false;
+            foreach (List<ShownButton> group in groups)
+            {
+                if (!full && kept.Count == 0 && group.Count > limit)
+                {
+                    // the first group alone is too big
+                    kept.AddRange(group.GetRange(0, limit));
+                    hiddenInFirst = group.Count - limit;
+                    full = true;
+                }
+                else if (!full && kept.Count + group.Count <= limit)
+                {
+                    kept.AddRange(group);
+                }
+                else
+                {
+                    full = true;
+                    collapsed.Add(new CollapsedGroup { Header = group[0].Header, OwnerTitle = group[0].OwnerTitle, Count = group.Count });
+                }
+            }
+            return kept;
+        }
+
+        private void AddLimitLines(List<CollapsedGroup> collapsed, int hiddenInFirst)
+        {
+            if (hiddenInFirst > 0)
+            {
+                int more = Math.Min(ShownLimitStep, hiddenInFirst);
+                Label label = MakeLimitLabel(T("▼ Mostrar mais " + more + " botões (faltam " + hiddenInFirst + ")",
+                    "▼ Show " + more + " more buttons (" + hiddenInFirst + " left)"), () =>
+                {
+                    m_ShownLimit += ShownLimitStep;
+                    UpdateElementsPanel();
+                });
+                elementsPanel.Controls.Add(label);
+            }
+            foreach (CollapsedGroup group in collapsed)
+            {
+                string text = (group.Header ?? group.OwnerTitle) + "  —  " + group.Count + T(" botões (clique para abrir)", " buttons (click to open)");
+                elementsPanel.Controls.Add(MakeGroupHeader(text, group.OwnerTitle));
+            }
+        }
+
+        private Label MakeLimitLabel(string text, Action click)
+        {
+            Label label = new Label();
+            label.Text = text;
+            label.AutoSize = false;
+            label.Font = new Font(elementsPanel.Font, FontStyle.Bold);
+            label.TextAlign = ContentAlignment.MiddleLeft;
+            label.Cursor = Cursors.Hand;
+            label.Margin = new Padding(3, 10, 3, 6);
+            label.Height = TextRenderer.MeasureText("Ag", label.Font).Height + 14;
+            label.Width = HeaderWidth();
+            label.Click += (s, e) => click();
+            elementsPanel.SetFlowBreak(label, true);
+            return label;
+        }
+
         private Label MakeGroupHeader(string text, string modeTitle)
         {
             GroupHeaderLabel label = new GroupHeaderLabel();
