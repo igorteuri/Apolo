@@ -32,6 +32,14 @@ namespace Ares.Settings
                 {
                     if (s_Root != null)
                         return s_Root;
+                    // APOLO_DATA_DIR puts all the data of the program in another folder (a portable copy, the tests)
+                    string forced = Environment.GetEnvironmentVariable("APOLO_DATA_DIR");
+                    if (!string.IsNullOrEmpty(forced))
+                    {
+                        try { Directory.CreateDirectory(forced); } catch (Exception) { }
+                        s_Root = forced;
+                        return s_Root;
+                    }
                     string root = Path.Combine(AppData, FolderName);
                     string legacy = Path.Combine(AppData, LegacyFolderName);
                     try

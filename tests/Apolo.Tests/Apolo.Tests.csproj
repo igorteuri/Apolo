@@ -19,6 +19,7 @@
     <ProjectReference Include="..\..\src\Ares.Data\Ares.Data.csproj" />
     <ProjectReference Include="..\..\src\Ares.Playing\Ares.Playing.csproj" />
     <ProjectReference Include="..\..\src\Ares.Players\Ares.Players.csproj" />
+    <ProjectReference Include="..\..\src\Ares.AppCore\Ares.AppCore.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- the logic under test is compiled straight from the player sources (no window code) -->

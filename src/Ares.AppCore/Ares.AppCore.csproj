@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The part of the program which does not depend on a window system: used by the Windows program (WinForms) and by the
+       Linux / macOS / Windows program (Avalonia). -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Ares.AppCore</AssemblyName>
+    <RootNamespace>Ares.AppCore</RootNamespace>
+    <EnableDefaultItems>false</EnableDefaultItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="**\*.cs" Exclude="bin\**;obj\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ares.Data\Ares.Data.csproj" />
+    <ProjectReference Include="..\Ares.Settings\Ares.Settings.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Apolo for Linux, macOS (and Windows): the same engine as the Windows program, with a window made with Avalonia. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Apolo.Desktop</AssemblyName>
+    <RootNamespace>Apolo.Desktop</RootNamespace>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationIcon>Assets\apolo.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.5" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.5" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ares.AppCore\Ares.AppCore.csproj" />
+    <ProjectReference Include="..\Ares.Data\Ares.Data.csproj" />
+    <ProjectReference Include="..\Ares.ModelChecks\Ares.ModelInfo.csproj" />
+    <ProjectReference Include="..\Ares.Players\Ares.Players.csproj" />
+    <ProjectReference Include="..\Ares.Playing\Ares.Playing.csproj" />
+    <ProjectReference Include="..\Ares.Settings\Ares.Settings.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- the line icons of the buttons are the same files as the Windows program uses -->
+    <AvaloniaResource Include="..\Ares.CommonGUI\Icons\*.png" Link="Icons\%(Filename)%(Extension)" />
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+</Project>

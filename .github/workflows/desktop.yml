@@ -1,0 +1,122 @@
+name: Apolo Desktop (Linux, macOS, Windows)
+
+# The program for Linux and macOS (made with Avalonia, same engine as the Windows program).
+# Each system builds, tests (without a screen) and packs its own version; the packs are in the "Artifacts" of the run.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: macos-latest
+            rid: osx-arm64
+          - os: macos-latest
+            rid: osx-x64
+          - os: windows-latest
+            rid: win-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Window tests (no screen)
+        # run once per system (not for the second Mac build)
+        if: matrix.rid != 'osx-x64'
+        shell: bash
+        env:
+          ALSOFT_DRIVERS: "null"
+        run: dotnet test tests/Apolo.Desktop.Tests/Apolo.Desktop.Tests.csproj -c Release --nologo
+
+      - name: Publish (self-contained)
+        shell: bash
+        run: |
+          dotnet publish src/Apolo.Desktop/Apolo.Desktop.csproj -c Release -r ${{ matrix.rid }} --self-contained true \
+            -p:PublishSingleFile=false -p:DebugType=none --nologo -v:q -o publish
+          ls publish | head -50
+
+      - name: Pack for Linux
+        if: startsWith(matrix.rid, 'linux')
+        shell: bash
+        run: |
+          mkdir -p dist/Apolo
+          cp -R publish/. dist/Apolo/
+          chmod +x dist/Apolo/Apolo.Desktop
+          cp src/Apolo.Desktop/Assets/apolo.png dist/Apolo/apolo.png
+          cat > dist/Apolo/apolo.desktop <<'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=Apolo
+          Comment=Music controller for tabletop RPG
+          Exec=sh -c 'cd "$(dirname "$(readlink -f "%k")")" && ./Apolo.Desktop'
+          Icon=apolo
+          Categories=AudioVideo;Audio;Player;
+          Terminal=false
+          EOF
+          tar -C dist -czf Apolo-${{ matrix.rid }}.tar.gz Apolo
+
+      - name: Pack for macOS
+        if: startsWith(matrix.rid, 'osx')
+        shell: bash
+        run: |
+          APP=dist/Apolo.app
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          cp -R publish/. "$APP/Contents/MacOS/"
+          chmod +x "$APP/Contents/MacOS/Apolo.Desktop"
+          # the icon: .icns made from the picture of the program
+          ICONSET=apolo.iconset
+          mkdir "$ICONSET"
+          for size in 16 32 64 128 256; do
+            sips -z $size $size src/Apolo.Desktop/Assets/apolo.png --out "$ICONSET/icon_${size}x${size}.png" > /dev/null
+          done
+          cp "$ICONSET/icon_32x32.png" "$ICONSET/icon_16x16@2x.png"
+          cp "$ICONSET/icon_64x64.png" "$ICONSET/icon_32x32@2x.png"
+          cp "$ICONSET/icon_256x256.png" "$ICONSET/icon_128x128@2x.png"
+          iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/apolo.icns" || echo "icon not made"
+          VERSION="$(tr -d '\r\n' < VERSION).${{ github.run_number }}"
+          cat > "$APP/Contents/Info.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>Apolo</string>
+            <key>CFBundleDisplayName</key><string>Apolo</string>
+            <key>CFBundleIdentifier</key><string>com.igorteuri.apolo</string>
+            <key>CFBundleVersion</key><string>$VERSION</string>
+            <key>CFBundleShortVersionString</key><string>$VERSION</string>
+            <key>CFBundleExecutable</key><string>Apolo.Desktop</string>
+            <key>CFBundleIconFile</key><string>apolo</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>LSMinimumSystemVersion</key><string>11.0</string>
+            <key>NSHighResolutionCapable</key><true/>
+            <key>CFBundleDocumentTypes</key>
+            <array><dict>
+              <key>CFBundleTypeName</key><string>Apolo project</string>
+              <key>CFBundleTypeExtensions</key><array><string>apolo</string><string>apkg</string></array>
+              <key>CFBundleTypeRole</key><string>Editor</string>
+            </dict></array>
+          </dict>
+          </plist>
+          EOF
+          ditto -c -k --sequesterRsrc --keepParent "$APP" Apolo-${{ matrix.rid }}.zip
+
+      - name: Pack for Windows
+        if: startsWith(matrix.rid, 'win')
+        shell: pwsh
+        run: |
+          Compress-Archive -Path publish\* -DestinationPath Apolo-${{ matrix.rid }}.zip
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: Apolo-${{ matrix.rid }}
+          path: Apolo-${{ matrix.rid }}.*
+          if-no-files-found: error

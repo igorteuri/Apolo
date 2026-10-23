@@ -17,6 +17,7 @@
     <EmbeddedResource Include="Remote\remote.html" LogicalName="remote.html" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ares.AppCore\Ares.AppCore.csproj" />
     <ProjectReference Include="..\Ares.CommonGUI\Ares.CommonGUI.csproj" />
     <ProjectReference Include="..\Ares.Data\Ares.Data.csproj" />
     <ProjectReference Include="..\Ares.Ipc\Ares.Ipc.csproj" />

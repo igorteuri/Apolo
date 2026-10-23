@@ -12,6 +12,7 @@
     <EmbeddedResource Include="Icons\*.png" LogicalName="icon.%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Ares.AppCore\Ares.AppCore.csproj" />
     <ProjectReference Include="..\Ares.Data\Ares.Data.csproj" />
     <ProjectReference Include="..\Ares.ModelChecks\Ares.ModelInfo.csproj" />
     <ProjectReference Include="..\Ares.Settings\Ares.Settings.csproj" />
