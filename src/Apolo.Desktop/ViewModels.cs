@@ -392,6 +392,7 @@ namespace Apolo.Desktop
                 Groups.Add(stub);
             }
             UpdatePlaying();
+            RaisePanel();
         }
 
         private GroupVM NewGroup(string header, string owner)
@@ -546,6 +547,7 @@ namespace Apolo.Desktop
             UpdateChips();
             Raise("StateText");
             Raise("RepeatText");
+            RaisePanel();
         }
 
         private int m_LastMusicId = -1;
@@ -648,6 +650,35 @@ namespace Apolo.Desktop
                     Ares.CommonGUI.Preferences.SetBool("LevelerOn", value);
                 }
             }
+        }
+
+        // ---- the box of state on the left (F8)
+
+        private bool m_PanelVisible = Ares.CommonGUI.Preferences.GetBool("LeftOpenV2", true);
+        public bool PanelVisible
+        {
+            get { return m_PanelVisible; }
+            set { if (Set(ref m_PanelVisible, value)) Ares.CommonGUI.Preferences.SetBool("LeftOpenV2", value); }
+        }
+        public string PanelProject { get { return AppHost.T("Projeto: ", "Project: ") + ProjectName; } }
+        public string PanelFolder { get { return AppHost.T("Pasta: ", "Folder: ") + (m_Selected != null ? m_Selected.Title : "-"); } }
+        public string PanelButtons
+        {
+            get { return AppHost.T("Botões: ", "Buttons: ") + Groups.Sum(g => g.Cards.Count); }
+        }
+        public string PanelMusic
+        {
+            get { return AppHost.T("Música: ", "Music: ") + (MusicTitle.Length > 0 ? MusicTitle : "-"); }
+        }
+        public string PanelSounds { get { return AppHost.T("Sons tocando: ", "Sounds playing: ") + Chips.Count; } }
+
+        private void RaisePanel()
+        {
+            Raise("PanelProject");
+            Raise("PanelFolder");
+            Raise("PanelButtons");
+            Raise("PanelMusic");
+            Raise("PanelSounds");
         }
 
         // ---- the bar below: state, repeat, output, project

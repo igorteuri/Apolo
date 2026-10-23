@@ -30,7 +30,9 @@
         <MenuItem Name="AboutItem" Header="Sobre o Apolo" Click="OnAbout" />
       </MenuItem>
       <MenuItem Name="ViewMenu" Header="Exibir">
+        <MenuItem Name="PanelItem" Header="Painel de estado" InputGesture="F8" Click="OnTogglePanel" />
         <MenuItem Name="TracksItem" Header="Lista de faixas" InputGesture="F9" Click="OnToggleTracks" />
+        <MenuItem Name="PadItem" Header="Pad flutuante" Click="OnPad" />
         <Separator />
         <MenuItem Name="ZoomMenu" Header="Tamanho do texto das pastas">
           <MenuItem Name="ZoomBigger" Header="Maior" InputGesture="Ctrl+OemPlus" Click="OnZoomBigger" />
@@ -133,6 +135,7 @@
     </Border>
     <!-- folders, buttons and the list of tracks -->
     <Grid Grid.Row="3" ColumnDefinitions="270,6,*" Margin="8,0,8,0">
+      <Grid RowDefinitions="*,Auto">
       <Border Classes="panel" Padding="6">
         <TreeView Name="FolderTree" ItemsSource="{Binding Folders}" FontSize="{Binding FolderFontSize}" SelectedItem="{Binding SelectedFolder, Mode=TwoWay}" Background="Transparent">
           <TreeView.Styles>
@@ -161,6 +164,17 @@
           </TreeView.ItemTemplate>
         </TreeView>
       </Border>
+      <Border Grid.Row="1" Classes="panel" Padding="10,8" Margin="0,6,0,0" IsVisible="{Binding PanelVisible}">
+        <StackPanel Spacing="3">
+          <TextBlock Name="PanelTitle" Text="Estado" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding PanelProject}" Classes="dim" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding PanelFolder}" Classes="dim" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding PanelButtons}" Classes="dim" />
+          <TextBlock Text="{Binding PanelMusic}" Classes="dim" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding PanelSounds}" Classes="dim" />
+        </StackPanel>
+      </Border>
+      </Grid>
 
       <Grid Grid.Column="2" RowDefinitions="*,Auto">
       <Border Classes="panel" Padding="6">

@@ -86,6 +86,9 @@ namespace Apolo.Desktop
             Find<MenuItem>("ZoomSmaller").Header = AppHost.T("Menor", "Smaller");
             Find<MenuItem>("ZoomNormal").Header = AppHost.T("Normal", "Normal");
             UpdateSoftenMark();
+            Find<MenuItem>("PanelItem").Header = AppHost.T("Painel de estado", "State panel");
+            Find<MenuItem>("PadItem").Header = AppHost.T("Pad flutuante (Ctrl+Alt+P)", "Floating pad (Ctrl+Alt+P)");
+            Find<TextBlock>("PanelTitle").Text = AppHost.T("Estado", "State");
             Find<Button>("AddButtonMenu").Content = AppHost.T("+ Adicionar ▾", "+ Add ▾");
             Find<TextBox>("SearchBox").Watermark = AppHost.T("Buscar playlist...", "Search playlist...");
             Find<MenuItem>("NewFolderItem").Header = AppHost.T("Nova pasta...", "New folder...");
@@ -448,6 +451,27 @@ namespace Apolo.Desktop
             m_Model.TrackList.CheckRights(() => m_Model.TrackList.Title2 = null);
         }
 
+        private void OnTogglePanel(object sender, RoutedEventArgs e)
+        {
+            m_Model.PanelVisible = !m_Model.PanelVisible;
+        }
+
+        private PadWindow m_Pad;
+
+        private void OnPad(object sender, RoutedEventArgs e)
+        {
+            if (m_Host.Project == null)
+                return;
+            if (m_Pad != null)
+            {
+                m_Pad.Close();
+                return;
+            }
+            m_Pad = new PadWindow(m_Host, m_Model.SelectedFolderTitle);
+            m_Pad.Closed += (s, a) => m_Pad = null;
+            m_Pad.Show();
+        }
+
         private void OnToggleTracks(object sender, RoutedEventArgs e)
         {
             m_Model.TrackList.Visible = !m_Model.TrackList.Visible;
@@ -701,6 +725,16 @@ namespace Apolo.Desktop
             else if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && (e.Key == Key.D0 || e.Key == Key.NumPad0))
             {
                 m_Model.SetFolderZoom(100);
+                e.Handled = true;
+            }
+            else if (e.Key == Key.F8)
+            {
+                OnTogglePanel(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
+            else if (e.Key == Key.P && e.KeyModifiers.HasFlag(KeyModifiers.Control) && e.KeyModifiers.HasFlag(KeyModifiers.Alt))
+            {
+                OnPad(this, new RoutedEventArgs());
                 e.Handled = true;
             }
             else if (e.Key == Key.F9)
