@@ -287,6 +287,143 @@ namespace Apolo.Desktop
             return summary;
         }
 
+        private IMode OwnerOf(int elementId, out IModeElement element)
+        {
+            element = null;
+            if (Project == null)
+                return null;
+            foreach (IMode mode in Project.GetModes())
+            {
+                foreach (IModeElement me in mode.GetElements())
+                {
+                    if (me.Id == elementId)
+                    {
+                        element = me;
+                        return mode;
+                    }
+                }
+            }
+            return null;
+        }
+
+        public void RenameButton(int id, string newTitle)
+        {
+            IModeElement element;
+            IMode mode = OwnerOf(id, out element);
+            if (mode == null || string.IsNullOrWhiteSpace(newTitle))
+                return;
+            string old = element.Title;
+            ButtonDecor.RenameButton(ProjectPath, mode.Title, old, newTitle);
+            element.Title = newTitle;
+            SaveProjectNow();
+        }
+
+        public void DeleteButton(int id)
+        {
+            IModeElement element;
+            IMode mode = OwnerOf(id, out element);
+            if (mode == null)
+                return;
+            StopAll();
+            ButtonDecor.RemoveButton(ProjectPath, mode.Title, element.Title);
+            mode.RemoveElement(element);
+            DataModule.ElementRepository.DeleteElement(element.Id);
+            SaveProjectNow();
+        }
+
+        /// <summary>Moves a button one place inside its folder (delta -1 = earlier, +1 = later).</summary>
+        public void MoveButton(int id, int delta)
+        {
+            IModeElement element;
+            IMode mode = OwnerOf(id, out element);
+            if (mode == null)
+                return;
+            IList<IModeElement> list = mode.GetElements();
+            int index = list.IndexOf(element);
+            int target = index + delta;
+            if (index < 0 || target < 0 || target >= list.Count)
+                return;
+            mode.RemoveElement(element);
+            mode.InsertElement(target, element);
+            SaveProjectNow();
+        }
+
+        public void SetButtonIcon(int id, string spec)
+        {
+            IModeElement element;
+            IMode mode = OwnerOf(id, out element);
+            if (mode != null)
+                ButtonDecor.Set(ProjectPath, mode.Title, element.Title, spec);
+        }
+
+        public void SetButtonColor(int id, string hex)
+        {
+            IModeElement element;
+            IMode mode = OwnerOf(id, out element);
+            if (mode != null)
+                ButtonDecor.SetColor(ProjectPath, mode.Title, element.Title, hex);
+        }
+
+        public void SetFolderIcon(string folder, string spec)
+        {
+            ButtonDecor.Set(ProjectPath, folder, "", spec);
+        }
+
+        public void SetFolderColor(string folder, string hex)
+        {
+            ButtonDecor.SetColor(ProjectPath, folder, "", hex);
+        }
+
+        /// <summary>A new empty folder (inside "parent", or at the top level); returns its title (made unique if needed).</summary>
+        public string NewFolder(string title, string parent)
+        {
+            string unique = title;
+            for (int n = 2; ModeByTitle(unique) != null; n++)
+                unique = title + " " + n;
+            Project.AddMode(unique);
+            Tree.Sync(Project.GetModes().Select(m => m.Title).ToList());
+            ModeNode node = Tree.Find(unique);
+            ModeNode parentNode = parent != null ? Tree.Find(parent) : null;
+            if (node != null && parentNode != null)
+            {
+                Tree.Attach(node, parentNode, -1);
+                parentNode.Collapsed = false;
+            }
+            SaveProjectNow();
+            return unique;
+        }
+
+        public string RenameFolder(string oldTitle, string newTitle)
+        {
+            IMode mode = ModeByTitle(oldTitle);
+            if (mode == null || string.IsNullOrWhiteSpace(newTitle) || newTitle == oldTitle)
+                return oldTitle;
+            if (ModeByTitle(newTitle) != null)
+                return oldTitle;
+            ButtonDecor.RenameFolder(ProjectPath, oldTitle, newTitle);
+            mode.Title = newTitle;
+            ModeNode node = Tree.Find(oldTitle);
+            if (node != null)
+                node.Title = newTitle;
+            SaveProjectNow();
+            return newTitle;
+        }
+
+        public void DeleteFolder(string title)
+        {
+            IMode mode = ModeByTitle(title);
+            if (mode == null)
+                return;
+            StopAll();
+            foreach (IModeElement element in mode.GetElements().ToList())
+                DataModule.ElementRepository.DeleteElement(element.Id);
+            ButtonDecor.RemoveFolder(ProjectPath, title);
+            Project.RemoveMode(mode);
+            // its subfolders move up one level
+            Tree.Sync(Project.GetModes().Select(m => m.Title).ToList());
+            SaveProjectNow();
+        }
+
         /// <summary>Writes the project and its folder tree.</summary>
         public void SaveProjectNow()
         {

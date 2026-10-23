@@ -77,6 +77,7 @@ namespace Apolo.Desktop
             Find<MenuItem>("ProjectMenu").Header = AppHost.T("Projeto", "Project");
             Find<MenuItem>("NewItem").Header = AppHost.T("Novo projeto...", "New project...");
             Find<MenuItem>("OpenItem").Header = AppHost.T("Abrir...", "Open...");
+            Find<MenuItem>("NewFolderItem").Header = AppHost.T("Nova pasta...", "New folder...");
             Find<MenuItem>("PacksItem").Header = AppHost.T("Pacotes de conteúdo prontos...", "Ready-made content packs...");
             Find<Button>("WelcomePacks").Content = AppHost.T("Baixar pacotes prontos...", "Download ready-made packs...");
             Find<MenuItem>("ImportFolderItem").Header = AppHost.T("Adicionar pasta de músicas...", "Add a folder of music...");
@@ -252,6 +253,171 @@ namespace Apolo.Desktop
             {
                 new MessageWindow(AppHost.T("Erro ao adicionar", "Error while adding"), ex.Message).Show(this);
             }
+        }
+
+        // ---- editing: buttons
+
+        private static T Context<T>(object sender) where T : class
+        {
+            MenuItem item = sender as MenuItem;
+            return item != null ? item.DataContext as T : null;
+        }
+
+        private void AfterEdit(string showTitle)
+        {
+            m_Model.ProjectChanged(showTitle);
+        }
+
+        private string ShownTitle()
+        {
+            return m_Model.SelectedFolder != null ? m_Model.SelectedFolder.Title : null;
+        }
+
+        private async void OnCardRename(object sender, RoutedEventArgs e)
+        {
+            CardVM card = Context<CardVM>(sender);
+            if (card == null)
+                return;
+            string name = await PromptWindow.Ask(this, AppHost.T("Renomear botão", "Rename button"), AppHost.T("Novo nome:", "New name:"), card.Title);
+            if (name == null)
+                return;
+            string shown = ShownTitle();
+            m_Host.RenameButton(card.Id, name);
+            AfterEdit(shown);
+        }
+
+        private async void OnCardLook(object sender, RoutedEventArgs e)
+        {
+            CardVM card = Context<CardVM>(sender);
+            if (card == null)
+                return;
+            string owner = OwnerOf(card.Id);
+            AppearanceWindow window = new AppearanceWindow(card.Title, Ares.AppCore.ButtonDecor.Get(m_Host.ProjectPath, owner, card.Title),
+                Ares.AppCore.ButtonDecor.GetColor(m_Host.ProjectPath, owner, card.Title));
+            await window.ShowDialog(this);
+            if (!window.Applied)
+                return;
+            if (window.IconChanged)
+                m_Host.SetButtonIcon(card.Id, window.Icon);
+            if (window.ColorChanged)
+                m_Host.SetButtonColor(card.Id, window.Color);
+            AfterEdit(ShownTitle());
+        }
+
+        private string OwnerOf(int id)
+        {
+            foreach (Ares.Data.IMode mode in m_Host.Project.GetModes())
+            {
+                if (mode.GetElements().Any(el => el.Id == id))
+                    return mode.Title;
+            }
+            return "";
+        }
+
+        private void OnCardLeft(object sender, RoutedEventArgs e)
+        {
+            CardVM card = Context<CardVM>(sender);
+            if (card == null)
+                return;
+            m_Host.MoveButton(card.Id, -1);
+            AfterEdit(ShownTitle());
+        }
+
+        private void OnCardRight(object sender, RoutedEventArgs e)
+        {
+            CardVM card = Context<CardVM>(sender);
+            if (card == null)
+                return;
+            m_Host.MoveButton(card.Id, 1);
+            AfterEdit(ShownTitle());
+        }
+
+        private async void OnCardDelete(object sender, RoutedEventArgs e)
+        {
+            CardVM card = Context<CardVM>(sender);
+            if (card == null)
+                return;
+            if (!await ConfirmWindow.Ask(this, AppHost.T("Excluir botão", "Delete button"),
+                AppHost.T("Excluir o botão \"" + card.Title + "\"? (Os arquivos de áudio não são apagados.)", "Delete the button \"" + card.Title + "\"? (The audio files are not deleted.)")))
+                return;
+            m_Host.DeleteButton(card.Id);
+            AfterEdit(ShownTitle());
+        }
+
+        // ---- editing: folders
+
+        private async void OnNewFolder(object sender, RoutedEventArgs e)
+        {
+            await NewFolder(null);
+        }
+
+        private async void OnFolderNewChild(object sender, RoutedEventArgs e)
+        {
+            FolderVM folder = Context<FolderVM>(sender);
+            await NewFolder(folder != null ? folder.Title : null);
+        }
+
+        private async System.Threading.Tasks.Task NewFolder(string parent)
+        {
+            if (m_Host.Project == null)
+                return;
+            string name = await PromptWindow.Ask(this, parent == null ? AppHost.T("Nova pasta", "New folder") : AppHost.T("Nova subpasta", "New subfolder"),
+                AppHost.T("Nome da pasta:", "Folder name:"), "");
+            if (name == null)
+                return;
+            string created = m_Host.NewFolder(name, parent);
+            AfterEdit(created);
+        }
+
+        private async void OnFolderRename(object sender, RoutedEventArgs e)
+        {
+            FolderVM folder = Context<FolderVM>(sender);
+            if (folder == null)
+                return;
+            string name = await PromptWindow.Ask(this, AppHost.T("Renomear pasta", "Rename folder"), AppHost.T("Novo nome:", "New name:"), folder.Title);
+            if (name == null)
+                return;
+            string result = m_Host.RenameFolder(folder.Title, name);
+            AfterEdit(result);
+        }
+
+        private async void OnFolderLook(object sender, RoutedEventArgs e)
+        {
+            FolderVM folder = Context<FolderVM>(sender);
+            if (folder == null)
+                return;
+            AppearanceWindow window = new AppearanceWindow(folder.Title, Ares.AppCore.ButtonDecor.Get(m_Host.ProjectPath, folder.Title, ""),
+                Ares.AppCore.ButtonDecor.GetColor(m_Host.ProjectPath, folder.Title, ""));
+            await window.ShowDialog(this);
+            if (!window.Applied)
+                return;
+            if (window.IconChanged)
+                m_Host.SetFolderIcon(folder.Title, window.Icon);
+            if (window.ColorChanged)
+                m_Host.SetFolderColor(folder.Title, window.Color);
+            AfterEdit(folder.Title);
+        }
+
+        private async void OnFolderDelete(object sender, RoutedEventArgs e)
+        {
+            FolderVM folder = Context<FolderVM>(sender);
+            if (folder == null)
+                return;
+            string extra = folder.Children.Count > 0 ? AppHost.T("\n(As subpastas dela sobem um nível e continuam existindo.)", "\n(Its subfolders move up one level and stay.)") : "";
+            if (!await ConfirmWindow.Ask(this, AppHost.T("Excluir pasta", "Delete folder"),
+                AppHost.T("Excluir a pasta \"" + folder.Title + "\" e todas as suas playlists? (Os arquivos de áudio não são apagados.)" + extra,
+                          "Delete the folder \"" + folder.Title + "\" and all its playlists? (The audio files are not deleted.)" + extra)))
+                return;
+            m_Host.DeleteFolder(folder.Title);
+            AfterEdit(null);
+        }
+
+        private void OnFolderAddHere(object sender, RoutedEventArgs e)
+        {
+            FolderVM folder = Context<FolderVM>(sender);
+            if (folder != null)
+                m_Model.SelectedFolder = folder;
+            OnImportFiles(sender, e);
         }
 
         private async void OnPacks(object sender, RoutedEventArgs e)

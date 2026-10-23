@@ -1,4 +1,4 @@
-/*
+﻿/*
  Apolo - a fork of Ares (Copyright (c) Joerg Ruedenauer), distributed under the GPL.
 
  What decorates the buttons and folders of a project: icon, picture / emoji and color. It is kept beside the project
@@ -148,6 +148,90 @@ namespace Ares.AppCore
             else
                 map[key] = color;
             Save(projectPath, map);
+        }
+
+        /// <summary>A button was renamed: its icon and color follow the new name.</summary>
+        public static void RenameButton(string projectPath, string folder, string oldTitle, string newTitle)
+        {
+            Dictionary<string, string> map = Load(projectPath);
+            bool changed = false;
+            foreach (string prefix in new[] { "", ColorPrefix })
+            {
+                string oldKey = Key(folder, prefix + oldTitle);
+                string value;
+                if (map.TryGetValue(oldKey, out value))
+                {
+                    map.Remove(oldKey);
+                    map[Key(folder, prefix + newTitle)] = value;
+                    changed = true;
+                }
+            }
+            if (changed)
+                Save(projectPath, map);
+        }
+
+        /// <summary>A button was deleted: its icon and color go too.</summary>
+        public static void RemoveButton(string projectPath, string folder, string title)
+        {
+            Dictionary<string, string> map = Load(projectPath);
+            bool changed = map.Remove(Key(folder, title));
+            changed |= map.Remove(Key(folder, ColorPrefix + title));
+            if (changed)
+                Save(projectPath, map);
+        }
+
+        /// <summary>A folder was renamed: what it has (its own icon and color, the ones of its buttons) follows the new name.</summary>
+        public static void RenameFolder(string projectPath, string oldTitle, string newTitle)
+        {
+            Dictionary<string, string> map = Load(projectPath);
+            string start = (oldTitle ?? "").Replace('	', ' ') + "	";
+            List<string> keys = new List<string>();
+            foreach (string key in map.Keys)
+            {
+                if (key.StartsWith(start, StringComparison.Ordinal))
+                    keys.Add(key);
+            }
+            foreach (string key in keys)
+            {
+                string value = map[key];
+                map.Remove(key);
+                map[(newTitle ?? "").Replace('	', ' ') + "	" + key.Substring(start.Length)] = value;
+            }
+            if (keys.Count > 0)
+                Save(projectPath, map);
+        }
+
+        /// <summary>A folder was deleted.</summary>
+        public static void RemoveFolder(string projectPath, string title)
+        {
+            Dictionary<string, string> map = Load(projectPath);
+            string start = (title ?? "").Replace('	', ' ') + "	";
+            List<string> keys = new List<string>();
+            foreach (string key in map.Keys)
+            {
+                if (key.StartsWith(start, StringComparison.Ordinal))
+                    keys.Add(key);
+            }
+            foreach (string key in keys)
+                map.Remove(key);
+            if (keys.Count > 0)
+                Save(projectPath, map);
+        }
+
+        /// <summary>Copies a picture of the person into the "icones" folder of Apolo; returns the "lib:" setting for it.</summary>
+        public static string ImportPicture(string sourceFile)
+        {
+            Directory.CreateDirectory(IconsFolder);
+            string name = Path.GetFileName(sourceFile);
+            string target = Path.Combine(IconsFolder, name);
+            if (File.Exists(target) && new FileInfo(target).Length != new FileInfo(sourceFile).Length)
+            {
+                name = Guid.NewGuid().ToString("N").Substring(0, 8) + "-" + name;
+                target = Path.Combine(IconsFolder, name);
+            }
+            if (!File.Exists(target))
+                File.Copy(sourceFile, target);
+            return "lib:" + name;
         }
     }
 }

@@ -12,6 +12,7 @@
         <MenuItem Name="NewItem" Header="Novo projeto..." InputGesture="Ctrl+N" Click="OnNewProject" />
         <MenuItem Name="OpenItem" Header="Abrir..." InputGesture="Ctrl+O" Click="OnOpen" />
         <MenuItem Name="RecentMenu" Header="Recentes" />
+        <MenuItem Name="NewFolderItem" Header="Nova pasta..." InputGesture="Ctrl+Shift+N" Click="OnNewFolder" />
         <MenuItem Name="PacksItem" Header="Pacotes de conteúdo prontos..." Click="OnPacks" />
         <Separator />
         <MenuItem Name="ImportFolderItem" Header="Adicionar pasta de músicas..." Click="OnImportFolder" />
@@ -90,7 +91,18 @@
           </TreeView.Styles>
           <TreeView.ItemTemplate>
             <TreeDataTemplate ItemsSource="{Binding Children}">
-              <StackPanel Orientation="Horizontal" Spacing="8">
+              <StackPanel Orientation="Horizontal" Spacing="8" Background="Transparent">
+                <StackPanel.ContextMenu>
+                  <ContextMenu>
+                    <MenuItem Header="{x:Static local:Texts.AddHere}" Click="OnFolderAddHere" />
+                    <Separator />
+                    <MenuItem Header="{x:Static local:Texts.NewSubfolder}" Click="OnFolderNewChild" />
+                    <MenuItem Header="{x:Static local:Texts.Rename}" Click="OnFolderRename" />
+                    <MenuItem Header="{x:Static local:Texts.Look}" Click="OnFolderLook" />
+                    <Separator />
+                    <MenuItem Header="{x:Static local:Texts.Delete}" Click="OnFolderDelete" />
+                  </ContextMenu>
+                </StackPanel.ContextMenu>
                 <Rectangle Width="18" Height="18" Fill="{Binding Tint}" OpacityMask="{Binding IconMask}" IsVisible="{Binding HasIcon}" />
                 <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
               </StackPanel>
@@ -116,6 +128,16 @@
                       <ItemsControl.ItemTemplate>
                         <DataTemplate>
                           <Button Classes="card" Command="{Binding Click}" Width="172" Height="108">
+                            <Button.ContextMenu>
+                              <ContextMenu>
+                                <MenuItem Header="{x:Static local:Texts.Rename}" Click="OnCardRename" />
+                                <MenuItem Header="{x:Static local:Texts.Look}" Click="OnCardLook" />
+                                <MenuItem Header="{x:Static local:Texts.MoveBefore}" Click="OnCardLeft" />
+                                <MenuItem Header="{x:Static local:Texts.MoveAfter}" Click="OnCardRight" />
+                                <Separator />
+                                <MenuItem Header="{x:Static local:Texts.Delete}" Click="OnCardDelete" />
+                              </ContextMenu>
+                            </Button.ContextMenu>
                             <Border Classes="cardface" Background="{Binding Face}" BorderBrush="{Binding Edge}">
                               <Grid RowDefinitions="*,Auto">
                                 <Panel>
