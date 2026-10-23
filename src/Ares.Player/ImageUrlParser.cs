@@ -164,7 +164,8 @@ namespace Ares.Player
                 string value = WebUtility.HtmlDecode(m.Groups[1].Value.Trim());
                 Uri result;
                 Uri baseUri;
-                if (Uri.TryCreate(value, UriKind.Absolute, out result))
+                // only web addresses are absolute here (on Linux and macOS "/img/a.jpg" would also pass as a file path)
+                if (Uri.TryCreate(value, UriKind.Absolute, out result) && (result.Scheme == Uri.UriSchemeHttp || result.Scheme == Uri.UriSchemeHttps))
                     return result.ToString();
                 if (Uri.TryCreate(pageUrl, UriKind.Absolute, out baseUri) && Uri.TryCreate(baseUri, value, out result))
                     return result.ToString();

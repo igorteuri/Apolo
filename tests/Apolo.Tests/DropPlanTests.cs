@@ -22,14 +22,14 @@ namespace Apolo.Tests
 
         private string Dir(string relative)
         {
-            string path = Path.Combine(m_Root, relative);
+            string path = Path.Combine(m_Root, relative.Replace((char)92, Path.DirectorySeparatorChar));
             Directory.CreateDirectory(path);
             return path;
         }
 
         private string File_(string relative)
         {
-            string path = Path.Combine(m_Root, relative);
+            string path = Path.Combine(m_Root, relative.Replace((char)92, Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path, "x");
             return path;
