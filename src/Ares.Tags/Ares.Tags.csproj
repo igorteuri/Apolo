@@ -10,8 +10,7 @@
     <EmbeddedResource Include="**\*.resx" Exclude="bin\**;obj\**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118.0" />
-    <PackageReference Include="Stub.System.Data.SQLite.Core.NetStandard" Version="1.0.118" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
   </ItemGroup>
 </Project>

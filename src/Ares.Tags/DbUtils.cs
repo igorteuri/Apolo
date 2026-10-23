@@ -25,7 +25,11 @@ using System.Data.Common;
 #if ANDROID
 using Mono.Data.Sqlite;
 #else
-using System.Data.SQLite;
+#if ANDROID
+using Mono.Data.Sqlite;
+#else
+using Microsoft.Data.Sqlite;
+#endif
 #endif
 
 namespace Ares.Tags
@@ -96,22 +100,10 @@ namespace Ares.Tags
 
         public static Int64 LastInsertRowId(this DbConnection connection)
         {
-			#if ANDROID
-			if (connection is SqliteConnection)
-			{
-				using (DbCommand command = CreateDbCommand("select last_insert_rowid()", connection))
-				{
-					return (Int64)command.ExecuteScalar();
-				}
-			}
-			#else
-            if (connection is SQLiteConnection)
+            using (DbCommand command = CreateDbCommand("select last_insert_rowid()", connection))
             {
-                return ((SQLiteConnection)connection).LastInsertRowId;
+                return Convert.ToInt64(command.ExecuteScalar());
             }
-			#endif
-            else
-                throw new NotImplementedException();
         }
     }
 

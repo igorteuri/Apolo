@@ -25,7 +25,7 @@ using System.Text;
 #if ANDROID
 using Mono.Data.Sqlite;
 #else
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 #endif
 using System.Data.Common;
 
