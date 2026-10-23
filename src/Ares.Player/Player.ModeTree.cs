@@ -27,6 +27,7 @@ namespace Ares.Player
                 modesList.DrawMode = DrawMode.OwnerDrawFixed;
                 modesList.ItemHeight = Math.Max(22, modesList.Font.Height + 8);
                 modesList.FontChanged += (s, e) => modesList.ItemHeight = Math.Max(22, modesList.Font.Height + 8);
+                Ares.CommonGUI.ThemeManager.Changed += (s, e) => { ClearModeIcons(); modesList.Invalidate(); };
                 modesList.DrawItem += ModesDrawItem;
                 modesList.MouseDown += ModesTreeMouseDown;
                 modesList.MouseUp += ModesTreeMouseUp;
@@ -100,6 +101,18 @@ namespace Ares.Player
         }
 
         // draws the emoji / picture / icon of a folder; false if it has none
+        private readonly Dictionary<string, Bitmap> m_ModeIcons = new Dictionary<string, Bitmap>();
+
+        private void ClearModeIcons()
+        {
+            foreach (Bitmap b in m_ModeIcons.Values)
+            {
+                if (b != null)
+                    b.Dispose();
+            }
+            m_ModeIcons.Clear();
+        }
+
         private bool DrawModeIcon(Graphics g, string modeTitle, Rectangle bounds, Color color)
         {
             string spec = Ares.CommonGUI.ButtonImageStore.Get(m_CurrentProjectPath, modeTitle, "");
@@ -109,13 +122,18 @@ namespace Ares.Player
             {
                 if (spec.StartsWith("lucide:"))
                 {
-                    using (Bitmap icon = Ares.CommonGUI.IconLibrary.Get(spec.Substring(7), bounds.Size, color))
+                    // the list is painted again and again (hover, scroll, the buttons being built): the icons are made once
+                    string key = spec + "|" + bounds.Width + "x" + bounds.Height + "|" + color.ToArgb();
+                    Bitmap icon;
+                    if (!m_ModeIcons.TryGetValue(key, out icon))
                     {
-                        if (icon == null)
-                            return false;
-                        g.DrawImage(icon, bounds);
-                        return true;
+                        icon = Ares.CommonGUI.IconLibrary.Get(spec.Substring(7), bounds.Size, color);
+                        m_ModeIcons[key] = icon;
                     }
+                    if (icon == null)
+                        return false;
+                    g.DrawImage(icon, bounds);
+                    return true;
                 }
                 Bitmap picture = Ares.CommonGUI.ButtonImageStore.LoadImage(m_CurrentProjectPath, spec);
                 if (picture == null)

@@ -852,6 +852,7 @@ namespace Ares.Player
 
         private void UpdateModesList()
         {
+            ClearModeIcons();
             foreach (CheckBox box in m_CurrentButtons.Keys)
             {
                 box.CheckedChanged -= m_CurrentButtons[box];
@@ -921,6 +922,19 @@ namespace Ares.Player
         }
 
         private void UpdateElementsPanel()
+        {
+            try
+            {
+                DoUpdateElementsPanel();
+            }
+            finally
+            {
+                // whatever happened, the panel must be drawn again
+                ResumeRedraw(elementsPanel);
+            }
+        }
+
+        private void DoUpdateElementsPanel()
         {
             int modeIndex = SelectedModeIndex;
             if (modeIndex == -1)
@@ -1138,6 +1152,9 @@ namespace Ares.Player
                 m_CurrentButtons.Clear();
                 m_ButtonsForIds.Clear();
                 m_ElementOwners.Clear();
+                // thousands of buttons: nothing is laid out or drawn while they are made (it is done once at the end)
+                SuspendRedraw(elementsPanel);
+                elementsPanel.SuspendLayout();
                 elementsPanel.Controls.Clear();
 
                 if (m_Project != null && m_Project.GetModes().Count > modeIndex)
@@ -1147,6 +1164,15 @@ namespace Ares.Player
                     Ares.Data.IMode shownMode = m_Project.GetModes()[modeIndex];
                     // the buttons of the folder, then (under a heading each) the ones of its subfolders
                     List<ShownButton> shown = CollectShownButtons(shownMode);
+                    // a big folder (or a mother folder of many) shows the first buttons; the rest comes on demand
+                    if (shownMode.Title != m_ShownLimitFolder)
+                    {
+                        m_ShownLimitFolder = shownMode.Title;
+                        m_ShownLimit = ShownLimitStep;
+                    }
+                    List<CollapsedGroup> collapsedGroups;
+                    int hiddenInFirst;
+                    shown = LimitShown(shown, m_ShownLimit, out collapsedGroups, out hiddenInFirst);
                     List<Ares.Data.IModeElement> elements = new List<Ares.Data.IModeElement>();
                     foreach (ShownButton sb in shown)
                         elements.Add(sb.Element);
@@ -1214,7 +1240,8 @@ namespace Ares.Player
                         AttachElementMenu(checkBox, id);
                         elementsPanel.Controls.Add(checkBox);
                     }
-                    if (count == 0)
+                    AddLimitLines(collapsedGroups, hiddenInFirst);
+                    if (count == 0 && collapsedGroups.Count == 0)
                     {
                         Label label = new Label();
                         label.Text = StringResources.NoElements;
@@ -1235,6 +1262,8 @@ namespace Ares.Player
                 tagsPanel.Visible = false;
                 m_TagsControlsActive = false;
                 elementsPanel.Visible = true;
+                elementsPanel.ResumeLayout(true);
+                ResumeRedraw(elementsPanel);
             }
         }
 
