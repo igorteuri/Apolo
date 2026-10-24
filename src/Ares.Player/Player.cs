@@ -818,6 +818,8 @@ namespace Ares.Player
                     m_TagLanguageId = Ares.Tags.TagsModule.GetTagsDB().TranslationsInterface.GetIdOfCurrentUILanguage();
                 }
                 Ares.Settings.Settings.Instance.RecentFiles.AddFile(new RecentFiles.ProjectEntry(m_Project.FileName, m_Project.Title));
+                if (Ares.Data.ProjectRecovery.UsedBackup && !onControllerRequest)
+                    MessageBox.Show(this, T("O arquivo do projeto estava danificado. Abri a cópia da versão anterior (.bak); o arquivo danificado ficou guardado como .corrompido.", "The project file was damaged. I opened the copy of the previous version (.bak); the damaged file was kept as .corrompido."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception e)
             {

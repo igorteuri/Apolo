@@ -127,6 +127,24 @@ namespace Apolo.Tests
         }
 
         [Fact]
+        public void DamagedFile_OpensTheBackup()
+        {
+            string file = Path.Combine(m_Dir, "dano.apolo");
+            IProject project = DataModule.ProjectManager.CreateProject("Boa");
+            DataModule.ProjectManager.SaveProject(project, file);
+            project.AddMode("Pasta");
+            DataModule.ProjectManager.SaveProject(project); // the first version is now the .bak
+            DataModule.ProjectManager.UnloadProject(project);
+            File.WriteAllText(file, "<?xml version=\"1.0\"?><Project><oops");
+
+            IProject recovered = DataModule.ProjectManager.LoadProject(file);
+            Assert.True(Ares.Data.ProjectRecovery.UsedBackup);
+            Assert.Equal("Boa", recovered.Title);
+            Assert.True(File.Exists(file + ".corrompido"));
+            DataModule.ProjectManager.UnloadProject(recovered);
+        }
+
+        [Fact]
         public void SaveWithoutFileName_Throws()
         {
             IProject project = DataModule.ProjectManager.CreateProject("Sem nome");

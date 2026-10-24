@@ -177,6 +177,12 @@ namespace Ares.Data
 		}
 	}
 
+    /// <summary>Set by the project loader when the file was damaged and the "&lt;file&gt;.bak" copy was opened instead.</summary>
+    public static class ProjectRecovery
+    {
+        public static bool UsedBackup { get; set; }
+    }
+
     class ProjectManager : IProjectManager
     {
         #region IProjectManager Members
@@ -187,6 +193,34 @@ namespace Ares.Data
         }
 
         public IProject LoadProject(String fileName)
+        {
+            ProjectRecovery.UsedBackup = false;
+            try
+            {
+                return DoLoadProject(fileName);
+            }
+            catch (Exception)
+            {
+                // a damaged file (power cut, full disk, a synchronised folder): the version before the last save is still there
+                String backup = fileName + ".bak";
+                if (!System.IO.File.Exists(backup))
+                    throw;
+                IProject project = DoLoadProject(backup);
+                try
+                {
+                    System.IO.File.Copy(fileName, fileName + ".corrompido", true);
+                    System.IO.File.Copy(backup, fileName, true);
+                }
+                catch (Exception)
+                {
+                    // the project is open anyway; the next save writes the file again
+                }
+                ProjectRecovery.UsedBackup = true;
+                return project;
+            }
+        }
+
+        private IProject DoLoadProject(String fileName)
         {
             IList<IXmlWritable> elements = DoImportElements(fileName, true);
             if (elements.Count > 0 && elements[0] is IProject)
