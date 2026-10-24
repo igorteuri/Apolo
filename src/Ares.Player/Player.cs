@@ -86,6 +86,7 @@ namespace Ares.Player
 #endif
             InitializeComponent();
             BeginHiddenStart();
+            InitWindowFit();
             if (!m_HideToTray)
             {
                 notifyIcon.Visible = false;

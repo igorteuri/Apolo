@@ -265,6 +265,7 @@ namespace Ares.Player
             try
             {
                 Ares.CommonGUI.ThemeManager.Apply(this);
+                KeepWindowOnScreen(); // the text size of the theme can make the window bigger than the screen
                 PreloadWebTabs();
                 if (Visible)
                     Refresh(); // paints everything with the theme while the window is still invisible
@@ -275,6 +276,11 @@ namespace Ares.Player
             }
             Opacity = 1;
             SplashForm.CloseSplash();
+            // the scale of the interface settles a little later: look once more
+            Timer late = new Timer();
+            late.Interval = 1500;
+            late.Tick += (s2, e2) => { late.Stop(); late.Dispose(); KeepWindowOnScreen(); };
+            late.Start();
         }
     }
 }
