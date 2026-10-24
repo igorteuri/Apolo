@@ -109,6 +109,24 @@ namespace Apolo.Tests
         }
 
         [Fact]
+        public void SavingAgain_KeepsThePreviousVersionAsBak_AndLeavesNoTempFile()
+        {
+            string file = Path.Combine(m_Dir, "bak.apolo");
+            IProject project = DataModule.ProjectManager.CreateProject("Primeira");
+            DataModule.ProjectManager.SaveProject(project, file);
+            string first = File.ReadAllText(file);
+
+            project.AddMode("Nova pasta");
+            DataModule.ProjectManager.SaveProject(project);
+
+            Assert.True(File.Exists(file + ".bak"));
+            Assert.Equal(first, File.ReadAllText(file + ".bak"));
+            Assert.NotEqual(first, File.ReadAllText(file));
+            Assert.False(File.Exists(file + ".tmp"));
+            DataModule.ProjectManager.UnloadProject(project);
+        }
+
+        [Fact]
         public void SaveWithoutFileName_Throws()
         {
             IProject project = DataModule.ProjectManager.CreateProject("Sem nome");

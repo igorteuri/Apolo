@@ -48,6 +48,65 @@ namespace Ares.Player
 		}
 
 
+        // an error in an event handler must not close the program with the work of the session: it is written to
+        // crash.log (next to the settings), the user is told, and the program goes on
+        private static void InstallCrashHandlers()
+        {
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            Application.ThreadException += (s, e) => ReportCrash(e.Exception, false);
+            AppDomain.CurrentDomain.UnhandledException += (s, e) => ReportCrash(e.ExceptionObject as Exception, e.IsTerminating);
+            System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (s, e) => { Log(e.Exception); e.SetObserved(); };
+        }
+
+        private static readonly object s_LogLock = new object();
+        private static DateTime s_LastDialog = DateTime.MinValue;
+
+        private static void Log(Exception ex)
+        {
+            try
+            {
+                lock (s_LogLock)
+                {
+                    string file = System.IO.Path.Combine(Ares.Settings.AppFolders.Root, "crash.log");
+                    System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(file));
+                    if (System.IO.File.Exists(file) && new System.IO.FileInfo(file).Length > 512 * 1024)
+                        System.IO.File.Delete(file);
+                    System.IO.File.AppendAllText(file, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "  " + (ex != null ? ex.ToString() : "(unknown error)") + Environment.NewLine + Environment.NewLine);
+                }
+            }
+            catch (Exception)
+            {
+                // the log is the last resort: nothing more to do
+            }
+        }
+
+        private static void ReportCrash(Exception ex, bool terminating)
+        {
+            Log(ex);
+            // one message at a time (a broken repaint can raise the same error again and again)
+            if ((DateTime.Now - s_LastDialog).TotalSeconds < 10)
+                return;
+            s_LastDialog = DateTime.Now;
+            try
+            {
+                bool pt = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt";
+                string nl = Environment.NewLine + Environment.NewLine;
+                string detail = ex != null ? ex.Message : "?";
+                string text;
+                if (terminating)
+                    text = (pt ? "Erro grave: o Apolo precisa fechar. Seu projeto foi salvo na última alteração." : "Serious error: Apolo has to close. Your project was saved at the last change.")
+                        + nl + detail;
+                else
+                    text = (pt ? "Ocorreu um erro inesperado, mas o Apolo continua aberto. Seu projeto é salvo a cada alteração." : "An unexpected error occurred, but Apolo stays open. Your project is saved after every change.")
+                        + nl + detail + nl
+                        + (pt ? "O registro completo está em crash.log, na pasta de dados do Apolo." : "The full record is in crash.log, in the Apolo data folder.");
+                MessageBox.Show(text, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
         /// <summary>
         /// Der Haupteinstiegspunkt für die Anwendung.
         /// </summary>
@@ -69,6 +128,7 @@ namespace Ares.Player
                 }
             }
             Ares.CommonGUI.LanguageManager.Apply();
+            InstallCrashHandlers();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Ares.CommonGUI.ThemeManager.Install();

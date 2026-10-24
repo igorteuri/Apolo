@@ -247,7 +247,10 @@ namespace Ares.Data
 
         private void DoExportElements(IList<IXmlWritable> elements, String fileName, bool isProject)
         {
-            String tempFileName = System.IO.Path.GetTempFileName();
+            // written next to the target and then swapped in: a crash or a full disk in the middle never leaves a half
+            // written project, and the previous version stays as "<file>.bak"
+            String directory = System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(fileName));
+            String tempFileName = System.IO.Path.Combine(directory, System.IO.Path.GetFileName(fileName) + ".tmp");
             XmlWriterSettings settings = new XmlWriterSettings();
             settings.CloseOutput = true;
             settings.ConformanceLevel = ConformanceLevel.Document;
@@ -255,6 +258,18 @@ namespace Ares.Data
             using (XmlWriter writer = XmlWriter.Create(tempFileName, settings))
             {
                 DoExportElements(elements, writer, isProject);
+            }
+            if (isProject && System.IO.File.Exists(fileName))
+            {
+                try
+                {
+                    System.IO.File.Replace(tempFileName, fileName, fileName + ".bak");
+                    return;
+                }
+                catch (System.IO.IOException)
+                {
+                    // e.g. a file system without Replace: fall back to copying
+                }
             }
             System.IO.File.Copy(tempFileName, fileName, true);
             System.IO.File.Delete(tempFileName);
