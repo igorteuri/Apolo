@@ -63,7 +63,9 @@ namespace Ares.Player
             {
                 ColumnHeader h = new ColumnHeader();
                 h.Text = names[i];
-                h.Width = widths[i];
+                // never narrower than the header with its sort arrow ("Duraç...", "Tocad..." were cut)
+                int needed = TextRenderer.MeasureText(names[i] + "  ▲", m_TrackList.Font).Width + 26;
+                h.Width = Math.Max(widths[i], needed);
                 if (i == ColNumber || i == ColDuration || i == ColPlays)
                     h.TextAlign = HorizontalAlignment.Right;
                 else if (i == ColKind)

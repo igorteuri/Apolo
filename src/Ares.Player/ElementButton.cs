@@ -54,7 +54,7 @@ namespace Ares.Player
         // where the small badges are drawn (the same place for painting and for the click)
         private Rectangle BadgeRect(int index, int count)
         {
-            int bd = Math.Max(18, (int)Math.Round(21 * Scale));
+            int bd = Math.Max(22, (int)Math.Round(25 * Scale));
             return m_ListMode
                 ? new Rectangle(Width - (bd + 4) * (count - index) - 6, (Height - bd) / 2, bd, bd)
                 : new Rectangle(6 + index * (bd + 3), 6, bd, bd);
@@ -333,6 +333,45 @@ namespace Ares.Player
                 | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
         }
 
+        // the button which plays now: three small bars (an equalizer) in a pill at the top right, besides the fill and the border
+        private void PaintPlayingMark(Graphics g, Color accent, Color text, Color window)
+        {
+            int d = Math.Max(22, (int)Math.Round(25 * Scale));
+            Rectangle pill = new Rectangle(Width - d - 8, 6, d, d);
+            using (GraphicsPath pp = Rounded(pill, d / 3))
+            {
+                using (SolidBrush pb = new SolidBrush(Color.FromArgb(235, accent)))
+                    g.FillPath(pb, pp);
+            }
+            // dark bars on a light color, light bars on a dark one
+            Color bar = ContrastRatio(accent, Color.White) >= ContrastRatio(accent, Color.Black) ? Color.White : Color.Black;
+            int bw = Math.Max(3, d / 8);
+            int gap = Math.Max(2, d / 10);
+            int total = 3 * bw + 2 * gap;
+            int x0 = pill.X + (d - total) / 2;
+            int[] heights = { d * 2 / 5, d * 3 / 5, d * 1 / 3 };
+            using (SolidBrush bb = new SolidBrush(bar))
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    int h = heights[i];
+                    g.FillRectangle(bb, x0 + i * (bw + gap), pill.Y + (d + d / 3) / 2 - h, bw, h);
+                }
+            }
+        }
+
+        private static double Luminance(Color c)
+        {
+            Func<byte, double> f = v => { double x = v / 255.0; return x <= 0.03928 ? x / 12.92 : Math.Pow((x + 0.055) / 1.055, 2.4); };
+            return 0.2126 * f(c.R) + 0.7152 * f(c.G) + 0.0722 * f(c.B);
+        }
+
+        private static double ContrastRatio(Color a, Color b)
+        {
+            double la = Luminance(a), lb = Luminance(b);
+            return (Math.Max(la, lb) + 0.05) / (Math.Min(la, lb) + 0.05);
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             ThemePalette p = ThemeManager.Current;
@@ -446,8 +485,8 @@ namespace Ares.Player
                         glyphs.Add("\u266B");
                     if ((m_Kind & 2) != 0)
                         glyphs.Add("\u26A1");
-                    int bd = Math.Max(18, (int)Math.Round(21 * Scale));
-                    using (Font gf = new Font("Segoe UI Symbol", Math.Max(8f, Font.Size), FontStyle.Regular))
+                    int bd = Math.Max(22, (int)Math.Round(25 * Scale));
+                    using (Font gf = new Font("Segoe UI Symbol", Math.Max(10f, Font.Size + 2f), FontStyle.Bold))
                     {
                         for (int gi = 0; gi < glyphs.Count; gi++)
                         {
@@ -459,11 +498,14 @@ namespace Ares.Player
                                 using (Pen pbd = new Pen(Color.FromArgb(150, accent)))
                                     g.DrawPath(pbd, pp);
                             }
-                            TextRenderer.DrawText(g, glyphs[gi], gf, pill, accent,
+                            TextRenderer.DrawText(g, glyphs[gi], gf, pill, text,
                                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
                         }
                     }
                 }
+
+                if (Checked && !m_ListMode)
+                    PaintPlayingMark(g, accent, text, window);
 
                 if (m_MultiSelected)
                 {

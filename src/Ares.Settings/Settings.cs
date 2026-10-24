@@ -848,6 +848,11 @@ namespace Ares.Settings
             {
                 return false;
             }
+            catch (PlatformNotSupportedException)
+            {
+                // BinaryFormatter does not exist in .NET 9 and later: the copy of the settings for the helper program is not available
+                return false;
+            }
         }
 
         private void WriteToSharedMemory()
@@ -874,6 +879,10 @@ namespace Ares.Settings
             }
             catch (Ares.Ipc.SharedMemoryException)
             {
+            }
+            catch (PlatformNotSupportedException)
+            {
+                // see ReadFromSharedMemory: the settings are in their file anyway
             }
         }
 
