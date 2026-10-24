@@ -34,6 +34,7 @@ namespace Ares.Playing
         void SetMusicVolume(int volume);
         void PlayMusicTitle(Int32 elementId, bool fade, bool crossFade, int fadeTimeMs);
         bool RepeatCurrentMusic { set; }
+        bool RepeatPlaylist { set; }
         int CurrentMusicHandle { get; }
         void ChangeRandomList(IRandomBackgroundMusicList newList);
         void SetMusicOnAllSpeakers(bool onAllSpeakers);
@@ -80,7 +81,7 @@ namespace Ares.Playing
                 }
             }, false);
 
-            if (CurrentPlayedHandle != 0 && m_RepeatCurrentMusic)
+            if (CurrentPlayedHandle != 0 && ShallLoopFile())
             {
                 ((FilePlayer)PlayingModule.FilePlayer).SetRepeatFile(CurrentPlayedHandle, true);
             }
@@ -207,10 +208,33 @@ namespace Ares.Playing
             set
             {
                 m_RepeatCurrentMusic = value;
-                if (CurrentPlayedHandle != 0)
-                {
-                    ((FilePlayer)PlayingModule.FilePlayer).SetRepeatFile(CurrentPlayedHandle, value);
-                }
+                UpdateFileLoop();
+            }
+        }
+
+        // 'repeat playlist': lists start over at their end (see PlayNext); a single file is the whole playlist, so it loops
+        public bool RepeatPlaylist
+        {
+            set
+            {
+                m_RepeatPlaylist = value;
+                UpdateFileLoop();
+            }
+        }
+
+        protected bool RepeatPlaylistOn { get { return m_RepeatPlaylist; } }
+
+        // whether the file which plays now has to loop by itself
+        protected virtual bool ShallLoopFile()
+        {
+            return m_RepeatCurrentMusic;
+        }
+
+        private void UpdateFileLoop()
+        {
+            if (CurrentPlayedHandle != 0)
+            {
+                ((FilePlayer)PlayingModule.FilePlayer).SetRepeatFile(CurrentPlayedHandle, ShallLoopFile());
             }
         }
 
@@ -220,11 +244,13 @@ namespace Ares.Playing
         }
 
         private bool m_RepeatCurrentMusic;
+        private bool m_RepeatPlaylist;
 
         protected MusicPlayer(WaitHandle stoppedEvent, IElementPlayerClient client)
             : base(stoppedEvent, client)
         {
             m_RepeatCurrentMusic = PlayingModule.ThePlayer.RepeatCurrentMusic;
+            m_RepeatPlaylist = PlayingModule.ThePlayer.RepeatPlaylist;
         }
 
         protected bool shallStop = false;
@@ -279,7 +305,7 @@ namespace Ares.Playing
             if (m_Index >= m_Container.GetElements().Count)
             {
                 ++m_RepeatCount;
-                if (m_Container.RepeatCount == -1 || m_RepeatCount < m_Container.RepeatCount)
+                if (m_Container.RepeatCount == -1 || m_RepeatCount < m_Container.RepeatCount || RepeatPlaylistOn)
                 {
                     Monitor.Exit(syncObject);
                     Repeat(m_Container, m_Container);
@@ -422,7 +448,7 @@ namespace Ares.Playing
                 Monitor.Exit(syncObject);
                 Repeat(RandomMusicList, element);
             }
-            else if (m_Container.RepeatCount != -1 && m_Container.RepeatCount <= ++m_RepeatCount)
+            else if (!RepeatPlaylistOn && m_Container.RepeatCount != -1 && m_Container.RepeatCount <= ++m_RepeatCount)
             {
                 Monitor.Exit(syncObject);
                 if (PlayingModule.ThePlayer.ProjectCallbacks != null)
@@ -899,6 +925,12 @@ namespace Ares.Playing
         public override void PlayNext()
         {
             Client.SubPlayerFinished(this, false, false);
+        }
+
+        // the file is the whole playlist: repeating the playlist repeats the file
+        protected override bool ShallLoopFile()
+        {
+            return base.ShallLoopFile() || RepeatPlaylistOn;
         }
 
         protected override bool IsSingleFileList()

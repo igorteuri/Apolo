@@ -618,7 +618,8 @@ namespace Ares.Player
                 json.Append(",\"list\":").Append(JsonString(listTitle));
                 json.Append(",\"position\":").Append(position.ToString("0.0", CultureInfo.InvariantCulture));
                 json.Append(",\"length\":").Append(length.ToString("0.0", CultureInfo.InvariantCulture));
-                json.Append(",\"repeat\":").Append(control.MusicRepeat ? "true" : "false");
+                json.Append(",\"repeat\":").Append(control.MusicRepeatMode != 0 ? "true" : "false");
+                json.Append(",\"repeatMode\":").Append(control.MusicRepeatMode);
                 json.Append(",\"vol\":{\"overall\":").Append(control.GlobalVolume);
                 json.Append(",\"music\":").Append(control.MusicVolume);
                 json.Append(",\"sound\":").Append(control.SoundVolume).Append("}");

@@ -132,7 +132,7 @@ namespace Ares.Player
                         color = p.TextDim;
                 }
                 SetStat(m_StatState, state, color);
-                SetStat(m_StatRepeat, T("Repetição: ", "Repeat: ") + (repeatButton.Checked ? T("ligada", "on") : T("desligada", "off")), ForeColor);
+                SetStat(m_StatRepeat, T("Repetição: ", "Repeat: ") + RepeatModeText(m_RepeatModeShown), ForeColor);
                 SetStat(m_StatOutput, (m_OutputButton != null ? m_OutputButton.Text : ""), ForeColor);
                 if (m_Remote != null && m_Remote.Running)
                 {

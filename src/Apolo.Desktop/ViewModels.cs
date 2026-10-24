@@ -188,7 +188,7 @@ namespace Apolo.Desktop
             StopCommand = new RelayCommand(() => Key(Ares.Data.Keys.Escape));
             PreviousCommand = new RelayCommand(() => Key(Ares.Data.Keys.Left));
             NextCommand = new RelayCommand(() => Key(Ares.Data.Keys.Right));
-            RepeatCommand = new RelayCommand(() => { m_Host.Control.SetRepeatCurrentMusic(!m_Host.Control.MusicRepeat); });
+            RepeatCommand = new RelayCommand(() => { m_Host.Control.CycleMusicRepeatMode(); });
             if (m_Host.Control != null)
             {
                 m_Global = m_Host.Control.GlobalVolume;
@@ -493,11 +493,13 @@ namespace Apolo.Desktop
         private bool m_Paused;
         public bool Paused { get { return m_Paused; } private set { if (Set(ref m_Paused, value)) Raise("PauseMask"); } }
         public IBrush PauseMask { get { return m_Paused ? Glyphs.Play : Glyphs.Pause; } }
-        private bool m_RepeatMusic;
-        public bool RepeatMusic { get { return m_RepeatMusic; } private set { if (Set(ref m_RepeatMusic, value)) Raise("RepeatBrush"); } }
+        private int m_RepeatMode;
+        // 0 = off, 1 = repeat the playlist, 2 = repeat the current track
+        public int RepeatMode { get { return m_RepeatMode; } private set { if (Set(ref m_RepeatMode, value)) { Raise("RepeatBrush"); Raise("RepeatMusic"); } } }
+        public bool RepeatMusic { get { return m_RepeatMode != 0; } }
         public IBrush RepeatBrush
         {
-            get { return m_RepeatMusic ? (IBrush)new SolidColorBrush(Color.Parse("#8E5BD1")) : new SolidColorBrush(Color.Parse("#ECEDF3")); }
+            get { return m_RepeatMode != 0 ? (IBrush)new SolidColorBrush(Color.Parse("#8E5BD1")) : new SolidColorBrush(Color.Parse("#ECEDF3")); }
         }
         public bool HasChips { get { return Chips.Count > 0; } }
 
@@ -510,7 +512,7 @@ namespace Apolo.Desktop
             try
             {
                 Paused = m_Host.Control.IsPaused();
-                RepeatMusic = m_Host.Control.MusicRepeat;
+                RepeatMode = m_Host.Control.MusicRepeatMode;
                 Global = m_Host.Control.GlobalVolume;
                 MusicVol = m_Host.Control.MusicVolume;
                 SoundVol = m_Host.Control.SoundVolume;
@@ -701,7 +703,7 @@ namespace Apolo.Desktop
 
         public string RepeatText
         {
-            get { return RepeatMusic ? AppHost.T("Repetir música: ligado", "Repeat music: on") : AppHost.T("Repetir música: desligado", "Repeat music: off"); }
+            get { return RepeatMode == 2 ? AppHost.T("Repetir música: só esta faixa", "Repeat music: this track") : RepeatMode == 1 ? AppHost.T("Repetir música: a playlist toda", "Repeat music: whole playlist") : AppHost.T("Repetir música: desligado", "Repeat music: off"); }
         }
 
         private string m_OutputName = "";

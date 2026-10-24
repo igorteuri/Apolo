@@ -161,6 +161,7 @@ namespace Ares.Player
                 m_TransportStrip.Dock = DockStyle.None;
                 m_TransportStrip.AutoSize = true;
                 m_TransportStrip.CanOverflow = false;
+                repeatButton.Paint += RepeatButton_Paint;
                 ToolStripItem[] moved = new ToolStripItem[] { m_PauseButton, stopButton, previousButton, nextButton, repeatButton };
                 foreach (ToolStripItem item in moved)
                 {
@@ -1238,6 +1239,7 @@ namespace Ares.Player
                             if (m_Listen && m_ButtonsActive)
                             {
                                 m_PlayingControl.SwitchElement(id);
+                                ShowTrackListOfClicked(id);
                             }
                         });
                         checkBox.CheckedChanged += handler;
@@ -1393,12 +1395,8 @@ namespace Ares.Player
                     }
                 }
             }
-            bool repeat = m_PlayingControl.MusicRepeat;
-            if (musicElementId == -1)
-            {
-                repeat = false;
-            }
-            repeatButton.Checked = repeat;
+            // the repeat mode is a setting of the player: it shows (and works) before anything plays
+            ShowRepeatMode(m_PlayingControl.MusicRepeatMode);
             bool settingsChanged = false;
             bool onAllSpeakers = m_PlayingControl.MusicOnAllSpeakers;
             if (onAllSpeakers != Ares.Settings.Settings.Instance.PlayMusicOnAllSpeakers)
@@ -1418,7 +1416,6 @@ namespace Ares.Player
                 Ares.Settings.Settings.Instance.ButtonMusicFadeTime = previousNextFadeTime;
                 settingsChanged = true;
             }
-            repeatCurrentMusicToolStripMenuItem.Checked = repeat;
             if (control.CurrentMusicList != lastMusicListId && SpecialViews && modesList.SelectedIndex == 0)
             {
                 UpdateElementsPanel();
@@ -1873,7 +1870,7 @@ namespace Ares.Player
 
         public void SetMusicRepeat(bool repeat)
         {
-            m_PlayingControl.SetRepeatCurrentMusic(repeat);
+            m_PlayingControl.SetMusicRepeatMode(repeat ? 2 : 0);
         }
 
         public void SwitchTag(Int32 categoryId, Int32 tagId, bool active)
@@ -2296,7 +2293,8 @@ namespace Ares.Player
 
         private void repeatButton_Click(object sender, EventArgs e)
         {
-            m_PlayingControl.SetRepeatCurrentMusic(!m_PlayingControl.MusicRepeat);
+            m_PlayingControl.CycleMusicRepeatMode();
+            ShowRepeatMode(m_PlayingControl.MusicRepeatMode);
         }
 
         private void musicTagCategoryBox_SelectedIndexChanged(object sender, EventArgs e)

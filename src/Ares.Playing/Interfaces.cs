@@ -333,6 +333,12 @@ namespace Ares.Playing
         bool RepeatCurrentMusic { get; set; }
 
         /// <summary>
+        /// Whether the music playlist which plays now starts over when it has ended
+        /// (even if it was not set to repeat). Default is false.
+        /// </summary>
+        bool RepeatPlaylist { get; set; }
+
+        /// <summary>
         /// Gets the position and length (in seconds) of the music title which is
         /// currently playing. Returns false if there is no music playing or
         /// if its length is unknown (e.g. web radio).

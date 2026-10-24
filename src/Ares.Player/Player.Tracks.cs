@@ -652,6 +652,9 @@ namespace Ares.Player
             int musicId = m_PlayingControl.CurrentMusicElement;
             if (musicId == -1)
                 return false;
+            IFileElement single = me.StartElement as IFileElement;
+            if (single != null)
+                return single.Id == musicId;
             IGeneralElementContainer container = me.StartElement as IGeneralElementContainer;
             if (container == null)
                 return false;
@@ -690,6 +693,16 @@ namespace Ares.Player
             SyncTrackSelection();
         }
 
+        /// <summary>A button was clicked to play: when the track panel is open it shows that button's files (also for sound effects, which the music follow does not see).</summary>
+        private void ShowTrackListOfClicked(int modeElementId)
+        {
+            if (m_TrackPanel == null || m_TrackState != 2 || modeElementId == m_TrackElementId)
+                return;
+            m_TrackPinned = true;
+            m_TrackLastListId = m_PlayingControl != null ? m_PlayingControl.CurrentMusicList : int.MinValue;
+            LoadTrackList(modeElementId);
+        }
+
         private void LoadTrackList(int modeElementId)
         {
             IMode mode;
@@ -710,10 +723,24 @@ namespace Ares.Player
         {
             m_TrackRows.Clear();
             IGeneralElementContainer container = me.StartElement as IGeneralElementContainer;
-            if (container == null)
+            IList<IContainerElement> top = null;
+            IList<IFileElement> files = null;
+            IFileElement single = me.StartElement as IFileElement;
+            if (container != null)
+            {
+                top = container.GetGeneralElements();
+                files = container.GetFileElements();
+            }
+            else if (single != null)
+            {
+                // a button of one single music / sound effect: the list shows that one file
+                top = new List<IContainerElement>();
+                files = new List<IFileElement> { single };
+            }
+            else
+            {
                 return;
-            IList<IContainerElement> top = container.GetGeneralElements();
-            IList<IFileElement> files = container.GetFileElements();
+            }
             foreach (IFileElement f in files)
             {
                 TrackRow row = new TrackRow();
@@ -812,6 +839,12 @@ namespace Ares.Player
             if (me == null || me.StartElement == null)
                 return;
             int fileId = m_TrackShown[idx].File.Id;
+            if (me.StartElement is IFileElement)
+            {
+                // the button is the file itself: there is nothing to jump to
+                m_PlayingControl.SwitchElement(me.Id);
+                return;
+            }
             bool listActive = TrackElementIsPlaying(me);
             if (listActive || m_PlayingControl.CurrentModeElements.Contains(me))
             {

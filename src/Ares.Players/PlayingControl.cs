@@ -162,6 +162,29 @@ namespace Ares.Players
             PlayingModule.ProjectPlayer.RepeatCurrentMusic = repeat;
         }
 
+        /// <summary>Repeat mode of the music: 0 = off, 1 = the playlist, 2 = the current track.</summary>
+        public int MusicRepeatMode
+        {
+            get
+            {
+                if (PlayingModule.ProjectPlayer.RepeatCurrentMusic)
+                    return 2;
+                return PlayingModule.ProjectPlayer.RepeatPlaylist ? 1 : 0;
+            }
+        }
+
+        public void SetMusicRepeatMode(int mode)
+        {
+            PlayingModule.ProjectPlayer.RepeatPlaylist = mode == 1;
+            PlayingModule.ProjectPlayer.RepeatCurrentMusic = mode == 2;
+        }
+
+        /// <summary>Off, then repeat playlist, then repeat current track, then off again (like Spotify).</summary>
+        public void CycleMusicRepeatMode()
+        {
+            SetMusicRepeatMode((MusicRepeatMode + 1) % 3);
+        }
+
         public void AddMusicTag(int categoryId, int tagId)
         {
             PlayingModule.ProjectPlayer.AddMusicTag(categoryId, tagId);
