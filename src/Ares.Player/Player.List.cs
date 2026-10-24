@@ -121,7 +121,7 @@ namespace Ares.Player
             int addWidth = Math.Max(90, TextRenderer.MeasureText(m_AddBarButton.Text, m_AddBarButton.Font).Width + 24);
             m_ListToggle.SetBounds(m_ListBar.ClientSize.Width - toggleWidth, 0, toggleWidth, m_ListBar.ClientSize.Height);
             m_AddBarButton.SetBounds(m_ListBar.ClientSize.Width - toggleWidth - 6 - addWidth, 0, addWidth, m_ListBar.ClientSize.Height);
-            m_SearchBox.SetBounds(0, 0, Math.Max(40, m_ListBar.ClientSize.Width - toggleWidth - addWidth - 12), m_SearchBox.Height);
+            m_SearchBox.SetBounds(0, 0, Math.Min(440, Math.Max(40, m_ListBar.ClientSize.Width - toggleWidth - addWidth - 12)), m_SearchBox.Height); // a search field the whole width of the window is only a long empty line
             m_SearchBox.Top = (m_ListBar.ClientSize.Height - m_SearchBox.Height) / 2;
         }
 

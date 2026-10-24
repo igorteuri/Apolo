@@ -418,7 +418,7 @@ namespace Ares.Player
             m_TrackUp.SetBounds(w - 2 * bw - 2, 0, bw, h);
             int rest = w - 2 * bw - 2 - 8; // room for title, type and search
             int kindW = Math.Max(120, Math.Min(230, rest / 3));
-            int titleW = Math.Max(60, Math.Min(170, rest / 4));
+            int titleW = Math.Max(60, Math.Min(340, rest / 3));
             int searchW = Math.Max(60, rest - kindW - titleW - 8);
             int x = 0;
             m_TrackTitle.SetBounds(x, 0, titleW, h);
@@ -672,7 +672,7 @@ namespace Ares.Player
             m_TrackRows.Clear();
             m_TrackShown.Clear();
             m_TrackList.Items.Clear();
-            m_TrackTitle.Text = T("Botão direito numa playlist > Ver músicas", "Right-click a playlist > View tracks");
+            m_TrackTitle.Text = T("Clique num botão para ver os arquivos dele aqui", "Click a button to see its files here");
             m_TrackKindLock = true;
             m_TrackKind.SelectedIndex = -1;
             m_TrackKindLock = false;
