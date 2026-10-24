@@ -1311,7 +1311,7 @@ namespace Ares.Playing
             {
                 if (Ares.Playing.Audio.AudioEngine.Instance != null)
                 {
-                    Ares.Playing.Audio.AudioEngine.Instance.MasterVolume = value / 100.0f;
+                    Ares.Playing.Audio.AudioEngine.Instance.MasterVolume = Ares.Playing.Audio.VolumeCurve.ToGain(value);
                 }
             }
         }

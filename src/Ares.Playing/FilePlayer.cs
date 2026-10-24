@@ -585,7 +585,7 @@ namespace Ares.Playing
             {
                 var info = m_RunningFiles.ContainsKey(handle) ? m_RunningFiles[handle] : null;
                 float specificVolume = info != null ? info.Volume : 0.01f;
-                specificVolume *= volume * 0.01f;
+                specificVolume *= Audio.VolumeCurve.ToGain(volume);
                 if (channel != null)
                     channel.SetVolume(specificVolume);
             }
@@ -600,7 +600,7 @@ namespace Ares.Playing
 
         private bool SetStartVolume(ISoundFile file, int fadeInTime, AudioChannel channel, RunningFileInfo info)
         {
-            float volume = file.Volume / 100.0f;
+            float volume = Audio.VolumeCurve.ToGain(file.Volume);
             float specificVolume = 1.0f;
             if (file.Effects != null)
             {
