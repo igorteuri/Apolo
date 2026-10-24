@@ -103,6 +103,14 @@ namespace Ares.Playing
                 if (fadeOutTime == 0)
                     fadeOutTime = settingTime;
             }
+            // a music which repeats (the repeat button may be switched on at any time) ends by blending into its own
+            // beginning, as long as its fade out / crossfade: the music does not stop and start again
+            if (file.SoundFileType == SoundFileType.Music && !loop && fadeOutTime > 0 && length > 0 && !cueOutActive)
+            {
+                int musicBlend = (int)Math.Min(fadeOutTime, length * 1000 / 3);
+                if (musicBlend >= 100)
+                    channel.LoopCrossfadeMs = musicBlend;
+            }
             if (fadeOutTime != 0 && length > 0)
             {
                 double fadeOutSeconds = Math.Min(0.001 * fadeOutTime, length);
