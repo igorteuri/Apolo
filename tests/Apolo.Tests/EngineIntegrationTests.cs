@@ -149,6 +149,69 @@ namespace Apolo.Tests
             DataModule.ProjectManager.UnloadProject(project);
         }
 
+        // a music with a fade out / crossfade at its end, as the user has it: repeat must not fade it out and hand over,
+        // and a jump into the fade zone must play from there instead of ending the music
+        private IProject MusicWithFade(string file)
+        {
+            IProject created = DataModule.ProjectManager.CreateProject("Teste");
+            IFileElement music = DataModule.ElementFactory.CreateFileElement(MakeWave(file), SoundFileType.Music);
+            music.Effects.FadeOutTime = 400;
+            music.Effects.CrossFading = true;
+            created.AddMode("Pasta").AddElement(DataModule.ElementFactory.CreateModeElement("Musica", music));
+            string projectFile = Path.Combine(m_Dir, file + ".apolo");
+            DataModule.ProjectManager.SaveProject(created, projectFile);
+            DataModule.ProjectManager.UnloadProject(created);
+            return DataModule.ProjectManager.LoadProject(projectFile);
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        public void RepeatMode_WorksWithAFadeOutOnTheMusic(int mode)
+        {
+            Ares.Settings.Settings.Instance.InitializeWithoutSharedMemory(m_Dir);
+            IProject project = MusicWithFade("fade" + mode + ".wav");
+            IMode folder = project.GetModes()[0];
+            using (Ares.Playing.AudioInit init = new Ares.Playing.AudioInit(OperatingSystem.IsWindows() ? 0 : -1, s => { }))
+            using (PlayingControl control = new PlayingControl())
+            {
+                control.UpdateDirectories();
+                Ares.Playing.PlayingModule.ProjectPlayer.SetProject(project);
+                control.SetMode(folder);
+                control.SetMusicRepeatMode(mode);
+                Assert.True(control.SwitchElement(folder.GetElements().First().Id));
+                Thread.Sleep(2500);
+                Assert.True(control.CurrentMusicElement != -1, "the music with a fade out did not repeat");
+                control.SetMusicRepeatMode(0);
+                Ares.Playing.PlayingModule.ProjectPlayer.StopAll();
+                Thread.Sleep(200);
+            }
+            DataModule.ProjectManager.UnloadProject(project);
+        }
+
+        [Fact]
+        public void ClickingNearTheEnd_PlaysFromThereInsteadOfEndingTheMusic()
+        {
+            Ares.Settings.Settings.Instance.InitializeWithoutSharedMemory(m_Dir);
+            IProject project = MusicWithFade("seek.wav");
+            IMode folder = project.GetModes()[0];
+            using (Ares.Playing.AudioInit init = new Ares.Playing.AudioInit(OperatingSystem.IsWindows() ? 0 : -1, s => { }))
+            using (PlayingControl control = new PlayingControl())
+            {
+                control.UpdateDirectories();
+                Ares.Playing.PlayingModule.ProjectPlayer.SetProject(project);
+                control.SetMode(folder);
+                Assert.True(control.SwitchElement(folder.GetElements().First().Id));
+                Thread.Sleep(150);
+                control.SeekMusic(0.5); // inside the last 0.4 s, where the fade out is
+                Thread.Sleep(60);
+                Assert.True(control.CurrentMusicElement != -1, "the click ended the music at once");
+                Ares.Playing.PlayingModule.ProjectPlayer.StopAll();
+                Thread.Sleep(200);
+            }
+            DataModule.ProjectManager.UnloadProject(project);
+        }
+
         private static class IChoiceElementContainerHelper
         {
             public static void Add(IMode mode, string file)

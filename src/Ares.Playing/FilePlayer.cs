@@ -113,6 +113,8 @@ namespace Ares.Playing
                 {
                     info.CrossFade = crossFading;
                 }
+                info.PlannedFadeAt = channel.FadeAt;
+                info.PlannedCrossFade = info.CrossFade;
             }
             if (effects != null && (effects.Pitch.Active || effects.Tempo.Active))
             {
@@ -402,7 +404,39 @@ namespace Ares.Playing
                 return false;
             // stay slightly before the end so that the file doesn't end immediately in an odd state
             double target = Math.Max(0, Math.Min(positionSeconds, Math.Max(0, lengthSec - 0.2)));
-            return channel.Seek(target);
+            double before = channel.Position;
+            if (!channel.Seek(target))
+                return false;
+            ReviseFadeAfterSeek(handle, channel, before, target);
+            return true;
+        }
+
+        // The fade out at the end of a file (and the crossfade into the next one) belongs to the end of the file. A click
+        // near the end of the progress bar must play from there, not fade out and switch at once: after a jump into the
+        // fade zone the fade is off; a jump back before it puts the fade back and restores the volume.
+        private void ReviseFadeAfterSeek(int handle, AudioChannel channel, double before, double target)
+        {
+            RunningFileInfo info;
+            lock (m_Mutex)
+            {
+                if (!m_RunningFiles.TryGetValue(handle, out info))
+                    return;
+            }
+            if (info.PlannedFadeAt < 0 || info.Repeating)
+                return;
+            bool wasFading = before >= info.PlannedFadeAt;
+            if (target >= info.PlannedFadeAt)
+            {
+                channel.FadeAt = -1;
+                info.CrossFade = false;
+            }
+            else
+            {
+                channel.FadeAt = info.PlannedFadeAt;
+                info.CrossFade = info.PlannedCrossFade;
+            }
+            if (wasFading && info.File != null)
+                channel.SetVolume(Audio.VolumeCurve.ToGain(info.File.Volume) * info.Volume);
         }
 
         public void StopFile(int handle)
@@ -594,8 +628,35 @@ namespace Ares.Playing
         public void SetRepeatFile(int handle, bool repeat)
         {
             AudioChannel channel = GetChannel(handle);
-            if (channel != null)
-                channel.Loop = repeat;
+            if (channel == null)
+                return;
+            channel.Loop = repeat;
+            RunningFileInfo info = null;
+            lock (m_Mutex)
+            {
+                m_RunningFiles.TryGetValue(handle, out info);
+            }
+            if (info == null || info.PlannedFadeAt < 0)
+                return;
+            // a repeating file does not fade out and hand over to a next file at its end; it starts again
+            bool wasFading = channel.Position >= info.PlannedFadeAt;
+            if (repeat)
+            {
+                info.Repeating = true;
+                channel.FadeAt = -1;
+                info.CrossFade = false;
+                if (wasFading && info.File != null)
+                    channel.SetVolume(Audio.VolumeCurve.ToGain(info.File.Volume) * info.Volume);
+            }
+            else if (info.Repeating)
+            {
+                info.Repeating = false;
+                if (channel.Position < info.PlannedFadeAt)
+                {
+                    channel.FadeAt = info.PlannedFadeAt;
+                    info.CrossFade = info.PlannedCrossFade;
+                }
+            }
         }
 
         private bool SetStartVolume(ISoundFile file, int fadeInTime, AudioChannel channel, RunningFileInfo info)
@@ -697,6 +758,10 @@ namespace Ares.Playing
             public Action EndAction { get; set; }
             public float Volume { get; set; }
             public bool CrossFade { get; set; }
+            private double m_PlannedFadeAt = -1;
+            public double PlannedFadeAt { get { return m_PlannedFadeAt; } set { m_PlannedFadeAt = value; } } // where the fade out of the file was planned (seconds), -1 for none
+            public bool PlannedCrossFade { get; set; }
+            public bool Repeating { get; set; } // the repeat button switched the file to loop: no fade out at its end
             public ISoundFile File { get; set; }
             public Action StopAction { get; set; }
             public Func<bool> RepeatQuery { get; set; }
