@@ -530,7 +530,11 @@ namespace Ares.Player
                 if (m_NowPlaying != null && m_NowPlaying.SetSounds(sounds))
                     LayoutMainColumns();
 
-                UpdatePauseButton(control.IsPaused());
+                // nothing playing: the button shows "play" and is dimmed (it was a "pause" icon beside the status "Stopped")
+                bool idle = m_TrayState == Ares.CommonGUI.ApoloState.Idle;
+                UpdatePauseButton(control.IsPaused() || idle);
+                if (m_PauseButton != null && m_PauseButton.Enabled == idle)
+                    m_PauseButton.Enabled = !idle;
                 UpdateOutputButton();
             }
             catch (Exception)

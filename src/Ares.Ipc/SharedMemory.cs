@@ -365,7 +365,6 @@ namespace Ares.Ipc
 
 			// Einen MemoryStream zum aufnehmen der Daten erzeugen
 			MemoryStream ms = new MemoryStream();
-			BinaryFormatter formatter = new BinaryFormatter();
 			BinaryWriter bw = new BinaryWriter(ms);
 
             // die Größe der serialisierten Objekts an den
@@ -373,7 +372,7 @@ namespace Ares.Ipc
 			bw.Write(marshalledSize);
 
 			// das Objekt in den MemorySteam schreiben
-			formatter.Serialize(ms, obj);
+			SerializeObject(ms, obj);
 
 			// Stream auf den Anfang setzen
 			ms.Seek(0, SeekOrigin.Begin);
@@ -393,9 +392,7 @@ namespace Ares.Ipc
 
 			copySharedMemoryToStream(ms);
 
-			BinaryFormatter bf = new BinaryFormatter();
-
-			return bf.Deserialize(ms);
+			return DeserializeObject(ms);
 		}
 
 		/// <summary>
@@ -584,16 +581,50 @@ namespace Ares.Ipc
 		/// <returns>Die Grösse des Speichers in byte.</returns>
 		/// <exception cref="T:System.ArgumentNullException"></exception>
 		/// <remarks>n/a</remarks>
+		// The information about a running copy of the program (window handle, project) is written in a simple format of
+		// its own: BinaryFormatter does not exist any more in .NET 9 and later, and then no second start could ever
+		// find the first one. Everything else still uses BinaryFormatter (only the older runtimes have it).
+		private const byte AppInfoMarker = 0xA1;
+
+		private static void SerializeObject(Stream stream, object obj)
+		{
+			ApplicationInfo info = obj as ApplicationInfo;
+			if (info != null)
+			{
+				BinaryWriter writer = new BinaryWriter(stream);
+				writer.Write(AppInfoMarker);
+				writer.Write((long)info.WindowHandle);
+				writer.Write(info.LoadedProject != null);
+				if (info.LoadedProject != null)
+					writer.Write(info.LoadedProject);
+				writer.Flush();
+				return;
+			}
+			new BinaryFormatter().Serialize(stream, obj);
+		}
+
+		private static object DeserializeObject(Stream stream)
+		{
+			int first = stream.ReadByte();
+			if (first == AppInfoMarker)
+			{
+				BinaryReader reader = new BinaryReader(stream);
+				IntPtr handle = new IntPtr(reader.ReadInt64());
+				string project = reader.ReadBoolean() ? reader.ReadString() : null;
+				return new ApplicationInfo(handle, project);
+			}
+			stream.Seek(0, SeekOrigin.Begin);
+			return new BinaryFormatter().Deserialize(stream);
+		}
+
 		private static int getMarshalledSize(object obj)
 		{
 			// neuen MemoryStream zum serialisieren des Objekts verwenden.
 			MemoryStream ms = new MemoryStream();
 			
             // BinaryFormatter zum serialisieren des Objekt erzeugen
-			BinaryFormatter formatter = new BinaryFormatter();
-			
             // Objekt serialisieren
-			formatter.Serialize(ms, obj);
+			SerializeObject(ms, obj);
 			
             // die benötigte Grösse des Objekts
             // plus einen Offset des Typs long

@@ -116,6 +116,7 @@ namespace Ares.Player
                     }
                 }
                 InitLeveler();
+                InitVolumeLabels();
                 Controls.Add(m_VolumePanel);
                 groupBox2.Visible = false;
 

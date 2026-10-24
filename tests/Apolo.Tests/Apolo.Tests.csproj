@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\src\Ares.Playing\Ares.Playing.csproj" />
     <ProjectReference Include="..\..\src\Ares.Players\Ares.Players.csproj" />
     <ProjectReference Include="..\..\src\Ares.AppCore\Ares.AppCore.csproj" />
+    <ProjectReference Include="..\..\src\Ares.Ipc\Ares.Ipc.csproj" />
     <ProjectReference Include="..\..\src\Ares.ModelChecks\Ares.ModelInfo.csproj" />
   </ItemGroup>
   <ItemGroup>

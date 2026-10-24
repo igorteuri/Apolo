@@ -24,11 +24,11 @@ using System.Runtime.InteropServices;
 // Allgemeine Informationen über eine Assembly werden über die folgenden 
 // Attribute gesteuert. Ändern Sie diese Attributwerte, um die Informationen zu ändern,
 // die mit einer Assembly verknüpft sind.
-[assembly: AssemblyTitle("Ares.Player")]
-[assembly: AssemblyDescription("Ares Player")]
+[assembly: AssemblyTitle("Apolo")]
+[assembly: AssemblyDescription("Apolo - player de áudio para RPG")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Ares")]
+[assembly: AssemblyProduct("Apolo")]
 [assembly: AssemblyCopyright("Copyright © Jörg Rüdenauer 2010")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

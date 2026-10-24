@@ -43,25 +43,11 @@ namespace Ares.Ipc
         /// <returns>Single object for the application</returns>
         public static ApplicationInstance CreateOrActivate(String appName)
         {
-            while (true)
-            {
-                try
-                {
-                    return new ApplicationInstance(appName);
-                }
-                catch (Exception)
-                {
-                    if (Activate(appName))
-                    {
-                        return null;
-                    }
-                    else
-                    {
-                        System.Threading.Thread.Sleep(50);
-                    }
-                }
-            }
+            return CreateOrActivate(appName, null);
         }
+
+        // how long to wait for another copy which exists but does not answer (it is still starting, or it is stuck)
+        private const int GiveUpAfterMs = 8000;
 
         /// <summary>
         /// For use in the own application. If an object is returned, it
@@ -75,6 +61,7 @@ namespace Ares.Ipc
         /// <returns>Single object for the application</returns>
         public static ApplicationInstance CreateOrActivate(String appName, String projectPath)
         {
+            System.Diagnostics.Stopwatch waited = System.Diagnostics.Stopwatch.StartNew();
             while (true)
             {
                 try
@@ -83,14 +70,20 @@ namespace Ares.Ipc
                 }
                 catch (Exception)
                 {
-                    if (Activate(appName, System.IO.Path.GetFileName(projectPath), projectPath))
+                    bool activated = String.IsNullOrEmpty(projectPath)
+                        ? Activate(appName)
+                        : Activate(appName, System.IO.Path.GetFileName(projectPath), projectPath);
+                    if (activated)
                     {
                         return null;
                     }
-                    else
+                    // another copy owns the name but never answers: do not hang on the loading screen for ever, give up
+                    // (the caller treats null as "already running" and ends quietly)
+                    if (waited.ElapsedMilliseconds > GiveUpAfterMs)
                     {
-                        System.Threading.Thread.Sleep(50);
+                        return null;
                     }
+                    System.Threading.Thread.Sleep(50);
                 }
             }
         }
