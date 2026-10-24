@@ -53,7 +53,7 @@ namespace Ares.Player
             Color tint = Ares.CommonGUI.ButtonImageStore.GetColor(m_CurrentProjectPath, node.Title, null);
             if (!tint.IsEmpty)
             {
-                double t = selected ? 0.55 : 0.28;
+                double t = selected ? 0.45 : 0.14; // soft: the color of the folder is a hint, the strip at the left carries it
                 back = Color.FromArgb(255, (int)(back.R + (tint.R - back.R) * t), (int)(back.G + (tint.G - back.G) * t), (int)(back.B + (tint.B - back.B) * t));
             }
             using (SolidBrush b = new SolidBrush(back))
