@@ -185,62 +185,63 @@ namespace Ares.Player
                 form.MaximizeBox = false;
                 form.MinimizeBox = false;
                 form.ShowInTaskbar = false;
-                form.ClientSize = new Size(640, 470);
+                form.ClientSize = new Size(680, 534);
                 form.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0);
 
                 Label intro = new Label();
-                intro.SetBounds(16, 12, 608, 64);
+                intro.SetBounds(24, 20, 632, 64);
                 intro.Text = T(
                     "Controle o Apolo com botões e dials do Stream Deck: tocar/pausar, parar, anterior/próxima, repetir, volumes, trocar de pasta e tocar playlists. O Apolo abre uma porta que só responde neste computador e só aceita a chave abaixo.",
                     "Control Apolo with Stream Deck keys and dials: play/pause, stop, previous/next, repeat, volumes, switching folders and playing playlists. Apolo opens a port which only answers on this computer and only accepts the key below.");
 
                 CheckBox enabled = new CheckBox();
-                enabled.SetBounds(16, 86, 400, 26);
+                enabled.SetBounds(24, 108, 420, 28);
                 enabled.Text = T("Ativar o acesso do Stream Deck", "Enable Stream Deck access");
                 enabled.Checked = m_Deck.Running;
                 Label status = new Label();
-                status.SetBounds(16, 114, 608, 24);
+                status.SetBounds(24, 140, 632, 24);
+                DialogKit.Muted(status);
 
                 Label portLabel = new Label();
-                portLabel.SetBounds(16, 148, 80, 26);
+                portLabel.SetBounds(24, 188, 80, 32);
                 portLabel.Text = T("Porta:", "Port:");
                 portLabel.TextAlign = ContentAlignment.MiddleLeft;
                 TextBox port = new TextBox();
-                port.SetBounds(100, 148, 100, 26);
+                DialogKit.InRow(port, 110, 188, 110, 32);
                 port.ReadOnly = true;
                 Label keyLabel = new Label();
-                keyLabel.SetBounds(16, 184, 80, 26);
+                keyLabel.SetBounds(24, 232, 80, 32);
                 keyLabel.Text = T("Chave:", "Key:");
                 keyLabel.TextAlign = ContentAlignment.MiddleLeft;
                 TextBox key = new TextBox();
-                key.SetBounds(100, 184, 300, 26);
+                DialogKit.InRow(key, 110, 232, 300, 32);
                 key.ReadOnly = true;
                 key.UseSystemPasswordChar = true;
                 key.Text = DeckKey();
                 CheckBox show = new CheckBox();
-                show.SetBounds(410, 184, 90, 26);
+                show.SetBounds(422, 232, 100, 32);
                 show.Text = T("Mostrar", "Show");
                 show.CheckedChanged += (s, e) => key.UseSystemPasswordChar = !show.Checked;
                 Button copy = new Button();
-                copy.SetBounds(504, 182, 120, 30);
+                copy.SetBounds(530, 230, 126, 36);
                 copy.Text = T("Copiar chave", "Copy key");
                 copy.Click += (s, e) =>
                 {
                     try { Clipboard.SetText(key.Text); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 };
                 Button renew = new Button();
-                renew.SetBounds(100, 222, 200, 30);
+                renew.SetBounds(110, 276, 200, 36);
                 renew.Text = T("Gerar nova chave", "New key");
 
                 Label steps = new Label();
-                steps.SetBounds(16, 268, 608, 120);
-                steps.ForeColor = Color.Gray;
+                steps.SetBounds(24, 344, 632, 116);
+                DialogKit.Muted(steps);
                 steps.Text = T(
                     "Como usar:\r\n1. Clique em \"Instalar o plugin\" (o programa do Stream Deck abre e pede confirmação).\r\n2. No Stream Deck, procure o grupo \"Apolo\" e arraste as ações para os botões.\r\n3. Em qualquer ação, em \"Conexão com o Apolo\", cole a porta e a chave acima e clique em Salvar. Vale para todas as ações.",
                     "How to use:\r\n1. Click \"Install the plugin\" (the Stream Deck software opens and asks to confirm).\r\n2. In Stream Deck find the \"Apolo\" group and drag the actions onto keys.\r\n3. In any action, under \"Connection to Apolo\", paste the port and the key above and click Save. It applies to all actions.");
 
                 Button install = new Button();
-                install.SetBounds(16, 398, 200, 38);
+                install.SetBounds(24, 478, 200, 40); DialogKit.Primary(install);
                 install.Text = T("Instalar o plugin", "Install the plugin");
                 install.Click += (s, e) =>
                 {
@@ -262,7 +263,7 @@ namespace Ares.Player
                 Button close = new Button();
                 close.Text = T("Fechar", "Close");
                 close.DialogResult = DialogResult.OK;
-                close.SetBounds(640 - 16 - 100, 470 - 12 - 34, 100, 34);
+                close.SetBounds(680 - 24 - 110, 482, 110, 36);
 
                 Action refresh = () =>
                 {
@@ -291,10 +292,10 @@ namespace Ares.Player
                         StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 };
 
-                form.Controls.AddRange(new Control[] { intro, enabled, status, portLabel, port, keyLabel, key, show, copy, renew, steps, install, close });
-                form.AcceptButton = close;
+                form.Controls.AddRange(new Control[] { intro, enabled, status, portLabel, port, keyLabel, key, show, copy, renew, steps, install, close,
+                    DialogKit.MakeRule(92, 632), DialogKit.MakeRule(172, 632), DialogKit.MakeRule(328, 632) });
                 refresh();
-                Ares.CommonGUI.ThemeManager.Apply(form);
+                DialogKit.Finish(form, close, enabled);
                 form.ShowDialog(this);
                 key.Text = "";
             }

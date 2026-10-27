@@ -232,21 +232,23 @@ The code of Apolo is open and lives on GitHub:
 
                 Panel pad = new Panel();
                 pad.Dock = DockStyle.Fill;
-                pad.Padding = new Padding(16, 12, 16, 8);
+                pad.Padding = new Padding(24, 16, 24, 8);
                 pad.Controls.Add(body);
 
                 FlowLayoutPanel row = new FlowLayoutPanel();
                 row.Dock = DockStyle.Bottom;
-                row.Height = 52;
+                row.Height = 60;
                 row.FlowDirection = FlowDirection.RightToLeft;
-                row.Padding = new Padding(12, 8, 12, 8);
+                row.Padding = new Padding(16, 10, 16, 10);
                 for (int i = buttons.Count - 1; i >= 0; i--)
                 {
                     Action action = buttons[i].Value;
                     Button b = new Button();
                     b.Text = buttons[i].Key;
                     b.AutoSize = true;
-                    b.MinimumSize = new Size(110, 32);
+                    b.MinimumSize = new Size(120, 36);
+                    if (action != null && i == 0)
+                        b.Tag = "Primary"; // the first action of the window (install, ...) is the main one
                     b.Padding = new Padding(8, 0, 8, 0);
                     if (action == null)
                     {
