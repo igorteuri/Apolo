@@ -152,72 +152,72 @@ namespace Ares.Player
                 form.MaximizeBox = false;
                 form.MinimizeBox = false;
                 form.ShowInTaskbar = false;
-                form.ClientSize = new Size(700, 520);
+                form.ClientSize = new Size(720, 580);
                 form.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0);
 
                 Label intro = new Label();
-                intro.SetBounds(16, 12, 668, 58);
+                intro.SetBounds(24, 20, 672, 48);
                 intro.Text = T(
                     "Toque o Apolo num canal de voz do Discord (como o Kenku FM). O bot é seu: você cola aqui o token dele. Tudo que o Apolo toca vai para o canal e continua saindo nas suas caixas de som.",
                     "Play Apolo in a Discord voice channel (like Kenku FM). The bot is yours: paste its token here. Everything Apolo plays goes to the channel and still plays on your speakers.");
 
                 Label tokenLabel = new Label();
-                tokenLabel.SetBounds(16, 80, 110, 26);
+                tokenLabel.SetBounds(24, 92, 112, 32);
                 tokenLabel.Text = T("Token do bot:", "Bot token:");
                 tokenLabel.TextAlign = ContentAlignment.MiddleLeft;
                 TextBox token = new TextBox();
-                token.SetBounds(130, 80, 400, 26);
+                DialogKit.InRow(token, 140, 92, 360, 32);
                 token.UseSystemPasswordChar = true;
                 bool remember = Ares.CommonGUI.Preferences.GetBool("DiscordRemember", true);
                 token.Text = remember ? DiscordTokenStore.Load() : "";
                 CheckBox show = new CheckBox();
-                show.SetBounds(540, 80, 150, 26);
+                show.SetBounds(520, 92, 176, 32);
                 show.Text = T("Mostrar", "Show");
                 show.CheckedChanged += (s, e) => token.UseSystemPasswordChar = !show.Checked;
 
                 CheckBox rememberBox = new CheckBox();
-                rememberBox.SetBounds(130, 110, 400, 24);
+                rememberBox.SetBounds(140, 132, 370, 30);
                 rememberBox.Text = T("Lembrar o token neste computador (criptografado)", "Remember the token on this computer (encrypted)");
                 rememberBox.Checked = remember;
                 Button help = new Button();
-                help.SetBounds(540, 108, 144, 30);
+                help.SetBounds(520, 130, 176, 34);
                 help.Text = T("Como obter?", "How to get it?");
                 help.Click += (s, e) => ShowDiscordHelp(form);
 
                 Button connect = new Button();
-                connect.SetBounds(16, 150, 200, 38);
+                connect.SetBounds(24, 200, 200, 40); DialogKit.Primary(connect);
                 Label status = new Label();
-                status.SetBounds(228, 150, 456, 38);
+                status.SetBounds(240, 200, 456, 40);
                 status.TextAlign = ContentAlignment.MiddleLeft;
 
                 Label guildLabel = new Label();
-                guildLabel.SetBounds(16, 206, 110, 26);
+                guildLabel.SetBounds(24, 268, 112, 32);
                 guildLabel.Text = T("Servidor:", "Server:");
                 guildLabel.TextAlign = ContentAlignment.MiddleLeft;
-                ComboBox guilds = new ComboBox();
+                ComboBox guilds = new Ares.CommonGUI.ThemedComboBox();
                 guilds.DropDownStyle = ComboBoxStyle.DropDownList;
-                guilds.SetBounds(130, 206, 320, 26);
+                DialogKit.InRow(guilds, 140, 268, 360, 32);
                 Button invite = new Button();
-                invite.SetBounds(460, 203, 224, 32);
+                invite.SetBounds(520, 266, 176, 36);
                 invite.Text = T("Adicionar o bot a um servidor", "Add the bot to a server");
 
                 Label channelLabel = new Label();
-                channelLabel.SetBounds(16, 246, 110, 26);
+                channelLabel.SetBounds(24, 316, 112, 32);
                 channelLabel.Text = T("Canal de voz:", "Voice channel:");
                 channelLabel.TextAlign = ContentAlignment.MiddleLeft;
-                ComboBox channels = new ComboBox();
+                ComboBox channels = new Ares.CommonGUI.ThemedComboBox();
                 channels.DropDownStyle = ComboBoxStyle.DropDownList;
-                channels.SetBounds(130, 246, 320, 26);
+                DialogKit.InRow(channels, 140, 316, 360, 32);
                 Button join = new Button();
-                join.SetBounds(460, 243, 224, 32);
+                join.SetBounds(520, 314, 176, 36);
 
                 Label hint = new Label();
-                hint.SetBounds(16, 290, 668, 54);
-                hint.ForeColor = Color.Gray;
+                hint.SetBounds(24, 364, 672, 40);
+                DialogKit.Muted(hint);
 
                 Label notes = new Label();
-                notes.SetBounds(16, 350, 668, 110);
-                notes.ForeColor = Color.Gray;
+                notes.SetBounds(24, 436, 672, 96);
+                DialogKit.Muted(notes);
                 notes.Text = T(
                     "• O Apolo envia o som dele mesmo (não os outros programas do computador).\r\n• Precisa do Windows 10 atualizado (versão 2004 ou mais nova) ou do Windows 11.\r\n• O token fica só neste computador. Quem tiver o token controla o bot: não compartilhe.\r\n• Este recurso usa o componente \"discord\" que vem na pasta do Apolo.",
                     "• Apolo sends its own sound (not the other programs on the computer).\r\n• Needs an up-to-date Windows 10 (version 2004 or newer) or Windows 11.\r\n• The token stays on this computer only. Whoever has the token controls the bot: do not share it.\r\n• This feature uses the \"discord\" component which comes in the Apolo folder.");
@@ -225,7 +225,7 @@ namespace Ares.Player
                 Button close = new Button();
                 close.Text = T("Fechar", "Close");
                 close.DialogResult = DialogResult.OK;
-                close.SetBounds(700 - 16 - 100, 520 - 12 - 34, 100, 34);
+                close.SetBounds(720 - 24 - 110, 580 - 20 - 36, 110, 36);
 
                 string guildsKey = null;
                 bool updating = false;
@@ -384,9 +384,9 @@ namespace Ares.Player
                 tick.Start();
 
                 form.Controls.AddRange(new Control[] { intro, tokenLabel, token, show, rememberBox, help, connect, status,
-                    guildLabel, guilds, invite, channelLabel, channels, join, hint, notes, close });
-                form.AcceptButton = close;
-                Ares.CommonGUI.ThemeManager.Apply(form);
+                    guildLabel, guilds, invite, channelLabel, channels, join, hint, notes, close,
+                    DialogKit.MakeRule(80, 672), DialogKit.MakeRule(184, 672), DialogKit.MakeRule(252, 672), DialogKit.MakeRule(420, 672) });
+                DialogKit.Finish(form, close, connect);
                 refresh();
                 form.ShowDialog(this);
                 tick.Stop();

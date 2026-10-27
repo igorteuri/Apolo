@@ -682,6 +682,17 @@ namespace Ares.CommonGUI
                 b.BackColor = p.Surface;
                 b.ForeColor = p.Text;
                 b.FlatAppearance.BorderSize = 0;
+                if (b.Tag is string && (string)b.Tag == "Primary")
+                {
+                    // the main button of a dialog: filled with the highlight color, text in black or white (whichever reads better)
+                    b.BackColor = p.Accent;
+                    b.ForeColor = ContrastRatio(p.Accent, Color.White) >= ContrastRatio(p.Accent, Color.Black) ? Color.White : Color.Black;
+                    b.FlatAppearance.MouseOverBackColor = Color.FromArgb(255,
+                        (p.Accent.R * 85 + 255 * 15) / 100, (p.Accent.G * 85 + 255 * 15) / 100, (p.Accent.B * 85 + 255 * 15) / 100);
+                    b.FlatAppearance.MouseDownBackColor = p.Accent;
+                    if (!b.Font.Bold)
+                        b.Font = new Font(b.Font, FontStyle.Bold);
+                }
                 HookRoundedButton(b);
             }
             else if (c is CheckBox && ((CheckBox)c).Appearance == Appearance.Button
@@ -734,13 +745,19 @@ namespace Ares.CommonGUI
                     l.FlatStyle = FlatStyle.Standard;
                 l.BackColor = Color.Transparent;
                 l.ForeColor = p.Text;
+                // labels of the dialogs: "Muted" = secondary text, "Title" = heading of the window
+                string role = l.Tag as string;
+                if (role == "Muted")
+                    l.ForeColor = p.TextDim;
+                else if (role == "Title" && !l.Font.Bold)
+                    l.Font = new Font(l.Font.FontFamily, l.Font.Size + 1.5f, FontStyle.Bold);
             }
             else if (c is TextBoxBase || c is NumericUpDown || c is DomainUpDown)
             {
                 c.BackColor = p.Surface;
                 c.ForeColor = p.Text;
                 TextBox tb = c as TextBox;
-                if (tb != null)
+                if (tb != null && !(tb.Tag is string && (string)tb.Tag == "NoThemeBorder"))
                 {
                     tb.BorderStyle = BorderStyle.FixedSingle;
                     HookTextBoxBorder(tb);

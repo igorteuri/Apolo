@@ -12,12 +12,19 @@ namespace Ares.Player
     {
         private void InitVolumeLabels()
         {
-            WireVolumeLabel(label2, overallVolumeBar, overallVolumeBar_Scroll);
-            WireVolumeLabel(label3, musicVolumeBar, musicVolumeBar_Scroll);
-            WireVolumeLabel(label4, soundVolumeBar, soundVolumeBar_Scroll);
+            EventHandler[] toggles =
+            {
+                WireVolumeLabel(label2, overallVolumeBar, overallVolumeBar_Scroll),
+                WireVolumeLabel(label3, musicVolumeBar, musicVolumeBar_Scroll),
+                WireVolumeLabel(label4, soundVolumeBar, soundVolumeBar_Scroll)
+            };
+            // the same three sliders again in the state panel
+            InitStateVolumes(new Label[] { label2, label3, label4 },
+                new Ares.CommonGUI.ModernSlider[] { overallVolumeBar, musicVolumeBar, soundVolumeBar },
+                new EventHandler[] { overallVolumeBar_Scroll, musicVolumeBar_Scroll, soundVolumeBar_Scroll }, toggles);
         }
 
-        private void WireVolumeLabel(Label label, Ares.CommonGUI.ModernSlider bar, EventHandler changed)
+        private EventHandler WireVolumeLabel(Label label, Ares.CommonGUI.ModernSlider bar, EventHandler changed)
         {
             string name = label.Text.TrimEnd(':', ' ');
             int before = 50; // the value to come back to after muting
@@ -61,6 +68,7 @@ namespace Ares.Player
             label.Click += toggle;
             percent.Click += toggle;
             tip.SetToolTip(percent, T("Clique para silenciar / voltar ao volume anterior", "Click to mute / go back to the previous volume"));
+            return toggle;
         }
 
         // the "40%" of a volume slider: the highlight color of the theme, a little translucent (red when the volume is almost off)

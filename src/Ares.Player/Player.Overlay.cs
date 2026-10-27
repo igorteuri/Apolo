@@ -289,47 +289,48 @@ namespace Ares.Player
                 form.MaximizeBox = false;
                 form.MinimizeBox = false;
                 form.ShowInTaskbar = false;
-                form.ClientSize = new Size(560, 330);
+                form.ClientSize = new Size(600, 400);
 
                 Label intro = new Label();
-                intro.SetBounds(14, 12, 532, 62);
+                intro.SetBounds(24, 20, 552, 64);
                 intro.Text = T(
-                    "O Apolo gera uma página com o título da música que está tocando. No OBS, adicione uma fonte \"Navegador\" e cole o link abaixo (largura 800, altura 200). O Ares precisa estar aberto; esta janela não.",
-                    "Apolo serves a page with the title of the music that is playing. In OBS, add a \"Browser\" source and paste the link below (width 800, height 200). Ares must be running; this window does not.");
+                    "O Apolo gera uma página com o título da música que está tocando. No OBS, adicione uma fonte \"Navegador\" e cole o link abaixo (largura 800, altura 200). O Apolo precisa estar aberto; esta janela não.",
+                    "Apolo serves a page with the title of the music that is playing. In OBS, add a \"Browser\" source and paste the link below (width 800, height 200). Apolo must be running; this window does not.");
 
                 CheckBox enabled = new CheckBox();
-                enabled.SetBounds(14, 82, 400, 24);
+                enabled.SetBounds(24, 112, 400, 28);
                 enabled.Text = T("Ativar o overlay (servidor local)", "Enable the overlay (local server)");
                 enabled.Checked = m_Overlay.Running;
 
                 Label portLabel = new Label();
-                portLabel.SetBounds(14, 116, 60, 24);
+                portLabel.SetBounds(24, 152, 60, 32);
                 portLabel.Text = T("Porta:", "Port:");
                 portLabel.TextAlign = ContentAlignment.MiddleLeft;
                 NumericUpDown port = new NumericUpDown();
-                port.SetBounds(80, 114, 90, 26);
+                DialogKit.InRow(port, 88, 152, 100, 32);
                 port.Minimum = 1024;
                 port.Maximum = 65535;
                 port.Value = OverlayPort;
 
                 Label linkLabel = new Label();
-                linkLabel.SetBounds(14, 152, 532, 20);
+                linkLabel.SetBounds(24, 212, 552, 22);
                 linkLabel.Text = T("Link para colar no OBS:", "Link to paste into OBS:");
                 TextBox link = new TextBox();
-                link.SetBounds(14, 174, 532, 26);
+                DialogKit.InRow(link, 24, 238, 552, 32);
                 link.ReadOnly = true;
 
                 Label status = new Label();
-                status.SetBounds(14, 208, 532, 38);
+                status.SetBounds(24, 284, 552, 40);
+                DialogKit.Muted(status);
 
                 Button copy = new Button();
-                copy.SetBounds(14, 256, 150, 32);
+                copy.SetBounds(24, 340, 140, 36); DialogKit.Primary(copy);
                 copy.Text = T("Copiar link", "Copy link");
                 Button configure = new Button();
-                configure.SetBounds(172, 256, 210, 32);
+                configure.SetBounds(176, 340, 210, 36);
                 configure.Text = T("Ajustar aparência...", "Adjust appearance...");
                 Button close = new Button();
-                close.SetBounds(446, 256, 100, 32);
+                close.SetBounds(600 - 24 - 110, 340, 110, 36);
                 close.Text = T("Fechar", "Close");
                 close.DialogResult = DialogResult.OK;
                 form.AcceptButton = close;
@@ -379,7 +380,9 @@ namespace Ares.Player
                 configure.Click += (s, e) => OpenInBrowser("http://localhost:" + (int)port.Value + "/config");
                 refresh();
 
-                form.Controls.AddRange(new Control[] { intro, enabled, portLabel, port, linkLabel, link, status, copy, configure, close });
+                form.Controls.AddRange(new Control[] { intro, enabled, portLabel, port, linkLabel, link, status, copy, configure, close,
+                    DialogKit.MakeRule(96, 552), DialogKit.MakeRule(196, 552) });
+                DialogKit.Finish(form, close, enabled);
                 form.ShowDialog(this);
             }
         }

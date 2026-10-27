@@ -27,10 +27,7 @@ namespace Ares.Player
             m_WebAudioPanel.Rebuild(infos);
             if (m_NowPlaying != null && m_NowPlaying.SetWeb(infos))
                 LayoutMainColumns();
-            int h = m_WebAudioPanel.Height;
-            m_WebAudioPanel.Top = groupBox3.ClientSize.Height - h - 4;
-            int bottom = (h > 0) ? m_WebAudioPanel.Top - 4 : groupBox3.ClientSize.Height - 8;
-            m_SoundPanel.Height = Math.Max(40, bottom - m_SoundPanel.Top);
+            LayoutStateBottom();
         }
 
         private void InitWeb()

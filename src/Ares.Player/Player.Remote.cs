@@ -809,30 +809,30 @@ namespace Ares.Player
                 form.MaximizeBox = false;
                 form.MinimizeBox = false;
                 form.ShowInTaskbar = false;
-                form.ClientSize = new Size(780, 470);
+                form.ClientSize = new Size(800, 530);
                 form.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0);
 
                 Label intro = new Label();
-                intro.SetBounds(16, 12, 740, 56);
+                intro.SetBounds(24, 20, 752, 56);
                 intro.Text = T(
                     "Controle o Apolo pelo celular ou deixe outra pessoa controlar pela internet. Ao ligar, o Apolo cria um link seguro (https) — sem IP, sem abrir portas. Abra o link (ou leia o QR code) no celular e digite a senha.",
                     "Control Apolo from your phone, or let someone else control it over the internet. When switched on, Apolo creates a secure (https) link - no IP, no open ports. Open the link (or scan the QR code) on the phone and type the password.");
 
                 Label pwLabel = new Label();
-                pwLabel.SetBounds(16, 80, 70, 26);
+                pwLabel.SetBounds(24, 104, 74, 32);
                 pwLabel.Text = T("Senha:", "Password:");
                 pwLabel.TextAlign = ContentAlignment.MiddleLeft;
                 TextBox pw = new TextBox();
-                pw.SetBounds(90, 80, 200, 26);
+                DialogKit.InRow(pw, 100, 104, 210, 32);
                 string saved = Ares.CommonGUI.Preferences.Get("RemotePassword", "");
                 pw.Text = string.IsNullOrEmpty(saved) ? RandomPassword() : saved;
                 pw.UseSystemPasswordChar = true;
                 CheckBox show = new CheckBox();
-                show.SetBounds(300, 80, 140, 26);
+                show.SetBounds(324, 104, 120, 32);
                 show.Text = T("Mostrar", "Show");
                 show.CheckedChanged += (s, e) => pw.UseSystemPasswordChar = !show.Checked;
                 Button copyPw = new Button();
-                copyPw.SetBounds(446, 78, 130, 30);
+                copyPw.SetBounds(448, 102, 112, 36);
                 copyPw.Text = T("Copiar senha", "Copy password");
                 copyPw.Click += (s, e) =>
                 {
@@ -840,34 +840,34 @@ namespace Ares.Player
                 };
 
                 Button toggle = new Button();
-                toggle.SetBounds(16, 124, 220, 38);
+                toggle.SetBounds(24, 152, 220, 40); DialogKit.Primary(toggle);
                 Label status = new Label();
-                status.SetBounds(248, 124, 328, 38);
+                status.SetBounds(256, 152, 304, 40);
                 status.TextAlign = ContentAlignment.MiddleLeft;
 
                 Label linkLabel = new Label();
-                linkLabel.SetBounds(16, 178, 560, 22);
+                linkLabel.SetBounds(24, 208, 536, 22);
                 linkLabel.Text = T("Link para abrir no celular:", "Link to open on the phone:");
                 TextBox link = new TextBox();
-                link.SetBounds(16, 202, 560, 26);
+                DialogKit.InRow(link, 24, 232, 536, 32);
                 link.ReadOnly = true;
                 Button copy = new Button();
-                copy.SetBounds(16, 238, 130, 32);
+                copy.SetBounds(24, 276, 130, 36);
                 copy.Text = T("Copiar link", "Copy link");
                 Button open = new Button();
-                open.SetBounds(156, 238, 130, 32);
+                open.SetBounds(166, 276, 130, 36);
                 open.Text = T("Abrir aqui", "Open here");
 
                 // QR code of the link (black on white, so every camera reads it)
                 PictureBox qr = new PictureBox();
-                qr.SetBounds(596, 80, 168, 168);
+                qr.SetBounds(600, 104, 176, 176);
                 qr.SizeMode = PictureBoxSizeMode.Zoom;
                 qr.BackColor = Color.White;
                 Button copyQr = new Button();
-                copyQr.SetBounds(596, 256, 82, 30);
+                copyQr.SetBounds(600, 288, 86, 34);
                 copyQr.Text = T("Copiar QR", "Copy QR");
                 Button saveQr = new Button();
-                saveQr.SetBounds(682, 256, 82, 30);
+                saveQr.SetBounds(690, 288, 86, 34);
                 saveQr.Text = T("Salvar QR", "Save QR");
                 string qrFor = null;
                 Bitmap qrBitmap = null;
@@ -894,11 +894,11 @@ namespace Ares.Player
                 };
 
                 Label warn = new Label();
-                warn.SetBounds(16, 300, 748, 120);
+                warn.SetBounds(24, 352, 752, 110);
                 warn.Text = T(
                     "• Quem tiver o link E a senha controla o Apolo. Use uma senha forte e desligue ao terminar.\r\n• O link muda toda vez que você liga; a senha fica salva.\r\n• O QR code só contém o link — a senha você envia separada.\r\n• O acesso passa pelo túnel gratuito da Cloudflare (sem conta). O Apolo precisa ficar aberto neste computador.\r\n• Depois de 5 senhas erradas, o acesso é bloqueado por 1 minuto.",
                     "• Anyone with the link AND the password controls Apolo. Use a strong password and switch it off when done.\r\n• The link changes every time you switch it on; the password is kept.\r\n• The QR code only holds the link - send the password separately.\r\n• Access goes through the free Cloudflare tunnel (no account). Apolo must stay open on this computer.\r\n• After 5 wrong passwords access is blocked for 1 minute.");
-                warn.ForeColor = Color.Gray;
+                DialogKit.Muted(warn);
 
                 Action refresh = () =>
                 {
@@ -918,6 +918,9 @@ namespace Ares.Player
                             old.Dispose();
                     }
                     copyQr.Enabled = saveQr.Enabled = qrBitmap != null;
+                    // white only behind a real code (cameras need it); an empty box takes the color of the theme
+                    Ares.CommonGUI.ThemePalette tp = Ares.CommonGUI.ThemeManager.Current;
+                    qr.BackColor = qrBitmap != null || tp == null || tp.IsClassic ? Color.White : tp.Surface;
                     if (!on)
                         status.Text = T("Desligado.", "Off.");
                     else if (url != null)
@@ -994,12 +997,12 @@ namespace Ares.Player
                 Button close = new Button();
                 close.Text = T("Fechar", "Close");
                 close.DialogResult = DialogResult.OK;
-                close.SetBounds(780 - 16 - 100, 470 - 12 - 34, 100, 34);
+                close.SetBounds(800 - 24 - 110, 530 - 20 - 36, 110, 36);
 
-                form.Controls.AddRange(new Control[] { intro, pwLabel, pw, show, copyPw, toggle, status, linkLabel, link, copy, open, qr, copyQr, saveQr, warn, close });
-                form.AcceptButton = close;
+                form.Controls.AddRange(new Control[] { intro, pwLabel, pw, show, copyPw, toggle, status, linkLabel, link, copy, open, qr, copyQr, saveQr, warn, close,
+                    DialogKit.MakeRule(88, 752), DialogKit.MakeRule(336, 752) });
                 refresh();
-                Ares.CommonGUI.ThemeManager.Apply(form);
+                DialogKit.Finish(form, close, toggle);
                 form.ShowDialog(this);
                 tick.Stop();
                 tick.Dispose();

@@ -14,6 +14,7 @@ namespace Ares.Player
         private bool m_ListMode = false;
         private Panel m_ListBar;
         private TextBox m_SearchBox;
+        private SearchField m_SearchField;
         private Button m_ListToggle;
         private Button m_AddBarButton;
         private int m_FilterModeIndex = -1;
@@ -33,7 +34,9 @@ namespace Ares.Player
 
                 m_ListBar = new Panel();
                 m_ListBar.Name = "listBar";
-                m_SearchBox = new TextBox();
+                m_SearchField = new SearchField();
+                m_SearchField.Name = "searchField";
+                m_SearchBox = m_SearchField.Box;
                 m_SearchBox.Name = "searchBox";
                 m_ListToggle = new Button();
                 m_ListToggle.Name = "listToggle";
@@ -50,7 +53,7 @@ namespace Ares.Player
                 int gap = 4;
                 m_ListBar.SetBounds(elementsPanel.Left, elementsPanel.Top, elementsPanel.Width, barHeight);
                 m_ListBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-                m_ListBar.Controls.Add(m_SearchBox);
+                m_ListBar.Controls.Add(m_SearchField);
                 m_ListBar.Controls.Add(m_ListToggle);
                 m_ListBar.Controls.Add(m_AddBarButton);
                 m_ListBar.Resize += (s, e) => LayoutListBar();
@@ -121,8 +124,8 @@ namespace Ares.Player
             int addWidth = Math.Max(90, TextRenderer.MeasureText(m_AddBarButton.Text, m_AddBarButton.Font).Width + 24);
             m_ListToggle.SetBounds(m_ListBar.ClientSize.Width - toggleWidth, 0, toggleWidth, m_ListBar.ClientSize.Height);
             m_AddBarButton.SetBounds(m_ListBar.ClientSize.Width - toggleWidth - 6 - addWidth, 0, addWidth, m_ListBar.ClientSize.Height);
-            m_SearchBox.SetBounds(0, 0, Math.Min(440, Math.Max(40, m_ListBar.ClientSize.Width - toggleWidth - addWidth - 12)), m_SearchBox.Height); // a search field the whole width of the window is only a long empty line
-            m_SearchBox.Top = (m_ListBar.ClientSize.Height - m_SearchBox.Height) / 2;
+            // the field fills the bar: the same height as the buttons, all the width up to them
+            m_SearchField.SetBounds(0, 0, Math.Max(40, m_ListBar.ClientSize.Width - toggleWidth - addWidth - 12), m_ListBar.ClientSize.Height);
         }
 
         private void FitRowWidths()

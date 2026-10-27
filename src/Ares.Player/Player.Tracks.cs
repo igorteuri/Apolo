@@ -42,6 +42,7 @@ namespace Ares.Player
         private ComboBox m_TrackKind;
         private bool m_TrackKindLock;
         private TextBox m_TrackSearch;
+        private SearchField m_TrackSearchField;
         private TrackListView m_TrackList;
         private int m_TrackState = 0; // 0 = not placed yet, 1 = collapsed, 2 = open
         private int m_TrackHeight = 230;
@@ -132,12 +133,13 @@ namespace Ares.Player
                 m_TrackKind.Items.Add(T("Música — em sequência", "Music — sequential"));
                 m_TrackKind.Items.Add(T("Efeito sonoro — um aleatório", "Sound effect — one at random"));
                 new ToolTip().SetToolTip(m_TrackKind, T("Tipo da playlist: muda como ela toca os arquivos", "Playlist type: changes how it plays its files"));
-                m_TrackSearch = new TextBox();
+                m_TrackSearchField = new SearchField();
+                m_TrackSearch = m_TrackSearchField.Box;
                 m_TrackList = new TrackListView();
                 InitTrackColumns();
 
                 m_TrackBody.Controls.Add(m_TrackList);
-                m_TrackBody.Controls.Add(m_TrackSearch);
+                m_TrackBody.Controls.Add(m_TrackSearchField);
                 m_TrackBody.Controls.Add(m_TrackKind);
                 m_TrackBody.Controls.Add(m_TrackTitle);
                 m_TrackBody.Controls.Add(m_TrackCollapse);
@@ -419,13 +421,13 @@ namespace Ares.Player
             int rest = w - 2 * bw - 2 - 8; // room for title, type and search
             int kindW = Math.Max(120, Math.Min(230, rest / 3));
             int titleW = Math.Max(60, Math.Min(340, rest / 3));
-            int searchW = Math.Max(60, Math.Min(440, rest - kindW - titleW - 8)); // same limit as the search of the playlists: a field the whole width is only a long empty line
+            int searchW = Math.Max(60, rest - kindW - titleW - 8);
             int x = 0;
             m_TrackTitle.SetBounds(x, 0, titleW, h);
             x += titleW + 4;
             m_TrackKind.SetBounds(x, (h - m_TrackKind.Height) / 2, kindW, m_TrackKind.Height);
             x += kindW + 4;
-            m_TrackSearch.SetBounds(x, (h - m_TrackSearch.Height) / 2, searchW, m_TrackSearch.Height);
+            m_TrackSearchField.SetBounds(x, 0, searchW, h);
             int y = h + 4;
             m_TrackList.SetBounds(0, y, w, Math.Max(20, m_TrackBody.ClientSize.Height - y));
         }
@@ -445,8 +447,16 @@ namespace Ares.Player
                 return;
             m_TrackState = state;
             Ares.CommonGUI.Preferences.SetBool("TracksOpen", state == 2);
-            UpdateTrackVisibility();
-            LayoutMainColumns();
+            SuspendRedraw(this);
+            try
+            {
+                UpdateTrackVisibility();
+                LayoutMainColumns();
+            }
+            finally
+            {
+                ResumeRedraw(this);
+            }
             if (state == 2)
             {
                 m_TrackPanel.BringToFront();
@@ -570,7 +580,16 @@ namespace Ares.Player
                 return;
             m_LeftOpen = open;
             Ares.CommonGUI.Preferences.SetBool("LeftOpenV2", open);
-            LayoutMainColumns();
+            // the columns move and the buttons are re-fitted: draw once at the end instead of piece by piece (it flickered)
+            SuspendRedraw(this);
+            try
+            {
+                LayoutMainColumns();
+            }
+            finally
+            {
+                ResumeRedraw(this);
+            }
         }
 
         private void ResizeTrackPanel(int newHeight)
