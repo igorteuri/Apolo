@@ -488,7 +488,10 @@ namespace Ares.Player
             VisibleChanged += (s, e) =>
             {
                 if (Visible)
+                {
+                    LayoutBar(bar);
                     OnTabSelected();
+                }
             };
         }
 
@@ -578,7 +581,7 @@ namespace Ares.Player
             right = m_Mute.Left - 6;
             m_Extensions.Left = right - m_Extensions.Width;
             right = m_Extensions.Left - 6;
-            if (m_ExtBar != null && m_ExtBar.Visible)
+            if (m_ExtBar != null && m_ExtBar.Any)
             {
                 m_ExtBar.Left = right - m_ExtBar.Width;
                 right = m_ExtBar.Left - 6;

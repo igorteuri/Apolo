@@ -270,6 +270,9 @@ namespace Ares.Player
             return System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "pt" ? pt : en;
         }
 
+        /// <summary>There is at least one extension button (Visible is false whenever the tab is hidden, so it cannot tell).</summary>
+        public bool Any { get { return m_Entries.Count > 0; } }
+
         public ExtensionBar(Func<Task<CoreWebView2Environment>> environment, Action changed, Action manage)
         {
             m_Environment = environment;
