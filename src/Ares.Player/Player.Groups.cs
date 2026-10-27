@@ -97,8 +97,12 @@ namespace Ares.Player
             if (!control.IsHandleCreated)
                 return;
             SendMessage(control.Handle, 0x000B, (IntPtr)1, IntPtr.Zero); // WM_SETREDRAW on
-            control.Invalidate(true);
+            // RDW_INVALIDATE | RDW_NOERASE | RDW_ALLCHILDREN: paint everything once, without the flash of an erased background
+            RedrawWindow(control.Handle, IntPtr.Zero, IntPtr.Zero, 0x0001 | 0x0004 | 0x0080);
         }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprcUpdate, IntPtr hrgnUpdate, uint flags);
 
         /// <summary>
         /// Keeps the first buttons (up to "limit"): the groups (a folder and its subfolders) which fit entirely, the first group

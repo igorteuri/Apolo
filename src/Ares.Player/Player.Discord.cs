@@ -152,7 +152,7 @@ namespace Ares.Player
                 form.MaximizeBox = false;
                 form.MinimizeBox = false;
                 form.ShowInTaskbar = false;
-                form.ClientSize = new Size(720, 580);
+                form.ClientSize = new Size(720, 604);
                 form.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0);
 
                 Label intro = new Label();
@@ -199,7 +199,7 @@ namespace Ares.Player
                 DialogKit.InRow(guilds, 140, 268, 360, 32);
                 Button invite = new Button();
                 invite.SetBounds(520, 266, 176, 36);
-                invite.Text = T("Adicionar o bot a um servidor", "Add the bot to a server");
+                invite.Text = T("Convidar o bot", "Invite the bot");
 
                 Label channelLabel = new Label();
                 channelLabel.SetBounds(24, 316, 112, 32);
@@ -216,7 +216,7 @@ namespace Ares.Player
                 DialogKit.Muted(hint);
 
                 Label notes = new Label();
-                notes.SetBounds(24, 436, 672, 96);
+                notes.SetBounds(24, 436, 672, 92);
                 DialogKit.Muted(notes);
                 notes.Text = T(
                     "• O Apolo envia o som dele mesmo (não os outros programas do computador).\r\n• Precisa do Windows 10 atualizado (versão 2004 ou mais nova) ou do Windows 11.\r\n• O token fica só neste computador. Quem tiver o token controla o bot: não compartilhe.\r\n• Este recurso usa o componente \"discord\" que vem na pasta do Apolo.",
@@ -225,7 +225,7 @@ namespace Ares.Player
                 Button close = new Button();
                 close.Text = T("Fechar", "Close");
                 close.DialogResult = DialogResult.OK;
-                close.SetBounds(720 - 24 - 110, 580 - 20 - 36, 110, 36);
+                close.SetBounds(720 - 24 - 110, 604 - 20 - 36, 110, 36);
 
                 string guildsKey = null;
                 bool updating = false;
@@ -278,8 +278,8 @@ namespace Ares.Player
                         hint.Text = T("Entrei no canal, mas não consegui capturar o som do Apolo (", "I joined the channel, but could not capture Apolo's sound (")
                             + m_Discord.CaptureError + T("). Isso exige Windows 10 versão 2004+ ou Windows 11.", "). This needs Windows 10 version 2004+ or Windows 11.");
                     else if ((st == DiscordState.Ready) && m_Discord.Guilds.Count == 0)
-                        hint.Text = T("O bot ainda não está em nenhum servidor. Clique em \"Adicionar o bot a um servidor\", autorize no navegador e volte aqui.",
-                            "The bot is not in any server yet. Click \"Add the bot to a server\", authorize in the browser and come back.");
+                        hint.Text = T("O bot ainda não está em nenhum servidor. Clique em \"Convidar o bot\", autorize no navegador e volte aqui.",
+                            "The bot is not in any server yet. Click \"Invite the bot\", authorize in the browser and come back.");
                     else
                         hint.Text = "";
 

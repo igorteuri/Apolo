@@ -97,7 +97,7 @@ namespace Ares.Player
 
         private void InitTrackPanel()
         {
-            Ares.CommonGUI.ThemeManager.Changed += (s, e) => RefreshRightsColors();
+            Ares.CommonGUI.ThemeManager.Changed += (s, e) => { RefreshRightsColors(); RefreshSmallIcons(); };
             try
             {
                 Control host = this;
@@ -124,9 +124,9 @@ namespace Ares.Player
                 m_TrackTitle = new Label();
                 m_TrackTitle.AutoEllipsis = true;
                 m_TrackTitle.TextAlign = ContentAlignment.MiddleLeft;
-                m_TrackCollapse = MakeSmallButton("▶", T("Recolher o painel para a lateral" + KeyHint("tracks"), "Collapse the panel to the side" + KeyHint("tracks")));
-                m_TrackUp = MakeSmallButton("▲", T("Mover a música para cima (só em lista em sequência)", "Move the track up (sequential lists only)"));
-                m_TrackDown = MakeSmallButton("▼", T("Mover a música para baixo (só em lista em sequência)", "Move the track down (sequential lists only)"));
+                m_TrackCollapse = MakeSmallButton("chevron-right", T("Recolher o painel para a lateral" + KeyHint("tracks"), "Collapse the panel to the side" + KeyHint("tracks")));
+                m_TrackUp = MakeSmallButton("chevron-up", T("Mover a música para cima (só em lista em sequência)", "Move the track up (sequential lists only)"));
+                m_TrackDown = MakeSmallButton("chevron-down", T("Mover a música para baixo (só em lista em sequência)", "Move the track down (sequential lists only)"));
                 m_TrackKind = new Ares.CommonGUI.ThemedComboBox();
                 m_TrackKind.DropDownStyle = ComboBoxStyle.DropDownList;
                 m_TrackKind.Items.Add(T("Música — aleatória", "Music — random"));
@@ -390,16 +390,37 @@ namespace Ares.Player
             return text.Length == 0 ? "" : " (" + text + ")";
         }
 
-        private static Button MakeSmallButton(string text, string tip)
+        private readonly System.Collections.Generic.List<KeyValuePair<Button, string>> m_SmallIcons = new System.Collections.Generic.List<KeyValuePair<Button, string>>();
+
+        // a small square button with an icon (in the color of the theme) instead of a text glyph
+        private Button MakeSmallButton(string icon, string tip)
         {
             Button b = new Button();
-            b.Text = text;
-            b.FlatStyle = FlatStyle.System;
-            b.UseVisualStyleBackColor = true;
             b.TabStop = false;
+            b.ImageAlign = ContentAlignment.MiddleCenter;
+            m_SmallIcons.Add(new KeyValuePair<Button, string>(b, icon));
+            SetSmallIcon(b, icon);
+            b.EnabledChanged += (s, e) => SetSmallIcon(b, icon);
             ToolTip t = new ToolTip();
             t.SetToolTip(b, tip);
             return b;
+        }
+
+        private static void SetSmallIcon(Button b, string icon)
+        {
+            Image old = b.Image;
+            b.Image = Ares.CommonGUI.IconLibrary.Get(icon, new Size(20, 20), b.Enabled ? Ares.CommonGUI.IconLibrary.ThemeColor() : (Ares.CommonGUI.ThemeManager.Current != null ? Ares.CommonGUI.ThemeManager.Current.TextDim : SystemColors.GrayText));
+            if (old != null)
+                old.Dispose();
+        }
+
+        private void RefreshSmallIcons()
+        {
+            foreach (KeyValuePair<Button, string> pair in m_SmallIcons)
+            {
+                if (!pair.Key.IsDisposed)
+                    SetSmallIcon(pair.Key, pair.Value);
+            }
         }
 
         private void ToggleTrackPanel()
@@ -414,17 +435,18 @@ namespace Ares.Player
             // one header row (title | list type | search | up | down) and the wide list below it
             int h = Math.Max(26, m_TrackSearch.PreferredHeight + 2);
             int w = m_TrackBody.ClientSize.Width;
-            int bw = h;
+            int bw = h + 8;
             m_TrackCollapse.SetBounds(0, 0, 0, 0);
             m_TrackDown.SetBounds(w - bw, 0, bw, h);
-            m_TrackUp.SetBounds(w - 2 * bw - 2, 0, bw, h);
-            int rest = w - 2 * bw - 2 - 8; // room for title, type and search
+            m_TrackUp.SetBounds(w - 2 * bw - 4, 0, bw, h);
+            int rest = w - 2 * bw - 4 - 8; // room for title, type and search
             int kindW = Math.Max(120, Math.Min(230, rest / 3));
             int titleW = Math.Max(60, Math.Min(340, rest / 3));
             int searchW = Math.Max(60, rest - kindW - titleW - 8);
             int x = 0;
             m_TrackTitle.SetBounds(x, 0, titleW, h);
             x += titleW + 4;
+            m_TrackKind.ItemHeight = Math.Max(16, h - 8); // the box takes the height of the other fields of the row
             m_TrackKind.SetBounds(x, (h - m_TrackKind.Height) / 2, kindW, m_TrackKind.Height);
             x += kindW + 4;
             m_TrackSearchField.SetBounds(x, 0, searchW, h);

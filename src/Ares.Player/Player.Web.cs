@@ -125,6 +125,7 @@ namespace Ares.Player
         private void ShowHome()
         {
             m_ShowingWeb = false;
+            SetEditChromeVisible(true);
             if (m_WebWindow != null)
                 m_WebWindow.Visible = false;
             RefreshTabBar();
@@ -138,6 +139,7 @@ namespace Ares.Player
                 return;
             }
             m_ShowingWeb = true;
+            SetEditChromeVisible(false);
             m_WebWindow.Visible = true;
             m_WebWindow.BringToFront();
             m_TabBar.SendToBack();
@@ -309,7 +311,10 @@ namespace Ares.Player
         private Panel m_Host;
         private WebTab m_Selected;
         private TextBox m_Address;
+        private SearchField m_AddressField;
         private Button m_Back, m_Forward, m_Reload, m_Add, m_ToAres, m_VdoSettings, m_VdoCopy, m_Mute, m_Extensions;
+        private readonly System.Collections.Generic.List<KeyValuePair<Button, string>> m_BarIcons = new System.Collections.Generic.List<KeyValuePair<Button, string>>();
+        private const int BarButtonHeight = 30;
         private ExtensionBar m_ExtBar;
         public static event Action StateChanged;
         public event Action TabsChanged;
@@ -437,21 +442,22 @@ namespace Ares.Player
             m_Player = player;
             Panel bar = new Panel();
             bar.Dock = DockStyle.Top;
-            bar.Height = 38;
+            bar.Height = 44;
             bar.Padding = new Padding(4);
 
-            m_ToAres = MakeBarButton(T("◀ Apolo", "◀ Apolo"), 4, 80, (s, e) => m_Player.BringToFrontFromWeb());
-            m_Back = MakeBarButton("←", 88, 36, (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CanGoBack) t.View.GoBack(); });
-            m_Forward = MakeBarButton("→", 128, 36, (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CanGoForward) t.View.GoForward(); });
-            m_Reload = MakeBarButton("⟳", 168, 36, (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CoreWebView2 != null) t.View.CoreWebView2.Reload(); });
-            m_Add = MakeBarButton(T("+ Favorito", "+ Favorite"), 0, 90, (s, e) => AddFavorite());
-            m_Mute = MakeBarButton(T("Mutar aba", "Mute tab"), 0, 100, (s, e) => { WebTab t = Current(); if (t != null) SetTabMuted(t, !t.Muted); });
-            m_Extensions = MakeBarButton(T("Extensões", "Extensions"), 0, 90, (s, e) => ManageExtensions());
-            m_VdoSettings = MakeBarButton(T("Config. VDO", "VDO settings"), 0, 100, (s, e) => ConfigureVdo());
-            m_VdoCopy = MakeBarButton(T("Copiar link do ouvinte", "Copy listener link"), 0, 170, (s, e) => CopyListenerLink());
-            m_Address = new TextBox();
-            m_Address.Location = new Point(212, 8);
-            m_Address.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            m_ToAres = MakeBarButton(T("Apolo", "Apolo"), "house", T("Voltar para o Apolo", "Back to Apolo"), (s, e) => m_Player.BringToFrontFromWeb());
+            m_Back = MakeBarButton("", "chevron-left", T("Voltar", "Back"), (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CanGoBack) t.View.GoBack(); });
+            m_Forward = MakeBarButton("", "chevron-right", T("Avançar", "Forward"), (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CanGoForward) t.View.GoForward(); });
+            m_Reload = MakeBarButton("", "refresh-cw", T("Recarregar a página", "Reload the page"), (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CoreWebView2 != null) t.View.CoreWebView2.Reload(); });
+            m_Add = MakeBarButton(T("Favorito", "Favorite"), "star", T("Guardar esta página como favorita", "Keep this page as a favorite"), (s, e) => AddFavorite());
+            m_Mute = MakeBarButton(T("Mutar aba", "Mute tab"), "volume-x", null, (s, e) => { WebTab t = Current(); if (t != null) SetTabMuted(t, !t.Muted); });
+            m_Mute.Width = Math.Max(FitBarWidth(T("Mutar aba", "Mute tab"), true), FitBarWidth(T("Ativar som", "Unmute"), true));
+            m_Extensions = MakeBarButton(T("Extensões", "Extensions"), "puzzle", T("Gerenciar as extensões do navegador", "Manage the browser extensions"), (s, e) => ManageExtensions());
+            m_VdoSettings = MakeBarButton(T("Config. VDO", "VDO settings"), "settings", T("Configurações do envio pelo VDO.Ninja", "VDO.Ninja sending settings"), (s, e) => ConfigureVdo());
+            m_VdoCopy = MakeBarButton(T("Copiar link do ouvinte", "Copy listener link"), "copy", T("Copia o link para o ouvinte abrir", "Copies the link for the listener to open"), (s, e) => CopyListenerLink());
+            m_AddressField = new SearchField();
+            m_AddressField.ShowIcon = false;
+            m_Address = m_AddressField.Box;
             m_Address.KeyDown += (s, e) =>
             {
                 if (e.KeyCode == System.Windows.Forms.Keys.Enter)
@@ -463,7 +469,8 @@ namespace Ares.Player
             // one button for each installed extension (settings, window, disable, remove), at the right of the address
             m_ExtBar = new ExtensionBar(() => GetEnvironment(), () => LayoutBar(bar), () => ManageExtensions());
             m_ExtBar.Top = 5;
-            bar.Controls.AddRange(new Control[] { m_ToAres, m_Back, m_Forward, m_Reload, m_Address, m_Mute, m_Extensions, m_ExtBar, m_VdoCopy, m_VdoSettings, m_Add });
+            bar.Controls.AddRange(new Control[] { m_ToAres, m_Back, m_Forward, m_Reload, m_AddressField, m_Mute, m_Extensions, m_ExtBar, m_VdoCopy, m_VdoSettings, m_Add });
+            Ares.CommonGUI.ThemeManager.Changed += (s, e) => RefreshBarIcons();
             bar.Resize += (s, e) => LayoutBar(bar);
 
             m_Host = new Panel();
@@ -485,19 +492,82 @@ namespace Ares.Player
             };
         }
 
-        private Button MakeBarButton(string text, int left, int width, EventHandler click)
+        // the buttons of the bar: all of one height, icon (in the color of the theme) + text, the width follows the text
+        private int FitBarWidth(string text, bool icon)
+        {
+            int textWidth = string.IsNullOrEmpty(text) ? 0 : TextRenderer.MeasureText(text, Font).Width;
+            return textWidth == 0 ? BarButtonHeight + 6 : textWidth + (icon ? 22 : 0) + 28;
+        }
+
+        private Button MakeBarButton(string text, string icon, string tip, EventHandler click)
         {
             Button b = new Button();
             b.Text = text;
-            b.Location = new Point(left, 5);
-            b.Size = new Size(width, 28);
+            b.Height = BarButtonHeight;
+            b.Width = FitBarWidth(text, icon != null);
+            b.TabStop = false;
+            if (icon != null)
+            {
+                b.TextImageRelation = TextImageRelation.ImageBeforeText;
+                b.ImageAlign = ContentAlignment.MiddleCenter;
+                b.TextAlign = ContentAlignment.MiddleCenter;
+                m_BarIcons.Add(new KeyValuePair<Button, string>(b, icon));
+                SetBarIcon(b, icon);
+            }
+            if (tip != null)
+                new ToolTip().SetToolTip(b, tip);
             b.Click += click;
             return b;
         }
 
+        private static void SetBarIcon(Button b, string icon)
+        {
+            Image old = b.Image;
+            b.Image = Ares.CommonGUI.IconLibrary.Get(icon, new Size(18, 18), Ares.CommonGUI.IconLibrary.ThemeColor());
+            if (old != null)
+                old.Dispose();
+        }
+
+        private void RefreshBarIcons()
+        {
+            foreach (KeyValuePair<Button, string> pair in m_BarIcons)
+            {
+                if (!pair.Key.IsDisposed)
+                    SetBarIcon(pair.Key, pair.Value);
+            }
+        }
+
+        // the mute button says what a click does: the icon and the text change together
+        private void ShowMuteState(bool muted)
+        {
+            m_Mute.Text = muted ? T("Ativar som", "Unmute") : T("Mutar aba", "Mute tab");
+            for (int i = 0; i < m_BarIcons.Count; i++)
+            {
+                if (m_BarIcons[i].Key == m_Mute)
+                {
+                    m_BarIcons[i] = new KeyValuePair<Button, string>(m_Mute, muted ? "volume-2" : "volume-x");
+                    SetBarIcon(m_Mute, m_BarIcons[i].Value);
+                }
+            }
+        }
+
         private void LayoutBar(Panel bar)
         {
-            int right = bar.ClientSize.Width - 4;
+            int top = Math.Max(2, (bar.ClientSize.Height - BarButtonHeight) / 2);
+            int x = 8;
+            foreach (Button b in new Button[] { m_ToAres, m_Back, m_Forward, m_Reload })
+            {
+                b.Location = new Point(x, top);
+                x += b.Width + 6;
+            }
+            foreach (Button b in new Button[] { m_Add, m_VdoSettings, m_VdoCopy, m_Mute, m_Extensions })
+                b.Top = top;
+            if (m_ExtBar != null)
+                m_ExtBar.Top = Math.Max(2, (bar.ClientSize.Height - m_ExtBar.Height) / 2);
+            m_AddressField.Top = top;
+            m_AddressField.Height = BarButtonHeight;
+            m_AddressField.Left = x;
+            int right = bar.ClientSize.Width - 8;
             m_Add.Left = right - m_Add.Width;
             right = m_Add.Left - 6;
             m_VdoSettings.Left = right - m_VdoSettings.Width;
@@ -513,7 +583,7 @@ namespace Ares.Player
                 m_ExtBar.Left = right - m_ExtBar.Width;
                 right = m_ExtBar.Left - 6;
             }
-            m_Address.Width = Math.Max(100, right - m_Address.Left);
+            m_AddressField.Width = Math.Max(100, right - m_AddressField.Left);
         }
 
         // ------------------------------------------------------------------ tabs
@@ -595,7 +665,7 @@ namespace Ares.Player
             WebTab t = Current();
             bool vdo = t != null && t.Kind == "vdo";
             m_Mute.Visible = t != null;
-            m_Mute.Text = (t != null && t.Muted) ? T("Ativar som", "Unmute") : T("Mutar aba", "Mute tab");
+            ShowMuteState(t != null && t.Muted);
             m_VdoCopy.Visible = vdo;
             m_VdoSettings.Visible = vdo;
             if (t == null)
@@ -759,7 +829,7 @@ namespace Ares.Player
         private void UpdateTabState(WebTab tab)
         {
             if (tab == m_Selected)
-                m_Mute.Text = tab.Muted ? T("Ativar som", "Unmute") : T("Mutar aba", "Mute tab");
+                ShowMuteState(tab.Muted);
             Action h = StateChanged;
             if (h != null)
                 h();

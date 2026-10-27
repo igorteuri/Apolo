@@ -71,7 +71,8 @@ namespace Ares.Player
                     m_EditButton.Margin = new Padding(14, 0, 14, 0);
                     if (string.IsNullOrEmpty(m_EditButton.ToolTipText) || m_EditButton.ToolTipText == m_EditButton.Text)
                         m_EditButton.ToolTipText = T("Modo de edição: criar e alterar playlists e elementos", "Edit mode: create and change playlists and elements");
-                    menuStrip1.Items.Add(new ToolStripSeparator());
+                    m_EditSeparator = new ToolStripSeparator();
+                    menuStrip1.Items.Add(m_EditSeparator);
                     menuStrip1.Items.Add(m_EditButton);
                 }
                 if (m_AddButton != null)
@@ -137,6 +138,21 @@ namespace Ares.Player
 
         private ToolStripButton m_NetButton, m_VdoButton, m_DiscordButton, m_ObsButton;
         private ToolStripLabel m_HeaderSpacer;
+        private ToolStripSeparator m_EditSeparator;
+        private bool m_EditChromeHidden;
+
+        // edit mode is about the playlists: in a web tab its button (and the Add button) are not shown, but keep their room so that the others do not move
+        private void SetEditChromeVisible(bool visible)
+        {
+            m_EditChromeHidden = !visible;
+            if (m_EditButton != null)
+                m_EditButton.Visible = visible;
+            if (m_EditSeparator != null)
+                m_EditSeparator.Visible = visible;
+            if (m_AddButton != null)
+                m_AddButton.Visible = visible && m_EditMode;
+            CenterQuickButtons();
+        }
         private bool m_Centering;
         private bool m_MovingAppearance;
 
@@ -159,7 +175,8 @@ namespace Ares.Player
                     if (afterSpacer && item is ToolStripMenuItem && (item.Text == "Aparência" || item.Text == "Appearance"))
                         appearance = item;
                     // the Add button appears in edit mode: its room is kept, so that the other buttons do not move
-                    bool reserved = item == m_AddButton && !item.Visible;
+                    bool reserved = (item == m_AddButton && !item.Visible)
+                        || (m_EditChromeHidden && (item == m_EditButton || item == m_EditSeparator));
                     if ((!item.Visible && !reserved) || item.Alignment != ToolStripItemAlignment.Left)
                         continue;
                     int w = (reserved ? item.GetPreferredSize(Size.Empty).Width : item.Width) + item.Margin.Horizontal;

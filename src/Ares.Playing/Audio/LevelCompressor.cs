@@ -10,15 +10,67 @@ using System;
 
 namespace Ares.Playing
 {
-    /// <summary>The switch of the leveler (the Player turns it on and off; the audio engine reads it).</summary>
+    /// <summary>
+    /// The switch and the settings of the leveler (the Player and the settings window write them; the audio engine reads them
+    /// on every block), and what it is doing now (for the display in the settings window).
+    /// </summary>
     public static class AudioLeveler
     {
+        public const float DefaultTargetDb = -20f;
+        public const float DefaultStrength = 0.8f;
+        public const float DefaultMaxBoostDb = 9f;
+        public const float DefaultMaxCutDb = 12f;
+
         private static volatile bool s_Enabled = true;
+        private static volatile float s_TargetDb = DefaultTargetDb;
+        private static volatile float s_Strength = DefaultStrength;
+        private static volatile float s_MaxBoostDb = DefaultMaxBoostDb;
+        private static volatile float s_MaxCutDb = DefaultMaxCutDb;
+
+        /// <summary>Raised when the switch changes (so that the button in the window and the settings page follow each other).</summary>
+        public static event EventHandler EnabledChanged;
 
         public static bool Enabled
         {
             get { return s_Enabled; }
-            set { s_Enabled = value; }
+            set
+            {
+                if (s_Enabled == value)
+                    return;
+                s_Enabled = value;
+                EventHandler h = EnabledChanged;
+                if (h != null)
+                    h(null, EventArgs.Empty);
+            }
+        }
+
+        /// <summary>The loudness (RMS, dB below full scale) the mix is led to.</summary>
+        public static float TargetDb { get { return s_TargetDb; } set { s_TargetDb = Math.Max(-40f, Math.Min(-6f, value)); } }
+        /// <summary>How much of the difference to the target is corrected, 0 to 1 (1 = a flat level).</summary>
+        public static float Strength { get { return s_Strength; } set { s_Strength = Math.Max(0f, Math.Min(1f, value)); } }
+        /// <summary>The most it makes quiet material louder (dB).</summary>
+        public static float MaxBoostDb { get { return s_MaxBoostDb; } set { s_MaxBoostDb = Math.Max(0f, Math.Min(24f, value)); } }
+        /// <summary>The most it makes loud material quieter (dB).</summary>
+        public static float MaxCutDb { get { return s_MaxCutDb; } set { s_MaxCutDb = Math.Max(0f, Math.Min(30f, value)); } }
+
+        private static volatile int s_ActiveTick;
+        /// <summary>Environment.TickCount of the last block with sound above the gate (to tell "playing" from "silent").</summary>
+        public static int ActiveTick { get { return s_ActiveTick; } internal set { s_ActiveTick = value; } }
+
+        private static volatile float s_GainDb;
+        private static volatile float s_LevelDb = -60f;
+
+        /// <summary>The gain in force now (dB, + = louder, - = quieter). Written by the audio engine.</summary>
+        public static float GainDb { get { return s_GainDb; } internal set { s_GainDb = value; } }
+        /// <summary>The loudness of the mix before the gain (RMS, dB). Written by the audio engine.</summary>
+        public static float LevelDb { get { return s_LevelDb; } internal set { s_LevelDb = value; } }
+
+        public static void ResetToDefaults()
+        {
+            TargetDb = DefaultTargetDb;
+            Strength = DefaultStrength;
+            MaxBoostDb = DefaultMaxBoostDb;
+            MaxCutDb = DefaultMaxCutDb;
         }
     }
 }
@@ -27,19 +79,13 @@ namespace Ares.Playing.Audio
 {
     internal sealed class LevelCompressor
     {
-        /// <summary>The loudness (RMS, in dB below full scale) the mix is led to.</summary>
-        public const float TargetDb = -20f;
-        /// <summary>The most it makes quiet material louder / loud material quieter.</summary>
-        public const float MaxBoostDb = 9f;
-        public const float MaxCutDb = 12f;
+        // target, strength and the limits of the gain are in AudioLeveler (the user can change them)
         /// <summary>Quieter than this counts as silence: the level estimate and the gain stay as they are.</summary>
         public const float GateDb = -50f;
-        /// <summary>How much of the difference to the target is corrected (1 = all of it, a flat level).</summary>
-        public const float Strength = 0.8f;
         /// <summary>Peaks never go above this after the gain.</summary>
         public const float Ceiling = 0.95f;
 
-        private float m_LevelDb = TargetDb;   // slow estimate of the loudness of the mix
+        private float m_LevelDb = AudioLeveler.DefaultTargetDb;   // slow estimate of the loudness of the mix
         private float m_GainDb;               // gain in force at the end of the last block
         private float m_Gain = 1f;            // the same as a factor
 
@@ -48,7 +94,7 @@ namespace Ares.Playing.Audio
 
         public void Reset()
         {
-            m_LevelDb = TargetDb;
+            m_LevelDb = AudioLeveler.TargetDb;
             m_GainDb = 0f;
             m_Gain = 1f;
         }
@@ -88,12 +134,13 @@ namespace Ares.Playing.Audio
             {
                 if (powerDb > GateDb)
                 {
+                    AudioLeveler.ActiveTick = Environment.TickCount;
                     float tau = powerDb > m_LevelDb ? 0.5f : 2.0f;
                     m_LevelDb += (powerDb - m_LevelDb) * Coefficient(seconds, tau);
                 }
-                desiredDb = (TargetDb - m_LevelDb) * Strength;
-                if (desiredDb > MaxBoostDb) desiredDb = MaxBoostDb;
-                else if (desiredDb < -MaxCutDb) desiredDb = -MaxCutDb;
+                desiredDb = (AudioLeveler.TargetDb - m_LevelDb) * AudioLeveler.Strength;
+                if (desiredDb > AudioLeveler.MaxBoostDb) desiredDb = AudioLeveler.MaxBoostDb;
+                else if (desiredDb < -AudioLeveler.MaxCutDb) desiredDb = -AudioLeveler.MaxCutDb;
                 // no boost while nothing is playing, so that the noise between pieces is not raised
                 if (powerDb <= GateDb && desiredDb > m_GainDb)
                     desiredDb = m_GainDb;
@@ -123,6 +170,15 @@ namespace Ares.Playing.Audio
                     buffer[o + c] *= g;
             }
             m_Gain = end;
+            if (enabled)
+            {
+                AudioLeveler.GainDb = m_GainDb;
+                AudioLeveler.LevelDb = m_LevelDb;
+            }
+            else
+            {
+                AudioLeveler.GainDb = 0f;
+            }
         }
     }
 }

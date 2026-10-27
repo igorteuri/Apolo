@@ -46,6 +46,7 @@ namespace Ares.Player
                 {
                     if (state.Value != bar.Value)
                         state.Value = bar.Value;
+                    caption.Invalidate();
                 };
                 m_StateCaptions[i] = caption;
                 m_StateSliders[i] = state;

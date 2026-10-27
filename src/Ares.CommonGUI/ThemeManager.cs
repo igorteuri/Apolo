@@ -1898,6 +1898,29 @@ namespace Ares.CommonGUI
                 base.OnRenderArrow(e);
             }
 
+            // the "selected" mark of a menu item: just a tick in the highlight color (the default one sits in a box with a brown fill)
+            protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
+            {
+                Rectangle r = e.ImageRectangle;
+                int s = Math.Min(r.Width, r.Height);
+                int x = r.X + (r.Width - s) / 2;
+                int y = r.Y + (r.Height - s) / 2;
+                System.Drawing.Drawing2D.SmoothingMode old = e.Graphics.SmoothingMode;
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                using (Pen tick = new Pen(e.Item.Enabled ? Current.Accent : Current.TextDim, 2f))
+                {
+                    tick.StartCap = tick.EndCap = System.Drawing.Drawing2D.LineCap.Round;
+                    tick.LineJoin = System.Drawing.Drawing2D.LineJoin.Round;
+                    e.Graphics.DrawLines(tick, new PointF[]
+                    {
+                        new PointF(x + s * 0.22f, y + s * 0.54f),
+                        new PointF(x + s * 0.43f, y + s * 0.74f),
+                        new PointF(x + s * 0.80f, y + s * 0.30f)
+                    });
+                }
+                e.Graphics.SmoothingMode = old;
+            }
+
             protected override void OnRenderButtonBackground(ToolStripItemRenderEventArgs e)
             {
                 ToolStripButton button = e.Item as ToolStripButton;

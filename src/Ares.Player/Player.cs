@@ -669,7 +669,6 @@ namespace Ares.Player
 
         private void ShowSettingsDialog(int pageIndex)
         {
-            StopAllPlaying();
 #if !MONO
             m_KeyboardHookManager.Enabled = false; 
 #endif

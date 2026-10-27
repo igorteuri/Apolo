@@ -15,7 +15,15 @@ namespace Ares.Player
         /// <summary>The text box inside (text, events and cue banner are used through it).</summary>
         public readonly TextBox Box = new TextBox();
 
-        private const int IconWidth = 26;
+        private int IconWidth { get { return m_ShowIcon ? 26 : 8; } }
+        private bool m_ShowIcon = true;
+
+        /// <summary>The magnifier at the left (a search box has it, an address box does not).</summary>
+        public bool ShowIcon
+        {
+            get { return m_ShowIcon; }
+            set { m_ShowIcon = value; LayoutBox(); Invalidate(); }
+        }
 
         public SearchField()
         {
@@ -91,6 +99,8 @@ namespace Ares.Player
                     g.DrawPath(pen, path);
             }
             // magnifier
+            if (!m_ShowIcon)
+                return;
             float cy = Height / 2f;
             using (Pen pen = new Pen(focus ? accent : dim, 1.6f))
             {

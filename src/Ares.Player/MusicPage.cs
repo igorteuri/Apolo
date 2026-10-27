@@ -15,6 +15,7 @@ namespace Ares.Player
         {
             InitializeComponent();
             SetData();
+            BuildLevelerUi();
         }
 
         private bool listen = true;

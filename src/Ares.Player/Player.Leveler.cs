@@ -14,7 +14,7 @@ namespace Ares.Player
     {
         private void InitLeveler()
         {
-            Ares.Playing.AudioLeveler.Enabled = Ares.CommonGUI.Preferences.GetBool("LevelerOn", true);
+            LevelerSettings.Load();
             m_LevelLabel = new Label();
             m_LevelLabel.Name = "levelLabel";
             m_LevelLabel.Text = T("Nivelar", "Level");
@@ -23,10 +23,16 @@ namespace Ares.Player
             m_LevelToggle = new Ares.CommonGUI.ModernToggle();
             m_LevelToggle.Name = "levelToggle";
             m_LevelToggle.Checked = Ares.Playing.AudioLeveler.Enabled;
+            // the settings page can switch it too
+            Ares.Playing.AudioLeveler.EnabledChanged += (s, e) =>
+            {
+                if (m_LevelToggle != null && !m_LevelToggle.IsDisposed && m_LevelToggle.Checked != Ares.Playing.AudioLeveler.Enabled)
+                    m_LevelToggle.Checked = Ares.Playing.AudioLeveler.Enabled;
+            };
             m_LevelToggle.CheckedChanged += (s, e) =>
             {
                 Ares.Playing.AudioLeveler.Enabled = m_LevelToggle.Checked;
-                Ares.CommonGUI.Preferences.SetBool("LevelerOn", m_LevelToggle.Checked);
+                LevelerSettings.Save();
                 ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
                     m_LevelToggle.Checked ? T("Nivelador ligado: o volume entre as músicas fica mais parecido.", "Leveler on: the volume between pieces is evened out.")
                                           : T("Nivelador desligado: o áudio sai como está nos arquivos.", "Leveler off: the audio goes out as it is in the files.")));
