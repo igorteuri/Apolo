@@ -249,7 +249,7 @@ namespace Ares.Player
             }
             foreach (WebSource s in sources)
             {
-                try { s.Capture.Dispose(); } catch (Exception) { }
+                try { s.Capture.Dispose(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             }
         }
 
@@ -269,15 +269,15 @@ namespace Ares.Player
         private void MixLoop()
         {
             // Windows normally wakes a sleeping thread only every 15 ms: ask for 1 ms so that the frames come evenly
-            try { timeBeginPeriod(1); } catch (Exception) { }
+            try { timeBeginPeriod(1); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             // an audio thread: Windows serves it before the ordinary work (the window, the browser) of the PC
-            try { Thread.CurrentThread.Priority = ThreadPriority.Highest; } catch (Exception) { }
+            try { Thread.CurrentThread.Priority = ThreadPriority.Highest; } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             IntPtr boost = AudioThread.Boost();
             try { MixLoopCore(); }
             finally
             {
                 AudioThread.Release(boost);
-                try { timeEndPeriod(1); } catch (Exception) { }
+                try { timeEndPeriod(1); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             }
         }
 
@@ -367,7 +367,7 @@ namespace Ares.Player
                     if (handler != null)
                     {
                         try { handler(output, FrameBytes); }
-                        catch (Exception) { }
+                        catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                     }
                 }
                 if (now - lastReport > 30000)
@@ -453,7 +453,7 @@ namespace Ares.Player
             }
             foreach (WebSource g in gone)
             {
-                try { g.Capture.Dispose(); } catch (Exception) { }
+                try { g.Capture.Dispose(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             }
             foreach (int pid in roots)
             {
@@ -608,8 +608,9 @@ namespace Ares.Player
                 if (handle != IntPtr.Zero)
                     AvRevertMmThreadCharacteristics(handle);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
     }

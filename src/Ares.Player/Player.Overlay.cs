@@ -67,8 +67,9 @@ namespace Ares.Player
             {
                 listener.Close();
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -89,8 +90,9 @@ namespace Ares.Player
                 if (listener.IsListening)
                     listener.BeginGetContext(OnContext, listener);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             try
             {
@@ -98,7 +100,7 @@ namespace Ares.Player
             }
             catch (Exception)
             {
-                try { context.Response.Abort(); } catch (Exception) { }
+                try { context.Response.Abort(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             }
         }
 
@@ -256,9 +258,10 @@ namespace Ares.Player
                 json.Append("}");
                 m_Overlay.SetState(json.ToString());
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
                 // the overlay must never disturb playing
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -370,7 +373,7 @@ namespace Ares.Player
                 };
                 copy.Click += (s, e) =>
                 {
-                    try { Clipboard.SetText(link.Text); } catch (Exception) { }
+                    try { Clipboard.SetText(link.Text); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                     status.Text = T("Link copiado.", "Link copied.");
                 };
                 configure.Click += (s, e) => OpenInBrowser("http://localhost:" + (int)port.Value + "/config");

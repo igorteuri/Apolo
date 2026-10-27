@@ -255,8 +255,9 @@ namespace Ares.Player
                                 Fill();
                         }));
                     }
-                    catch (InvalidOperationException)
+                    catch (InvalidOperationException swallowed)
                     {
+                        Ares.Settings.ErrorLog.Note(swallowed);
                     }
                 });
             };
@@ -332,8 +333,9 @@ namespace Ares.Player
                         if (file != null)
                             bmp = Small(file, 40);
                     }
-                    catch (Exception)
+                    catch (Exception swallowed)
                     {
+                        Ares.Settings.ErrorLog.Note(swallowed);
                     }
                     if (bmp == null)
                         continue;

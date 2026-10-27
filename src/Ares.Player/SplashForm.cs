@@ -75,8 +75,9 @@ namespace Ares.Player
                 using (Bitmap bmp = Ares.CommonGUI.ApoloBrand.Render(logo, Ares.CommonGUI.ApoloState.Playing, 0))
                     g.DrawImage(bmp, (ClientSize.Width - logo) / 2, (int)(28 * m_Scale), logo, logo);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             Rectangle nameRect = new Rectangle(0, (int)(136 * m_Scale), ClientSize.Width, (int)(44 * m_Scale));
             using (Font f = new Font("Segoe UI", 24f * m_Scale * 0.75f, FontStyle.Bold))

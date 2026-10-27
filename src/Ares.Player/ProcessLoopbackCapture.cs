@@ -55,7 +55,7 @@ namespace Ares.Player
             m_Thread = null;
             if (t != null && !t.Join(3000))
             {
-                try { t.Abort(); } catch (Exception) { }
+                try { t.Abort(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             }
         }
 
@@ -76,8 +76,9 @@ namespace Ares.Player
                     System.IO.File.Delete(file);
                 System.IO.File.AppendAllText(file, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "  " + text + "\r\n");
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -160,7 +161,7 @@ namespace Ares.Player
         private void CaptureLoop()
         {
             // the capture must never wait for the rest of the PC: a late read is lost sound
-            try { System.Threading.Thread.CurrentThread.Priority = System.Threading.ThreadPriority.Highest; } catch (Exception) { }
+            try { System.Threading.Thread.CurrentThread.Priority = System.Threading.ThreadPriority.Highest; } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             IntPtr boost = AudioThread.Boost();
             try
             {
@@ -284,14 +285,14 @@ namespace Ares.Player
                     if (started && client != null)
                         client.Stop();
                 }
-                catch (Exception) { }
+                catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 if (capture != null)
                 {
-                    try { Marshal.ReleaseComObject(capture); } catch (Exception) { }
+                    try { Marshal.ReleaseComObject(capture); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 }
                 if (client != null)
                 {
-                    try { Marshal.ReleaseComObject(client); } catch (Exception) { }
+                    try { Marshal.ReleaseComObject(client); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 }
                 if (format != IntPtr.Zero)
                     Marshal.FreeHGlobal(format);

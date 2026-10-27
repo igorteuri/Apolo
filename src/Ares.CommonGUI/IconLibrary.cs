@@ -38,7 +38,7 @@ namespace Ares.CommonGUI
         /// <summary>Makes the icons of a managed toolbar bigger (or smaller) than the standard toolbar size, e.g. 1.4 for the player buttons.</summary>
         public static void SetSizeFactor(ToolStrip strip, double factor)
         {
-            try { s_Factors.Remove(strip); } catch (Exception) { }
+            try { s_Factors.Remove(strip); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             s_Factors.Add(strip, factor);
         }
 
@@ -145,7 +145,7 @@ namespace Ares.CommonGUI
         {
             Size lastSize = Size.Empty;
             Color lastColor = Color.Empty;
-            try { s_Managed.Add(strip, strip); } catch (ArgumentException) { }
+            try { s_Managed.Add(strip, strip); } catch (ArgumentException swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             Action apply = () =>
             {
                 Size size = SizeFor(strip);
@@ -184,8 +184,9 @@ namespace Ares.CommonGUI
                     if (!strip.IsDisposed && (SizeFor(strip) != lastSize || strip.ImageScalingSize != lastSize || ThemeColor() != lastColor))
                         apply();
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             };
             Application.Idle += idle;
@@ -201,8 +202,9 @@ namespace Ares.CommonGUI
                     else
                         apply();
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             };
         }
@@ -257,8 +259,9 @@ namespace Ares.CommonGUI
                     if (!menu.IsDisposed && (MenuIconSize() != lastSize || ThemeColor() != lastColor))
                         apply();
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             };
             Application.Idle += idle;

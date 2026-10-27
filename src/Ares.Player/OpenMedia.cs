@@ -50,7 +50,7 @@ namespace Ares.Player
             get
             {
                 string v = "";
-                try { v = System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString(3); } catch (Exception) { }
+                try { v = System.Reflection.Assembly.GetEntryAssembly().GetName().Version.ToString(3); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 return "Apolo/" + v + " (https://github.com/igorteuri/Apolo)";
             }
         }
@@ -69,18 +69,18 @@ namespace Ares.Player
                     if (File.Exists(FreesoundKeyFile))
                         return File.ReadAllText(FreesoundKeyFile).Trim();
                 }
-                catch (Exception) { }
+                catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 return "";
             }
         }
 
         private static WebClient NewClient()
         {
-            try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; } catch (Exception) { }
+            try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             WebClient c = new WebClient();
             c.Encoding = Encoding.UTF8;
             c.Headers[HttpRequestHeader.UserAgent] = UserAgent;
-            try { c.Proxy = WebRequest.GetSystemWebProxy(); } catch (Exception) { }
+            try { c.Proxy = WebRequest.GetSystemWebProxy(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             return c;
         }
 
@@ -496,7 +496,7 @@ namespace Ares.Player
                 string file = Path.Combine(Path.GetDirectoryName(path), "creditos.txt");
                 File.AppendAllText(file, line.Replace("\r", " ").Replace("\n", " ") + Environment.NewLine, Encoding.UTF8);
             }
-            catch (Exception) { }
+            catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             try
             {
                 string text = (hit.License.Length > 0 ? hit.License + ": " : "") + hit.Title + (hit.Author.Length > 0 ? " - " + hit.Author : "")
@@ -505,7 +505,7 @@ namespace Ares.Player
                 Ares.Tags.AudioTags.WriteCredit(path, lic, text);
                 Ares.Tags.AudioTags.Write(path, hit.Title, hit.Author, "");
             }
-            catch (Exception) { }
+            catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
         }
     }
 }

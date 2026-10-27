@@ -150,7 +150,7 @@ Apolo updates: menu About > How to update.") }
                 form.MaximizeBox = false;
                 form.FormBorderStyle = FormBorderStyle.FixedDialog;
                 form.ClientSize = new Size(680, 470);
-                try { form.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0); } catch (Exception) { }
+                try { form.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
 
                 Label title = new Label();
                 title.SetBounds(20, 14, 640, 34);

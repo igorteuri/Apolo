@@ -385,8 +385,9 @@ namespace Ares.Player
                     if (list.Count > 0)
                         s_Extended = list;
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
                 finally
                 {
@@ -535,13 +536,15 @@ namespace Ares.Player
                             return file;
                         }
                     }
-                    catch (Exception)
+                    catch (Exception swallowed)
                     {
+                        Ares.Settings.ErrorLog.Note(swallowed);
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             return null;
         }

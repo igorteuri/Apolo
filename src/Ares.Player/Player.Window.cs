@@ -196,7 +196,7 @@ namespace Ares.Player
             if (e.CloseReason != CloseReason.UserClosing)
             {
                 // Windows is closing: no questions, just try to save
-                try { DataModule_SaveQuiet(); } catch (Exception) { }
+                try { DataModule_SaveQuiet(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 return false;
             }
             if (!Visible || WindowState == FormWindowState.Minimized)

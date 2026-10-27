@@ -63,8 +63,9 @@ namespace Ares.Player
                 }
                 RegisterFileTypes(exe);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -246,19 +247,20 @@ namespace Ares.Player
                             extras[Ares.ModelInfo.Exporter.PROJECT_DIR + "/creditos.txt"] = creditsTempFile;
                         }
                     }
-                    catch (Exception)
+                    catch (Exception swallowed)
                     {
+                        Ares.Settings.ErrorLog.Note(swallowed);
                     }
                     Ares.ModelInfo.Exporter.Export(monitor, m_Project, m_Project.FileName, target, error =>
                     {
                         monitor.Close();
                         if (iconsTempFile != null)
                         {
-                            try { File.Delete(iconsTempFile); } catch (Exception) { }
+                            try { File.Delete(iconsTempFile); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                         }
                         if (creditsTempFile != null)
                         {
-                            try { File.Delete(creditsTempFile); } catch (Exception) { }
+                            try { File.Delete(creditsTempFile); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                         }
                         if (error != null)
                         {
@@ -290,8 +292,9 @@ namespace Ares.Player
                 if (File.Exists(file))
                     manual = File.ReadAllText(file, System.Text.Encoding.UTF8);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             List<CreditEntry> entries = new List<CreditEntry>();
             foreach (Ares.Data.IFileElement element in new Ares.ModelInfo.FileLists().GetAllFiles(m_Project))
@@ -308,8 +311,9 @@ namespace Ares.Player
                         continue;
                     entries.Add(new CreditEntry { File = element.FilePath, Title = tag.title, Artist = tag.artist, Copyright = tag.copyright, Comment = tag.comment });
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             }
             return ProjectCredits.Build(manual, entries);
@@ -365,9 +369,10 @@ namespace Ares.Player
                                 }
                                 ++count;
                             }
-                            catch (IOException)
+                            catch (IOException swallowed)
                             {
                                 // a file in use is left out
+                                Ares.Settings.ErrorLog.Note(swallowed);
                             }
                         }
                     }

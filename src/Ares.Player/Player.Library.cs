@@ -50,8 +50,9 @@ namespace Ares.Player
                 extrasToolStripMenuItem.DropDownItems.Insert(0, lib);
                 extrasToolStripMenuItem.DropDownItems.Insert(1, new ToolStripSeparator());
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -73,8 +74,9 @@ namespace Ares.Player
                     if (File.Exists(oldPath) && !File.Exists(newPath))
                         File.Copy(oldPath, newPath);
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
                 if (wasOpen && File.Exists(newPath))
                     OpenProject(newPath, false);
@@ -95,8 +97,9 @@ namespace Ares.Player
                     HookDrop(child);
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

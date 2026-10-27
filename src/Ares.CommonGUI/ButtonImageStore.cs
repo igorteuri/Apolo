@@ -29,7 +29,7 @@ namespace Ares.CommonGUI
             Action<string> handler = BeforeChange;
             if (handler != null)
             {
-                try { handler(projectPath); } catch (Exception) { }
+                try { handler(projectPath); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             }
         }
 
@@ -57,7 +57,7 @@ namespace Ares.CommonGUI
             get
             {
                 string dir = Path.Combine(Ares.Settings.AppFolders.Root, "icones");
-                try { Directory.CreateDirectory(dir); } catch (Exception) { }
+                try { Directory.CreateDirectory(dir); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 return dir;
             }
         }
@@ -103,8 +103,9 @@ namespace Ares.CommonGUI
                     map[key] = "lib:" + name;
                     changed = true;
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             }
             return changed;
@@ -197,8 +198,9 @@ namespace Ares.CommonGUI
                 }
                 File.WriteAllLines(SidecarPath(newProjectPath), lines.ToArray());
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -249,8 +251,9 @@ namespace Ares.CommonGUI
                         CopyFolder(old, Path.Combine(dir, "apolo_icons"));
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             s_Cache[projectPath] = map;
             bool moved = MigrateToLibrary(projectPath, map);
@@ -276,8 +279,9 @@ namespace Ares.CommonGUI
                     lines.Add(pair.Key + "\t" + pair.Value);
                 File.WriteAllLines(file, lines.ToArray());
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -371,8 +375,9 @@ namespace Ares.CommonGUI
                     return Color.FromArgb(255, Convert.ToInt32(spec.Substring(1, 2), 16), Convert.ToInt32(spec.Substring(3, 2), 16),
                         Convert.ToInt32(spec.Substring(5, 2), 16));
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             }
             return Color.Empty;

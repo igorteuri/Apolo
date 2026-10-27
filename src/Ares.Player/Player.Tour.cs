@@ -349,8 +349,9 @@ namespace Ares.Player
                 m_Dim.Close();
                 m_Owner.Activate();
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             if (m_Finished != null)
                 m_Finished(completed);

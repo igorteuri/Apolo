@@ -56,8 +56,9 @@ namespace Ares.Player
                         s_Cache[parts[0]] = new string[] { parts[1], parts[2] };
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -93,8 +94,9 @@ namespace Ares.Player
                         lines.Add(pair.Key + "\t" + pair.Value[0] + "\t" + pair.Value[1]);
                     File.WriteAllLines(file, lines.ToArray(), Encoding.UTF8);
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             }
         }

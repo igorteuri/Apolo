@@ -331,8 +331,9 @@ namespace Ares.Player
                     if (oldImage != null)
                         oldImage.Dispose();
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             });
 
@@ -409,8 +410,9 @@ namespace Ares.Player
                         return device.Name;
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             return deviceIndex.ToString();
         }
@@ -538,9 +540,10 @@ namespace Ares.Player
                     m_PauseButton.Enabled = !idle;
                 UpdateOutputButton();
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
                 // the bars are only informative
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

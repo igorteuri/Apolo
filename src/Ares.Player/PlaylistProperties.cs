@@ -259,7 +259,7 @@ namespace Ares.Player
             ShowInTaskbar = false;
             MinimizeBox = false;
             MaximizeBox = true;
-            try { Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0); } catch (Exception) { }
+            try { Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
 
             FlowLayoutPanel top = new FlowLayoutPanel();
             top.Dock = DockStyle.Top;

@@ -27,8 +27,9 @@ namespace Ares.CommonGUI
                 Thread.CurrentThread.CurrentUICulture = ci;
                 CultureInfo.DefaultThreadCurrentUICulture = ci;
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

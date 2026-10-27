@@ -81,8 +81,9 @@ namespace Ares.CommonGUI
                     Width += m_Overflow + 8;
                 LayoutGeneralPage();
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

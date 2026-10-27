@@ -24,7 +24,7 @@ namespace Ares.Player
         {
             if (IsDisposed || !IsHandleCreated)
                 return;
-            try { BeginInvoke(action); } catch (InvalidOperationException) { }
+            try { BeginInvoke(action); } catch (InvalidOperationException swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
         }
 
         protected MediaForm(string title)
@@ -36,7 +36,7 @@ namespace Ares.Player
             StartPosition = FormStartPosition.CenterParent;
             ShowInTaskbar = false;
             MinimizeBox = false;
-            try { Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0); } catch (Exception) { }
+            try { Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
         }
 
         protected static void Place(Control c, int x, int y, int w, int h, AnchorStyles anchor)
@@ -184,7 +184,7 @@ namespace Ares.Player
                         return;
                     Bitmap bmp = null;
                     try { bmp = Fit(OpenMedia.GetBytes(h.ThumbUrl), 160, 120); }
-                    catch (Exception) { }
+                    catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                     if (bmp == null)
                         continue;
                     shown++;

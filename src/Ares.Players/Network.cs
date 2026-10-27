@@ -1523,8 +1523,9 @@ namespace Ares.Players
                 {
                     WriteToClient(package, 0, package.Length);
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             }
         }

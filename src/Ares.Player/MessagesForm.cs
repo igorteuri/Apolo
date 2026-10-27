@@ -163,8 +163,9 @@ namespace Ares.Player
                 if (text.Length > 0)
                     Clipboard.SetText(text);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

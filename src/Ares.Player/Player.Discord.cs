@@ -22,7 +22,7 @@ namespace Ares.Player
                 extrasToolStripMenuItem.DropDownItems.Insert(2, item);
                 FormClosed += (s, e) =>
                 {
-                    try { m_Discord.Dispose(); } catch (Exception) { }
+                    try { m_Discord.Dispose(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 };
             }
             catch (Exception ex)

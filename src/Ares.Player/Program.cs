@@ -40,8 +40,9 @@ namespace Ares.Player
 #if !ANDROID
 			try {
 				XInitThreads ();
-			} catch (Exception) {
+			} catch (Exception swallowed) {
 				// silent failure
+			    Ares.Settings.ErrorLog.Note(swallowed);
 			}
 #endif
 #endif
@@ -74,9 +75,10 @@ namespace Ares.Player
                     System.IO.File.AppendAllText(file, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "  " + (ex != null ? ex.ToString() : "(unknown error)") + Environment.NewLine + Environment.NewLine);
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
                 // the log is the last resort: nothing more to do
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -102,8 +104,9 @@ namespace Ares.Player
                         + (pt ? "O registro completo está em crash.log, na pasta de dados do Apolo." : "The full record is in crash.log, in the Apolo data folder.");
                 MessageBox.Show(text, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -141,8 +144,9 @@ namespace Ares.Player
                 }
             }
 #if !MONO
-            catch (Ares.Ipc.ApplicationAlreadyStartedException)
+            catch (Ares.Ipc.ApplicationAlreadyStartedException swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
 #endif
             catch (Ares.Playing.AudioInitException ex)

@@ -115,8 +115,9 @@ namespace Ares.Player
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             return false;
         }
@@ -162,8 +163,9 @@ namespace Ares.Player
                 int n = PlayCounts.Add(full);
                 RefreshTrackPlays(file.Id, n);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
     }

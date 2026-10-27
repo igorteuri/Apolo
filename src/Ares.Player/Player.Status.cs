@@ -156,9 +156,10 @@ namespace Ares.Player
                 if (m_NetButton != null)
                     m_NetButton.Checked = m_Remote != null && m_Remote.Running;
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
                 // only informative
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

@@ -260,8 +260,9 @@ namespace Ares.CommonGUI
                 File.AppendAllText(Path.Combine(dir, "theme.log"),
                     DateTime.Now.ToString("HH:mm:ss") + " " + where + ": " + (ex == null ? "" : ex.GetType().Name + " " + ex.Message) + Environment.NewLine);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -346,8 +347,9 @@ namespace Ares.CommonGUI
                         {
                             s_CustomAccent = ThemePalette.C(Convert.ToInt32(value.TrimStart('#'), 16));
                         }
-                        catch (Exception)
+                        catch (Exception swallowed)
                         {
+                            Ares.Settings.ErrorLog.Note(swallowed);
                         }
                     }
                     else if (key == "scale")
@@ -358,9 +360,10 @@ namespace Ares.CommonGUI
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
                 // use defaults
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -376,9 +379,10 @@ namespace Ares.CommonGUI
                     "customaccent=" + (s_CustomAccent.ToArgb() & 0xFFFFFF).ToString("X6")
                 });
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
                 // not critical
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -880,8 +884,9 @@ namespace Ares.CommonGUI
                 c.BackColor = o.BackColor;
                 c.ForeColor = o.ForeColor;
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             if (o.HasFlatStyle)
             {
@@ -980,8 +985,9 @@ namespace Ares.CommonGUI
             {
                 c.Font = new Font(family, size, orig.Font.Style, orig.Font.Unit);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -999,8 +1005,9 @@ namespace Ares.CommonGUI
                 if (ts.ImageScalingSize != target)
                     ts.ImageScalingSize = target;
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -1308,8 +1315,9 @@ namespace Ares.CommonGUI
                     using (Pen pen = new Pen(m_Box.Focused ? p.Accent : p.ControlBorder))
                         g.DrawRectangle(pen, 0, 0, m_Box.Width - 1, m_Box.Height - 1);
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
                 finally
                 {
@@ -1469,8 +1477,9 @@ namespace Ares.CommonGUI
                         g.FillRegion(b, r);
                     }
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             }
         }
@@ -1550,8 +1559,9 @@ namespace Ares.CommonGUI
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             object skin = GetProp(dock, "Skin");
             if (skin == null)
@@ -1618,8 +1628,9 @@ namespace Ares.CommonGUI
                 if (pi != null && pi.CanWrite)
                     pi.SetValue(o, value, null);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -1660,8 +1671,9 @@ namespace Ares.CommonGUI
                     SetWindowTheme(c.Handle, dark ? "DarkMode_CFD" : "Explorer", null);
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -1676,8 +1688,9 @@ namespace Ares.CommonGUI
                 if (DwmSetWindowAttribute(f.Handle, 20, ref value, sizeof(int)) != 0)
                     DwmSetWindowAttribute(f.Handle, 19, ref value, sizeof(int));
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -1908,8 +1921,9 @@ namespace Ares.CommonGUI
                 if (c.ContextMenuStrip != null)
                     HookStrip(c.ContextMenuStrip);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -2039,8 +2053,9 @@ namespace Ares.CommonGUI
                 if (AfterAppearanceMenu != null)
                     AfterAppearanceMenu(form, menu);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

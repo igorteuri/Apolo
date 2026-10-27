@@ -30,7 +30,7 @@ namespace Ares.Player
                 extrasToolStripMenuItem.DropDownItems.Insert(3, item);
                 FormClosed += (s, e) =>
                 {
-                    try { m_Deck.Stop(); } catch (Exception) { }
+                    try { m_Deck.Stop(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 };
             }
             catch (Exception ex)
@@ -141,8 +141,9 @@ namespace Ares.Player
                     result = json.ToString();
                 }));
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             return result;
         }
@@ -161,8 +162,9 @@ namespace Ares.Player
                 if (!color.IsEmpty)
                     json.Append(",\"color\":\"#").Append(color.R.ToString("X2")).Append(color.G.ToString("X2")).Append(color.B.ToString("X2")).Append("\"");
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -224,7 +226,7 @@ namespace Ares.Player
                 copy.Text = T("Copiar chave", "Copy key");
                 copy.Click += (s, e) =>
                 {
-                    try { Clipboard.SetText(key.Text); } catch (Exception) { }
+                    try { Clipboard.SetText(key.Text); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 };
                 Button renew = new Button();
                 renew.SetBounds(100, 222, 200, 30);

@@ -308,8 +308,9 @@ namespace Ares.Player
                 if (row >= 0 && modesList.SelectedIndex != row)
                     modesList.SelectedIndex = row;
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

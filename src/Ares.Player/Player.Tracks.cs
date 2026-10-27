@@ -187,7 +187,7 @@ namespace Ares.Player
                     if (!modesDragging)
                         return;
                     modesDragging = false;
-                    try { Ares.CommonGUI.Preferences.Set("ModesWidth", m_ModesWidth.ToString()); } catch (Exception) { }
+                    try { Ares.CommonGUI.Preferences.Set("ModesWidth", m_ModesWidth.ToString()); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 };
                 new ToolTip().SetToolTip(m_ModesSplit, T("Arraste para alargar ou estreitar a lista de pastas", "Drag to widen or narrow the folder list"));
                 host.Controls.Add(m_ModesSplit);
@@ -218,7 +218,7 @@ namespace Ares.Player
                     if (!stateDragging)
                         return;
                     stateDragging = false;
-                    try { Ares.CommonGUI.Preferences.Set("StateWidth", m_StateWidth.ToString()); } catch (Exception) { }
+                    try { Ares.CommonGUI.Preferences.Set("StateWidth", m_StateWidth.ToString()); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 };
                 new ToolTip().SetToolTip(m_StateSplit, T("Arraste para alargar ou estreitar o painel", "Drag to widen or narrow the panel"));
                 host.Controls.Add(m_StateSplit);
@@ -419,7 +419,7 @@ namespace Ares.Player
             int rest = w - 2 * bw - 2 - 8; // room for title, type and search
             int kindW = Math.Max(120, Math.Min(230, rest / 3));
             int titleW = Math.Max(60, Math.Min(340, rest / 3));
-            int searchW = Math.Max(60, rest - kindW - titleW - 8);
+            int searchW = Math.Max(60, Math.Min(440, rest - kindW - titleW - 8)); // same limit as the search of the playlists: a field the whole width is only a long empty line
             int x = 0;
             m_TrackTitle.SetBounds(x, 0, titleW, h);
             x += titleW + 4;

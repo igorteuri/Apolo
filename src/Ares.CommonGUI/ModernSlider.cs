@@ -152,8 +152,9 @@ namespace Ares.CommonGUI
                 if (!m_Dragging)
                     m_TipTimer.Start();
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -164,8 +165,9 @@ namespace Ares.CommonGUI
                 if (m_Tip != null)
                     m_Tip.Hide(this);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

@@ -19,7 +19,7 @@ namespace Ares.Player
 
         private int HeaderHeight
         {
-            get { return Math.Max(58, Font.Height * 3 + 8); }
+            get { return Math.Max(48, Font.Height + 32); } // name + percentage on one line over the slider
         }
 
         private void InitHeader()
@@ -213,8 +213,9 @@ namespace Ares.Player
                     button.Image = bitmap;
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -244,7 +245,7 @@ namespace Ares.Player
             int width = ClientSize.Width;
             if (width < 300)
                 return;
-            int headerTop = menuStrip1.Bottom + 6;
+            int headerTop = menuStrip1.Bottom + 4;
             int hh = HeaderHeight;
 
             int vw = 3 * VolumeColumnWidth + 8 + LevelColumnWidth;

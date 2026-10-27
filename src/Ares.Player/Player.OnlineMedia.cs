@@ -59,8 +59,9 @@ namespace Ares.Player
                     string line = spec.Substring(4) + "\t" + hit.Title + "\t" + hit.Author + "\t" + hit.License + "\t" + hit.PageUrl;
                     File.AppendAllText(Path.Combine(dir, "creditos.txt"), line.Replace("\r", " ").Replace("\n", " ") + Environment.NewLine, Encoding.UTF8);
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
                 UpdateElementsPanel();
             }
@@ -70,7 +71,7 @@ namespace Ares.Player
             }
             finally
             {
-                try { File.Delete(temp); } catch (Exception) { }
+                try { File.Delete(temp); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             }
         }
 
@@ -317,7 +318,7 @@ namespace Ares.Player
                 {
                     if (h.PageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                     {
-                        try { Process.Start(new ProcessStartInfo(h.PageUrl) { UseShellExecute = true }); } catch (Exception) { }
+                        try { Process.Start(new ProcessStartInfo(h.PageUrl) { UseShellExecute = true }); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                     }
                     break;
                 }
@@ -369,7 +370,7 @@ namespace Ares.Player
                             File.AppendAllText(Path.Combine(folder, "creditos.txt"),
                                 name + "\t\t\tYouTube Audio Library\thttps://studio.youtube.com/" + Environment.NewLine, System.Text.Encoding.UTF8);
                         }
-                        catch (Exception) { }
+                        catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                         ok++;
                     }
                     catch (Exception ex)

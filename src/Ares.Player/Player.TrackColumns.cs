@@ -176,8 +176,9 @@ namespace Ares.Player
                 m_TrackList.EndUpdate();
                 m_TrackList.Invalidate();
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -248,8 +249,9 @@ namespace Ares.Player
                         if (System.IO.File.Exists(pair.Value))
                             info = Ares.Tags.AudioTags.Read(pair.Value);
                     }
-                    catch (Exception)
+                    catch (Exception swallowed)
                     {
+                        Ares.Settings.ErrorLog.Note(swallowed);
                     }
                     if (info == null)
                         info = new Ares.Tags.AudioTagInfo();
@@ -418,8 +420,9 @@ namespace Ares.Player
                     BeginInvoke((Action)(() => ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
                         T("Verificação de direitos autorais concluída.", "Copyright check finished.")))));
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             });
         }

@@ -227,7 +227,7 @@ namespace Ares.Player
 
         private static void TryDelete(string file)
         {
-            try { if (File.Exists(file)) File.Delete(file); } catch (Exception) { }
+            try { if (File.Exists(file)) File.Delete(file); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
         }
 
         // null when the download looks right, otherwise the message for the user

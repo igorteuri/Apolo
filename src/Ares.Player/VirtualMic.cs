@@ -136,11 +136,12 @@ namespace Ares.Player
                     m_Ui.BeginInvoke((Action)(() =>
                     {
                         try { m_Core.PostWebMessageAsString(text); }
-                        catch (Exception) { }
+                        catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                     }));
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

@@ -92,7 +92,7 @@ namespace Ares.Player
             }
             if (listener == null)
                 return;
-            try { listener.Close(); } catch (Exception) { }
+            try { listener.Close(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
         }
 
         private void OnContext(IAsyncResult ar)
@@ -106,11 +106,11 @@ namespace Ares.Player
                 if (listener.IsListening)
                     listener.BeginGetContext(OnContext, listener);
             }
-            catch (Exception) { }
+            catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             try { Handle(context); }
             catch (Exception)
             {
-                try { context.Response.Abort(); } catch (Exception) { }
+                try { context.Response.Abort(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             }
         }
 
@@ -141,7 +141,7 @@ namespace Ares.Player
                     string value = Uri.UnescapeDataString(part.Substring(idx + 1).Replace('+', ' '));
                     result[key] = value;
                 }
-                catch (Exception) { }
+                catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             }
             return result;
         }
@@ -439,7 +439,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                try { if (File.Exists(temp)) File.Delete(temp); } catch (Exception) { }
+                try { if (File.Exists(temp)) File.Delete(temp); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 return ex.Message;
             }
         }
@@ -524,7 +524,7 @@ namespace Ares.Player
                 if (!process.HasExited)
                     process.Kill();
             }
-            catch (Exception) { }
+            catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
         }
     }
 
@@ -717,9 +717,10 @@ namespace Ares.Player
                 if (bridgeOn)
                     m_Bridge.SetState(stateText);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
                 // the remote control must never disturb playing
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -835,7 +836,7 @@ namespace Ares.Player
                 copyPw.Text = T("Copiar senha", "Copy password");
                 copyPw.Click += (s, e) =>
                 {
-                    try { Clipboard.SetText(pw.Text); } catch (Exception) { }
+                    try { Clipboard.SetText(pw.Text); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 };
 
                 Button toggle = new Button();
@@ -874,7 +875,7 @@ namespace Ares.Player
                 {
                     if (qrBitmap != null)
                     {
-                        try { Clipboard.SetImage(qrBitmap); } catch (Exception) { }
+                        try { Clipboard.SetImage(qrBitmap); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                     }
                 };
                 saveQr.Click += (s, e) =>
@@ -887,7 +888,7 @@ namespace Ares.Player
                         dlg.FileName = "apolo-qr.png";
                         if (dlg.ShowDialog(form) == DialogResult.OK)
                         {
-                            try { qrBitmap.Save(dlg.FileName, System.Drawing.Imaging.ImageFormat.Png); } catch (Exception) { }
+                            try { qrBitmap.Save(dlg.FileName, System.Drawing.Imaging.ImageFormat.Png); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                         }
                     }
                 };
@@ -981,7 +982,7 @@ namespace Ares.Player
                 };
                 copy.Click += (s, e) =>
                 {
-                    try { Clipboard.SetText(link.Text); } catch (Exception) { }
+                    try { Clipboard.SetText(link.Text); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 };
                 open.Click += (s, e) => OpenInBrowser(link.Text);
 

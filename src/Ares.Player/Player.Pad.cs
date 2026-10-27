@@ -96,8 +96,9 @@ namespace Ares.Player
                           "The floating pad shortcut (" + KeyText(PadHotkey) + ") is already used by another program. Choose another in Extras > Floating pad.")));
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             FormClosed += (s, e) =>
             {
@@ -410,8 +411,9 @@ namespace Ares.Player
                 {
                     Ares.CommonGUI.Preferences.Set("PadPos", Left + "," + Top);
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
                 base.OnFormClosed(e);
             }

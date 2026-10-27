@@ -66,8 +66,9 @@ namespace Ares.CommonGUI
                 {
                     PaintBox();
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             }
         }

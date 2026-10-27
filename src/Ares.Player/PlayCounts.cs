@@ -38,8 +38,9 @@ namespace Ares.Player
                         s_Counts[line.Substring(0, tab)] = n;
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -80,8 +81,9 @@ namespace Ares.Player
                     lines.Add(pair.Key + "\t" + pair.Value);
                 File.WriteAllLines(path, lines.ToArray(), Encoding.UTF8);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
     }

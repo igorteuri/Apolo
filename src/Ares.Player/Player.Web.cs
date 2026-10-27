@@ -567,8 +567,9 @@ namespace Ares.Player
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             if (m_Tabs.Count == 0)
             {
@@ -586,8 +587,9 @@ namespace Ares.Player
                     lines.Add(t.Kind + "\t" + t.Name.Replace('\t', ' ') + "\t" + (t.Kind == "vdo" ? "" : t.Url.Replace('\t', ' ')));
                 File.WriteAllLines(ConfigFile, lines.ToArray());
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -742,8 +744,9 @@ namespace Ares.Player
                         Ares.CommonGUI.Preferences.Set("VdoDevice", label);
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -794,8 +797,9 @@ namespace Ares.Player
                 if (IsHandleCreated && !IsDisposed)
                     BeginInvoke(new Action(ApplyCaptureModeAll));
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -818,8 +822,9 @@ namespace Ares.Player
                         core.Reload();
                     }
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             }
         }
@@ -851,8 +856,9 @@ namespace Ares.Player
                     tab.CaptureHooked = true;
                     AppAudioCapture.PushPageAudio(tab, data, data.Length);
                 }
-                catch (FormatException)
+                catch (FormatException swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             }
         }
@@ -972,8 +978,9 @@ namespace Ares.Player
             {
                 t.View.CoreWebView2.Navigate(text);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -1037,8 +1044,9 @@ namespace Ares.Player
                 if (m_ExtBar != null)
                     await m_ExtBar.RefreshAsync(core);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -1289,7 +1297,7 @@ namespace Ares.Player
                     }
                     finally
                     {
-                        try { File.Delete(temp); } catch (Exception) { }
+                        try { File.Delete(temp); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                     }
                     await Install(target);
                 }

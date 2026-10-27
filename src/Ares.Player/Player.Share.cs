@@ -173,14 +173,16 @@ namespace Ares.Player
                                 }
                             }
                         }
-                        catch (Exception)
+                        catch (Exception swallowed)
                         {
+                            Ares.Settings.ErrorLog.Note(swallowed);
                         }
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             result.Sort(StringComparer.CurrentCultureIgnoreCase);
             return result;

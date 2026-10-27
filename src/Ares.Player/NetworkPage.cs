@@ -150,8 +150,8 @@ namespace Ares.Player
                 {
                     File.Delete(tempFile);
                 }
-                catch (IOException)
-                { }
+                catch (IOException swallowed)
+                { Ares.Settings.ErrorLog.Note(swallowed); }
             }
         }
 

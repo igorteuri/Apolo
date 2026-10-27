@@ -119,8 +119,9 @@ namespace Ares.Player
                     player = s_Info ?? (s_Info = Make(new double[] { 783.99, 987.77 }));
                 player.Play();
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

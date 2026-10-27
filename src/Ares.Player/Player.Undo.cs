@@ -93,8 +93,9 @@ namespace Ares.Player
                     File.WriteAllBytes(path, data);
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -143,8 +144,9 @@ namespace Ares.Player
                 m_RedoStack.Clear();
                 UpdateUndoMenu();
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

@@ -16,14 +16,14 @@ namespace Ares.Player
 
         private static byte[] DownloadBytes(string url, out string contentType)
         {
-            try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; } catch (Exception) { }
+            try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Timeout = 8000;
             request.ReadWriteTimeout = 8000;
             request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Apolo";
             request.Accept = "image/*,text/html;q=0.8,*/*;q=0.5";
             request.AllowAutoRedirect = true;
-            try { request.Proxy = WebRequest.GetSystemWebProxy(); } catch (Exception) { }
+            try { request.Proxy = WebRequest.GetSystemWebProxy(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             using (WebResponse response = request.GetResponse())
             {
                 contentType = response.ContentType ?? "";
@@ -184,7 +184,7 @@ namespace Ares.Player
             }
             finally
             {
-                try { File.Delete(temp); } catch (Exception) { }
+                try { File.Delete(temp); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             }
         }
 
@@ -247,7 +247,7 @@ namespace Ares.Player
                 }
                 Bitmap bmp = null;
                 try { bmp = data.GetDataPresent(DataFormats.Bitmap) ? data.GetData(DataFormats.Bitmap) as Bitmap : null; }
-                catch (Exception) { }
+                catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 if (bmp != null)
                 {
                     using (MemoryStream ms = new MemoryStream())
@@ -258,8 +258,9 @@ namespace Ares.Player
                     return PictureDrop.Other;
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             return PictureDrop.None;
         }
@@ -414,8 +415,9 @@ namespace Ares.Player
                         m_Text.Text = clip;
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             ShowFound();
             Shown += (s, e) => { m_Text.Focus(); m_Text.SelectAll(); };

@@ -21,6 +21,8 @@ namespace Ares.Player
         private const int ChipMax = 300;
         private const int Gap = 6;
         private const int Btn = 22;
+        // the bottom strip of a sound chip is its progress line: a click anywhere along it (also under the buttons) seeks
+        private const int SeekZone = 7;
 
         private enum Part { None, Body, Repeat, Pause, Stop, Mute }
 
@@ -174,17 +176,17 @@ namespace Ares.Player
 
         private static Rectangle StopRect(Rectangle r)
         {
-            return new Rectangle(r.Right - Btn - 3, r.Y + (r.Height - Btn) / 2, Btn, Btn);
+            return new Rectangle(r.Right - Btn - 3, r.Y + (r.Height - SeekZone - Btn) / 2, Btn, Btn);
         }
 
         private static Rectangle PauseRect(Rectangle r)
         {
-            return new Rectangle(r.Right - 2 * Btn - 3, r.Y + (r.Height - Btn) / 2, Btn, Btn);
+            return new Rectangle(r.Right - 2 * Btn - 3, r.Y + (r.Height - SeekZone - Btn) / 2, Btn, Btn);
         }
 
         private static Rectangle RepeatRect(Rectangle r)
         {
-            return new Rectangle(r.Right - 3 * Btn - 3, r.Y + (r.Height - Btn) / 2, Btn, Btn);
+            return new Rectangle(r.Right - 3 * Btn - 3, r.Y + (r.Height - SeekZone - Btn) / 2, Btn, Btn);
         }
 
         private static Rectangle MuteRect(Rectangle r)
@@ -198,6 +200,8 @@ namespace Ares.Player
                 return Part.None;
             if (c.Web)
                 return MuteRect(c.Rect).Contains(p) ? Part.Mute : Part.Body;
+            if (p.Y >= c.Rect.Bottom - SeekZone)
+                return Part.Body;
             if (StopRect(c.Rect).Contains(p))
                 return Part.Stop;
             if (PauseRect(c.Rect).Contains(p))
@@ -265,8 +269,8 @@ namespace Ares.Player
                     RepeatRequested(c.Handle, !c.Repeat);
                 else if (p == Part.Body && SeekRequested != null && c.Length > 0)
                 {
-                    int left = c.Rect.X + 8;
-                    int width = Math.Max(1, c.Rect.Width - 16);
+                    int left = c.Rect.X + 6;
+                    int width = Math.Max(1, c.Rect.Width - 12);
                     double f = Math.Max(0, Math.Min(1, (e.X - left) / (double)width));
                     SeekRequested(c.Handle, f * c.Length);
                 }
@@ -356,7 +360,21 @@ namespace Ares.Player
                     icon = "⚡"; // sound effect
                     iconColor = accent;
                 }
-                Rectangle iconRect = new Rectangle(r.X + 6, r.Y, 18, r.Height);
+                int bodyHeight = c.Web ? r.Height : r.Height - SeekZone;
+                if (!c.Web && c.Length > 0)
+                {
+                    // thin progress line along the bottom edge
+                    Rectangle track = new Rectangle(r.X + 8, r.Bottom - 6, Math.Max(4, r.Width - 16), 3);
+                    using (SolidBrush tb = new SolidBrush(Color.FromArgb(80, dim)))
+                        g.FillRectangle(tb, track);
+                    int lineW = (int)(track.Width * Math.Max(0, Math.Min(1, c.Position / c.Length)));
+                    if (lineW > 0)
+                    {
+                        using (SolidBrush lb = new SolidBrush(accent))
+                            g.FillRectangle(lb, track.X, track.Y, lineW, track.Height);
+                    }
+                }
+                Rectangle iconRect = new Rectangle(r.X + 6, r.Y, 18, bodyHeight);
                 TextRenderer.DrawText(g, icon, Font, iconRect, iconColor,
                     TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.NoPadding);
 
@@ -366,7 +384,7 @@ namespace Ares.Player
                     title = (c.Vdo ? T("Enviando: ", "Sending: ") : "") + title + (c.Muted ? T(" (mudo)", " (muted)") : "");
                 else if (c.Length > 0)
                     title += "  " + Time(c.Position) + "/" + Time(c.Length);
-                Rectangle textRect = new Rectangle(r.X + 26, r.Y, Math.Max(10, r.Width - 26 - buttonsWidth), r.Height);
+                Rectangle textRect = new Rectangle(r.X + 26, r.Y, Math.Max(10, r.Width - 26 - buttonsWidth), bodyHeight);
                 TextRenderer.DrawText(g, title, Font, textRect, c.Muted ? dim : text,
                     TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.Left | TextFormatFlags.NoPadding);
 

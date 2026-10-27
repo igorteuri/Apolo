@@ -194,7 +194,7 @@ The code of Apolo is open and lives on GitHub:
                 form.MaximizeBox = true;
                 form.ClientSize = new Size(720, 560);
                 form.MinimumSize = new Size(560, 400);
-                try { form.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0); } catch (Exception) { }
+                try { form.Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
 
                 RichTextBox body = new RichTextBox();
                 body.ReadOnly = true;
@@ -278,7 +278,7 @@ The code of Apolo is open and lives on GitHub:
         private void ShowFoundryHelp()
         {
             // the ID comes from the VDO.Ninja tab ("Send audio"): it is opened for the user (it is needed while the Foundry plays)
-            try { ShowWebWindow(true); } catch (Exception) { }
+            try { ShowWebWindow(true); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             string id = ShareDialog.CleanStreamId(Ares.CommonGUI.Preferences.Get("VdoId", ""));
             string idLine = id.Length > 0
                 ? T("O seu ID da transmissão é: " + id + "  (o botão \"Copiar ID\" abaixo copia para você).",
@@ -354,7 +354,7 @@ TIPS
             {
                 buttons.Add(new KeyValuePair<string, Action>(T("Copiar ID", "Copy ID"), () =>
                 {
-                    try { Clipboard.SetText(id); } catch (Exception) { }
+                    try { Clipboard.SetText(id); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 }));
             }
             buttons.Add(new KeyValuePair<string, Action>(T("Fechar", "Close"), null));

@@ -284,8 +284,9 @@ namespace Ares.Player
                                 Fill();
                         }));
                     }
-                    catch (InvalidOperationException)
+                    catch (InvalidOperationException swallowed)
                     {
+                        Ares.Settings.ErrorLog.Note(swallowed);
                     }
                 });
             }
@@ -386,8 +387,9 @@ namespace Ares.Player
                                         ok++;
                                         continue;
                                     }
-                                    catch (Exception)
+                                    catch (Exception swallowed)
                                     {
+                                        Ares.Settings.ErrorLog.Note(swallowed);
                                     }
                                 }
                                 failed++;
@@ -400,8 +402,9 @@ namespace Ares.Player
                                 + (failed > 0 ? " " + failed + Player.T(" falharam (internet?).", " failed (internet?).") : "");
                         }));
                     }
-                    catch (InvalidOperationException)
+                    catch (InvalidOperationException swallowed)
                     {
+                        Ares.Settings.ErrorLog.Note(swallowed);
                     }
                 });
             }

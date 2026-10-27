@@ -186,8 +186,9 @@ namespace Ares.Player
                     if (File.Exists(full) && seen.Add(full))
                         result.Add(full);
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             }
             return result;
@@ -257,7 +258,7 @@ namespace Ares.Player
                 StartPosition = FormStartPosition.CenterParent;
                 ShowInTaskbar = false;
                 MinimizeBox = false;
-                try { Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0); } catch (Exception) { }
+                try { Icon = Ares.CommonGUI.ApoloBrand.GetIcon(32, Ares.CommonGUI.ApoloState.Playing, 0); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
 
                 m_Top.SetBounds(12, 10, 936, 36);
                 m_Top.WrapContents = false;
@@ -406,7 +407,7 @@ namespace Ares.Player
             {
                 if (IsDisposed || !IsHandleCreated)
                     return;
-                try { BeginInvoke(action); } catch (InvalidOperationException) { }
+                try { BeginInvoke(action); } catch (InvalidOperationException swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             }
         }
 
@@ -441,8 +442,9 @@ namespace Ares.Player
                             return t;
                     }
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
                 return "{titulo} - {artista}";
             }
@@ -454,8 +456,9 @@ namespace Ares.Player
                     Directory.CreateDirectory(Path.GetDirectoryName(PatternFile));
                     File.WriteAllText(PatternFile, pattern.Trim(), Encoding.UTF8);
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             }
 
@@ -782,8 +785,9 @@ namespace Ares.Player
                     Directory.CreateDirectory(Path.GetDirectoryName(UndoFile));
                     File.WriteAllLines(UndoFile, log.ToArray(), Encoding.UTF8);
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
                 m_Owner.UpdateProjectPaths(moved);
                 m_Apply.Enabled = false;
@@ -845,7 +849,7 @@ namespace Ares.Player
                         failed++;
                     }
                 }
-                try { File.Delete(UndoFile); } catch (Exception) { }
+                try { File.Delete(UndoFile); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 m_Owner.UpdateProjectPaths(moved);
                 m_Undo.Enabled = false;
                 m_Items.Clear();

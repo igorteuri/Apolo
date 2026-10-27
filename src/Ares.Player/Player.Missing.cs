@@ -226,8 +226,9 @@ namespace Ares.Player
                         return f.Substring(b.Length);
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             return newPath;
         }
@@ -409,9 +410,10 @@ namespace Ares.Player
                             foreach (string sub in Directory.GetDirectories(dir))
                                 pending.Push(sub);
                         }
-                        catch (Exception)
+                        catch (Exception swallowed)
                         {
                             // folder without access: skip
+                            Ares.Settings.ErrorLog.Note(swallowed);
                         }
                     }
                 }

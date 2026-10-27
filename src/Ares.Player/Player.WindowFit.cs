@@ -39,9 +39,10 @@ namespace Ares.Player
                 Ares.CommonGUI.Preferences.Set("WindowBounds", string.Join(",", new[] { b.X, b.Y, b.Width, b.Height }.Select(v => v.ToString(CultureInfo.InvariantCulture))));
                 Ares.CommonGUI.Preferences.SetBool("WindowMaximized", WindowState == FormWindowState.Maximized);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
                 // remembering the window is a convenience
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -67,9 +68,10 @@ namespace Ares.Player
                 if (!m_HideToTray && Ares.CommonGUI.Preferences.GetBool("WindowMaximized", false))
                     WindowState = FormWindowState.Maximized;
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
                 // the window keeps the size it has
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             m_WindowRestored = true;
         }
@@ -85,8 +87,9 @@ namespace Ares.Player
                 if (fitted != Bounds)
                     Bounds = fitted;
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

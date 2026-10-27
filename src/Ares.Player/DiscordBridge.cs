@@ -73,8 +73,9 @@ namespace Ares.Player
                 byte[] cipher = ProtectedData.Protect(Encoding.UTF8.GetBytes(token), Entropy, DataProtectionScope.CurrentUser);
                 Ares.CommonGUI.Preferences.Set("DiscordToken", Convert.ToBase64String(cipher));
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
     }
@@ -140,7 +141,7 @@ namespace Ares.Player
             EventHandler h = Changed;
             if (h != null)
             {
-                try { h(this, EventArgs.Empty); } catch (Exception) { }
+                try { h(this, EventArgs.Empty); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             }
         }
 
@@ -228,7 +229,7 @@ namespace Ares.Player
                 }
                 if (client == null)
                     throw new InvalidOperationException("The Discord helper did not start.");
-                try { listener.Stop(); } catch (Exception) { }
+                try { listener.Stop(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
                 client.NoDelay = true;
                 lock (m_Lock)
                 {
@@ -509,8 +510,9 @@ namespace Ares.Player
                             stream.Write(frame, 0, frame.Length);
                         }
                     }
-                    catch (Exception)
+                    catch (Exception swallowed)
                     {
+                        Ares.Settings.ErrorLog.Note(swallowed);
                     }
                 }
             }
@@ -547,8 +549,9 @@ namespace Ares.Player
                         stream.Write(data, 0, count);
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -592,9 +595,9 @@ namespace Ares.Player
 
         private void CleanUp()
         {
-            try { if (m_Listener != null) m_Listener.Stop(); } catch (Exception) { }
+            try { if (m_Listener != null) m_Listener.Stop(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             m_Listener = null;
-            try { if (m_Client != null) m_Client.Close(); } catch (Exception) { }
+            try { if (m_Client != null) m_Client.Close(); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             m_Client = null;
             m_Stream = null;
             try
@@ -605,7 +608,7 @@ namespace Ares.Player
                         m_Process.Kill();
                 }
             }
-            catch (Exception) { }
+            catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
             m_Process = null;
             m_Token = null;
         }

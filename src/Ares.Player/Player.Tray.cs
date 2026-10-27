@@ -50,9 +50,10 @@ namespace Ares.Player
                 notifyIcon.Text = "Apolo - " + (state == Ares.CommonGUI.ApoloState.Playing ? T("tocando", "playing")
                     : state == Ares.CommonGUI.ApoloState.Paused ? T("pausado", "paused") : T("parado", "stopped"));
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
                 // the icon is only informative
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 

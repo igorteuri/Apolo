@@ -48,8 +48,9 @@ namespace Ares.Player
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             return map;
         }
@@ -64,8 +65,9 @@ namespace Ares.Player
                 Directory.CreateDirectory(Path.GetDirectoryName(MapFile));
                 File.WriteAllLines(MapFile, map.Select(p => p.Key + "\t" + p.Value).ToArray());
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
@@ -140,8 +142,9 @@ namespace Ares.Player
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
             return null;
         }
@@ -227,8 +230,9 @@ namespace Ares.Player
                     using (Image img = Image.FromStream(fs))
                         return new Bitmap(img, 20, 20);
                 }
-                catch (Exception)
+                catch (Exception swallowed)
                 {
+                    Ares.Settings.ErrorLog.Note(swallowed);
                 }
             }
             return null;
