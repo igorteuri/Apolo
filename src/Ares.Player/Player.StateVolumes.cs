@@ -16,6 +16,8 @@ namespace Ares.Player
         private readonly Control[] m_StateCaptions = new Control[3];
         private readonly Ares.CommonGUI.ModernSlider[] m_StateSliders = new Ares.CommonGUI.ModernSlider[3];
         private bool m_StateLayoutPending;
+        private bool m_StateLayouting;
+        private string m_StateLayoutKey;
 
         private void InitStateVolumes(Label[] labels, Ares.CommonGUI.ModernSlider[] bars, EventHandler[] changed, EventHandler[] toggles)
         {
@@ -54,7 +56,8 @@ namespace Ares.Player
             // the panel is moved by the layout of the columns after the anchors have worked: do it once it is quiet
             groupBox3.Layout += (s, e) =>
             {
-                if (m_StateLayoutPending || !IsHandleCreated)
+                // our own SetBounds below raise this event again: ignore it, or the window never stops laying out
+                if (m_StateLayoutPending || m_StateLayouting || !IsHandleCreated)
                     return;
                 m_StateLayoutPending = true;
                 BeginInvoke(new System.Windows.Forms.MethodInvoker(() =>
@@ -69,9 +72,27 @@ namespace Ares.Player
         // the bottom of the state panel: web audio on the very bottom, the volumes above it, the list of sounds takes the rest
         private void LayoutStateBottom()
         {
-            if (m_SoundPanel == null)
+            if (m_SoundPanel == null || m_StateLayouting)
                 return;
             int web = m_WebAudioPanel != null ? m_WebAudioPanel.Height : 0;
+            // nothing changed since the last time: nothing to move
+            string key = groupBox3.ClientSize + "|" + web + "|" + m_SoundPanel.Top;
+            if (key == m_StateLayoutKey)
+                return;
+            m_StateLayouting = true;
+            try
+            {
+                PlaceStateBottom(web);
+            }
+            finally
+            {
+                m_StateLayouting = false;
+                m_StateLayoutKey = groupBox3.ClientSize + "|" + web + "|" + m_SoundPanel.Top;
+            }
+        }
+
+        private void PlaceStateBottom(int web)
+        {
             int bottom = groupBox3.ClientSize.Height - 8;
             if (m_WebAudioPanel != null)
             {
