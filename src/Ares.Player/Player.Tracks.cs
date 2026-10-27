@@ -491,7 +491,8 @@ namespace Ares.Player
                 }
                 int statusHeight = m_StatusStrip != null && m_StatusStrip.Visible ? m_StatusStrip.Height : 0;
                 int bodyBottom = ClientSize.Height - statusHeight - 10;
-                int bodyHeight = Math.Max(150, bodyBottom - bodyTop);
+                // the three columns (state, folders, elements + tracks) end on the same line; the strip of the track list runs under all of them
+                int bodyHeight = Math.Max(150, bodyBottom - TrackStripHeight - 2 - bodyTop);
 
                 // left column (state of the program) or its strip
                 bool leftOpen = m_LeftOpen;
@@ -534,8 +535,8 @@ namespace Ares.Player
                 int colLeft = groupBox5.Left;
                 int colWidth = Math.Max(100, right - colLeft);
                 int top = bodyTop;
-                int bottom = bodyBottom - TrackStripHeight - 2;
-                int total = Math.Max(100, bottom - top);
+                int bottom = bodyTop + bodyHeight;
+                int total = bodyHeight;
                 int panelHeight = 0;
                 if (m_TrackState == 2)
                     panelHeight = Math.Max(90, Math.Min(m_TrackHeight, total - ElementsMinHeight - TrackGap));
@@ -544,7 +545,8 @@ namespace Ares.Player
                 int panelTop = top + elementsHeight + TrackGap;
                 m_TrackPanel.SetBounds(colLeft, panelTop, colWidth, panelHeight);
                 m_TrackSplit.SetBounds(colLeft, panelTop - TrackGap, colWidth, TrackGap);
-                m_TrackStrip.SetBounds(colLeft, bottom + 2, colWidth, TrackStripHeight);
+                int stripLeft = leftOpen ? margin : modesLeft;
+                m_TrackStrip.SetBounds(stripLeft, bottom + 2, Math.Max(100, right - stripLeft), TrackStripHeight);
                 if (m_TrackState == 2)
                     LayoutTrackPanel();
 
@@ -575,7 +577,7 @@ namespace Ares.Player
         {
             if (m_TrackState != 2)
                 return;
-            int total = groupBox4.Bottom - TrackStripHeight - 2 - groupBox4.Top;
+            int total = groupBox4.Bottom - groupBox4.Top;
             int max = total - ElementsMinHeight - TrackGap;
             newHeight = Math.Max(90, Math.Min(newHeight, max));
             if (newHeight == m_TrackHeight)

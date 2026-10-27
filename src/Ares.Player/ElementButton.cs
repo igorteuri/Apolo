@@ -188,6 +188,15 @@ namespace Ares.Player
         private static int Pad { get { return (int)Math.Round(10 * Scale); } }
         private static int IconSize { get { return (int)Math.Round(30 * Scale); } }
         private static int PictureHeight { get { return (int)Math.Round(70 * Scale); } }
+        private static int BadgeSize { get { return Math.Max(22, (int)Math.Round(25 * Scale)); } }
+
+        // a text-only card whose name is long: the name goes below the corner marks (kind badges, "playing" mark) instead of under them
+        private static bool TextCrowdsMarks(string text, Font font, int width)
+        {
+            int w = TextRenderer.MeasureText(text, font, new Size(int.MaxValue, int.MaxValue),
+                TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix).Width;
+            return w > width - 2 * (BadgeSize + 12);
+        }
 
         private const TextFormatFlags TextFlags = TextFormatFlags.WordBreak | TextFormatFlags.HorizontalCenter
             | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix;
@@ -214,6 +223,8 @@ namespace Ares.Player
             {
                 int textHeight = TextRenderer.MeasureText(texts[i], font, new Size(width - 2 * pad, int.MaxValue), TextFlags).Height;
                 int h = textHeight + 2 * pad;
+                if (kinds[i] == 0 && TextCrowdsMarks(texts[i], font, width))
+                    h = textHeight + pad + BadgeSize + 12;
                 if (kinds[i] == 1)
                     h += IconSize + 4;
                 else if (kinds[i] == 2)
@@ -327,13 +338,16 @@ namespace Ares.Player
                     g.DrawImage(m_IconCache, x, (Height - size) / 2, size, size);
                 x += size + pad;
             }
-            Rectangle textRect = new Rectangle(x, 0, Math.Max(10, Width - x - pad), Height);
+            int right = Width - pad;
+            if (m_Kind != 0)
+                right = BadgeRect(0, BadgeCount()).X - 4;
+            Rectangle textRect = new Rectangle(x, 0, Math.Max(10, right - x), Height);
             TextRenderer.DrawText(g, Text, Font, textRect, text,
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis
                 | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
         }
 
-        // the button which plays now: three small bars (an equalizer) in a pill at the top right, besides the fill and the border
+        // the button which plays now: a "play" triangle in a pill at the top right, besides the fill and the border
         private void PaintPlayingMark(Graphics g, Color accent, Color text, Color window)
         {
             int d = Math.Max(22, (int)Math.Round(25 * Scale));
@@ -343,20 +357,16 @@ namespace Ares.Player
                 using (SolidBrush pb = new SolidBrush(Color.FromArgb(235, accent)))
                     g.FillPath(pb, pp);
             }
-            // dark bars on a light color, light bars on a dark one
-            Color bar = ContrastRatio(accent, Color.White) >= ContrastRatio(accent, Color.Black) ? Color.White : Color.Black;
-            int bw = Math.Max(3, d / 8);
-            int gap = Math.Max(2, d / 10);
-            int total = 3 * bw + 2 * gap;
-            int x0 = pill.X + (d - total) / 2;
-            int[] heights = { d * 2 / 5, d * 3 / 5, d * 1 / 3 };
-            using (SolidBrush bb = new SolidBrush(bar))
+            // dark symbol on a light color, light symbol on a dark one
+            Color mark = ContrastRatio(accent, Color.White) >= ContrastRatio(accent, Color.Black) ? Color.White : Color.Black;
+            // the triangle is a little to the right of the center so that it looks centered
+            float th = d * 0.46f;
+            float tw = th * 0.9f;
+            float tx = pill.X + (d - tw) / 2f + d * 0.04f;
+            float ty = pill.Y + (d - th) / 2f;
+            using (SolidBrush bb = new SolidBrush(mark))
             {
-                for (int i = 0; i < 3; i++)
-                {
-                    int h = heights[i];
-                    g.FillRectangle(bb, x0 + i * (bw + gap), pill.Y + (d + d / 3) / 2 - h, bw, h);
-                }
+                g.FillPolygon(bb, new PointF[] { new PointF(tx, ty), new PointF(tx + tw, ty + th / 2f), new PointF(tx, ty + th) });
             }
         }
 
@@ -454,6 +464,10 @@ namespace Ares.Player
                     if (m_IconCache != null)
                         g.DrawImage(m_IconCache, (Width - size) / 2, pad, size, size);
                     textTop = pad + size + 4;
+                }
+                else if (!m_ListMode && (m_Kind != 0 || Checked) && TextCrowdsMarks(Text, Font, Width))
+                {
+                    textTop = Math.Max(pad, BadgeSize + 12);
                 }
 
                 if (!m_ListMode)
