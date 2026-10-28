@@ -439,10 +439,14 @@ namespace Ares.Player
                 T("Escolha em qual placa de som o Apolo toca, ou \"não ouvir neste PC\" para só enviar o som para a live (Discord, VDO.Ninja, OBS).",
                   "Choose which sound card Apolo plays on, or \"do not listen on this PC\" to only send the sound to the stream (Discord, VDO.Ninja, OBS)."),
                 () => TourOf(menuStrip1, m_OutputButton));
-            add(T("Menu Extras", "Extras menu"),
-                T("Pad flutuante (botões da pasta por cima da tela, com um atalho), controle remoto pelo celular, Stream Deck, Discord, OBS, banco de imagens para os botões, ferramentas para renomear músicas e checar direitos autorais.",
-                  "Floating pad (the buttons of a folder on top of the screen, with a shortcut), remote control from your phone, Stream Deck, Discord, OBS, the image bank for the buttons, tools to rename music and check copyright."),
+            add(T("Menu Ferramentas", "Tools menu"),
+                T("Coisas que você executa: pad flutuante, baixar música e efeitos livres, imagens do banco para os botões, renomear músicas, checar direitos autorais e achar arquivos ausentes.",
+                  "Things you run: floating pad, download free music and effects, pictures from the bank for the buttons, rename music, check copyright and find missing files."),
                 () => TourOf(menuStrip1, extrasToolStripMenuItem));
+            add(T("Configurações (engrenagem)", "Settings (gear)"),
+                T("Tudo o que você ajusta fica aqui, em abas: pastas e música, aparência e idioma, atalhos e pad flutuante, e as conexões (controle remoto, Stream Deck, Discord, VDO.Ninja, OBS, Foundry).",
+                  "Everything you adjust is here, in tabs: folders and music, look and language, shortcuts and floating pad, and the connections (remote control, Stream Deck, Discord, VDO.Ninja, OBS, Foundry)."),
+                () => TourOf(menuStrip1, m_GearButton));
             add(T("Lista de faixas", "Track list"),
                 T("As músicas do botão selecionado, com busca. A coluna Direitos é um semáforo que indica o risco de a música dar problema em lives (é só uma indicação). F9 abre e fecha este painel.",
                   "The pieces of the selected button, with search. The Rights column is a traffic light for the risk of a piece causing trouble on streams (just an indication). F9 opens and closes this panel."),

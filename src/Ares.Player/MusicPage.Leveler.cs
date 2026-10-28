@@ -125,7 +125,28 @@ namespace Ares.Player
             m_LevelBox.Controls.Add(m_LiveText);
             m_LevelBox.Controls.Add(help);
             m_LevelBox.Height = y + 376;
-            AutoScrollMinSize = new Size(0, m_LevelBox.Bottom + 8);
+            GroupBox effects = new GroupBox();
+            effects.Text = T("Efeitos sonoros", "Sound effects");
+            effects.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            effects.SetBounds(0, m_LevelBox.Bottom + 8, width, 96);
+            CheckBox soften = new CheckBox();
+            soften.Text = T("Suavizar a repetição dos efeitos (crossfade)", "Smooth the repetition of effects (crossfade)");
+            soften.SetBounds(14, 26, width - 28, 26);
+            soften.Checked = SoundRepeat.CrossfadeEnabled;
+            soften.CheckedChanged += (s, e) =>
+            {
+                SoundRepeat.CrossfadeEnabled = soften.Checked;
+                Preferences.SetBool("SfxLoopCrossfade", soften.Checked);
+            };
+            Label softenNote = new Label();
+            softenNote.Text = T("Quando um efeito sonoro repete, o final se mistura com o começo, sem queda brusca de som.",
+                "When a sound effect repeats, its end blends into its start, without a sudden drop.");
+            softenNote.Tag = "Muted";
+            softenNote.SetBounds(14, 54, width - 28, 36);
+            effects.Controls.Add(soften);
+            effects.Controls.Add(softenNote);
+            Controls.Add(effects);
+            AutoScrollMinSize = new Size(0, effects.Bottom + 8);
 
             ReadLevelerValues();
             AudioLeveler.EnabledChanged += OnLevelerEnabledChanged;

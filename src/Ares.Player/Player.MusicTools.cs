@@ -795,8 +795,8 @@ namespace Ares.Player
                 m_Undo.Enabled = File.Exists(UndoFile);
                 m_Info.Text = (log.Count) + T(" arquivo(s) alterado(s).", " file(s) changed.")
                     + (failed > 0 ? "  " + failed + T(" com problema (veja a coluna Situação).", " with problems (see the Status column).") : "")
-                    + "  " + T("O projeto aberto já aponta para os novos nomes; outros projetos podem pedir \"Arquivos de áudio ausentes\" no menu Extras.",
-                        "The open project already points to the new names; other projects may need \"Missing audio files\" in the Extras menu.");
+                    + "  " + T("O projeto aberto já aponta para os novos nomes; outros projetos podem pedir \"Arquivos de áudio ausentes\" no menu Ferramentas.",
+                        "The open project already points to the new names; other projects may need \"Missing audio files\" in the Tools menu.");
             }
 
             private void UndoLast()

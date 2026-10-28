@@ -38,6 +38,7 @@ namespace Ares.Player
                         m_OutputButton.ToolTipText = T("Dispositivo de saída de áudio (onde o Apolo toca)", "Audio output device (where Apolo plays)");
                     menuStrip1.Items.Add(m_OutputButton);
                 }
+                InitGearButton();
                 m_HeaderSpacer = new ToolStripLabel();
                 m_HeaderSpacer.Name = "headerSpacer";
                 m_HeaderSpacer.AutoSize = false;
@@ -55,6 +56,7 @@ namespace Ares.Player
                 menuStrip1.Items.Insert(menuStrip1.Items.IndexOf(m_ObsButton), new ToolStripSeparator());
                 Ares.CommonGUI.IconLibrary.Bind(menuStrip1, new Dictionary<ToolStripItem, string>
                 {
+                    { m_GearButton, "settings" },
                     { m_ObsButton, "tv" },
                     { m_NetButton, "globe" },
                     { m_VdoButton, "send" },

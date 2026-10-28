@@ -26,7 +26,7 @@ Assim como o Ares, o Apolo é distribuído sob a **GNU GPL (versão 2 ou posteri
 
 Os componentes de terceiros (bibliotecas, ícones, emojis, túnel e ponte do Discord) têm licenças próprias, todas compatíveis. A lista completa, com autores e textos de licença, está em [Licencas/AVISOS-DE-TERCEIROS.txt](Licencas/AVISOS-DE-TERCEIROS.txt) e vai junto com o instalador.
 
-A música e as imagens que você coloca nos seus projetos **não** fazem parte do Apolo: os direitos dependem de cada arquivo (veja o verificador de direitos autorais no menu Extras).
+A música e as imagens que você coloca nos seus projetos **não** fazem parte do Apolo: os direitos dependem de cada arquivo (veja o verificador de direitos autorais no menu Ferramentas).
 
 ## O que o Apolo faz
 
@@ -40,9 +40,9 @@ A música e as imagens que você coloca nos seus projetos **não** fazem parte d
 - **Overlay para OBS** mostrando a música que está tocando.
 - **Atalhos de teclado** configuráveis, para o programa e para cada pasta e playlist.
 - **Localizador de arquivos ausentes**, que ajuda a reencontrar músicas movidas de lugar.
-- **Renomeador de músicas** (menu Extras): limpa nomes de arquivo, busca título/artista/álbum na internet ([AcoustID](https://acoustid.org/) + [MusicBrainz](https://musicbrainz.org/)) e renomeia por um padrão que você escolhe, com prévia e desfazer.
-- **Verificador de direitos autorais** (menu Extras): identifica a música e mostra um semáforo de risco para lives e vídeos. É só um indicativo, não uma garantia.
-- **Música e efeitos livres** (menu Extras) e **imagens para os botões**: busca em bancos de licença livre ([Openverse](https://openverse.org/), Wikimedia Commons, Internet Archive e, opcionalmente, Freesound), sempre guardando autor e licença.
+- **Renomeador de músicas** (menu Ferramentas): limpa nomes de arquivo, busca título/artista/álbum na internet ([AcoustID](https://acoustid.org/) + [MusicBrainz](https://musicbrainz.org/)) e renomeia por um padrão que você escolhe, com prévia e desfazer.
+- **Verificador de direitos autorais** (menu Ferramentas): identifica a música e mostra um semáforo de risco para lives e vídeos. É só um indicativo, não uma garantia.
+- **Música e efeitos livres** (menu Ferramentas) e **imagens para os botões**: busca em bancos de licença livre ([Openverse](https://openverse.org/), Wikimedia Commons, Internet Archive e, opcionalmente, Freesound), sempre guardando autor e licença.
 - **Aparência:** emoji (escolhido ou sugerido automaticamente pelo nome do botão) e cor de destaque para cada botão e cada pasta.
 - **Imagem do botão por link da internet:** cole o endereço (ou o texto todo, com o link no meio) e o Apolo acha a imagem; também lê WebP.
 - **Como atualizar** (menu Ajuda) e **mostrar na pasta** para qualquer música da lista.

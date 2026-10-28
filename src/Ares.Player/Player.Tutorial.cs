@@ -121,17 +121,17 @@ The RIGHTS dot (green, yellow or red) is only an INDICATION, never a guarantee. 
 @"• Discord: leva o som do Apolo para um canal de voz.
 • Enviar áudio (VDO.Ninja): manda o som pela internet, para o Foundry e para os jogadores.
 • Compartilhar: controle remoto pelo celular (QR code) e na rede.
-• Pad flutuante (menu Extras): os botões de uma pasta aparecem por cima da tela, meio transparentes, com um atalho de teclado. Clique num botão para trocar de música e o pad fecha.
+• Pad flutuante (menu Ferramentas; atalho e transparência em Configurações): os botões de uma pasta aparecem por cima da tela, meio transparentes, com um atalho de teclado. Clique num botão para trocar de música e o pad fecha.
 
-Também há o módulo para o Foundry VTT e o plugin do Stream Deck (menu Extras). As abas do topo abrem páginas da web, como o YouTube, que tocam junto com o Apolo.
+Também há o módulo para o Foundry VTT e o plugin do Stream Deck (engrenagem de Configurações > Conexões). As abas do topo abrem páginas da web, como o YouTube, que tocam junto com o Apolo.
 
 Atualizações do Apolo: menu Sobre > Como atualizar.",
 @"• Discord: takes the Apolo sound to a voice channel.
 • Send audio (VDO.Ninja): sends the sound over the internet, to Foundry and to the players.
 • Share: remote control from the phone (QR code) and on the network.
-• Floating pad (Extras menu): the buttons of a folder appear on top of the screen, slightly transparent, with a keyboard shortcut. Click a button to change the music and the pad closes.
+• Floating pad (Tools menu; shortcut and transparency in Settings): the buttons of a folder appear on top of the screen, slightly transparent, with a keyboard shortcut. Click a button to change the music and the pad closes.
 
-There is also the Foundry VTT module and the Stream Deck plugin (menu Extras). The tabs at the top open web pages, like YouTube, which play together with Apolo.
+There is also the Foundry VTT module and the Stream Deck plugin (gear of Settings > Connections). The tabs at the top open web pages, like YouTube, which play together with Apolo.
 
 Apolo updates: menu About > How to update.") }
             };

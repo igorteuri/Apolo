@@ -78,13 +78,14 @@ namespace Ares.Player
                 for (int i = 0; i < steps.Length; i++)
                     ((ToolStripMenuItem)opacity.DropDownItems[i]).Checked = steps[i] == now;
             };
-            root.DropDownItems.AddRange(new ToolStripItem[] { m_PadShowItem, shortcut, closeOnClick, opacity });
-            root.DropDownOpening += (s, e) =>
+            m_PadCloseItem = closeOnClick; // its options are on the "Keyboard and pad" page of the settings
+            extrasToolStripMenuItem.DropDownOpening += (s, e) =>
             {
-                m_PadShowItem.Text = (m_Pad != null ? T("Esconder o pad", "Hide the pad") : T("Mostrar o pad", "Show the pad"))
+                m_PadShowItem.Text = (m_Pad != null ? T("Esconder o pad flutuante", "Hide the floating pad") : T("Mostrar o pad flutuante", "Show the floating pad"))
                     + "   (" + KeyText(PadHotkey) + ")";
             };
-            extrasToolStripMenuItem.DropDownItems.Insert(0, root);
+            m_PadShowItem.Text = T("Mostrar o pad flutuante", "Show the floating pad") + "   (" + KeyText(PadHotkey) + ")";
+            extrasToolStripMenuItem.DropDownItems.Insert(0, m_PadShowItem);
 
             try
             {
@@ -92,8 +93,8 @@ namespace Ares.Player
                 if (!m_PadHotkeyWindow.Register(PadHotkey))
                 {
                     ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Warning,
-                        T("O atalho do pad flutuante (" + KeyText(PadHotkey) + ") já é usado por outro programa. Escolha outro em Extras > Pad flutuante.",
-                          "The floating pad shortcut (" + KeyText(PadHotkey) + ") is already used by another program. Choose another in Extras > Floating pad.")));
+                        T("O atalho do pad flutuante (" + KeyText(PadHotkey) + ") já é usado por outro programa. Escolha outro em Configurações > Teclado e pad.",
+                          "The floating pad shortcut (" + KeyText(PadHotkey) + ") is already used by another program. Choose another in Settings > Keyboard and pad.")));
                 }
             }
             catch (Exception swallowed)

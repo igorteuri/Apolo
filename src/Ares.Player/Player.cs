@@ -675,6 +675,9 @@ namespace Ares.Player
             Ares.Settings.Settings settings = Ares.Settings.Settings.Instance;
             Ares.CommonGUI.SettingsDialog dialog = new Ares.CommonGUI.SettingsDialog(Ares.Settings.Settings.Instance, m_BasicSettings);
             dialog.AddPage(new MusicPageHost());
+            dialog.AddPage(new InterfacePage(this));
+            dialog.AddPage(new KeyboardPage(this));
+            dialog.AddPage(new ConnectionsPage(this));
             dialog.SetVisiblePage(pageIndex);
             if (dialog.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
             {
@@ -703,6 +706,11 @@ namespace Ares.Player
 #if !MONO
             m_KeyboardHookManager.Enabled = true;
 #endif
+            // a page asked for another window (a service, the shortcuts): it opens now that the settings are closed
+            Action after = m_AfterSettings;
+            m_AfterSettings = null;
+            if (after != null)
+                BeginInvoke(after);
         }
 
         private void SetOutputDevice()

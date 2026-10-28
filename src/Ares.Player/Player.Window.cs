@@ -92,6 +92,7 @@ namespace Ares.Player
         {
             try
             {
+                DetachSettingsItems();
                 ToolStripItemCollection items = extrasToolStripMenuItem.DropDownItems;
                 List<ToolStripItem> pool = new List<ToolStripItem>();
                 foreach (ToolStripItem item in items)
@@ -102,7 +103,6 @@ namespace Ares.Player
                 // each group: names of the items (or the beginning of their text)
                 string[][] groups =
                 {
-                    new[] { "remoteMenuItem", "deckMenuItem", "discordMenuItem", "overlayMenuItem", "foundryMenuItem" },
                     new[] { "Ícones automáticos", "Automatic icons", "bankMenuItem" },
                     new[] { "Renomeador", "Music renamer", "Verificador", "Copyright check", "Baixar música", "Download free", "Arquivos de áudio ausentes", "Missing audio" }
                 };

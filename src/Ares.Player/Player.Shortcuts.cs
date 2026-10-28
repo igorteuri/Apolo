@@ -35,6 +35,7 @@ namespace Ares.Player
 
         private static readonly Dictionary<string, Keys> s_ShortcutDefaults = new Dictionary<string, Keys>
         {
+            { "settings", Keys.Control | Keys.Oemcomma },
             { "left", Keys.F8 },
             { "tracks", Keys.F9 },
             { "edit", Keys.Control | Keys.E },
@@ -78,6 +79,7 @@ namespace Ares.Player
                 s_ShortcutDefaults.TryGetValue(id, out def);
                 m_Shortcuts.Add(new ProgramShortcut { Id = id, Pt = pt, En = en, Default = def, Current = ReadShortcut(id, def), Run = run });
             };
+            add("settings", "Abrir as configurações", "Open the settings", () => ShowSettingsDialog(-1));
             add("left", "Mostrar / esconder o painel esquerdo", "Show / hide the left panel", () => SetLeftOpen(!m_LeftOpen));
             add("tracks", "Mostrar / esconder a lista de músicas", "Show / hide the track list", ToggleTrackPanel);
             add("edit", "Ligar / desligar o modo de edição", "Turn edit mode on / off", () => { if (m_EditButton != null) m_EditButton.Checked = !m_EditButton.Checked; });
@@ -117,36 +119,8 @@ namespace Ares.Player
                 }
                 return null;
             };
-            ToolStripMenuItem settings = new ToolStripMenuItem(T("Configurações", "Settings"));
-            settings.Name = "settingsMenuRoot";
-            List<ToolStripItem> general = new List<ToolStripItem>();
-            general.Add(settingsToolStripMenuItem1);
-            settingsToolStripMenuItem1.Text = T("Configurações gerais...", "General settings...");
-            general.Add(keysItem);
-            general.Add(showKeysMenuItem);
-            general.Add(globalKeyHookItem);
-            general.Add(take("closeToTrayItem"));
-            ToolStripItem language = null;
-            foreach (ToolStripItem item in extras)
-            {
-                if (item.Text != null && item.Text.StartsWith("Idioma"))
-                {
-                    language = item;
-                    break;
-                }
-            }
-            if (language != null)
-                extras.Remove(language);
-            general.Add(language);
-            // Stream Deck, remote control, Discord and the OBS overlay stay in Extras (they are tools, not settings)
-
-            extras.Remove(settingsToolStripMenuItem1);
-            extras.Remove(showKeysMenuItem);
-            extras.Remove(globalKeyHookItem);
-            foreach (ToolStripItem item in general.Where(i => i != null))
-                settings.DropDownItems.Add(item);
-            int at = menuStrip1.Items.IndexOf(extrasToolStripMenuItem) + 1;
-            menuStrip1.Items.Insert(Math.Max(at, 0), settings);
+            // the settings (window of the gear button) have their own pages: DetachSettingsItems moves them out of the menu,
+            // once every part of the program has added its items (OrganizeExtrasMenu)
 
             // tidy up the Extras menu: no double / leading / trailing separators
             for (int i = extras.Count - 1; i >= 0; i--)
