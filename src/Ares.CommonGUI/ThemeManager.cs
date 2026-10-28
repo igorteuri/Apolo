@@ -1738,6 +1738,36 @@ namespace Ares.CommonGUI
             };
             u.GotFocus += (s, e) => u.Invalidate();
             u.LostFocus += (s, e) => u.Invalidate();
+            // the two small buttons are drawn by the system in light gray: they are painted over in the colors of the theme
+            foreach (Control child in u.Controls)
+            {
+                if (child.GetType().Name != "UpDownButtons")
+                    continue;
+                Control spin = child;
+                spin.Paint += (s, e) =>
+                {
+                    ThemePalette p = Current;
+                    if (p == null || p.IsClassic)
+                        return;
+                    Graphics g = e.Graphics;
+                    Rectangle r = spin.ClientRectangle;
+                    using (SolidBrush back = new SolidBrush(p.Surface))
+                        g.FillRectangle(back, r);
+                    using (Pen line = new Pen(p.ControlBorder))
+                    {
+                        g.DrawLine(line, r.X, r.Y, r.X, r.Bottom);
+                        g.DrawLine(line, r.X, r.Y + r.Height / 2, r.Right, r.Y + r.Height / 2);
+                    }
+                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    using (SolidBrush arrow = new SolidBrush(p.Text))
+                    {
+                        float cx = r.X + (r.Width + 1) / 2f, h = r.Height / 2f, a = Math.Max(2.5f, Math.Min(r.Width / 4f, h / 3f));
+                        g.FillPolygon(arrow, new[] { new PointF(cx - a, h / 2f + a / 2f), new PointF(cx + a, h / 2f + a / 2f), new PointF(cx, h / 2f - a / 2f) });
+                        g.FillPolygon(arrow, new[] { new PointF(cx - a, h + h / 2f - a / 2f), new PointF(cx + a, h + h / 2f - a / 2f), new PointF(cx, h + h / 2f + a / 2f) });
+                    }
+                };
+                spin.Invalidate();
+            }
         }
 
         // the list which drops down from a combo box is a window of its own: its scroll bar stays white unless it gets the theme too

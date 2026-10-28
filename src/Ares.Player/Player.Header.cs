@@ -44,7 +44,6 @@ namespace Ares.Player
                         m_StatusStrip.Items.Remove(m_StatOutput);
                         if (at >= 0 && at < m_StatusStrip.Items.Count && m_StatDividers.Contains(m_StatusStrip.Items[at] as ToolStripStatusLabel))
                             m_StatusStrip.Items.RemoveAt(at);
-                        m_OutputButton.DropDownDirection = ToolStripDropDownDirection.AboveLeft;
                         m_StatusStrip.Items.Add(MakeStatusDivider());
                         m_StatusStrip.Items.Add(m_OutputButton);
                     }

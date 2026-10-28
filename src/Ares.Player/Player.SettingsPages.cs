@@ -31,8 +31,28 @@ namespace Ares.Player
 
         // The settings which used to be menu items leave the Tools menu; the items stay alive (without a menu) because the
         // pages use them as the switches.
+        private ToolStripMenuItem m_AppearanceItem;
+
+        // the "Appearance" menu (added by the theme manager) moves to the settings; its items stay as the switches
+        private void HideAppearanceMenu()
+        {
+            ToolStripMenuItem found = menuStrip1.Items.OfType<ToolStripMenuItem>()
+                .FirstOrDefault(i => i.Text == "Aparência" || i.Text == "Appearance");
+            if (found == null)
+                return;
+            m_AppearanceItem = found;
+            menuStrip1.Items.Remove(found);
+        }
+
         private void DetachSettingsItems()
         {
+            HideAppearanceMenu();
+            ThemeManager.AfterAppearanceMenu = (form, menu) =>
+            {
+                Player player = form as Player;
+                if (player != null)
+                    player.HideAppearanceMenu();
+            };
             ToolStripItemCollection extras = extrasToolStripMenuItem.DropDownItems;
             Func<Func<ToolStripItem, bool>, ToolStripItem> pull = test =>
             {
@@ -877,8 +897,7 @@ namespace Ares.Player
         {
             public GeneralPage(Player owner, SettingsDialog legacy) : base(owner, Loc.T("Geral", "General"))
             {
-                ToolStripMenuItem appearance = Owner.menuStrip1.Items.OfType<ToolStripMenuItem>()
-                    .FirstOrDefault(i => i.Text == "Aparência" || i.Text == "Appearance");
+                ToolStripMenuItem appearance = Owner.m_AppearanceItem;
                 Heading(Loc.T("Aparência", "Appearance"));
                 if (appearance != null)
                 {
@@ -943,6 +962,10 @@ namespace Ares.Player
                 {
                     Note(Loc.T("Nenhum dispositivo de saída foi encontrado.", "No output device was found."));
                 }
+
+                Heading(Loc.T("Arquivos do Apolo", "Apolo files"));
+                Note(Loc.T("Faz os arquivos .apolo e .apkg abrirem com o Apolo (duplo clique).", "Makes .apolo and .apkg files open with Apolo (double click)."));
+                AddButton(Loc.T("Associar arquivos .apolo ao Apolo", "Open .apolo files with Apolo"), Owner.AssociateProjectFiles);
 
                 // the old "General" page: where the settings are kept
                 Heading(Loc.T("Onde guardar as configurações", "Where the settings are kept"));

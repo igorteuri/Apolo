@@ -22,12 +22,9 @@ namespace Ares.Player
             export.Click += (s, e) => ExportDialogAndRun();
             ToolStripMenuItem restore = new ToolStripMenuItem(T("Importar backup das configurações...", "Import settings backup..."));
             restore.Click += (s, e) => RestoreSettingsBackup();
-            ToolStripMenuItem associate = new ToolStripMenuItem(T("Associar arquivos .apolo ao Apolo", "Open .apolo files with Apolo"));
-            associate.Click += (s, e) => AssociateProjectFiles();
             int pos = projectToolStripMenuItem.DropDownItems.IndexOf(importToolStripMenuItem) + 1;
             projectToolStripMenuItem.DropDownItems.Insert(pos, export);
             projectToolStripMenuItem.DropDownItems.Insert(pos + 1, restore);
-            projectToolStripMenuItem.DropDownItems.Insert(pos + 2, associate);
             EnsureFileAssociation();
         }
 

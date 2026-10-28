@@ -194,7 +194,7 @@ namespace Ares.Player
         private ToolStripButton m_PauseButton;
         private Size m_PauseIconSize;
         private bool m_PauseShown;
-        private ToolStripDropDownButton m_OutputButton;
+        private ToolStripButton m_OutputButton;
         private int m_OutputShown = int.MinValue;
         private System.Windows.Forms.Timer m_ProgressTimer;
 
@@ -289,14 +289,14 @@ namespace Ares.Player
             };
 
             // audio output selector, at the right end of the toolbar
-            m_OutputButton = new ToolStripDropDownButton();
+            m_OutputButton = new ToolStripButton();
             m_OutputButton.Name = "outputDeviceButton";
             m_OutputButton.Tag = "AccentText"; // highlighted like the settings button
             m_OutputButton.Alignment = ToolStripItemAlignment.Right;
             m_OutputButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
             m_OutputButton.ImageScaling = ToolStripItemImageScaling.None;
             m_OutputButton.ToolTipText = OutputToolTip();
-            m_OutputButton.DropDownOpening += (sender, e) => FillOutputMenu();
+            m_OutputButton.Click += (sender, e) => ShowOutputPopup();
             m_OutputButton.Image = CreateSpeakerImage();
             toolStrip1.Items.Add(m_OutputButton);
             UpdateOutputButton();
@@ -427,17 +427,20 @@ namespace Ares.Player
                 return;
             m_OutputShown = index;
             string name = DeviceName(index);
-            m_OutputButton.Text = ShortName(name, 28);
+            m_OutputButton.Text = ShortName(name, 28) + "  ▾";
             m_OutputButton.ToolTipText = OutputToolTip() + ": " + name;
         }
 
-        private void FillOutputMenu()
+        private Form m_OutputPopup;
+        private int m_OutputPopupClosedAt;
+
+        // The list of output devices: a small window of our own, in the colors of the theme (the system menu showed a light frame).
+        private void ShowOutputPopup()
         {
-            m_OutputButton.DropDownItems.Clear();
-            Ares.CommonGUI.ThemeManager.Apply(m_OutputButton.DropDown);
-            m_OutputButton.DropDown.BackColor = Ares.CommonGUI.ThemeManager.Current.Surface;
-            m_OutputButton.DropDown.ForeColor = Ares.CommonGUI.ThemeManager.Current.Text;
-            int current = Settings.Settings.Instance.OutputDeviceIndex;
+            if (m_OutputPopup != null)
+                return;
+            if (unchecked(Environment.TickCount - m_OutputPopupClosedAt) < 250)
+                return; // the click which closed it must not open it again
             List<Ares.Playing.AudioInit.OutputDevice> devices;
             try
             {
@@ -447,16 +450,110 @@ namespace Ares.Player
             {
                 return;
             }
-            foreach (Ares.Playing.AudioInit.OutputDevice device in devices)
+            if (devices.Count == 0)
+                return;
+            Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
+            bool themed = p != null && !p.IsClassic;
+            Color back = themed ? p.Surface : SystemColors.Window;
+            Color fore = themed ? p.Text : SystemColors.WindowText;
+            Color accent = themed ? p.Accent : SystemColors.Highlight;
+            Color hover = themed ? p.Hover : SystemColors.ControlLight;
+            Color line = themed ? p.Accent : SystemColors.ControlDark;
+            int current = Settings.Settings.Instance.OutputDeviceIndex;
+            int rowHeight = Math.Max(32, Font.Height + 14);
+
+            Form pop = new Form();
+            pop.FormBorderStyle = FormBorderStyle.None;
+            pop.ShowInTaskbar = false;
+            pop.StartPosition = FormStartPosition.Manual;
+            pop.BackColor = line;
+            pop.Padding = new Padding(1);
+            pop.Font = Font;
+
+            int hot = -1;
+            ListBox list = new ListBox();
+            list.BorderStyle = BorderStyle.None;
+            list.DrawMode = DrawMode.OwnerDrawFixed;
+            list.ItemHeight = rowHeight;
+            list.IntegralHeight = false;
+            list.BackColor = back;
+            list.Dock = DockStyle.Fill;
+            int widest = 0;
+            foreach (Ares.Playing.AudioInit.OutputDevice d in devices)
             {
-                int index = device.Index;
-                ToolStripMenuItem item = new ToolStripMenuItem(device.Name);
-                item.Checked = index == current;
-                item.BackColor = Ares.CommonGUI.ThemeManager.Current.Surface;
-                item.ForeColor = Ares.CommonGUI.ThemeManager.Current.Text;
-                item.Click += (sender, e) => ChangeOutputDevice(index);
-                m_OutputButton.DropDownItems.Add(item);
+                list.Items.Add(d.Name);
+                widest = Math.Max(widest, TextRenderer.MeasureText(d.Name, Font).Width);
             }
+            list.DrawItem += (s, e) =>
+            {
+                if (e.Index < 0)
+                    return;
+                bool isCurrent = devices[e.Index].Index == current;
+                using (SolidBrush b = new SolidBrush(e.Index == hot ? hover : back))
+                    e.Graphics.FillRectangle(b, e.Bounds);
+                if (isCurrent)
+                {
+                    using (SolidBrush bar = new SolidBrush(accent))
+                        e.Graphics.FillRectangle(bar, e.Bounds.X, e.Bounds.Y + 4, 3, e.Bounds.Height - 8);
+                }
+                Rectangle text = new Rectangle(e.Bounds.X + 16, e.Bounds.Y, e.Bounds.Width - 24, e.Bounds.Height);
+                using (Font f = new Font(Font, isCurrent ? FontStyle.Bold : FontStyle.Regular))
+                    TextRenderer.DrawText(e.Graphics, list.Items[e.Index].ToString(), f, text, isCurrent ? accent : fore,
+                        TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.Left);
+            };
+            list.MouseMove += (s, e) =>
+            {
+                int index = list.IndexFromPoint(e.Location);
+                if (index != hot)
+                {
+                    hot = index;
+                    list.Invalidate();
+                }
+            };
+            list.MouseLeave += (s, e) => { hot = -1; list.Invalidate(); };
+            Action<int> choose = index =>
+            {
+                if (index < 0 || index >= devices.Count)
+                    return;
+                int deviceIndex = devices[index].Index;
+                pop.Close();
+                ChangeOutputDevice(deviceIndex);
+            };
+            list.MouseClick += (s, e) => choose(list.IndexFromPoint(e.Location));
+            list.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == System.Windows.Forms.Keys.Escape)
+                    pop.Close();
+                else if (e.KeyCode == System.Windows.Forms.Keys.Enter)
+                    choose(list.SelectedIndex);
+            };
+            pop.Controls.Add(list);
+
+            Screen screen = Screen.FromControl(this);
+            int width = Math.Min(screen.WorkingArea.Width - 20, Math.Max(340, widest + 60));
+            int height = Math.Min((int)(screen.WorkingArea.Height * 0.7), devices.Count * rowHeight + 2);
+            ToolStrip owner = m_OutputButton.Owner;
+            Rectangle button = owner.RectangleToScreen(m_OutputButton.Bounds);
+            int x = Math.Max(screen.WorkingArea.X, Math.Min(button.Right - width, screen.WorkingArea.Right - width));
+            int y = button.Top - height - 2;
+            if (y < screen.WorkingArea.Y)
+                y = button.Bottom + 2;
+            pop.SetBounds(x, y, width, height);
+            for (int i = 0; i < devices.Count; i++)
+            {
+                if (devices[i].Index == current)
+                    list.SelectedIndex = i;
+            }
+            pop.Deactivate += (s, e) => pop.Close();
+            pop.FormClosed += (s, e) =>
+            {
+                m_OutputPopupClosedAt = Environment.TickCount;
+                m_OutputPopup = null;
+                pop.Dispose();
+            };
+            m_OutputPopup = pop;
+            pop.Show(this);
+            list.Focus();
         }
 
         private void ChangeOutputDevice(int deviceIndex)

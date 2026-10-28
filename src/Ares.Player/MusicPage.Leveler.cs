@@ -45,13 +45,23 @@ namespace Ares.Player
                 c.Location = new Point(c is RadioButton ? gx + 22 : gx, gy);
                 gy += c == allChannelsCheckBox ? line + 8 : line;
             }
+            // the time row: a flow, so that the box always follows the real width of the text
+            FlowLayoutPanel timeRow = new FlowLayoutPanel();
+            timeRow.AutoSize = true;
+            timeRow.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            timeRow.WrapContents = false;
+            timeRow.FlowDirection = FlowDirection.LeftToRight;
+            timeRow.Location = new Point(gx, gy + 6);
+            groupBox1.Controls.Add(timeRow);
             label3.AutoSize = true;
+            label3.Margin = new Padding(0, 5, 14, 0);
             label2.AutoSize = true;
-            gy += 6;
-            label3.Location = new Point(gx, gy + Math.Max(0, (crossFadingUpDown.Height - label3.PreferredHeight) / 2));
-            crossFadingUpDown.Width = 100;
-            crossFadingUpDown.Location = new Point(label3.Right + 12, gy);
-            label2.Location = new Point(crossFadingUpDown.Right + 8, label3.Top);
+            label2.Margin = new Padding(8, 5, 0, 0);
+            crossFadingUpDown.Width = 110;
+            crossFadingUpDown.Margin = new Padding(0);
+            timeRow.Controls.Add(label3);
+            timeRow.Controls.Add(crossFadingUpDown);
+            timeRow.Controls.Add(label2);
 
             int width = groupBox1.Width;
             m_LevelBox = new GroupBox();
