@@ -12,6 +12,19 @@ namespace Ares.Player
         private StatusStrip m_StatusStrip;
         private ToolStripStatusLabel m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatDiscord, m_StatProject, m_StatSaved;
         private Timer m_StatusTimer;
+        private readonly List<ToolStripStatusLabel> m_StatDividers = new List<ToolStripStatusLabel>();
+        private ToolStripStatusLabel m_StatSavedDivider;
+
+        // a thin vertical line between two parts of the status bar; a glyph, so that its color is ours and very discreet
+        private ToolStripStatusLabel MakeStatusDivider()
+        {
+            ToolStripStatusLabel d = new ToolStripStatusLabel("│");
+            d.Margin = new Padding(0, 3, 0, 2);
+            d.Padding = new Padding(0);
+            d.AutoToolTip = false;
+            m_StatDividers.Add(d);
+            return d;
+        }
 
         private void InitStatusBar()
         {
@@ -41,19 +54,20 @@ namespace Ares.Player
                 m_StatProject.TextAlign = ContentAlignment.MiddleRight;
                 foreach (ToolStripStatusLabel l in new ToolStripStatusLabel[] { m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatDiscord })
                 {
-                    l.BorderSides = ToolStripStatusLabelBorderSides.Right;
-                    l.Padding = new Padding(4, 0, 8, 0);
+                    l.Padding = new Padding(4, 0, 4, 0);
                 }
                 m_StatSaved = new ToolStripStatusLabel();
-                m_StatSaved.BorderSides = ToolStripStatusLabelBorderSides.Left;
-                m_StatSaved.Padding = new Padding(8, 0, 4, 0);
+                m_StatSaved.Padding = new Padding(4, 0, 4, 0);
+                m_StatSavedDivider = MakeStatusDivider();
+                m_StatSavedDivider.Visible = false;
                 m_StatSaved.Visible = false;
                 m_StatSaved.Click += (s, e) =>
                 {
                     if (IsProjectDirty())
                         SaveProjectNow();
                 };
-                m_StatusStrip.Items.AddRange(new ToolStripItem[] { m_StatState, m_StatRepeat, m_StatOutput, m_StatShare, m_StatDiscord, m_StatProject, m_StatSaved });
+                m_StatusStrip.Items.AddRange(new ToolStripItem[] { m_StatState, MakeStatusDivider(), m_StatRepeat, MakeStatusDivider(), m_StatOutput, MakeStatusDivider(),
+                    m_StatShare, MakeStatusDivider(), m_StatDiscord, m_StatProject, m_StatSavedDivider, m_StatSaved });
                 Controls.Add(m_StatusStrip);
                 // line icons instead of emoji (emoji change with the system font and ignore the theme colors)
                 Ares.CommonGUI.IconLibrary.Bind(m_StatusStrip, new Dictionary<ToolStripItem, string>
@@ -150,6 +164,16 @@ namespace Ares.Player
                     : (m_Discord != null && m_Discord.State == DiscordState.Off && p != null && !p.IsClassic ? p.TextDim : ForeColor));
                 SetStat(m_StatProject, m_Project != null ? m_Project.Title : "", ForeColor);
                 UpdateSavedLabel(p);
+                if (m_StatSavedDivider != null)
+                    m_StatSavedDivider.Visible = m_StatSaved.Visible;
+                // the dividers are only a hint: the dim text color, half way to the background
+                if (p != null && !p.IsClassic)
+                {
+                    Color faint = Color.FromArgb((p.TextDim.R + p.Window.R * 2) / 3, (p.TextDim.G + p.Window.G * 2) / 3, (p.TextDim.B + p.Window.B * 2) / 3);
+                    foreach (ToolStripStatusLabel d in m_StatDividers)
+                        if (d.ForeColor != faint)
+                            d.ForeColor = faint;
+                }
                 // the quick buttons in the menu bar are highlighted while the feature is on
                 if (m_DiscordButton != null)
                     m_DiscordButton.Checked = discordActive;

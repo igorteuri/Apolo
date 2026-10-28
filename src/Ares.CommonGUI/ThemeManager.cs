@@ -2008,7 +2008,14 @@ namespace Ares.CommonGUI
 
             protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
             {
-                e.TextColor = e.Item.Enabled ? Current.Text : Current.TextDim;
+                if (e.Item is ToolStripStatusLabel)
+                {
+                    // the status bar chooses the color of each part itself (dim, highlight ...)
+                }
+                else if (e.Item.Tag is string && (string)e.Item.Tag == "AccentText")
+                    e.TextColor = Current.Accent;
+                else
+                    e.TextColor = e.Item.Enabled ? Current.Text : Current.TextDim;
                 base.OnRenderItemText(e);
             }
 

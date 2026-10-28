@@ -79,8 +79,21 @@ namespace Ares.Player
         {
             m_GearButton = new ToolStripButton();
             m_GearButton.Name = "gearButton";
-            m_GearButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            m_GearButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
+            m_GearButton.Text = T("Configurações", "Settings");
+            m_GearButton.Tag = "AccentText"; // the theme draws its text in the highlight color
+            m_GearButton.ImageScaling = ToolStripItemImageScaling.None;
+            m_GearButton.Margin = new Padding(6, 0, 6, 0);
             m_GearButton.Alignment = ToolStripItemAlignment.Right;
+            Action paintIcon = () =>
+            {
+                Image old = m_GearButton.Image;
+                m_GearButton.Image = IconLibrary.Get("settings", new Size(20, 20), ThemeManager.Current.Accent);
+                if (old != null)
+                    old.Dispose();
+            };
+            paintIcon();
+            ThemeManager.Changed += (s, e) => paintIcon();
             m_GearButton.ToolTipText = T("Configurações (" + ShortcutText("settings") + ")", "Settings (" + ShortcutText("settings") + ")");
             m_GearButton.AccessibleName = T("Configurações", "Settings");
             m_GearButton.Click += (s, e) => ShowSettingsDialog(-1);

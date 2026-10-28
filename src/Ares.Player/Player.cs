@@ -679,6 +679,11 @@ namespace Ares.Player
             dialog.AddPage(new KeyboardPage(this));
             dialog.AddPage(new ConnectionsPage(this));
             dialog.SetVisiblePage(pageIndex);
+            // big enough for the pages: 80% of the height of the program window (and wider than the old dialog)
+            Rectangle area = Screen.FromControl(this).WorkingArea;
+            dialog.StartPosition = FormStartPosition.CenterParent;
+            dialog.Size = new Size(Math.Min(area.Width - 40, Math.Max(dialog.Width, Math.Min((int)(Width * 0.7), 1200))),
+                Math.Min(area.Height - 40, Math.Max(dialog.Height, (int)(Height * 0.8))));
             if (dialog.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
             {
                 m_PlayingControl.UpdateDirectories();

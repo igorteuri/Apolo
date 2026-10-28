@@ -34,6 +34,7 @@ namespace Ares.Player
             // the first group: the fields were placed for a narrow font (the time box was on top of its label)
             groupBox1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             groupBox1.SetBounds(0, 0, Math.Max(480, ClientSize.Width), 252);
+            groupBox1.Text = T("Transição entre músicas (fade e crossfade)", "Transition between pieces of music (fade and crossfade)");
             crossFadingUpDown.Width = 90;
             crossFadingUpDown.Left = label3.Right + 8;
             label2.Left = crossFadingUpDown.Right + 6;
@@ -126,11 +127,11 @@ namespace Ares.Player
             m_LevelBox.Controls.Add(help);
             m_LevelBox.Height = y + 376;
             GroupBox effects = new GroupBox();
-            effects.Text = T("Efeitos sonoros", "Sound effects");
+            effects.Text = T("Repetição de efeitos sonoros (loop)", "Repetition of sound effects (loop)");
             effects.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            effects.SetBounds(0, m_LevelBox.Bottom + 8, width, 96);
+            effects.SetBounds(0, groupBox1.Bottom + 8, width, 116);
             CheckBox soften = new CheckBox();
-            soften.Text = T("Suavizar a repetição dos efeitos (crossfade)", "Smooth the repetition of effects (crossfade)");
+            soften.Text = T("Suavizar o ponto em que o efeito volta ao começo", "Smooth the point where the effect returns to its start");
             soften.SetBounds(14, 26, width - 28, 26);
             soften.Checked = SoundRepeat.CrossfadeEnabled;
             soften.CheckedChanged += (s, e) =>
@@ -139,14 +140,15 @@ namespace Ares.Player
                 Preferences.SetBool("SfxLoopCrossfade", soften.Checked);
             };
             Label softenNote = new Label();
-            softenNote.Text = T("Quando um efeito sonoro repete, o final se mistura com o começo, sem queda brusca de som.",
-                "When a sound effect repeats, its end blends into its start, without a sudden drop.");
+            softenNote.Text = T("Vale só para efeitos sonoros que se repetem: o final se mistura com o começo (crossfade do próprio efeito), sem corte ou estalo. É diferente do crossfade entre músicas, acima.",
+                "Only for sound effects that repeat: the end blends into the start (crossfade of the effect itself), without a cut or click. It is not the crossfade between pieces of music, above.");
             softenNote.Tag = "Muted";
-            softenNote.SetBounds(14, 54, width - 28, 36);
+            softenNote.SetBounds(14, 54, width - 28, 52);
             effects.Controls.Add(soften);
             effects.Controls.Add(softenNote);
             Controls.Add(effects);
-            AutoScrollMinSize = new Size(0, effects.Bottom + 8);
+            m_LevelBox.Top = effects.Bottom + 8; // the two kinds of crossfade are together, the leveler comes after
+            AutoScrollMinSize = new Size(0, m_LevelBox.Bottom + 8);
 
             ReadLevelerValues();
             AudioLeveler.EnabledChanged += OnLevelerEnabledChanged;

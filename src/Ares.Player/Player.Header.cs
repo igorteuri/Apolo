@@ -33,10 +33,18 @@ namespace Ares.Player
                 if (m_OutputButton != null)
                 {
                     toolStrip1.Items.Remove(m_OutputButton);
-                    m_OutputButton.Alignment = ToolStripItemAlignment.Right;
+                    m_OutputButton.Alignment = ToolStripItemAlignment.Left;
                     if (string.IsNullOrEmpty(m_OutputButton.ToolTipText) || m_OutputButton.ToolTipText == m_OutputButton.Text)
-                        m_OutputButton.ToolTipText = T("Dispositivo de saída de áudio (onde o Apolo toca)", "Audio output device (where Apolo plays)");
-                    menuStrip1.Items.Add(m_OutputButton);
+                        m_OutputButton.ToolTipText = T("Dispositivo de saída de áudio (onde o Apolo toca): clique para trocar", "Audio output device (where Apolo plays): click to change");
+                    // the output selector lives in the status bar, in the place of the plain text which said the same
+                    if (m_StatusStrip != null && m_StatOutput != null)
+                    {
+                        int at = m_StatusStrip.Items.IndexOf(m_StatOutput);
+                        m_StatusStrip.Items.Remove(m_StatOutput);
+                        m_StatusStrip.Items.Insert(Math.Max(0, at), m_OutputButton);
+                    }
+                    else
+                        menuStrip1.Items.Add(m_OutputButton);
                 }
                 InitGearButton();
                 m_HeaderSpacer = new ToolStripLabel();
@@ -56,7 +64,6 @@ namespace Ares.Player
                 menuStrip1.Items.Insert(menuStrip1.Items.IndexOf(m_ObsButton), new ToolStripSeparator());
                 Ares.CommonGUI.IconLibrary.Bind(menuStrip1, new Dictionary<ToolStripItem, string>
                 {
-                    { m_GearButton, "settings" },
                     { m_ObsButton, "tv" },
                     { m_NetButton, "globe" },
                     { m_VdoButton, "send" },

@@ -97,17 +97,17 @@ namespace Ares.CommonGUI
             int top = 8;
             int pageW = generalPage.ClientSize.Width;
 
-            // folders of the music and the sounds
-            Label[] captions2 = { label1, label2 };
-            Label[] paths2 = { musicDirLabel, soundDirLabel };
-            Button[] buttons2 = { selectMusicButton, selectSoundButton };
-            LayoutRows(groupBox2, top, pageW, gap, rowH, buttonW, captions2, paths2, buttons2);
-            top = groupBox2.Bottom + 10;
+            // the folders of the music and the sounds were the way of the old Ares to find the files of a project; Apolo keeps
+            // the paths in the project itself, so the box is not shown (the values stay as they are)
+            groupBox2.Visible = false;
 
-            // where the settings are kept
-            Control[] captions1 = { userDirButton, appDirButton, otherDirButton };
-            Label[] paths1 = { userDirLabel, appDirLabel, otherDirLabel };
-            Button[] buttons1 = { null, null, selectOtherDirButton };
+            // where the settings are kept (the "application folder" only when it can be used: not inside Program Files)
+            bool appDirOk = BasicSettings.IsAppDirAllowed();
+            appDirButton.Visible = appDirOk;
+            appDirLabel.Visible = appDirOk;
+            Control[] captions1 = appDirOk ? new Control[] { userDirButton, appDirButton, otherDirButton } : new Control[] { userDirButton, otherDirButton };
+            Label[] paths1 = appDirOk ? new Label[] { userDirLabel, appDirLabel, otherDirLabel } : new Label[] { userDirLabel, otherDirLabel };
+            Button[] buttons1 = appDirOk ? new Button[] { null, null, selectOtherDirButton } : new Button[] { null, selectOtherDirButton };
             LayoutRows(groupBox1, top, pageW, gap, rowH, buttonW, captions1, paths1, buttons1);
             top = groupBox1.Bottom + 10;
 
