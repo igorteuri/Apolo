@@ -35,11 +35,23 @@ namespace Ares.Player
             groupBox1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             groupBox1.SetBounds(0, 0, Math.Max(480, ClientSize.Width), 252);
             groupBox1.Text = T("Transição entre músicas (fade e crossfade)", "Transition between pieces of music (fade and crossfade)");
-            crossFadingUpDown.Width = 90;
-            crossFadingUpDown.Left = label3.Right + 8;
-            label2.Left = crossFadingUpDown.Right + 6;
-            label3.Top = crossFadingUpDown.Top + Math.Max(0, (crossFadingUpDown.Height - label3.Height) / 2);
-            label2.Top = label3.Top;
+            // laid out again from the top: the positions of the designer fitted a narrow font (the text "Duração da transição:"
+            // was longer than its label and the time box sat on top of it)
+            int gy = 28, gx = 14, line = Math.Max(26, Font.Height + 10);
+            Control[] stack = { allChannelsCheckBox, label1, noFadeButton, fadeButton, crossFadeButton };
+            foreach (Control c in stack)
+            {
+                c.AutoSize = true;
+                c.Location = new Point(c is RadioButton ? gx + 22 : gx, gy);
+                gy += c == allChannelsCheckBox ? line + 8 : line;
+            }
+            label3.AutoSize = true;
+            label2.AutoSize = true;
+            gy += 6;
+            label3.Location = new Point(gx, gy + Math.Max(0, (crossFadingUpDown.Height - label3.PreferredHeight) / 2));
+            crossFadingUpDown.Width = 100;
+            crossFadingUpDown.Location = new Point(label3.Right + 12, gy);
+            label2.Location = new Point(crossFadingUpDown.Right + 8, label3.Top);
 
             int width = groupBox1.Width;
             m_LevelBox = new GroupBox();

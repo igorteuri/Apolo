@@ -119,8 +119,24 @@ namespace Ares.Player
         // opens (or shows again) the settings tab, on a page (-1 = the one used last)
         private void ShowSettingsDialog(int pageIndex)
         {
+            ShowSettingsPage(pageIndex, null);
+        }
+
+        // a window of a service (remote control, Discord ...) asked for by something outside the settings: it opens in its page
+        private bool RedirectToSettings(string key)
+        {
+            if (m_EmbedHost != null)
+                return false;
+            ShowSettingsPage(-1, key);
+            return true;
+        }
+
+        private void ShowSettingsPage(int pageIndex, string key)
+        {
             if (m_ShowingSettings)
             {
+                if (key != null)
+                    pageIndex = m_SettingsView.IndexOfKey(key);
                 if (pageIndex >= 0)
                     m_SettingsView.SelectPage(pageIndex);
                 return;
@@ -145,8 +161,12 @@ namespace Ares.Player
 #if !MONO
             m_KeyboardHookManager.Enabled = false;
 #endif
+            if (key != null)
+                pageIndex = m_SettingsView.IndexOfKey(key);
             if (pageIndex >= 0)
                 m_SettingsView.SelectPage(pageIndex);
+            else
+                m_SettingsView.RefreshCurrent();
             RefreshTabBar();
         }
 
@@ -247,7 +267,10 @@ namespace Ares.Player
             form.FormBorderStyle = FormBorderStyle.None;
             form.Location = Point.Empty;
             if (resizable)
+            {
+                form.MinimumSize = Size.Empty;
                 form.Dock = DockStyle.Fill;
+            }
             host.Controls.Add(form);
             // the buttons which closed the dialog (OK, Close ...) close the embedded window
             Action<Control> hook = null;
@@ -266,6 +289,9 @@ namespace Ares.Player
             {
                 if (cleanup != null)
                     cleanup();
+                Action again = host.Tag as Action; // the page opens the window again
+                if (again != null && host.IsHandleCreated && !host.IsDisposed)
+                    host.BeginInvoke(again);
             };
             ThemeManager.Apply(form);
             host.AutoScrollMinSize = resizable ? Size.Empty : form.Size;
@@ -274,22 +300,32 @@ namespace Ares.Player
 
         // ------------------------------------------------------------------ the view
 
+        // a row of the side bar: a page, or the title of a group whose pages follow (indented)
+        private class SidebarEntry
+        {
+            public string Title, Icon;
+            public int Page = -1;     // index of the page; -1 for the title of a group
+            public bool Child;        // belongs to the group above
+        }
+
         private class SettingsView : Panel
         {
             private class PageEntry
             {
-                public string Title, Icon;
+                public string Key, Title, Icon, Group;
                 public Control Page;
-                public SettingsPage Source;
+                public Action Shown;
             }
 
             private readonly Player m_Owner;
             private readonly List<PageEntry> m_Pages = new List<PageEntry>();
+            private readonly List<SidebarEntry> m_Entries = new List<SidebarEntry>();
             private readonly Sidebar m_Sidebar = new Sidebar();
             private readonly Label m_Title = new Label();
             private readonly Panel m_Body = new Panel();
             private readonly Panel m_Column = new Panel();
             private int m_Selected = -1;
+            private string m_Group;
             private static int s_LastPage;
 
             /// <summary>The old dialog, never shown: it keeps the General and Music pages and saves them.</summary>
@@ -300,17 +336,23 @@ namespace Ares.Player
                 m_Owner = owner;
                 Legacy = new SettingsDialog(Ares.Settings.Settings.Instance, owner.m_BasicSettings);
                 Legacy.AddPage(new MusicPageHost());
-                AddPage(Legacy.TitleOfPage(0), "sliders-horizontal", Legacy.TakePage(0), null);
-                AddPage(Legacy.TitleOfPage(1), "music", Legacy.TakePage(1), null);
-                SettingsPage ui = new InterfacePage(owner);
-                AddPage(ui.PageTitle, "eye", ui.Page, ui);
+                SettingsPage general = new GeneralPage(owner, Legacy);
+                AddPage("general", general.PageTitle, "sliders-horizontal", general.Page, general.OnPageShown);
+                AddPage("music", Legacy.TitleOfPage(1), "music", Legacy.TakePage(1), null);
                 SettingsPage keys = new KeyboardPage(owner);
-                AddPage(keys.PageTitle, "keyboard", keys.Page, keys);
-                SettingsPage connections = new ConnectionsPage(owner);
-                AddPage(connections.PageTitle, "link", connections.Page, connections);
+                AddPage("keys", keys.PageTitle, "keyboard", keys.Page, keys.OnPageShown);
+
+                // the services are a group of their own: each one has its page, with its window shown inside it
+                AddGroup(Loc.T("Conexões", "Connections"), "link");
+                AddService("remote", Loc.T("Controle remoto", "Remote control"), "radio", owner.ShowRemoteDialog);
+                AddService("deck", "Stream Deck", "gamepad-2", owner.ShowDeckDialog);
+                AddService("discord", "Discord", "message-circle", owner.ShowDiscordDialog);
+                AddService("overlay", Loc.T("Overlay do OBS", "OBS overlay"), "tv", owner.ShowOverlayDialog);
+                AddService("foundry", "Foundry VTT", "dices", owner.ShowFoundryHelp);
+                AddVdoPage();
 
                 m_Sidebar.Dock = DockStyle.Left;
-                m_Sidebar.SetItems(m_Pages.Select(p => p.Title).ToList(), m_Pages.Select(p => p.Icon).ToList());
+                m_Sidebar.SetItems(m_Entries);
                 m_Sidebar.Selected += SelectPage;
 
                 m_Title.Dock = DockStyle.Top;
@@ -338,17 +380,86 @@ namespace Ares.Player
                 m_Body.BringToFront();
                 FontChanged += (s, e) => FitSizes();
                 FitSizes();
-                SelectPage(Math.Min(s_LastPage, m_Pages.Count - 1));
+                ShowPage(Math.Min(s_LastPage, m_Pages.Count - 1), false);
             }
 
-            private void AddPage(string title, string icon, Control page, SettingsPage source)
+            private void AddPage(string key, string title, string icon, Control page, Action shown)
             {
-                m_Pages.Add(new PageEntry { Title = title, Icon = icon, Page = page, Source = source });
+                m_Pages.Add(new PageEntry { Key = key, Title = title, Icon = icon, Page = page, Shown = shown, Group = m_Group });
+                m_Entries.Add(new SidebarEntry { Title = title, Icon = icon, Page = m_Pages.Count - 1, Child = m_Group != null });
+            }
+
+            private void AddGroup(string title, string icon)
+            {
+                m_Group = title;
+                m_Entries.Add(new SidebarEntry { Title = title, Icon = icon });
+            }
+
+            // a service: its own window (remote control, Discord ...) shown inside the page, using all of the space
+            private void AddService(string key, string title, string icon, Action open)
+            {
+                Panel host = new Panel();
+                host.AutoScroll = true;
+                int index = m_Pages.Count;
+                System.Diagnostics.Stopwatch opened = new System.Diagnostics.Stopwatch();
+                Action show = null;
+                show = () =>
+                {
+                    if (host.Controls.Count > 0)
+                        return;
+                    m_Owner.m_EmbedHost = host;
+                    opened.Restart();
+                    try { open(); }
+                    finally { m_Owner.m_EmbedHost = null; }
+                    if (host.Controls.Count == 0)
+                    {
+                        Label none = new Label();
+                        none.Text = Loc.T("Este recurso não está disponível agora.", "This feature is not available now.");
+                        none.Tag = "Muted";
+                        none.AutoSize = true;
+                        none.Location = new Point(0, 8);
+                        host.Controls.Add(none);
+                    }
+                };
+                // the window was closed by one of its own buttons: it opens again, fresh (unless it closed at once)
+                host.Tag = (Action)(() =>
+                {
+                    if (m_Selected == index && m_Owner.m_ShowingSettings && opened.ElapsedMilliseconds > 700)
+                        show();
+                });
+                AddPage(key, title, icon, host, show);
+            }
+
+            private void AddVdoPage()
+            {
+                Panel host = new Panel();
+                Label text = new Label();
+                text.Text = Loc.T(
+                    "O VDO.Ninja envia o áudio do Apolo pela internet (para o Foundry e para os jogadores). Ele roda numa aba do navegador do Apolo, por isso abre ali e não aqui.\n\nO botão \"Enviar áudio\" do cabeçalho faz a mesma coisa.",
+                    "VDO.Ninja sends the audio of Apolo over the internet (to Foundry and the players). It runs in a tab of the Apolo browser, so it opens there and not here.\n\nThe \"Send audio\" button of the header does the same.");
+                text.AutoSize = false;
+                text.SetBounds(0, 8, 640, 110);
+                Button open = new Button();
+                open.Text = Loc.T("Abrir a aba de envio de áudio", "Open the audio sending tab");
+                open.AutoSize = true;
+                open.MinimumSize = new Size(240, DialogKit.ButtonHeight);
+                open.Padding = new Padding(10, 0, 10, 0);
+                open.Location = new Point(0, 128);
+                DialogKit.Primary(open);
+                open.Click += (s, e) => m_Owner.ShowWebWindow(true);
+                host.Controls.Add(text);
+                host.Controls.Add(open);
+                AddPage("vdo", "VDO.Ninja", "send", host, null);
+            }
+
+            public int IndexOfKey(string key)
+            {
+                return m_Pages.FindIndex(p => p.Key == key);
             }
 
             private void FitSizes()
             {
-                m_Sidebar.Width = Math.Max(230, Font.Height * 15);
+                m_Sidebar.Width = Math.Max(250, Font.Height * 16);
                 m_Title.Height = Math.Max(64, Font.Height * 4);
                 m_Title.Font = new Font(Font.FontFamily, Font.Size + 7f, FontStyle.Bold);
                 FitColumn();
@@ -362,6 +473,18 @@ namespace Ares.Player
 
             public void SelectPage(int index)
             {
+                ShowPage(index, true);
+            }
+
+            /// <summary>The page in front is shown again (the tab was opened).</summary>
+            public void RefreshCurrent()
+            {
+                if (m_Selected >= 0 && m_Pages[m_Selected].Shown != null)
+                    m_Pages[m_Selected].Shown();
+            }
+
+            private void ShowPage(int index, bool notify)
+            {
                 if (index < 0 || index >= m_Pages.Count)
                     index = 0;
                 if (m_Selected >= 0)
@@ -369,18 +492,18 @@ namespace Ares.Player
                 m_Selected = index;
                 s_LastPage = index;
                 PageEntry entry = m_Pages[index];
-                m_Title.Text = entry.Title;
+                m_Title.Text = entry.Group != null ? entry.Group + "  ›  " + entry.Title : entry.Title;
                 entry.Page.Visible = true;
                 m_Sidebar.Current = index;
-                if (entry.Source != null)
-                    entry.Source.OnPageShown();
+                if (notify && entry.Shown != null)
+                    entry.Shown();
             }
         }
 
-        // the list of pages at the left
+        // the list of pages at the left (with groups)
         private class Sidebar : Control
         {
-            private List<string> m_Titles = new List<string>(), m_Icons = new List<string>();
+            private List<SidebarEntry> m_Entries = new List<SidebarEntry>();
             private int m_Current, m_Hot = -1;
 
             public event Action<int> Selected;
@@ -393,10 +516,9 @@ namespace Ares.Player
                 ThemeManager.Changed += (s, e) => Invalidate();
             }
 
-            public void SetItems(List<string> titles, List<string> icons)
+            public void SetItems(List<SidebarEntry> entries)
             {
-                m_Titles = titles;
-                m_Icons = icons;
+                m_Entries = entries;
                 Invalidate();
             }
 
@@ -406,7 +528,7 @@ namespace Ares.Player
                 set { m_Current = value; Invalidate(); }
             }
 
-            private int RowHeight { get { return Math.Max(46, Font.Height + 28); } }
+            private int RowHeight { get { return Math.Max(44, Font.Height + 26); } }
 
             private Rectangle RowRect(int i)
             {
@@ -419,13 +541,16 @@ namespace Ares.Player
                 bool themed = p != null && !p.IsClassic;
                 Color back = themed ? p.Surface : SystemColors.Window;
                 Color text = themed ? p.Text : SystemColors.ControlText;
+                Color dim = themed ? p.TextDim : SystemColors.GrayText;
                 Color accent = themed ? p.Accent : SystemColors.Highlight;
                 e.Graphics.Clear(back);
-                for (int i = 0; i < m_Titles.Count; i++)
+                for (int i = 0; i < m_Entries.Count; i++)
                 {
+                    SidebarEntry entry = m_Entries[i];
                     Rectangle r = RowRect(i);
-                    bool selected = i == m_Current;
-                    if (selected || i == m_Hot)
+                    bool header = entry.Page < 0;
+                    bool selected = !header && entry.Page == m_Current;
+                    if (!header && (selected || i == m_Hot))
                     {
                         using (SolidBrush fill = new SolidBrush(themed ? (selected ? p.Selection : p.Hover) : SystemColors.ControlLight))
                             e.Graphics.FillRectangle(fill, r);
@@ -435,30 +560,40 @@ namespace Ares.Player
                         using (SolidBrush bar = new SolidBrush(accent))
                             e.Graphics.FillRectangle(bar, r.X, r.Y, 4, r.Height);
                     }
-                    int x = 24;
-                    using (Bitmap icon = IconLibrary.Get(m_Icons[i], new Size(22, 22), selected ? accent : text))
+                    int x = entry.Child ? 46 : 24;
+                    int iconSize = entry.Child ? 18 : 22;
+                    using (Bitmap icon = IconLibrary.Get(entry.Icon, new Size(iconSize, iconSize), selected || header ? accent : text))
                     {
                         if (icon != null)
-                            e.Graphics.DrawImage(icon, x, r.Y + (r.Height - 22) / 2, 22, 22);
+                            e.Graphics.DrawImage(icon, x, r.Y + (r.Height - iconSize) / 2, iconSize, iconSize);
                     }
-                    Rectangle label = new Rectangle(x + 22 + 14, r.Y, r.Width - x - 22 - 20, r.Height);
-                    using (Font font = new Font(Font, selected ? FontStyle.Bold : FontStyle.Regular))
-                        TextRenderer.DrawText(e.Graphics, m_Titles[i], font, label, text,
+                    Rectangle label = new Rectangle(x + iconSize + 12, r.Y, Math.Max(10, r.Width - x - iconSize - 18), r.Height);
+                    using (Font font = new Font(Font, selected || header ? FontStyle.Bold : FontStyle.Regular))
+                        TextRenderer.DrawText(e.Graphics, entry.Title, font, label, header ? dim : text,
                             TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.Left);
                 }
                 using (Pen line = new Pen(themed ? p.Border : SystemColors.ControlDark))
                     e.Graphics.DrawLine(line, Width - 1, 0, Width - 1, Height);
-                if (Focused && ShowFocusCues && m_Titles.Count > 0)
+                int focusRow = RowOfPage(m_Current);
+                if (Focused && ShowFocusCues && focusRow >= 0)
                 {
-                    Rectangle r = RowRect(m_Current);
+                    Rectangle r = RowRect(focusRow);
                     r.Inflate(-2, -2);
                     ControlPaint.DrawFocusRectangle(e.Graphics, r);
                 }
             }
 
+            private int RowOfPage(int page)
+            {
+                for (int i = 0; i < m_Entries.Count; i++)
+                    if (m_Entries[i].Page == page)
+                        return i;
+                return -1;
+            }
+
             private int IndexAt(Point point)
             {
-                for (int i = 0; i < m_Titles.Count; i++)
+                for (int i = 0; i < m_Entries.Count; i++)
                     if (RowRect(i).Contains(point))
                         return i;
                 return -1;
@@ -467,6 +602,8 @@ namespace Ares.Player
             protected override void OnMouseMove(MouseEventArgs e)
             {
                 int hot = IndexAt(e.Location);
+                if (hot >= 0 && m_Entries[hot].Page < 0)
+                    hot = -1; // a group title is not a page
                 if (hot != m_Hot)
                 {
                     m_Hot = hot;
@@ -488,15 +625,22 @@ namespace Ares.Player
                 Focus();
                 int index = IndexAt(e.Location);
                 if (index >= 0)
-                    Choose(index);
+                {
+                    // the title of a group leads to its first page
+                    int page = m_Entries[index].Page;
+                    for (int i = index; page < 0 && i < m_Entries.Count; i++)
+                        page = m_Entries[i].Page;
+                    if (page >= 0)
+                        Choose(page);
+                }
                 base.OnMouseDown(e);
             }
 
-            private void Choose(int index)
+            private void Choose(int page)
             {
                 Action<int> handler = Selected;
                 if (handler != null)
-                    handler(index);
+                    handler(page);
             }
 
             protected override bool IsInputKey(Keys keyData)
@@ -506,7 +650,11 @@ namespace Ares.Player
 
             protected override void OnKeyDown(KeyEventArgs e)
             {
-                if (e.KeyCode == Keys.Down && m_Current < m_Titles.Count - 1)
+                int pages = 0;
+                foreach (SidebarEntry entry in m_Entries)
+                    if (entry.Page >= 0)
+                        pages++;
+                if (e.KeyCode == Keys.Down && m_Current < pages - 1)
                     Choose(m_Current + 1);
                 else if (e.KeyCode == Keys.Up && m_Current > 0)
                     Choose(m_Current - 1);
@@ -519,11 +667,47 @@ namespace Ares.Player
 
         // ------------------------------------------------------------------ the pages
 
-        private abstract class SettingsPage : ISettingsDialogPage
+        // a group of settings: a title and a rounded outline around it, so that the sets are told apart
+        private class CardPanel : FlowLayoutPanel
+        {
+            public CardPanel()
+            {
+                DoubleBuffered = true;
+                FlowDirection = FlowDirection.TopDown;
+                WrapContents = false;
+                AutoSize = true;
+                AutoSizeMode = AutoSizeMode.GrowAndShrink;
+                Padding = new Padding(18, 14, 18, 8);
+                Margin = new Padding(0, 0, 0, 16);
+            }
+
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                base.OnPaint(e);
+                ThemePalette p = ThemeManager.Current;
+                Color line = p != null && !p.IsClassic ? p.Border : SystemColors.ControlDark;
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                Rectangle r = new Rectangle(0, 0, Width - 1, Height - 1);
+                int d = 14;
+                using (System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath())
+                {
+                    path.AddArc(r.X, r.Y, d, d, 180, 90);
+                    path.AddArc(r.Right - d, r.Y, d, d, 270, 90);
+                    path.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
+                    path.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
+                    path.CloseFigure();
+                    using (Pen pen = new Pen(line, 1.5f))
+                        e.Graphics.DrawPath(pen, path);
+                }
+            }
+        }
+
+        private abstract class SettingsPage
         {
             protected readonly Player Owner;
             private readonly FlowLayoutPanel m_Flow = new FlowLayoutPanel();
             private readonly string m_Title;
+            private CardPanel m_Card;
 
             protected SettingsPage(Player owner, string title)
             {
@@ -538,7 +722,6 @@ namespace Ares.Player
 
             public Control Page { get { return m_Flow; } }
             public string PageTitle { get { return m_Title; } }
-            public void OnConfirm() { }
 
             /// <summary>The page was brought to the front.</summary>
             public virtual void OnPageShown() { }
@@ -548,35 +731,52 @@ namespace Ares.Player
                 get { return Math.Max(200, m_Flow.ClientSize.Width - m_Flow.Padding.Horizontal - SystemInformation.VerticalScrollBarWidth); }
             }
 
-            private void FitWidths()
+            private static void FitIn(FlowLayoutPanel flow, int w)
             {
-                int w = ContentWidth;
-                m_Flow.SuspendLayout();
-                foreach (Control c in m_Flow.Controls)
+                flow.SuspendLayout();
+                foreach (Control c in flow.Controls)
                 {
                     Label l = c as Label;
+                    CardPanel card = c as CardPanel;
                     if (l != null && l.AutoSize)
                         l.MaximumSize = new Size(w, 0);
+                    else if (card != null)
+                    {
+                        card.MinimumSize = new Size(w, 0);
+                        FitIn(card, w - card.Padding.Horizontal);
+                    }
                     else if (!(c is FlowLayoutPanel && ((FlowLayoutPanel)c).AutoSize))
                         c.Width = w;
                 }
-                m_Flow.ResumeLayout(true);
+                flow.ResumeLayout(true);
+            }
+
+            private void FitWidths()
+            {
+                FitIn(m_Flow, ContentWidth);
             }
 
             protected void Add(Control c)
             {
-                m_Flow.Controls.Add(c);
+                if (m_Card != null)
+                    m_Card.Controls.Add(c);
+                else
+                    m_Flow.Controls.Add(c);
                 FitWidths();
             }
 
+            /// <summary>Starts a new group (a card) with a title; what is added next goes inside it.</summary>
             protected void Heading(string text)
             {
+                m_Card = new CardPanel();
+                m_Flow.Controls.Add(m_Card);
                 Label l = new Label();
                 l.AutoSize = true;
                 l.Text = text;
-                l.Font = new Font(m_Flow.Font, FontStyle.Bold);
-                l.Margin = new Padding(0, m_Flow.Controls.Count == 0 ? 8 : 24, 0, 6);
-                Add(l);
+                l.Font = new Font(m_Flow.Font.FontFamily, m_Flow.Font.Size + 1f, FontStyle.Bold);
+                l.Margin = new Padding(0, 0, 0, 8);
+                m_Card.Controls.Add(l);
+                FitWidths();
             }
 
             protected void Note(string text)
@@ -651,7 +851,7 @@ namespace Ares.Player
                 ThemedComboBox c = new ThemedComboBox();
                 foreach (string s in items)
                     c.Items.Add(s);
-                c.Width = 260;
+                c.Width = 320;
                 c.ItemHeight = Math.Max(16, DialogKit.FieldHeight - 8);
                 if (selected >= 0 && selected < c.Items.Count)
                     c.SelectedIndex = selected;
@@ -671,11 +871,11 @@ namespace Ares.Player
             }
         }
 
-        // ---- Interface: look, folders, language, tray ----
+        // ---- General: look, language, audio output, where the settings are kept ----
 
-        private class InterfacePage : SettingsPage
+        private class GeneralPage : SettingsPage
         {
-            public InterfacePage(Player owner) : base(owner, Loc.T("Interface", "Interface"))
+            public GeneralPage(Player owner, SettingsDialog legacy) : base(owner, Loc.T("Geral", "General"))
             {
                 ToolStripMenuItem appearance = Owner.menuStrip1.Items.OfType<ToolStripMenuItem>()
                     .FirstOrDefault(i => i.Text == "Aparência" || i.Text == "Appearance");
@@ -706,7 +906,6 @@ namespace Ares.Player
                 normal.AutoSize = false; normal.Width = 90; normal.Height = DialogKit.FieldHeight;
                 Row(Loc.T("Texto da lista de pastas", "Text of the folder list"), smaller, zoomText, bigger, normal);
                 Note(Loc.T("Também com Ctrl + roda do mouse sobre a lista de pastas.", "Also with Ctrl + mouse wheel over the folder list."));
-
                 if (Owner.m_BankAutoItem != null)
                 {
                     ToolStripMenuItem bank = Owner.m_BankAutoItem;
@@ -717,14 +916,43 @@ namespace Ares.Player
                 if (Owner.m_LanguageItem != null)
                 {
                     ToolStripMenuItem language = Owner.m_LanguageItem;
-                    Button choose = null;
-                    choose = MakeButton(Loc.T("Escolher idioma...", "Choose language..."), () => language.DropDown.Show(choose, new Point(0, choose.Height)), false);
-                    Row(Loc.T("Idioma", "Language"), choose);
+                    List<ToolStripMenuItem> languages = language.DropDownItems.OfType<ToolStripMenuItem>().ToList();
+                    Row(Loc.T("Idioma", "Language"), Combo(languages.Select(i => i.Text), languages.FindIndex(i => i.Checked), index => languages[index].PerformClick()));
                 }
                 if (Owner.m_CloseToTrayItem != null)
                 {
                     ToolStripMenuItem tray = Owner.m_CloseToTrayItem;
                     Check(tray.Text, tray.Checked, value => tray.Checked = value);
+                }
+
+                Heading(Loc.T("Saída de áudio", "Audio output"));
+                List<Ares.Playing.AudioInit.OutputDevice> devices = null;
+                try { devices = Ares.Playing.AudioInit.GetActiveDevices(); }
+                catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
+                if (devices != null && devices.Count > 0)
+                {
+                    List<Ares.Playing.AudioInit.OutputDevice> list = devices;
+                    int now = list.FindIndex(d => d.Index == Ares.Settings.Settings.Instance.OutputDeviceIndex);
+                    ThemedComboBox box = Combo(list.Select(d => d.Name), now, index => Owner.ChangeOutputDevice(list[index].Index));
+                    box.Width = 420;
+                    Row(Loc.T("Dispositivo", "Device"), box);
+                    Note(Loc.T("Onde o Apolo toca. Também dá para trocar pelo botão no canto direito da barra de baixo.",
+                        "Where Apolo plays. It can also be changed with the button at the right end of the bottom bar."));
+                }
+                else
+                {
+                    Note(Loc.T("Nenhum dispositivo de saída foi encontrado.", "No output device was found."));
+                }
+
+                // the old "General" page: where the settings are kept
+                Heading(Loc.T("Onde guardar as configurações", "Where the settings are kept"));
+                Panel old = legacy.TakePage(0) as Panel;
+                if (old != null)
+                {
+                    old.Height = Math.Max(60, old.AutoScrollMinSize.Height);
+                    old.AutoScroll = false;
+                    old.Margin = new Padding(0, 0, 0, 8);
+                    Add(old);
                 }
             }
         }
@@ -765,6 +993,8 @@ namespace Ares.Player
 
                 Heading(Loc.T("Atalhos de teclado", "Keyboard shortcuts"));
                 Check(Owner.showKeysMenuItem.Text, Owner.showKeysMenuItem.Checked, value => Owner.showKeysMenuItem.Checked = value);
+                Note(Loc.T("Mostra o atalho de cada pasta e de cada botão num pequeno cartão no canto.",
+                    "Shows the shortcut of every folder and button in a small card in the corner."));
                 Check(Owner.globalKeyHookItem.Text, Owner.globalKeyHookItem.Checked, value => Owner.globalKeyHookItem.Checked = value)
                     .Enabled = Owner.globalKeyHookItem.Enabled;
                 AddButton(Loc.T("Mostrar a lista de atalhos de novo", "Show the list of shortcuts again"), ShowShortcuts);
@@ -784,67 +1014,6 @@ namespace Ares.Player
                     return;
                 m_First = false;
                 ShowShortcuts();
-            }
-        }
-
-        // ---- Connections ----
-
-        private class ConnectionsPage : SettingsPage
-        {
-            private readonly Panel m_Host;
-            private readonly Label m_Hint = new Label();
-
-            public ConnectionsPage(Player owner) : base(owner, Loc.T("Conexões", "Connections"))
-            {
-                Note(Loc.T("Tudo o que liga o Apolo a outros programas e pessoas. Escolha um serviço para ajustá-lo aqui mesmo.",
-                    "Everything which connects Apolo to other programs and people. Choose a service to set it up right here."));
-                FlowLayoutPanel chips = new FlowLayoutPanel();
-                chips.AutoSize = true;
-                chips.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-                chips.WrapContents = true;
-                chips.Margin = new Padding(0, 0, 0, 8);
-                m_Host = new Panel();
-                Chip(chips, Loc.T("Controle remoto", "Remote control"), Owner.ShowRemoteDialog);
-                Chip(chips, "Stream Deck", Owner.ShowDeckDialog);
-                Chip(chips, "Discord", Owner.ShowDiscordDialog);
-                Chip(chips, Loc.T("Overlay do OBS", "OBS overlay"), Owner.ShowOverlayDialog);
-                Chip(chips, "Foundry VTT", Owner.ShowFoundryHelp);
-                Button vdo = MakeButton("VDO.Ninja", () => Owner.ShowWebWindow(true), false);
-                vdo.AutoSize = false;
-                vdo.Size = new Size(Math.Max(110, TextRenderer.MeasureText("VDO.Ninja", vdo.Font).Width + 32), DialogKit.ButtonHeight);
-                vdo.Margin = new Padding(0, 0, 8, 8);
-                chips.Controls.Add(vdo);
-                Add(chips);
-
-                m_Host.Height = 660;
-                m_Host.AutoScroll = true;
-                m_Host.Margin = new Padding(0, 0, 0, 8);
-                m_Hint.Text = Loc.T("Escolha um serviço acima. \"VDO.Ninja\" abre a aba de envio de áudio.", "Choose a service above. \"VDO.Ninja\" opens the audio sending tab.");
-                m_Hint.Tag = "Muted";
-                m_Hint.AutoSize = true;
-                m_Hint.Location = new Point(0, 8);
-                m_Host.Controls.Add(m_Hint);
-                Add(m_Host);
-            }
-
-            private void Chip(FlowLayoutPanel parent, string title, Action open)
-            {
-                RadioButton chip = new RadioButton();
-                chip.Appearance = Appearance.Button;
-                chip.Text = title;
-                chip.AutoSize = false;
-                chip.TextAlign = ContentAlignment.MiddleCenter;
-                chip.Size = new Size(Math.Max(110, TextRenderer.MeasureText(title, chip.Font).Width + 32), DialogKit.ButtonHeight);
-                chip.Margin = new Padding(0, 0, 8, 8);
-                chip.CheckedChanged += (s, e) =>
-                {
-                    if (!chip.Checked)
-                        return;
-                    Owner.m_EmbedHost = m_Host;
-                    open();
-                    Owner.m_EmbedHost = null;
-                };
-                parent.Controls.Add(chip);
             }
         }
     }

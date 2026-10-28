@@ -279,6 +279,8 @@ The code of Apolo is open and lives on GitHub:
 
         private void ShowFoundryHelp()
         {
+            if (RedirectToSettings("foundry"))
+                return;
             // the ID comes from the VDO.Ninja tab ("Send audio"): it is opened for the user (it is needed while the Foundry plays)
             if (m_EmbedHost == null) // inside the settings tab it must not leave the tab
             {

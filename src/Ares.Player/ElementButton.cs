@@ -30,6 +30,15 @@ namespace Ares.Player
             set { if (m_Kind != value) { m_Kind = value; Invalidate(); } }
         }
 
+        private string m_KeyText;
+
+        /// <summary>The keyboard shortcut of the button, shown as a small translucent card in the lower right corner (null = none).</summary>
+        public string KeyText
+        {
+            get { return m_KeyText; }
+            set { if (m_KeyText != value) { m_KeyText = value; Invalidate(); } }
+        }
+
         /// <summary>Selected (with Ctrl / Shift) in edit mode, for deleting several buttons at once.</summary>
         public bool MultiSelected
         {
@@ -515,6 +524,29 @@ namespace Ares.Player
                             TextRenderer.DrawText(g, glyphs[gi], gf, pill, text,
                                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
                         }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(m_KeyText))
+                {
+                    // the shortcut: a soft card in the corner (subtle, so that it does not compete with the name)
+                    using (Font kf = new Font(Font.FontFamily, Math.Max(7f, Font.Size - 2f), FontStyle.Bold))
+                    {
+                        Size ks = TextRenderer.MeasureText(m_KeyText, kf, new Size(int.MaxValue, int.MaxValue), TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                        int kh = ks.Height + 4;
+                        int kw = Math.Max(kh, ks.Width + 10);
+                        Rectangle card = m_ListMode
+                            ? new Rectangle(Width - kw - 8, (Height - kh) / 2, kw, kh)
+                            : new Rectangle(Width - kw - 6, Height - kh - 6, kw, kh);
+                        using (GraphicsPath kp = Rounded(card, kh / 3))
+                        {
+                            using (SolidBrush kb = new SolidBrush(Color.FromArgb(90, window)))
+                                g.FillPath(kb, kp);
+                            using (Pen kd = new Pen(Color.FromArgb(70, text)))
+                                g.DrawPath(kd, kp);
+                        }
+                        TextRenderer.DrawText(g, m_KeyText, kf, card, Color.FromArgb(255, Mix(text, back, 0.25)),
+                            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
                     }
                 }
 

@@ -336,10 +336,22 @@ namespace Ares.Player
                 Rectangle r = m_Rects[i];
                 bool selected = i == m_Selected;
                 bool over = i == m_Hover;
-                Color back = selected ? pageColor : (over ? hover : barColor);
+                // each tab is a visible piece: the inactive ones have their own fill and an outline, the active one merges with the page
+                Color idle = Color.FromArgb(255, (barColor.R * 80 + text.R * 20) / 100, (barColor.G * 80 + text.G * 20) / 100, (barColor.B * 80 + text.B * 20) / 100);
+                Color back = selected ? pageColor : (over ? hover : idle);
+                Color outline = themed ? p.Border : SystemColors.ControlDark;
                 using (GraphicsPath path = TabPath(r))
-                using (SolidBrush b = new SolidBrush(back))
-                    g.FillPath(b, path);
+                {
+                    using (SolidBrush b = new SolidBrush(back))
+                        g.FillPath(b, path);
+                    using (Pen op = new Pen(selected ? Color.FromArgb(200, outline) : outline))
+                        g.DrawPath(op, path);
+                    if (selected)
+                    {
+                        using (Pen open = new Pen(pageColor))
+                            g.DrawLine(open, r.X + 1, r.Bottom, r.Right - 1, r.Bottom);
+                    }
+                }
                 if (selected)
                 {
                     using (SolidBrush line = new SolidBrush(accent))

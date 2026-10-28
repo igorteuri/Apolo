@@ -291,6 +291,7 @@ namespace Ares.Player
             // audio output selector, at the right end of the toolbar
             m_OutputButton = new ToolStripDropDownButton();
             m_OutputButton.Name = "outputDeviceButton";
+            m_OutputButton.Tag = "AccentText"; // highlighted like the settings button
             m_OutputButton.Alignment = ToolStripItemAlignment.Right;
             m_OutputButton.DisplayStyle = ToolStripItemDisplayStyle.ImageAndText;
             m_OutputButton.ImageScaling = ToolStripItemImageScaling.None;
@@ -434,6 +435,8 @@ namespace Ares.Player
         {
             m_OutputButton.DropDownItems.Clear();
             Ares.CommonGUI.ThemeManager.Apply(m_OutputButton.DropDown);
+            m_OutputButton.DropDown.BackColor = Ares.CommonGUI.ThemeManager.Current.Surface;
+            m_OutputButton.DropDown.ForeColor = Ares.CommonGUI.ThemeManager.Current.Text;
             int current = Settings.Settings.Instance.OutputDeviceIndex;
             List<Ares.Playing.AudioInit.OutputDevice> devices;
             try
@@ -449,6 +452,8 @@ namespace Ares.Player
                 int index = device.Index;
                 ToolStripMenuItem item = new ToolStripMenuItem(device.Name);
                 item.Checked = index == current;
+                item.BackColor = Ares.CommonGUI.ThemeManager.Current.Surface;
+                item.ForeColor = Ares.CommonGUI.ThemeManager.Current.Text;
                 item.Click += (sender, e) => ChangeOutputDevice(index);
                 m_OutputButton.DropDownItems.Add(item);
             }
@@ -474,7 +479,7 @@ namespace Ares.Player
 
         private Image CreateSpeakerImage()
         {
-            Image img = Ares.CommonGUI.IconLibrary.Get("volume-2", toolStrip1.ImageScalingSize);
+            Image img = Ares.CommonGUI.IconLibrary.Get("volume-2", toolStrip1.ImageScalingSize, Ares.CommonGUI.ThemeManager.Current.Accent);
             return img ?? new Bitmap(20, 20);
         }
 
@@ -1161,15 +1166,21 @@ namespace Ares.Player
                     List<string> texts = new List<string>();
                     List<string> specs = new List<string>();
                     List<int> kinds = new List<int>();
+                    List<string> keyTexts = new List<string>();
                     for (int i = 0; i < elements.Count; ++i)
                     {
                         String text = elements[i].Title;
+                        string keyText = null;
                         if (showKeys && elements[i].Trigger != null && elements[i].Trigger.TriggerType == TriggerType.Key)
                         {
                             int keyCode = (elements[i].Trigger as IKeyTrigger).KeyCode;
                             if (keyCode != 0)
-                                text += " (" + converter.ConvertToString((System.Windows.Forms.Keys)keyCode) + ")";
+                                keyText = converter.ConvertToString((System.Windows.Forms.Keys)keyCode);
                         }
+                        keyTexts.Add(keyText);
+                        // room for the shortcut card below the name
+                        if (keyText != null)
+                            text += "\n ";
                         string spec = Ares.CommonGUI.ButtonImageStore.Get(m_CurrentProjectPath, shown[i].OwnerTitle, elements[i].Title);
                         int kind = 0;
                         if (spec != null && (spec.StartsWith("img:") || spec.StartsWith("lib:")) && Ares.CommonGUI.ButtonImageStore.LoadImage(m_CurrentProjectPath, spec) != null)
@@ -1191,7 +1202,8 @@ namespace Ares.Player
                             elementsPanel.Controls.Add(MakeGroupHeader(shown[i].Header, shown[i].OwnerTitle));
                         ElementButton checkBox = new ElementButton();
                         checkBox.Font = elementsPanel.Font;
-                        checkBox.Text = texts[i];
+                        checkBox.Text = elements[i].Title;
+                        checkBox.KeyText = keyTexts[i];
                         if (kinds[i] == 2)
                             checkBox.Picture = Ares.CommonGUI.ButtonImageStore.LoadImage(m_CurrentProjectPath, specs[i]);
                         else if (kinds[i] == 1)

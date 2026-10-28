@@ -175,6 +175,8 @@ namespace Ares.Player
 
         private void ShowDeckDialog()
         {
+            if (RedirectToSettings("deck"))
+                return;
             if (m_Deck == null)
                 return;
             Form form = new Form();

@@ -799,6 +799,8 @@ namespace Ares.Player
 
         private void ShowRemoteDialog()
         {
+            if (RedirectToSettings("remote"))
+                return;
             if (m_Remote == null)
                 return;
             Form form = new Form();

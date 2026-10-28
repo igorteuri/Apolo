@@ -89,6 +89,22 @@ namespace Ares.Player
             }
             string text = e.Index < modesList.Items.Count ? Convert.ToString(modesList.Items[e.Index]) : node.Title;
             Rectangle r = new Rectangle(x + ModeGlyphWidth, e.Bounds.Y, Math.Max(10, e.Bounds.Right - x - ModeGlyphWidth - 2), e.Bounds.Height);
+            string keyText;
+            if (m_ModeKeyTexts.TryGetValue(node, out keyText))
+            {
+                // soft card with the shortcut, at the right end
+                Size ks = TextRenderer.MeasureText(keyText, modesList.Font, new Size(int.MaxValue, int.MaxValue), TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                int kh = Math.Min(e.Bounds.Height - 6, ks.Height + 2);
+                int kw = Math.Max(kh, ks.Width + 10);
+                Rectangle card = new Rectangle(e.Bounds.Right - kw - 8, e.Bounds.Y + (e.Bounds.Height - kh) / 2, kw, kh);
+                using (SolidBrush kb = new SolidBrush(Color.FromArgb(selected ? 70 : 45, fore)))
+                    e.Graphics.FillRectangle(kb, card);
+                using (Pen kd = new Pen(Color.FromArgb(80, fore)))
+                    e.Graphics.DrawRectangle(kd, card.X, card.Y, card.Width - 1, card.Height - 1);
+                TextRenderer.DrawText(e.Graphics, keyText, modesList.Font, card, dim,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
+                r.Width = Math.Max(10, r.Width - kw - 10);
+            }
             // emoji, picture or icon of the folder
             int iconSize = Math.Min(20, e.Bounds.Height - 4);
             if (iconSize >= 10 && DrawModeIcon(e.Graphics, node.Title, new Rectangle(r.X, e.Bounds.Y + (e.Bounds.Height - iconSize) / 2, iconSize, iconSize), fore))
@@ -192,6 +208,7 @@ namespace Ares.Player
             {
                 modesList.Items.Clear();
                 m_ModeRows.Clear();
+                m_ModeKeyTexts.Clear();
                 if (m_ModeTree == null || m_Project == null)
                     return;
                 bool showKeys = Settings.Settings.Instance.ShowKeysInButtons;
@@ -211,6 +228,9 @@ namespace Ares.Player
             }
         }
 
+        // the shortcut of a folder (when "show keys" is on), drawn as a small card at the right end of its row
+        private readonly Dictionary<ModeNode, string> m_ModeKeyTexts = new Dictionary<ModeNode, string>();
+
         private void AddRows(ModeNode parent, Dictionary<string, IMode> modes, bool showKeys, KeysConverter converter)
         {
             foreach (ModeNode node in parent.Children)
@@ -218,7 +238,7 @@ namespace Ares.Player
                 string title = node.Title;
                 IMode mode;
                 if (showKeys && modes.TryGetValue(title, out mode) && mode.KeyCode != 0)
-                    title += " (" + converter.ConvertToString((System.Windows.Forms.Keys)mode.KeyCode) + ")";
+                    m_ModeKeyTexts[node] = converter.ConvertToString((System.Windows.Forms.Keys)mode.KeyCode);
                 m_ModeRows.Add(node);
                 modesList.Items.Add(title);
                 if (!node.Collapsed)

@@ -2096,7 +2096,11 @@ namespace Ares.CommonGUI
             {
                 // no border around menu strips / toolbars / status strips
                 if (e.ToolStrip is ToolStripDropDown)
-                    base.OnRenderToolStripBorder(e);
+                {
+                    // one clean line in the border color (the default one leaves light pixels at the edges)
+                    using (Pen pen = new Pen(Current.Border))
+                        e.Graphics.DrawRectangle(pen, 0, 0, e.ToolStrip.Width - 1, e.ToolStrip.Height - 1);
+                }
             }
         }
 

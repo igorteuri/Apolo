@@ -279,6 +279,8 @@ namespace Ares.Player
 
         private void ShowOverlayDialog()
         {
+            if (RedirectToSettings("overlay"))
+                return;
             if (m_Overlay == null)
                 return;
             Form form = new Form();

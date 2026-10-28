@@ -142,6 +142,8 @@ namespace Ares.Player
 
         private void ShowDiscordDialog()
         {
+            if (RedirectToSettings("discord"))
+                return;
             if (m_Discord == null)
                 return;
             Form form = new Form();
