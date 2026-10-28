@@ -469,7 +469,10 @@ namespace Ares.Player
                 return;
             m_TrackState = state;
             Ares.CommonGUI.Preferences.SetBool("TracksOpen", state == 2);
-            SuspendRedraw(this);
+            // only the right column changes: freeze just that part, so the header, the state box and the folders are not painted again
+            Control[] column = { groupBox5, m_TrackPanel, elementsPanel };
+            foreach (Control c in column)
+                SuspendRedraw(c);
             try
             {
                 UpdateTrackVisibility();
@@ -477,7 +480,10 @@ namespace Ares.Player
             }
             finally
             {
-                ResumeRedraw(this);
+                foreach (Control c in column)
+                    ResumeRedraw(c);
+                m_TrackStrip.Invalidate();
+                m_TrackSplit.Invalidate();
             }
             if (state == 2)
             {
@@ -517,7 +523,8 @@ namespace Ares.Player
                     m_NowPlaying.Visible = true;
                     {
                         m_NowPlaying.SetBounds(margin, headerBottom + 4, Math.Max(100, clientWidth - 2 * margin), NowPlayingStrip.StripHeight);
-                        m_NowPlaying.BringToFront();
+                        if (!m_ShowingWeb) // over a web tab the strip would show through (the "Sending: VDO" chip)
+                            m_NowPlaying.BringToFront();
                         bodyTop = m_NowPlaying.Bottom + 6;
                     }
                 }

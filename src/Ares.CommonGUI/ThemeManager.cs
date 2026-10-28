@@ -693,6 +693,14 @@ namespace Ares.CommonGUI
                     if (!b.Font.Bold)
                         b.Font = new Font(b.Font, FontStyle.Bold);
                 }
+                else if (b.Tag is string && (string)b.Tag == "Danger")
+                {
+                    // a switch which is "on" and means trouble or silence (the muted tab): red with white text
+                    b.BackColor = Color.FromArgb(200, 52, 52);
+                    b.ForeColor = Color.White;
+                    b.FlatAppearance.MouseOverBackColor = Color.FromArgb(222, 84, 84);
+                    b.FlatAppearance.MouseDownBackColor = Color.FromArgb(170, 40, 40);
+                }
                 HookRoundedButton(b);
             }
             else if (c is CheckBox && ((CheckBox)c).Appearance == Appearance.Button
@@ -777,6 +785,7 @@ namespace Ares.CommonGUI
                 lv.BackColor = p.Surface;
                 lv.ForeColor = p.Text;
                 lv.BorderStyle = BorderStyle.FixedSingle;
+                HookSelectAll(lv);
                 if (!p.IsClassic)
                 {
                     if (lv.GridLines)
@@ -799,6 +808,7 @@ namespace Ares.CommonGUI
                 lb.BackColor = p.Surface;
                 lb.ForeColor = p.Text;
                 lb.BorderStyle = BorderStyle.FixedSingle;
+                HookSelectAll(lb);
                 ApplyListBoxLook(lb);
             }
             else if (c is TabControl)
@@ -1686,12 +1696,87 @@ namespace Ares.CommonGUI
                 else if (c is ComboBox)
                 {
                     SetWindowTheme(c.Handle, dark ? "DarkMode_CFD" : "Explorer", null);
+                    HookDropList((ComboBox)c);
                 }
             }
             catch (Exception swallowed)
             {
                 Ares.Settings.ErrorLog.Note(swallowed);
             }
+        }
+
+        // the list which drops down from a combo box is a window of its own: its scroll bar stays white unless it gets the theme too
+        [StructLayout(LayoutKind.Sequential)]
+        private struct COMBOBOXINFO
+        {
+            public int cbSize;
+            public Rectangle rcItem, rcButton;
+            public int stateButton;
+            public IntPtr hwndCombo, hwndItem, hwndList;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool GetComboBoxInfo(IntPtr hwnd, ref COMBOBOXINFO info);
+
+        private static readonly ConditionalWeakTable<ComboBox, object> s_DropHooked = new ConditionalWeakTable<ComboBox, object>();
+
+        private static void HookDropList(ComboBox cb)
+        {
+            object marker;
+            if (s_DropHooked.TryGetValue(cb, out marker))
+                return;
+            s_DropHooked.Add(cb, new object());
+            cb.DropDown += (s, e) =>
+            {
+                try
+                {
+                    ThemePalette p = Current;
+                    COMBOBOXINFO info = new COMBOBOXINFO();
+                    info.cbSize = Marshal.SizeOf(typeof(COMBOBOXINFO));
+                    if (p != null && GetComboBoxInfo(cb.Handle, ref info) && info.hwndList != IntPtr.Zero)
+                        SetWindowTheme(info.hwndList, !p.IsClassic && p.IsDark ? "DarkMode_Explorer" : "Explorer", null);
+                }
+                catch (Exception swallowed)
+                {
+                    Ares.Settings.ErrorLog.Note(swallowed);
+                }
+            };
+        }
+
+        // Ctrl+A selects everything in the lists which allow more than one selected item
+        private static readonly ConditionalWeakTable<Control, object> s_SelectAllHooked = new ConditionalWeakTable<Control, object>();
+
+        private static void HookSelectAll(Control c)
+        {
+            object marker;
+            if (s_SelectAllHooked.TryGetValue(c, out marker))
+                return;
+            s_SelectAllHooked.Add(c, new object());
+            c.KeyDown += (s, e) =>
+            {
+                if (!e.Control || e.KeyCode != Keys.A)
+                    return;
+                ListView lv = c as ListView;
+                ListBox lb = c as ListBox;
+                if (lv != null && lv.MultiSelect)
+                {
+                    lv.BeginUpdate();
+                    foreach (ListViewItem item in lv.Items)
+                        item.Selected = true;
+                    lv.EndUpdate();
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                }
+                else if (lb != null && (lb.SelectionMode == SelectionMode.MultiExtended || lb.SelectionMode == SelectionMode.MultiSimple))
+                {
+                    lb.BeginUpdate();
+                    for (int i = 0; i < lb.Items.Count; ++i)
+                        lb.SetSelected(i, true);
+                    lb.EndUpdate();
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                }
+            };
         }
 
         private static void SetDarkTitleBar(Form f)
@@ -1935,6 +2020,23 @@ namespace Ares.CommonGUI
                     return;
                 }
                 base.OnRenderButtonBackground(e);
+            }
+
+            protected override void OnRenderToolStripStatusLabelBackground(ToolStripItemRenderEventArgs e)
+            {
+                // the dividers of the status bar are only a hint: a thin line at 30% of the border color
+                ToolStripStatusLabel label = e.Item as ToolStripStatusLabel;
+                if (label == null || label.BorderSides == ToolStripStatusLabelBorderSides.None)
+                    return;
+                Rectangle r = new Rectangle(Point.Empty, label.Size);
+                int inset = Math.Max(3, r.Height / 5);
+                using (Pen pen = new Pen(Color.FromArgb(77, Current.TextDim)))
+                {
+                    if ((label.BorderSides & ToolStripStatusLabelBorderSides.Right) != 0)
+                        e.Graphics.DrawLine(pen, r.Right - 1, r.Top + inset, r.Right - 1, r.Bottom - inset);
+                    if ((label.BorderSides & ToolStripStatusLabelBorderSides.Left) != 0)
+                        e.Graphics.DrawLine(pen, r.Left, r.Top + inset, r.Left, r.Bottom - inset);
+                }
             }
 
             protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)

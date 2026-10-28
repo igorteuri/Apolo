@@ -128,6 +128,8 @@ namespace Ares.Player
             SetEditChromeVisible(true);
             if (m_WebWindow != null)
                 m_WebWindow.Visible = false;
+            if (m_NowPlaying != null)
+                m_NowPlaying.BringToFront();
             RefreshTabBar();
         }
 
@@ -312,9 +314,9 @@ namespace Ares.Player
         private WebTab m_Selected;
         private TextBox m_Address;
         private SearchField m_AddressField;
-        private Button m_Back, m_Forward, m_Reload, m_Add, m_ToAres, m_VdoSettings, m_VdoCopy, m_Mute, m_Extensions;
+        private Button m_Back, m_Forward, m_Reload, m_ToAres, m_VdoSettings, m_VdoCopy, m_Mute, m_Extensions;
         private readonly System.Collections.Generic.List<KeyValuePair<Button, string>> m_BarIcons = new System.Collections.Generic.List<KeyValuePair<Button, string>>();
-        private int BarButtonHeight { get { return Math.Max(30, Font.Height + 12); } }
+        private int BarButtonHeight { get { return Math.Max(34, Font.Height + 18); } }
         private Panel m_Bar;
         private readonly ToolTip m_Tip = new ToolTip();
         private ExtensionBar m_ExtBar;
@@ -445,7 +447,7 @@ namespace Ares.Player
             Panel bar = new Panel();
             m_Bar = bar;
             bar.Dock = DockStyle.Top;
-            bar.Height = BarButtonHeight + 16;
+            bar.Height = BarButtonHeight + 14;
             bar.Padding = new Padding(4);
             // a thin line under the bar, in the color of the theme, separates it from the page
             bar.Paint += (s, e) =>
@@ -464,7 +466,6 @@ namespace Ares.Player
             m_Back = MakeBarButton("", "chevron-left", T("Voltar", "Back"), (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CanGoBack) t.View.GoBack(); });
             m_Forward = MakeBarButton("", "chevron-right", T("Avançar", "Forward"), (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CanGoForward) t.View.GoForward(); });
             m_Reload = MakeBarButton("", "refresh-cw", T("Recarregar a página", "Reload the page"), (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CoreWebView2 != null) t.View.CoreWebView2.Reload(); });
-            m_Add = MakeBarButton(T("Favorito", "Favorite"), "star", T("Guardar esta página como favorita", "Keep this page as a favorite"), (s, e) => AddFavorite());
             m_Mute = MakeBarButton(T("Mutar aba", "Mute tab"), "volume-x", null, (s, e) => { WebTab t = Current(); if (t != null) SetTabMuted(t, !t.Muted); });
             m_Mute.Width = Math.Max(FitBarWidth(T("Mutar aba", "Mute tab"), true), FitBarWidth(T("Ativar som", "Unmute"), true));
             m_Extensions = MakeBarButton(T("Extensões", "Extensions"), "puzzle", T("Gerenciar as extensões do navegador", "Manage the browser extensions"), (s, e) => ManageExtensions());
@@ -486,7 +487,7 @@ namespace Ares.Player
             };
             // one button for each installed extension (settings, window, disable, remove), at the right of the address
             m_ExtBar = new ExtensionBar(() => GetEnvironment(), () => LayoutBar(bar), () => ManageExtensions(), m_Tip, BarButtonHeight);
-            bar.Controls.AddRange(new Control[] { m_ToAres, m_Back, m_Forward, m_Reload, m_AddressField, m_Mute, m_Extensions, m_ExtBar, m_VdoCopy, m_VdoSettings, m_Add });
+            bar.Controls.AddRange(new Control[] { m_ToAres, m_Back, m_Forward, m_Reload, m_AddressField, m_Mute, m_Extensions, m_ExtBar, m_VdoCopy, m_VdoSettings });
             Ares.CommonGUI.ThemeManager.Changed += (s, e) => RefreshBarIcons();
             bar.Resize += (s, e) => LayoutBar(bar);
 
@@ -567,7 +568,9 @@ namespace Ares.Player
             Image old = b.Image;
             Color color = Ares.CommonGUI.IconLibrary.ThemeColor();
             Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
-            if (b.Tag is string && (string)b.Tag == "Primary" && p != null && !p.IsClassic)
+            if (b.Tag is string && (string)b.Tag == "Danger" && p != null && !p.IsClassic)
+                color = Color.White;
+            else if (b.Tag is string && (string)b.Tag == "Primary" && p != null && !p.IsClassic)
             {
                 // the icon of a button filled with the highlight color follows the text color of that button
                 color = Ares.CommonGUI.ThemeManager.ContrastRatio(p.Accent, Color.White) >= Ares.CommonGUI.ThemeManager.ContrastRatio(p.Accent, Color.Black)
@@ -591,6 +594,7 @@ namespace Ares.Player
         private void ShowMuteState(bool muted)
         {
             m_Mute.Text = muted ? T("Ativar som", "Unmute") : T("Mutar aba", "Mute tab");
+            m_Mute.Tag = muted ? "Danger" : null; // a muted tab says so: the button turns red
             for (int i = 0; i < m_BarIcons.Count; i++)
             {
                 if (m_BarIcons[i].Key == m_Mute)
@@ -599,6 +603,7 @@ namespace Ares.Player
                     SetBarIcon(m_Mute, m_BarIcons[i].Value);
                 }
             }
+            Ares.CommonGUI.ThemeManager.Apply(m_Mute);
         }
 
         private void LayoutBar(Panel bar)
@@ -610,10 +615,17 @@ namespace Ares.Player
                 b.Location = new Point(x, top);
                 x += b.Width + 6;
             }
-            foreach (Button b in new Button[] { m_Add, m_VdoSettings, m_VdoCopy, m_Mute, m_Extensions })
+            bar.Height = BarButtonHeight + 14;
+            foreach (Button b in new Button[] { m_ToAres, m_Back, m_Forward, m_Reload, m_VdoSettings, m_VdoCopy, m_Mute, m_Extensions })
+            {
+                b.Height = BarButtonHeight;
                 b.Top = top;
+            }
             if (m_ExtBar != null)
+            {
+                m_ExtBar.SetSize(BarButtonHeight); // the same height as every other control of the bar
                 m_ExtBar.Top = top;
+            }
             m_AddressField.Top = top;
             m_AddressField.Height = BarButtonHeight;
             m_AddressField.Left = x;
@@ -621,7 +633,7 @@ namespace Ares.Player
             // only the buttons which this tab uses take room (Visible is false whenever the tab is hidden, so it cannot tell)
             WebTab current = Current();
             bool vdo = current != null && current.Kind == "vdo";
-            foreach (Button b in new Button[] { m_Add, m_VdoSettings, m_VdoCopy, m_Mute, m_Extensions })
+            foreach (Button b in new Button[] { m_VdoSettings, m_VdoCopy, m_Mute, m_Extensions })
             {
                 bool used = (b != m_VdoSettings && b != m_VdoCopy || vdo) && (b != m_Mute || current != null);
                 if (!used)
@@ -1294,33 +1306,38 @@ namespace Ares.Player
             MaximizeBox = false;
             MinimizeBox = false;
             ShowInTaskbar = false;
-            ClientSize = new Size(560, 424);
+            ClientSize = new Size(680, 470);
 
             Label help = new Label();
-            help.SetBounds(12, 10, 536, 78);
+            help.SetBounds(DialogKit.Margin, 20, 632, 66);
+            DialogKit.Muted(help);
             help.Text = T(
                 "Aqui você instala extensões nas abas de internet do Apolo (bloqueador de anúncios, melhorias do YouTube etc.). A Chrome Web Store não pode ser usada direto: baixe a extensão (arquivo .crx ou .zip) ou escolha a pasta de uma extensão já descompactada.",
                 "Install extensions in the web tabs of Apolo (ad blockers, YouTube improvements ...). The Chrome Web Store can't be used directly: download the extension (.crx or .zip file) or choose the folder of an unpacked extension.");
             Controls.Add(help);
 
-            m_List.SetBounds(12, 94, 536, 190);
+            m_List.SetBounds(DialogKit.Margin, 94, 632, 190);
             Controls.Add(m_List);
 
-            m_Info.SetBounds(12, 290, 536, 36);
+            m_Info.SetBounds(DialogKit.Margin, 292, 632, 36);
+            DialogKit.Muted(m_Info);
             Controls.Add(m_Info);
 
-            Button addFolder = MakeButton(T("Adicionar pasta...", "Add folder..."), 12, 336, 170);
+            Button addFolder = MakeButton(T("Adicionar pasta...", "Add folder..."), DialogKit.Margin, 340, 150);
             addFolder.Click += async (s, e) => await AddFolder();
-            Button addFile = MakeButton(T("Adicionar arquivo...", "Add file..."), 190, 336, 170);
+            DialogKit.Primary(addFolder);
+            Button addFile = MakeButton(T("Adicionar arquivo...", "Add file..."), DialogKit.Margin + 158, 340, 160);
             addFile.Click += async (s, e) => await AddFile();
-            Button settings = MakeButton(T("Configurações da extensão", "Extension settings"), 12, 376, 220);
+            Button settings = MakeButton(T("Configurações da extensão", "Extension settings"), DialogKit.Margin + 326, 340, 210);
             settings.Click += (s, e) => OpenSettingsOfSelected();
-            Button remove = MakeButton(T("Remover", "Remove"), 240, 376, 110);
+            Button remove = MakeButton(T("Remover", "Remove"), DialogKit.Margin + 544, 340, 88);
             remove.Click += async (s, e) => await RemoveSelected();
-            Button close = MakeButton(T("Fechar", "Close"), 458, 376, 90);
+            Controls.Add(DialogKit.MakeRule(396, 632));
+            Button close = MakeButton(T("Fechar", "Close"), 680 - DialogKit.Margin - 110, 412, 110);
             close.DialogResult = DialogResult.Cancel;
             CancelButton = close;
             Controls.AddRange(new Control[] { addFolder, addFile, settings, remove, close });
+            DialogKit.Finish(this, close, close);
 
             Shown += async (s, e) => await Refresh();
         }
@@ -1329,7 +1346,7 @@ namespace Ares.Player
         {
             Button b = new Button();
             b.Text = text;
-            b.SetBounds(x, y, width, 30);
+            b.SetBounds(x, y, width, DialogKit.ButtonHeight);
             return b;
         }
 

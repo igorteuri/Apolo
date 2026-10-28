@@ -263,7 +263,7 @@ namespace Ares.Player
         private readonly Action m_Changed;
         private readonly Action m_Manage;
         private readonly ToolTip m_Tip;
-        private readonly int m_Size;
+        private int m_Size;
         private List<ExtensionEntry> m_Entries = new List<ExtensionEntry>();
 
         private static string T(string pt, string en)
@@ -284,6 +284,22 @@ namespace Ares.Player
             Height = size;
             Width = 0;
             Visible = false;
+        }
+
+        /// <summary>The height of the buttons follows the rest of the bar (set again whenever the bar is laid out).</summary>
+        public void SetSize(int size)
+        {
+            if (size == m_Size)
+                return;
+            m_Size = size;
+            Height = size;
+            int x = 0;
+            foreach (Control c in Controls)
+            {
+                c.SetBounds(x, 0, size, size);
+                x += size + 6;
+            }
+            Width = Math.Max(0, x - 6);
         }
 
         public void HideTips()

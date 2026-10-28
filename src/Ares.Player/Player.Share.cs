@@ -74,6 +74,7 @@ namespace Ares.Player
             m_LabelBox = AddRow(table, 2, T("Nome exibido:", "Display name:"), new TextBox());
             m_DeviceBox = new ComboBox();
             m_DeviceBox.DropDownStyle = ComboBoxStyle.DropDown;
+            m_DeviceBox.FlatStyle = FlatStyle.Flat;
             FillDevices();
             AddRow(table, 3, T("Entrada de áudio (a que será enviada):", "Audio input (the one that is sent):"), m_DeviceBox);
             m_BitrateBox = new NumericUpDown();

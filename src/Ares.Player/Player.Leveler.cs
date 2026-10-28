@@ -42,6 +42,17 @@ namespace Ares.Player
                 "Volume leveler (gentle compressor): reduces the volume difference between pieces and avoids peaks. On = more even sound; off = original sound of the files.");
             tip.SetToolTip(m_LevelToggle, help);
             tip.SetToolTip(m_LevelLabel, help);
+            // right click: straight to the settings of the leveler (page "Music" of the settings)
+            MouseEventHandler openSettings = (s, e) =>
+            {
+                if (e.Button == MouseButtons.Right)
+                    ShowSettingsDialog(1);
+            };
+            m_LevelToggle.MouseUp += openSettings;
+            m_LevelLabel.MouseUp += openSettings;
+            string rightClick = T("\n\nBotão direito: abrir as configurações do nivelador.", "\n\nRight click: open the leveler settings.");
+            tip.SetToolTip(m_LevelToggle, help + rightClick);
+            tip.SetToolTip(m_LevelLabel, help + rightClick);
             m_VolumePanel.Controls.Add(m_LevelLabel);
             m_VolumePanel.Controls.Add(m_LevelToggle);
         }
