@@ -764,6 +764,9 @@ namespace Ares.CommonGUI
             {
                 c.BackColor = p.Surface;
                 c.ForeColor = p.Text;
+                UpDownBase upDown = c as UpDownBase;
+                if (upDown != null)
+                    HookUpDownBorder(upDown);
                 TextBox tb = c as TextBox;
                 if (tb != null && !(tb.Tag is string && (string)tb.Tag == "NoThemeBorder"))
                 {
@@ -1703,6 +1706,38 @@ namespace Ares.CommonGUI
             {
                 Ares.Settings.ErrorLog.Note(swallowed);
             }
+        }
+
+        // number boxes draw their own frame in the text color (white on the dark theme): painted over in the border color,
+        // and made wide enough for the biggest value (the digits were cut off)
+        private static readonly ConditionalWeakTable<UpDownBase, object> s_UpDownHooked = new ConditionalWeakTable<UpDownBase, object>();
+
+        private static void HookUpDownBorder(UpDownBase u)
+        {
+            NumericUpDown num = u as NumericUpDown;
+            if (num != null)
+            {
+                int digits = Math.Max(num.Maximum.ToString().Length, num.Minimum.ToString().Length);
+                int need = TextRenderer.MeasureText(new string('0', digits), num.Font).Width + SystemInformation.VerticalScrollBarWidth + 14;
+                if (num.Width < need)
+                    num.Width = need;
+            }
+            object marker;
+            if (s_UpDownHooked.TryGetValue(u, out marker))
+                return;
+            s_UpDownHooked.Add(u, new object());
+            u.BorderStyle = BorderStyle.FixedSingle;
+            u.Paint += (s, e) =>
+            {
+                ThemePalette p = Current;
+                if (p == null || p.IsClassic)
+                    return;
+                Rectangle r = new Rectangle(0, 0, u.Width - 1, u.Height - 1);
+                using (Pen pen = new Pen(u.ContainsFocus ? p.Accent : p.ControlBorder))
+                    e.Graphics.DrawRectangle(pen, r);
+            };
+            u.GotFocus += (s, e) => u.Invalidate();
+            u.LostFocus += (s, e) => u.Invalidate();
         }
 
         // the list which drops down from a combo box is a window of its own: its scroll bar stays white unless it gets the theme too

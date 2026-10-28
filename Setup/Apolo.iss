@@ -41,6 +41,9 @@ SolidCompression=yes
 PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=dialog
 MinVersion=10.0.14393
+; o Apolo e um programa de 64 bits (instala em Arquivos de Programas, nao em Arquivos de Programas (x86))
+ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode=x64
 ChangesAssociations=yes
 CloseApplications=yes
 RestartApplications=no
@@ -107,3 +110,27 @@ procedure InitializeWizard();
 begin
   WizardForm.WelcomeLabel2.Caption := CustomMessage('WelcomeCredits');
 end;
+
+// Versoes ate a 0.84 eram de 32 bits e ficavam em "Arquivos de Programas (x86)". Quem instala a de 64 bits por cima
+// ganha a versao nova e a antiga e removida (os projetos e as configuracoes ficam, estao na pasta do usuario).
+procedure RemoveOldX86Install();
+var
+  key, cmd: String;
+  code: Integer;
+begin
+  key := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{6E1D7F0A-3B2C-4C59-9D4E-7A1B5C8F2E41}_is1';
+  cmd := '';
+  if not RegQueryStringValue(HKLM32, key, 'UninstallString', cmd) then
+    if not RegQueryStringValue(HKCU32, key, 'UninstallString', cmd) then
+      cmd := '';
+  cmd := RemoveQuotes(cmd);
+  if (cmd <> '') and FileExists(cmd) then
+    Exec(cmd, '/VERYSILENT /NORESTART /SUPPRESSMSGBOXES', '', SW_HIDE, ewWaitUntilTerminated, code);
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssInstall then
+    RemoveOldX86Install();
+end;
+

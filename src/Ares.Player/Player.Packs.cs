@@ -338,7 +338,7 @@ namespace Ares.Player
 
                 Action refresh = () =>
                 {
-                    string credits = BuildCreditsText();
+                    string credits = BuildCreditsTextWithProgress();
                     text.Text = credits.Length > 0 ? credits
                         : T("Ainda não há créditos. Use \"Escrever créditos\" para dizer quem fez as músicas e sob qual licença.",
                             "There are no credits yet. Use \"Write credits\" to say who made the music and under which licence.");

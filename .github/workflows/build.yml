@@ -28,10 +28,10 @@ jobs:
       - name: Setup MSBuild (for the small firewall helper)
         uses: microsoft/setup-msbuild@v2
 
-      - name: Publish Apolo (.NET 8, self-contained, x86)
+      - name: Publish Apolo (.NET 8, self-contained, x64)
         shell: pwsh
         run: |
-          dotnet publish src/Ares.Player/Ares.Player.csproj -c Release -r win-x86 --self-contained true --nologo -v:q -clp:ErrorsOnly -o dist
+          dotnet publish src/Ares.Player/Ares.Player.csproj -c Release -r win-x64 --self-contained true --nologo -v:q -clp:ErrorsOnly -o dist
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: Build the firewall helper (Ares.WinSecurity, .NET Framework 4.8)
@@ -52,10 +52,6 @@ jobs:
       - name: Native libraries and the tunnel of the remote control
         shell: pwsh
         run: |
-          # audio decoding and rights check (the BASS library is not free for commercial use and is never part of Apolo)
-          foreach ($f in @("chromaprint.dll","avcodec-54.dll","avutil-52.dll","msvcp100.dll","msvcr100.dll")) {
-            if (Test-Path "Libraries/$f") { Copy-Item "Libraries/$f" dist -Force } else { Write-Host "missing: $f" }
-          }
           Remove-Item dist\bass*.dll, dist\Bass*.dll -Force -ErrorAction SilentlyContinue
           Invoke-WebRequest "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile dist/cloudflared.exe
 

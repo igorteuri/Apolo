@@ -145,7 +145,7 @@ namespace Ares.CommonGUI
         {
             Size lastSize = Size.Empty;
             Color lastColor = Color.Empty;
-            try { s_Managed.Add(strip, strip); } catch (ArgumentException swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
+            object already; if (!s_Managed.TryGetValue(strip, out already)) s_Managed.Add(strip, strip);
             Action apply = () =>
             {
                 Size size = SizeFor(strip);

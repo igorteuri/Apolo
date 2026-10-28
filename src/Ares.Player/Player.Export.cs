@@ -285,6 +285,42 @@ namespace Ares.Player
         // the credits of the project: the hand-written file beside it plus what the tags of its sounds say
         private string BuildCreditsText()
         {
+            return BuildCreditsText(null);
+        }
+
+        // for a big project reading the tags of thousands of files takes a while: shows a small window with the progress
+        private string BuildCreditsTextWithProgress()
+        {
+            System.Threading.Tasks.Task<string> work = null;
+            Ares.CommonGUI.ProgressDialog dialog = null;
+            int total = 0;
+            work = System.Threading.Tasks.Task.Run(() => BuildCreditsText((done, all) =>
+            {
+                total = all;
+                Ares.CommonGUI.ProgressDialog d = dialog;
+                if (d != null && d.IsHandleCreated && all > 0 && (done % 10 == 0 || done == all))
+                    d.BeginInvoke(new Action(() =>
+                    {
+                        if (!d.IsDisposed)
+                            d.SetProgress(Math.Min(100, done * 100 / all), T("Lendo as informações dos arquivos: ", "Reading the information of the files: ") + done + " / " + all);
+                    }));
+            }));
+            if (work.Wait(400))
+                return work.Result;
+            dialog = new Ares.CommonGUI.ProgressDialog(T("Lendo as informações dos arquivos de áudio...", "Reading the information of the audio files..."));
+            dialog.StartPosition = FormStartPosition.CenterParent;
+            dialog.ShowInTaskbar = false;
+            dialog.ControlBox = false;
+            work.ContinueWith(t => { if (!dialog.IsDisposed && dialog.IsHandleCreated) dialog.BeginInvoke(new Action(dialog.Close)); });
+            dialog.Shown += (s, e) => { if (work.IsCompleted) dialog.Close(); };
+            Ares.CommonGUI.ThemeManager.Apply(dialog);
+            dialog.ShowDialog(this);
+            dialog.Dispose();
+            return work.Result;
+        }
+
+        private string BuildCreditsText(Action<int, int> progress)
+        {
             string manual = "";
             try
             {
@@ -297,8 +333,13 @@ namespace Ares.Player
                 Ares.Settings.ErrorLog.Note(swallowed);
             }
             List<CreditEntry> entries = new List<CreditEntry>();
-            foreach (Ares.Data.IFileElement element in new Ares.ModelInfo.FileLists().GetAllFiles(m_Project))
+            List<Ares.Data.IFileElement> files = new List<Ares.Data.IFileElement>(new Ares.ModelInfo.FileLists().GetAllFiles(m_Project));
+            int index = 0;
+            foreach (Ares.Data.IFileElement element in files)
             {
+                ++index;
+                if (progress != null)
+                    progress(index, files.Count);
                 try
                 {
                     string dir = element.SoundFileType == Ares.Data.SoundFileType.Music ?

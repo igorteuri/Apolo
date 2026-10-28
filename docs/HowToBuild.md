@@ -1,16 +1,16 @@
 # Como compilar o Apolo
 
-O Apolo é um programa de Windows (C#, **.NET 8**, WinForms, plataforma x86). O projeto herdou do Ares os nomes internos `Ares.*`, que continuam nas pastas e nos namespaces.
+O Apolo é um programa de Windows (C#, **.NET 8**, WinForms, plataforma x64 (64 bits)). O projeto herdou do Ares os nomes internos `Ares.*`, que continuam nas pastas e nos namespaces.
 
 ## Pelo GitHub (o jeito mais simples)
 
-O arquivo `.github/workflows/build.yml` compila tudo a cada envio (`push`): publica o programa (`dotnet publish`, autocontido, win-x86), compila o pequeno ajudante de firewall (`Ares.WinSecurity`, .NET Framework 4.8), junta as bibliotecas nativas, empacota a ponte do Discord, o plugin do Stream Deck e o módulo do Foundry VTT, **roda os testes automáticos** e, só se eles passarem, gera o instalador (Inno Setup). O resultado aparece na aba *Actions*: `Apolo-installer` e `Apolo-windows`.
+O arquivo `.github/workflows/build.yml` compila tudo a cada envio (`push`): publica o programa (`dotnet publish`, autocontido, win-x64), compila o pequeno ajudante de firewall (`Ares.WinSecurity`, .NET Framework 4.8), junta as bibliotecas nativas, empacota a ponte do Discord, o plugin do Stream Deck e o módulo do Foundry VTT, **roda os testes automáticos** e, só se eles passarem, gera o instalador (Inno Setup). O resultado aparece na aba *Actions*: `Apolo-installer` e `Apolo-windows`.
 
 ## No seu computador
 
 1. Instale o [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 2. Rode os testes: `dotnet test tests/Apolo.Tests`.
-3. Gere o programa: `dotnet publish src/Ares.Player/Ares.Player.csproj -c Release -r win-x86 --self-contained true -o dist`.
+3. Gere o programa: `dotnet publish src/Ares.Player/Ares.Player.csproj -c Release -r win-x64 --self-contained true -o dist`.
 4. Copie para `dist` as bibliotecas nativas da pasta `Libraries` (`chromaprint.dll`, `avcodec-54.dll`, `avutil-52.dll`, `msvcp100.dll`, `msvcr100.dll`).
 5. O ajudante de firewall precisa do MSBuild (Visual Studio ou Build Tools): `msbuild tools/WinSecurity.slnf /p:Configuration=Release /p:Platform=x86`.
 
