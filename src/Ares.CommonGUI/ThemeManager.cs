@@ -2064,6 +2064,17 @@ namespace Ares.CommonGUI
                 base.OnRenderButtonBackground(e);
             }
 
+            protected override void OnRenderDropDownButtonBackground(ToolStripItemRenderEventArgs e)
+            {
+                ToolStripItem item = e.Item;
+                if (item.Selected || item.Pressed)
+                {
+                    Rectangle r = new Rectangle(1, 1, item.Width - 3, item.Height - 3);
+                    using (SolidBrush fill = new SolidBrush(item.Pressed ? Current.Selection : Current.Hover))
+                        e.Graphics.FillRectangle(fill, r);
+                }
+            }
+
             protected override void OnRenderToolStripStatusLabelBackground(ToolStripItemRenderEventArgs e)
             {
                 // the dividers of the status bar are only a hint: a thin line at 30% of the border color

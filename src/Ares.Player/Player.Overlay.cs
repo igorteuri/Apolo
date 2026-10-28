@@ -281,7 +281,7 @@ namespace Ares.Player
         {
             if (m_Overlay == null)
                 return;
-            using (Form form = new Form())
+            Form form = new Form();
             {
                 form.Text = T("Overlay para OBS", "OBS overlay");
                 form.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -383,7 +383,7 @@ namespace Ares.Player
                 form.Controls.AddRange(new Control[] { intro, enabled, portLabel, port, linkLabel, link, status, copy, configure, close,
                     DialogKit.MakeRule(96, 552), DialogKit.MakeRule(196, 552) });
                 DialogKit.Finish(form, close, enabled);
-                form.ShowDialog(this);
+                ShowOrEmbed(form, null);
             }
         }
     }

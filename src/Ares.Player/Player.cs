@@ -433,6 +433,7 @@ namespace Ares.Player
         private void FillOutputMenu()
         {
             m_OutputButton.DropDownItems.Clear();
+            Ares.CommonGUI.ThemeManager.Apply(m_OutputButton.DropDown);
             int current = Settings.Settings.Instance.OutputDeviceIndex;
             List<Ares.Playing.AudioInit.OutputDevice> devices;
             try
@@ -665,57 +666,6 @@ namespace Ares.Player
         private void settingsButton_Click(object sender, EventArgs e)
         {
             ShowSettingsDialog(-1);
-        }
-
-        private void ShowSettingsDialog(int pageIndex)
-        {
-#if !MONO
-            m_KeyboardHookManager.Enabled = false; 
-#endif
-            Ares.Settings.Settings settings = Ares.Settings.Settings.Instance;
-            Ares.CommonGUI.SettingsDialog dialog = new Ares.CommonGUI.SettingsDialog(Ares.Settings.Settings.Instance, m_BasicSettings);
-            dialog.AddPage(new MusicPageHost());
-            dialog.AddPage(new InterfacePage(this));
-            dialog.AddPage(new KeyboardPage(this));
-            dialog.AddPage(new ConnectionsPage(this));
-            dialog.SetVisiblePage(pageIndex);
-            // big enough for the pages: 80% of the height of the program window (and wider than the old dialog)
-            Rectangle area = Screen.FromControl(this).WorkingArea;
-            dialog.StartPosition = FormStartPosition.CenterParent;
-            dialog.Size = new Size(Math.Min(area.Width - 40, Math.Max(dialog.Width, Math.Min((int)(Width * 0.7), 1200))),
-                Math.Min(area.Height - 40, Math.Max(dialog.Height, (int)(Height * 0.8))));
-            if (dialog.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
-            {
-                m_PlayingControl.UpdateDirectories();
-                LoadTagsDB();
-                SetOutputDevice();
-                m_PlayingControl.SetPlayMusicOnAllSpeakers(settings.PlayMusicOnAllSpeakers);
-                m_PlayingControl.SetFadingOnPreviousNext(settings.ButtonMusicFadeMode != 0, settings.ButtonMusicFadeMode == 2, settings.ButtonMusicFadeTime);
-                if (m_Network != null)
-                {
-                    if (m_Network.ClientConnected)
-                    {
-                        m_Network.DisconnectClient(false);
-                    }
-                    m_Network.Shutdown();
-                    m_Network = new Networks(this, settings.UseLegacyNetwork, settings.UseWebNetwork);
-                    m_Network.InitConnectionData();
-                    if (Settings.Settings.Instance.UseWebNetwork || Settings.Settings.Instance.UseLegacyNetwork)
-                    {
-                        m_Network.StartUdpBroadcast();
-                        m_Network.ListenForClient();
-                    }
-                    UpdateClientState();
-                }
-            }
-#if !MONO
-            m_KeyboardHookManager.Enabled = true;
-#endif
-            // a page asked for another window (a service, the shortcuts): it opens now that the settings are closed
-            Action after = m_AfterSettings;
-            m_AfterSettings = null;
-            if (after != null)
-                BeginInvoke(after);
         }
 
         private void SetOutputDevice()

@@ -116,14 +116,23 @@ namespace Ares.Player
                     Muted = t.Muted
                 });
             }
+            if (m_SettingsOpen)
+                items.Add(new AppTabItem { Text = T("Configurações", "Settings"), Closable = true });
             int selected = 0;
-            if (m_ShowingWeb && m_WebWindow.Selected != null)
+            if (m_ShowingSettings)
+                selected = SettingsTabIndex;
+            else if (m_ShowingWeb && m_WebWindow.Selected != null)
                 selected = 1 + m_WebWindow.Tabs.IndexOf(m_WebWindow.Selected);
             m_TabBar.SetItems(items, selected);
         }
 
         private void ShowHome()
         {
+            if (!LeaveSettings())
+            {
+                RefreshTabBar();
+                return;
+            }
             m_ShowingWeb = false;
             SetEditChromeVisible(true);
             if (m_WebWindow != null)
@@ -138,6 +147,11 @@ namespace Ares.Player
             if (tab == null)
             {
                 ShowHome();
+                return;
+            }
+            if (!LeaveSettings())
+            {
+                RefreshTabBar();
                 return;
             }
             m_ShowingWeb = true;
@@ -156,10 +170,17 @@ namespace Ares.Player
 
             else if (index - 1 < m_WebWindow.Tabs.Count)
                 ShowWebTab(m_WebWindow.Tabs[index - 1]);
+            else if (m_SettingsOpen && index == SettingsTabIndex)
+                ShowSettingsDialog(-1);
         }
 
         private void TabBar_TabClosed(int index)
         {
+            if (m_SettingsOpen && index == SettingsTabIndex)
+            {
+                CloseSettingsTab();
+                return;
+            }
             if (index <= 0 || index - 1 >= m_WebWindow.Tabs.Count)
                 return;
             m_WebWindow.RemoveTab(m_WebWindow.Tabs[index - 1]);

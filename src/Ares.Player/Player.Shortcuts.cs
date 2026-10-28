@@ -224,11 +224,20 @@ namespace Ares.Player
                         walk(top, 0);
                 }
             }
-            using (ShortcutsDialog dlg = new ShortcutsDialog(rows))
+            ShortcutsDialog dlg = new ShortcutsDialog(rows);
+            if (m_EmbedHost != null)
             {
-                if (dlg.ShowDialog(this) != DialogResult.OK)
-                    return;
+                ShowOrEmbed(dlg, () => { if (dlg.DialogResult == DialogResult.OK) ApplyShortcutRows(rows); });
+                return;
             }
+            DialogResult answer = dlg.ShowDialog(this);
+            dlg.Dispose();
+            if (answer == DialogResult.OK)
+                ApplyShortcutRows(rows);
+        }
+
+        private void ApplyShortcutRows(List<ShortcutRow> rows)
+        {
             foreach (ShortcutRow row in rows)
             {
                 if (row.Kind == "prog")

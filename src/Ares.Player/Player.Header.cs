@@ -39,9 +39,14 @@ namespace Ares.Player
                     // the output selector lives in the status bar, in the place of the plain text which said the same
                     if (m_StatusStrip != null && m_StatOutput != null)
                     {
+                        // the plain text and the divider after it leave; the selector goes to the far right end
                         int at = m_StatusStrip.Items.IndexOf(m_StatOutput);
                         m_StatusStrip.Items.Remove(m_StatOutput);
-                        m_StatusStrip.Items.Insert(Math.Max(0, at), m_OutputButton);
+                        if (at >= 0 && at < m_StatusStrip.Items.Count && m_StatDividers.Contains(m_StatusStrip.Items[at] as ToolStripStatusLabel))
+                            m_StatusStrip.Items.RemoveAt(at);
+                        m_OutputButton.DropDownDirection = ToolStripDropDownDirection.AboveLeft;
+                        m_StatusStrip.Items.Add(MakeStatusDivider());
+                        m_StatusStrip.Items.Add(m_OutputButton);
                     }
                     else
                         menuStrip1.Items.Add(m_OutputButton);

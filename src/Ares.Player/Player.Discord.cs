@@ -144,7 +144,7 @@ namespace Ares.Player
         {
             if (m_Discord == null)
                 return;
-            using (Form form = new Form())
+            Form form = new Form();
             {
                 form.Text = T("Discord", "Discord");
                 form.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -388,10 +388,12 @@ namespace Ares.Player
                     DialogKit.MakeRule(80, 672), DialogKit.MakeRule(184, 672), DialogKit.MakeRule(252, 672), DialogKit.MakeRule(420, 672) });
                 DialogKit.Finish(form, close, connect);
                 refresh();
-                form.ShowDialog(this);
-                tick.Stop();
-                tick.Dispose();
-                token.Text = "";
+                ShowOrEmbed(form, () =>
+                {
+                    tick.Stop();
+                    tick.Dispose();
+                    token.Text = "";
+                });
             }
         }
     }

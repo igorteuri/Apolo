@@ -79,7 +79,7 @@ namespace Ares.CommonGUI
                 }
                 if (m_Overflow > 0)
                     Width += m_Overflow + 8;
-                LayoutGeneralPage();
+                LayoutGeneralPage(generalPage.ClientSize.Width, true);
             }
             catch (Exception swallowed)
             {
@@ -89,13 +89,12 @@ namespace Ares.CommonGUI
 
         // The first page is laid out again by code with the real size of the texts and fonts: the fixed positions of the
         // designer put the "..." buttons over the folder names when the text is larger than the designer expected.
-        private void LayoutGeneralPage()
+        private void LayoutGeneralPage(int pageW, bool grow)
         {
             int gap = 10;
             int rowH = Math.Max(30, TextRenderer.MeasureText("Ag", Font).Height + 14);
             int buttonW = Math.Max(36, TextRenderer.MeasureText("...", Font).Width + 24);
             int top = 8;
-            int pageW = generalPage.ClientSize.Width;
 
             // the folders of the music and the sounds were the way of the old Ares to find the files of a project; Apolo keeps
             // the paths in the project itself, so the box is not shown (the values stay as they are)
@@ -116,8 +115,87 @@ namespace Ares.CommonGUI
             top = groupBox3.Bottom + 10;
 
             int missing = top - generalPage.ClientSize.Height;
-            if (missing > 0)
+            if (grow && missing > 0)
                 Height += missing;
+        }
+
+        // ---- used when the pages are shown inside the main window instead of this dialog ----
+
+        /// <summary>Hands out the content of a page (0 = general, then the pages added with AddPage), taken out of the tabs.</summary>
+        public Control TakePage(int index)
+        {
+            if (index == 0)
+            {
+                Panel panel = new Panel();
+                panel.AutoScroll = true;
+                int width = 760;
+                LayoutGeneralPage(width, false);
+                int bottom = 0;
+                foreach (Control c in GetControls(generalPage))
+                {
+                    if (c.Visible)
+                        bottom = Math.Max(bottom, c.Bottom);
+                    panel.Controls.Add(c);
+                }
+                panel.AutoScrollMinSize = new Size(width, bottom + 12);
+                return panel;
+            }
+            Control page = m_Pages[index - 1].Page;
+            if (page.Parent != null)
+                page.Parent.Controls.Remove(page);
+            page.Dock = DockStyle.None;
+            return page;
+        }
+
+        private static List<Control> GetControls(Control parent)
+        {
+            List<Control> list = new List<Control>();
+            foreach (Control c in parent.Controls)
+                list.Add(c);
+            return list;
+        }
+
+        public string TitleOfPage(int index)
+        {
+            return index == 0 ? generalPage.Text : m_Pages[index - 1].PageTitle;
+        }
+
+        public int PageCount
+        {
+            get { return m_Pages.Count + 1; }
+        }
+
+        /// <summary>Saves everything the pages hold (the same as the OK button); false when something is not valid (a message was shown).</summary>
+        public bool Confirm()
+        {
+            s_lastPage = tabControl.SelectedIndex;
+            foreach (var page in m_Pages)
+            {
+                page.OnConfirm();
+            }
+            if (otherDirButton.Checked)
+            {
+                if (String.IsNullOrEmpty(otherDirLabel.Text))
+                {
+                    MessageBox.Show(this, StringResources.NeedDirectory, "Ares", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+                m_BasicSettings.UserSettingsLocation = BasicSettings.SettingsLocation.Custom;
+            }
+            else if (appDirButton.Checked && BasicSettings.IsAppDirAllowed())
+            {
+                m_BasicSettings.UserSettingsLocation = BasicSettings.SettingsLocation.AppDir;
+            }
+            else
+            {
+                m_BasicSettings.UserSettingsLocation = BasicSettings.SettingsLocation.AppDataDir;
+            }
+            m_Settings.MusicDirectory = musicDirLabel.Text;
+            m_Settings.SoundDirectory = soundDirLabel.Text;
+            m_Settings.CheckForUpdate = updateCheckBox.Checked;
+            m_BasicSettings.CustomSettingsDirectory = otherDirLabel.Text;
+            m_Settings.Commit();
+            return true;
         }
 
         private void LayoutRows(GroupBox box, int top, int pageW, int gap, int rowH, int buttonW, Control[] captions, Label[] paths, Button[] buttons)
@@ -226,36 +304,8 @@ namespace Ares.CommonGUI
 
         private void okButton_Click(object sender, EventArgs e)
         {
-            s_lastPage = tabControl.SelectedIndex;
-
-            foreach (var page in m_Pages)
-            {
-                page.OnConfirm();
-            }
-
-            if (otherDirButton.Checked)
-            {
-                if (String.IsNullOrEmpty(otherDirLabel.Text))
-                {
-                    MessageBox.Show(this, StringResources.NeedDirectory, "Ares", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    DialogResult = DialogResult.None;
-                    return;
-                }
-                m_BasicSettings.UserSettingsLocation = BasicSettings.SettingsLocation.Custom;
-            }
-            else if (appDirButton.Checked && BasicSettings.IsAppDirAllowed())
-            {
-                m_BasicSettings.UserSettingsLocation = BasicSettings.SettingsLocation.AppDir;
-            }
-            else
-            {
-                m_BasicSettings.UserSettingsLocation = BasicSettings.SettingsLocation.AppDataDir;
-            }
-            m_Settings.MusicDirectory = musicDirLabel.Text;
-            m_Settings.SoundDirectory = soundDirLabel.Text;
-            m_Settings.CheckForUpdate = updateCheckBox.Checked;
-            m_BasicSettings.CustomSettingsDirectory = otherDirLabel.Text;
-            m_Settings.Commit();
+            if (!Confirm())
+                DialogResult = DialogResult.None;
         }
 
         private Ares.Settings.Settings m_Settings { get; set; }

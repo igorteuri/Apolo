@@ -185,7 +185,7 @@ The code of Apolo is open and lives on GitHub:
 
         private void ShowInfoWindow(string title, string text, List<KeyValuePair<string, Action>> buttons)
         {
-            using (Form form = new Form())
+            Form form = new Form();
             {
                 form.Text = title;
                 form.StartPosition = FormStartPosition.CenterParent;
@@ -266,7 +266,7 @@ The code of Apolo is open and lives on GitHub:
                 form.Controls.Add(row);
                 Ares.CommonGUI.ThemeManager.Apply(form);
                 form.Shown += (s, e) => body.Select(0, 0);
-                form.ShowDialog(this);
+                ShowOrEmbed(form, null);
             }
         }
 
@@ -280,7 +280,10 @@ The code of Apolo is open and lives on GitHub:
         private void ShowFoundryHelp()
         {
             // the ID comes from the VDO.Ninja tab ("Send audio"): it is opened for the user (it is needed while the Foundry plays)
-            try { ShowWebWindow(true); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
+            if (m_EmbedHost == null) // inside the settings tab it must not leave the tab
+            {
+                try { ShowWebWindow(true); } catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
+            }
             string id = ShareDialog.CleanStreamId(Ares.CommonGUI.Preferences.Get("VdoId", ""));
             string idLine = id.Length > 0
                 ? T("O seu ID da transmissão é: " + id + "  (o botão \"Copiar ID\" abaixo copia para você).",

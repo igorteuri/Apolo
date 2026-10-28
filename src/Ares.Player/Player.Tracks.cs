@@ -523,7 +523,7 @@ namespace Ares.Player
                     m_NowPlaying.Visible = true;
                     {
                         m_NowPlaying.SetBounds(margin, headerBottom + 4, Math.Max(100, clientWidth - 2 * margin), NowPlayingStrip.StripHeight);
-                        if (!m_ShowingWeb) // over a web tab the strip would show through (the "Sending: VDO" chip)
+                        if (!m_ShowingWeb && !m_ShowingSettings) // over a web tab the strip would show through (the "Sending: VDO" chip)
                             m_NowPlaying.BringToFront();
                         bodyTop = m_NowPlaying.Bottom + 6;
                     }

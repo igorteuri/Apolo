@@ -177,7 +177,7 @@ namespace Ares.Player
         {
             if (m_Deck == null)
                 return;
-            using (Form form = new Form())
+            Form form = new Form();
             {
                 form.Text = "Stream Deck";
                 form.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -296,8 +296,7 @@ namespace Ares.Player
                     DialogKit.MakeRule(92, 632), DialogKit.MakeRule(172, 632), DialogKit.MakeRule(328, 632) });
                 refresh();
                 DialogKit.Finish(form, close, enabled);
-                form.ShowDialog(this);
-                key.Text = "";
+                ShowOrEmbed(form, () => { key.Text = ""; });
             }
         }
     }

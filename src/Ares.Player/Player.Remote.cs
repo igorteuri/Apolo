@@ -801,7 +801,7 @@ namespace Ares.Player
         {
             if (m_Remote == null)
                 return;
-            using (Form form = new Form())
+            Form form = new Form();
             {
                 form.Text = T("Controle remoto", "Remote control");
                 form.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -1003,12 +1003,14 @@ namespace Ares.Player
                     DialogKit.MakeRule(88, 752), DialogKit.MakeRule(336, 752) });
                 refresh();
                 DialogKit.Finish(form, close, toggle);
-                form.ShowDialog(this);
-                tick.Stop();
-                tick.Dispose();
-                qr.Image = null;
-                if (qrBitmap != null)
-                    qrBitmap.Dispose();
+                ShowOrEmbed(form, () =>
+                {
+                    tick.Stop();
+                    tick.Dispose();
+                    qr.Image = null;
+                    if (qrBitmap != null)
+                        qrBitmap.Dispose();
+                });
             }
         }
     }
