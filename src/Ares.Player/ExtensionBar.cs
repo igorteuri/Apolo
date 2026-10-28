@@ -262,7 +262,8 @@ namespace Ares.Player
         private readonly Func<Task<CoreWebView2Environment>> m_Environment;
         private readonly Action m_Changed;
         private readonly Action m_Manage;
-        private readonly ToolTip m_Tip = new ToolTip();
+        private readonly ToolTip m_Tip;
+        private readonly int m_Size;
         private List<ExtensionEntry> m_Entries = new List<ExtensionEntry>();
 
         private static string T(string pt, string en)
@@ -273,14 +274,22 @@ namespace Ares.Player
         /// <summary>There is at least one extension button (Visible is false whenever the tab is hidden, so it cannot tell).</summary>
         public bool Any { get { return m_Entries.Count > 0; } }
 
-        public ExtensionBar(Func<Task<CoreWebView2Environment>> environment, Action changed, Action manage)
+        public ExtensionBar(Func<Task<CoreWebView2Environment>> environment, Action changed, Action manage, ToolTip tip, int size)
         {
             m_Environment = environment;
             m_Changed = changed;
             m_Manage = manage;
-            Height = 28;
+            m_Tip = tip;
+            m_Size = size;
+            Height = size;
             Width = 0;
             Visible = false;
+        }
+
+        public void HideTips()
+        {
+            foreach (Control c in Controls)
+                m_Tip.Hide(c);
         }
 
         public async Task RefreshAsync(CoreWebView2 core)
@@ -313,7 +322,8 @@ namespace Ares.Player
             {
                 ExtensionEntry captured = entry;
                 Button b = new Button();
-                b.SetBounds(x, 0, 28, 28);
+                b.SetBounds(x, 0, m_Size, m_Size);
+                b.ImageAlign = ContentAlignment.MiddleCenter;
                 b.TabStop = true;
                 b.Cursor = Cursors.Hand;
                 if (entry.Icon != null)
@@ -324,9 +334,9 @@ namespace Ares.Player
                 b.Click += (s, e) => ShowMenu((Control)s, captured);
                 m_Tip.SetToolTip(b, entry.Name + (entry.Enabled ? "" : T(" (desativada)", " (disabled)")));
                 Controls.Add(b);
-                x += 31;
+                x += m_Size + 6;
             }
-            Width = Math.Max(0, x);
+            Width = Math.Max(0, x - 6);
             Visible = m_Entries.Count > 0;
             ResumeLayout(true);
             Action changed = m_Changed;

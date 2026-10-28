@@ -373,10 +373,10 @@ namespace Ares.Player
             MinimizeBox = false;
             ShowInTaskbar = false;
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(520, 250);
+            ClientSize = new Size(576, 316);
 
             Label intro = new Label();
-            intro.SetBounds(12, 10, 496, 36);
+            intro.SetBounds(DialogKit.Margin, 20, 528, 48);
             intro.Text = Loc.T("Cole aqui o link da imagem para o botão \"" + buttonTitle + "\". Pode colar o texto todo: o Apolo acha o link sozinho, "
                 + "mesmo sem \".png\" no final, com espaços sobrando ou no meio de um texto.",
                 "Paste the link of the picture for the button \"" + buttonTitle + "\" here. You can paste the whole text: Apolo finds the link by itself, "
@@ -386,23 +386,27 @@ namespace Ares.Player
             m_Text.Multiline = true;
             m_Text.ScrollBars = ScrollBars.Vertical;
             m_Text.AcceptsReturn = true;
-            m_Text.SetBounds(12, 52, 496, 100);
+            m_Text.SetBounds(DialogKit.Margin, 76, 528, 100);
             m_Text.TextChanged += (s, e) => ShowFound();
             Controls.Add(m_Text);
 
-            m_Found.SetBounds(12, 160, 496, 44);
+            m_Found.SetBounds(DialogKit.Margin, 186, 528, 44);
+            DialogKit.Muted(m_Found);
             Controls.Add(m_Found);
+            Controls.Add(DialogKit.MakeRule(244, 528));
 
             m_Ok.Text = Loc.T("Usar imagem", "Use picture");
             m_Ok.DialogResult = DialogResult.OK;
-            m_Ok.SetBounds(ClientSize.Width - 12 - 110 - 8 - 90, 212, 110, 28);
+            m_Ok.SetBounds(ClientSize.Width - DialogKit.Margin - 140 - 8 - 100, 260, 140, DialogKit.ButtonHeight);
+            DialogKit.Primary(m_Ok);
             Controls.Add(m_Ok);
             Button cancel = new Button();
             cancel.Text = Loc.T("Cancelar", "Cancel");
             cancel.DialogResult = DialogResult.Cancel;
-            cancel.SetBounds(ClientSize.Width - 12 - 90, 212, 90, 28);
+            cancel.SetBounds(ClientSize.Width - DialogKit.Margin - 100, 260, 100, DialogKit.ButtonHeight);
             Controls.Add(cancel);
-            AcceptButton = null;
+            DialogKit.Finish(this, m_Ok, m_Text);
+            AcceptButton = null; // Enter inside the box makes a new line
             CancelButton = cancel;
 
             // what is on the clipboard is already a link: it starts filled in

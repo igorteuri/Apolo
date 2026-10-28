@@ -314,7 +314,9 @@ namespace Ares.Player
         private SearchField m_AddressField;
         private Button m_Back, m_Forward, m_Reload, m_Add, m_ToAres, m_VdoSettings, m_VdoCopy, m_Mute, m_Extensions;
         private readonly System.Collections.Generic.List<KeyValuePair<Button, string>> m_BarIcons = new System.Collections.Generic.List<KeyValuePair<Button, string>>();
-        private const int BarButtonHeight = 30;
+        private int BarButtonHeight { get { return Math.Max(30, Font.Height + 12); } }
+        private Panel m_Bar;
+        private readonly ToolTip m_Tip = new ToolTip();
         private ExtensionBar m_ExtBar;
         public static event Action StateChanged;
         public event Action TabsChanged;
@@ -441,11 +443,24 @@ namespace Ares.Player
         {
             m_Player = player;
             Panel bar = new Panel();
+            m_Bar = bar;
             bar.Dock = DockStyle.Top;
-            bar.Height = 44;
+            bar.Height = BarButtonHeight + 16;
             bar.Padding = new Padding(4);
+            // a thin line under the bar, in the color of the theme, separates it from the page
+            bar.Paint += (s, e) =>
+            {
+                Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
+                if (p == null || p.IsClassic)
+                    return;
+                using (Pen line = new Pen(p.ControlBorder))
+                    e.Graphics.DrawLine(line, 0, bar.Height - 1, bar.Width, bar.Height - 1);
+            };
 
             m_ToAres = MakeBarButton(T("Apolo", "Apolo"), "house", T("Voltar para o Apolo", "Back to Apolo"), (s, e) => m_Player.BringToFrontFromWeb());
+            m_ToAres.Tag = "Primary";
+            m_ToAres.Width += 10;
+            SetBarIcon(m_ToAres, "house");
             m_Back = MakeBarButton("", "chevron-left", T("Voltar", "Back"), (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CanGoBack) t.View.GoBack(); });
             m_Forward = MakeBarButton("", "chevron-right", T("Avançar", "Forward"), (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CanGoForward) t.View.GoForward(); });
             m_Reload = MakeBarButton("", "refresh-cw", T("Recarregar a página", "Reload the page"), (s, e) => { WebTab t = Current(); if (t != null && t.View != null && t.View.CoreWebView2 != null) t.View.CoreWebView2.Reload(); });
@@ -455,6 +470,9 @@ namespace Ares.Player
             m_Extensions = MakeBarButton(T("Extensões", "Extensions"), "puzzle", T("Gerenciar as extensões do navegador", "Manage the browser extensions"), (s, e) => ManageExtensions());
             m_VdoSettings = MakeBarButton(T("Config. VDO", "VDO settings"), "settings", T("Configurações do envio pelo VDO.Ninja", "VDO.Ninja sending settings"), (s, e) => ConfigureVdo());
             m_VdoCopy = MakeBarButton(T("Copiar link do ouvinte", "Copy listener link"), "copy", T("Copia o link para o ouvinte abrir", "Copies the link for the listener to open"), (s, e) => CopyListenerLink());
+            m_VdoCopy.Tag = "Primary";
+            m_VdoCopy.Width += 10;
+            SetBarIcon(m_VdoCopy, "copy");
             m_AddressField = new SearchField();
             m_AddressField.ShowIcon = false;
             m_Address = m_AddressField.Box;
@@ -467,8 +485,7 @@ namespace Ares.Player
                 }
             };
             // one button for each installed extension (settings, window, disable, remove), at the right of the address
-            m_ExtBar = new ExtensionBar(() => GetEnvironment(), () => LayoutBar(bar), () => ManageExtensions());
-            m_ExtBar.Top = 5;
+            m_ExtBar = new ExtensionBar(() => GetEnvironment(), () => LayoutBar(bar), () => ManageExtensions(), m_Tip, BarButtonHeight);
             bar.Controls.AddRange(new Control[] { m_ToAres, m_Back, m_Forward, m_Reload, m_AddressField, m_Mute, m_Extensions, m_ExtBar, m_VdoCopy, m_VdoSettings, m_Add });
             Ares.CommonGUI.ThemeManager.Changed += (s, e) => RefreshBarIcons();
             bar.Resize += (s, e) => LayoutBar(bar);
@@ -487,12 +504,34 @@ namespace Ares.Player
                 m_Selected = m_Tabs[0];
             VisibleChanged += (s, e) =>
             {
+                HideTips();
                 if (Visible)
                 {
                     LayoutBar(bar);
                     OnTabSelected();
                 }
             };
+            // a tip which was showing when the window moved to another monitor must not stay behind in a corner
+            HandleCreated += (s, e) =>
+            {
+                Form form = FindForm();
+                if (form == null)
+                    return;
+                form.LocationChanged += (s2, e2) => HideTips();
+                form.Deactivate += (s2, e2) => HideTips();
+            };
+            ParentChanged += (s, e) => HideTips();
+        }
+
+        private void HideTips()
+        {
+            if (IsDisposed || m_Bar == null)
+                return;
+            foreach (Control c in m_Bar.Controls)
+                m_Tip.Hide(c);
+            m_Tip.Hide(this);
+            if (m_ExtBar != null)
+                m_ExtBar.HideTips();
         }
 
         // the buttons of the bar: all of one height, icon (in the color of the theme) + text, the width follows the text
@@ -518,7 +557,7 @@ namespace Ares.Player
                 SetBarIcon(b, icon);
             }
             if (tip != null)
-                new ToolTip().SetToolTip(b, tip);
+                m_Tip.SetToolTip(b, tip);
             b.Click += click;
             return b;
         }
@@ -526,7 +565,15 @@ namespace Ares.Player
         private static void SetBarIcon(Button b, string icon)
         {
             Image old = b.Image;
-            b.Image = Ares.CommonGUI.IconLibrary.Get(icon, new Size(18, 18), Ares.CommonGUI.IconLibrary.ThemeColor());
+            Color color = Ares.CommonGUI.IconLibrary.ThemeColor();
+            Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
+            if (b.Tag is string && (string)b.Tag == "Primary" && p != null && !p.IsClassic)
+            {
+                // the icon of a button filled with the highlight color follows the text color of that button
+                color = Ares.CommonGUI.ThemeManager.ContrastRatio(p.Accent, Color.White) >= Ares.CommonGUI.ThemeManager.ContrastRatio(p.Accent, Color.Black)
+                    ? Color.White : Color.Black;
+            }
+            b.Image = Ares.CommonGUI.IconLibrary.Get(icon, new Size(18, 18), color);
             if (old != null)
                 old.Dispose();
         }
@@ -566,21 +613,22 @@ namespace Ares.Player
             foreach (Button b in new Button[] { m_Add, m_VdoSettings, m_VdoCopy, m_Mute, m_Extensions })
                 b.Top = top;
             if (m_ExtBar != null)
-                m_ExtBar.Top = Math.Max(2, (bar.ClientSize.Height - m_ExtBar.Height) / 2);
+                m_ExtBar.Top = top;
             m_AddressField.Top = top;
             m_AddressField.Height = BarButtonHeight;
             m_AddressField.Left = x;
             int right = bar.ClientSize.Width - 8;
-            m_Add.Left = right - m_Add.Width;
-            right = m_Add.Left - 6;
-            m_VdoSettings.Left = right - m_VdoSettings.Width;
-            right = m_VdoSettings.Left - 6;
-            m_VdoCopy.Left = right - m_VdoCopy.Width;
-            right = m_VdoCopy.Left - 6;
-            m_Mute.Left = right - m_Mute.Width;
-            right = m_Mute.Left - 6;
-            m_Extensions.Left = right - m_Extensions.Width;
-            right = m_Extensions.Left - 6;
+            // only the buttons which this tab uses take room (Visible is false whenever the tab is hidden, so it cannot tell)
+            WebTab current = Current();
+            bool vdo = current != null && current.Kind == "vdo";
+            foreach (Button b in new Button[] { m_Add, m_VdoSettings, m_VdoCopy, m_Mute, m_Extensions })
+            {
+                bool used = (b != m_VdoSettings && b != m_VdoCopy || vdo) && (b != m_Mute || current != null);
+                if (!used)
+                    continue;
+                b.Left = right - b.Width;
+                right = b.Left - 6;
+            }
             if (m_ExtBar != null && m_ExtBar.Any)
             {
                 m_ExtBar.Left = right - m_ExtBar.Width;
@@ -671,6 +719,8 @@ namespace Ares.Player
             ShowMuteState(t != null && t.Muted);
             m_VdoCopy.Visible = vdo;
             m_VdoSettings.Visible = vdo;
+            HideTips();
+            LayoutBar(m_Bar);
             if (t == null)
             {
                 m_Address.Text = "";

@@ -42,7 +42,7 @@ namespace Ares.Player
             AutoScaleMode = AutoScaleMode.Font;
             AutoSize = true;
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            Padding = new Padding(12);
+            Padding = new Padding(DialogKit.Margin);
 
             TableLayoutPanel table = new TableLayoutPanel();
             table.AutoSize = true;
@@ -56,7 +56,8 @@ namespace Ares.Player
             Label info = new Label();
             info.AutoSize = true;
             info.MaximumSize = new Size(560, 0);
-            info.Margin = new Padding(0, 0, 0, 10);
+            info.Margin = new Padding(0, 0, 0, 18);
+            DialogKit.Muted(info);
             info.Text = T(
                 "Como funciona: o Apolo tem um microfone virtual próprio, o \"Apolo Audio\". Ele leva para o VDO.Ninja (dentro do Apolo) exatamente o som que o Apolo está tocando, qualquer que seja o dispositivo de saída escolhido, e envia para quem abrir o link do ouvinte. Não precisa instalar nenhum cabo virtual (exige Windows 10 versão 2004 ou o Windows 11).\n\n"
                 + "1. Deixe a entrada de áudio como \"Apolo Audio\" (ou escolha outro microfone/cabo, se preferir).\n"
@@ -98,8 +99,9 @@ namespace Ares.Player
             FlowLayoutPanel buttons = new FlowLayoutPanel();
             buttons.AutoSize = true;
             buttons.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            buttons.Margin = new Padding(0, 10, 0, 0);
+            buttons.Margin = new Padding(0, 20, 0, 0);
             Button apply = MakeButton(T("Aplicar", "Apply"), (s, e) => { DialogResult = DialogResult.OK; Close(); });
+            DialogKit.Primary(apply);
             buttons.Controls.Add(apply);
             buttons.Controls.Add(MakeButton(T("Copiar link do ouvinte", "Copy listener link"), (s, e) => CopyText(m_ViewBox.Text)));
             buttons.Controls.Add(MakeButton(T("Copiar link de envio", "Copy sender link"), (s, e) => CopyText(m_PushBox.Text)));
@@ -133,6 +135,7 @@ namespace Ares.Player
             m_BitrateBox.ValueChanged += changed;
             m_ProBox.CheckedChanged += changed;
             UpdateLinks();
+            DialogKit.Finish(this, apply, apply);
         }
 
         // ------------------------------------------------------------------ audio input devices
@@ -225,7 +228,9 @@ namespace Ares.Player
             b.Text = text;
             b.AutoSize = true;
             b.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            b.Padding = new Padding(6, 2, 6, 2);
+            b.Padding = new Padding(10, 2, 10, 2);
+            b.MinimumSize = new Size(0, DialogKit.ButtonHeight);
+            b.Margin = new Padding(0, 0, 8, 0);
             b.Click += onClick;
             return b;
         }
