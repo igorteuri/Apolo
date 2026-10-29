@@ -1692,7 +1692,7 @@ namespace Ares.CommonGUI
                     if (header != IntPtr.Zero)
                         SetWindowTheme(header, dark ? "DarkMode_ItemsView" : "Explorer", null);
                 }
-                else if (c is TreeView || c is ListBox || c is TextBoxBase || c is Panel)
+                else if (c is TreeView || c is ListBox || c is TextBoxBase || c is Panel || c is UserControl)
                 {
                     SetWindowTheme(c.Handle, dark ? "DarkMode_Explorer" : "Explorer", null);
                 }
@@ -1710,6 +1710,75 @@ namespace Ares.CommonGUI
 
         // number boxes draw their own frame in the text color (white on the dark theme): painted over in the border color,
         // and made wide enough for the biggest value (the digits were cut off)
+        private sealed class UpDownFrame : NativeWindow
+        {
+            private readonly UpDownBase m_Box;
+            private bool m_Attached;
+
+            public UpDownFrame(UpDownBase box)
+            {
+                m_Box = box;
+            }
+
+            public void Attach()
+            {
+                if (!m_Attached && m_Box.IsHandleCreated)
+                {
+                    AssignHandle(m_Box.Handle);
+                    m_Attached = true;
+                }
+            }
+
+            public void Detach()
+            {
+                if (m_Attached)
+                {
+                    ReleaseHandle();
+                    m_Attached = false;
+                }
+            }
+
+            public void Redraw()
+            {
+                if (m_Attached && m_Box.IsHandleCreated)
+                    RedrawWindow(m_Box.Handle, IntPtr.Zero, IntPtr.Zero, 0x0401); // RDW_INVALIDATE | RDW_FRAME
+            }
+
+            protected override void WndProc(ref Message m)
+            {
+                base.WndProc(ref m);
+                if (m.Msg != 0x0085) // WM_NCPAINT
+                    return;
+                ThemePalette p = Current;
+                if (p == null || p.IsClassic)
+                    return;
+                IntPtr dc = GetWindowDC(Handle);
+                if (dc == IntPtr.Zero)
+                    return;
+                try
+                {
+                    using (Graphics g = Graphics.FromHdc(dc))
+                    using (Pen pen = new Pen(m_Box.ContainsFocus ? p.Accent : p.ControlBorder))
+                    {
+                        g.DrawRectangle(pen, 0, 0, m_Box.Width - 1, m_Box.Height - 1);
+                    }
+                }
+                finally
+                {
+                    ReleaseDC(Handle, dc);
+                }
+            }
+
+            [DllImport("user32.dll")]
+            private static extern IntPtr GetWindowDC(IntPtr hWnd);
+
+            [DllImport("user32.dll")]
+            private static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+
+            [DllImport("user32.dll")]
+            private static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprc, IntPtr hrgn, uint flags);
+        }
+
         private static readonly ConditionalWeakTable<UpDownBase, object> s_UpDownHooked = new ConditionalWeakTable<UpDownBase, object>();
 
         private static void HookUpDownBorder(UpDownBase u)
@@ -1727,17 +1796,14 @@ namespace Ares.CommonGUI
                 return;
             s_UpDownHooked.Add(u, new object());
             u.BorderStyle = BorderStyle.FixedSingle;
-            u.Paint += (s, e) =>
-            {
-                ThemePalette p = Current;
-                if (p == null || p.IsClassic)
-                    return;
-                Rectangle r = new Rectangle(0, 0, u.Width - 1, u.Height - 1);
-                using (Pen pen = new Pen(u.ContainsFocus ? p.Accent : p.ControlBorder))
-                    e.Graphics.DrawRectangle(pen, r);
-            };
-            u.GotFocus += (s, e) => u.Invalidate();
-            u.LostFocus += (s, e) => u.Invalidate();
+            // the frame belongs to the non-client area of the window: it is painted there, over the light system frame
+            UpDownFrame frame = new UpDownFrame(u);
+            u.HandleCreated += (s, e) => frame.Attach();
+            u.HandleDestroyed += (s, e) => frame.Detach();
+            if (u.IsHandleCreated)
+                frame.Attach();
+            u.GotFocus += (s, e) => frame.Redraw();
+            u.LostFocus += (s, e) => frame.Redraw();
             // the two small buttons are drawn by the system in light gray: they are painted over in the colors of the theme
             foreach (Control child in u.Controls)
             {
@@ -2088,6 +2154,16 @@ namespace Ares.CommonGUI
                     using (SolidBrush fill = new SolidBrush(Color.FromArgb(120, Current.Accent)))
                         e.Graphics.FillRectangle(fill, r);
                     using (Pen border = new Pen(Current.Accent))
+                        e.Graphics.DrawRectangle(border, r);
+                    return;
+                }
+                if (button != null && button.Enabled && (button.Selected || button.Pressed))
+                {
+                    // hover / pressed: drawn here with the theme colors (the standard drawing can leave a light system fill)
+                    Rectangle r = new Rectangle(1, 1, button.Width - 3, button.Height - 3);
+                    using (SolidBrush fill = new SolidBrush(button.Pressed ? Current.Selection : Current.Hover))
+                        e.Graphics.FillRectangle(fill, r);
+                    using (Pen border = new Pen(button.Pressed ? Current.Accent : Current.Border))
                         e.Graphics.DrawRectangle(border, r);
                     return;
                 }

@@ -151,12 +151,12 @@ namespace Ares.Player
                 if (m_Remote != null && m_Remote.Running)
                 {
                     bool ready = m_Tunnel != null && m_Tunnel.Url != null;
-                    SetStat(m_StatShare, (ready ? T("Compartilhamento: ativo", "Sharing: on") : T("Compartilhamento: iniciando...", "Sharing: starting...")),
+                    SetStat(m_StatShare, (ready ? T("Controle remoto: ativo", "Remote: on") : T("Controle remoto: iniciando...", "Remote: starting...")),
                         ready && p != null && !p.IsClassic ? p.Accent : ForeColor);
                 }
                 else
                 {
-                    SetStat(m_StatShare, T("Compartilhamento: inativo", "Sharing: off"), p != null && !p.IsClassic ? p.TextDim : ForeColor);
+                    SetStat(m_StatShare, T("Controle remoto: inativo", "Remote: off"), p != null && !p.IsClassic ? p.TextDim : ForeColor);
                 }
                 bool discordActive;
                 string discordText = DiscordStatusText(out discordActive);

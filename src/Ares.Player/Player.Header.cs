@@ -61,7 +61,7 @@ namespace Ares.Player
                 m_DiscordButton = MakeQuickButton("discordButton", "Discord", T("Discord: conectar o Apolo a um canal de voz", "Discord: connect Apolo to a voice channel"), () => ShowDiscordDialog());
                 m_VdoButton = MakeQuickButton("vdoButton", T("Enviar áudio", "Send audio"), T("VDO.Ninja: enviar o áudio do Apolo pela internet (Foundry, jogadores)", "VDO.Ninja: send the Apolo audio over the internet (Foundry, players)"), () => ShowWebWindow(true));
                 m_ObsButton = MakeQuickButton("obsButton", "OBS", T("Overlay para o OBS: mostra a música que está tocando na sua live", "OBS overlay: shows the music which is playing on your stream"), () => ShowOverlayDialog());
-                m_NetButton = MakeQuickButton("netButton", T("Compartilhar", "Share"), T("Controle remoto e compartilhamento em rede (celular / internet)", "Remote control and network sharing (phone / internet)"), () => ShowRemoteDialog());
+                m_NetButton = MakeQuickButton("netButton", T("Controle remoto", "Remote"), T("Controle remoto: usar o Apolo pelo celular (QR code) ou pela rede", "Remote control: use Apolo from your phone (QR code) or over the network"), () => ShowRemoteDialog());
                 // thin separators make clear that these are three different buttons
                 menuStrip1.Items.Insert(menuStrip1.Items.IndexOf(m_VdoButton), new ToolStripSeparator());
                 menuStrip1.Items.Insert(menuStrip1.Items.IndexOf(m_NetButton), new ToolStripSeparator());

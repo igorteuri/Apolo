@@ -5,6 +5,7 @@
  and a live display of what the leveler is doing now. Everything applies at once (so that it can be heard) and is kept.
 */
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using Ares.CommonGUI;
@@ -32,7 +33,6 @@ namespace Ares.Player
         {
             AutoScroll = true;
             // the first group: the fields were placed for a narrow font (the time box was on top of its label)
-            groupBox1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             groupBox1.SetBounds(0, 0, Math.Max(480, ClientSize.Width), 252);
             groupBox1.Text = T("Transição entre músicas (fade e crossfade)", "Transition between pieces of music (fade and crossfade)");
             // laid out again from the top: the positions of the designer fitted a narrow font (the text "Duração da transição:"
@@ -66,7 +66,6 @@ namespace Ares.Player
             int width = groupBox1.Width;
             m_LevelBox = new GroupBox();
             m_LevelBox.Text = T("Nivelador de volume", "Volume leveler");
-            m_LevelBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             m_LevelBox.SetBounds(0, groupBox1.Bottom + 8, width, 400);
             Controls.Add(m_LevelBox);
 
@@ -131,14 +130,11 @@ namespace Ares.Player
             now.TextAlign = ContentAlignment.MiddleLeft;
             m_Meter = new GainMeter();
             m_Meter.SetBounds(80, y + 208, 380, 22);
-            m_Meter.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             m_LiveText = new Label();
             m_LiveText.SetBounds(14, y + 236, width - 40, 24);
-            m_LiveText.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             m_LiveText.Tag = "Muted";
             Label help = new Label();
             help.SetBounds(14, y + 270, width - 40, 96);
-            help.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             help.Tag = "Muted";
             help.Text = T(
                 "O nivelador aproxima o volume de músicas altas e baixas, sem estourar. Volume alvo: o nível para onde ele leva o som (mais alto = som mais forte). Força: quanto da diferença ele corrige (100% deixa tudo no mesmo nível). Aumento e redução máximos: o quanto ele pode subir ou baixar o volume. A barra mostra o ajuste feito agora: à direita ele está aumentando, à esquerda diminuindo.",
@@ -150,7 +146,6 @@ namespace Ares.Player
             m_LevelBox.Height = y + 376;
             GroupBox effects = new GroupBox();
             effects.Text = T("Repetição de efeitos sonoros (loop)", "Repetition of sound effects (loop)");
-            effects.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             effects.SetBounds(0, groupBox1.Bottom + 8, width, 116);
             CheckBox soften = new CheckBox();
             soften.Text = T("Suavizar o ponto em que o efeito volta ao começo", "Smooth the point where the effect returns to its start");
@@ -171,6 +166,13 @@ namespace Ares.Player
             Controls.Add(effects);
             m_LevelBox.Top = effects.Bottom + 8; // the two kinds of crossfade are together, the leveler comes after
             AutoScrollMinSize = new Size(0, m_LevelBox.Bottom + 8);
+            m_EffectsBox = effects;
+            m_EffectsSoften = soften;
+            m_EffectsNote = softenNote;
+            m_LevelHelp = help;
+            // the boxes follow the real width of the page (small windows cut off the sliders)
+            SizeChanged += (s, e) => FitLevelerWidth();
+            FitLevelerWidth();
 
             ReadLevelerValues();
             AudioLeveler.EnabledChanged += OnLevelerEnabledChanged;
@@ -195,6 +197,32 @@ namespace Ares.Player
             m_LevelListen = true;
         }
 
+        private GroupBox m_EffectsBox;
+        private CheckBox m_EffectsSoften;
+        private Label m_EffectsNote, m_LevelHelp;
+        private readonly List<KeyValuePair<ModernSlider, Label>> m_LevelRows = new List<KeyValuePair<ModernSlider, Label>>();
+
+        private void FitLevelerWidth()
+        {
+            if (m_LevelBox == null || m_EffectsBox == null)
+                return;
+            int width = Math.Max(300, ClientSize.Width - 2);
+            groupBox1.Width = width;
+            m_EffectsBox.Width = width;
+            m_LevelBox.Width = width;
+            int valueWidth = Math.Max(70, TextRenderer.MeasureText("-36 dB  ", Font).Width + 10);
+            foreach (KeyValuePair<ModernSlider, Label> row in m_LevelRows)
+            {
+                row.Value.SetBounds(width - valueWidth - 14, row.Key.Top, valueWidth, row.Key.Height);
+                row.Key.Width = Math.Max(80, row.Value.Left - 8 - row.Key.Left);
+            }
+            m_Meter.Width = Math.Max(80, width - m_Meter.Left - 20);
+            m_LiveText.Width = width - 40;
+            m_LevelHelp.Width = width - 40;
+            m_EffectsSoften.Width = width - 28;
+            m_EffectsNote.Width = width - 28;
+        }
+
         private ModernSlider AddLevelRow(string name, int min, int max, int y, out Label valueText, Action<int> set)
         {
             Label label = new Label();
@@ -205,10 +233,8 @@ namespace Ares.Player
             bar.Minimum = min;
             bar.Maximum = max;
             bar.SetBounds(160, y, 290, 32);
-            bar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             Label text = new Label();
             text.SetBounds(460, y, 90, 32);
-            text.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             text.TextAlign = ContentAlignment.MiddleLeft;
             Label shown = text;
             bar.Scroll += (s, e) =>
@@ -219,6 +245,7 @@ namespace Ares.Player
                 LevelerSettings.Save();
                 ShowLevelerValues();
             };
+            m_LevelRows.Add(new KeyValuePair<ModernSlider, Label>(bar, text));
             m_LevelBox.Controls.Add(label);
             m_LevelBox.Controls.Add(bar);
             m_LevelBox.Controls.Add(text);

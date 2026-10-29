@@ -73,6 +73,10 @@ namespace Ares.Player
             /// <summary>Times the source ran dry while sound was flowing (heard as a gap), and times the oldest sound was dropped.</summary>
             public int Underruns;
             public int Overflows;
+            // the last sample of the last frame, for a soft end when the source runs dry (a hard cut is heard as a click)
+            private short m_LastL, m_LastR;
+            private bool m_Ends;
+            private bool m_FadeIn;
 
             public Source() : this(PrimeBytes, MaxBytes, KeepBytes)
             {
@@ -132,7 +136,22 @@ namespace Ares.Player
                     {
                         m_Primed = false;
                         Underruns++;
-                        return false;
+                        if (!m_Ends)
+                            return false;
+                        // one frame which fades from the last sample to silence
+                        m_Ends = false;
+                        m_FadeIn = true;
+                        int pairs = FrameBytes / 4;
+                        for (int i = 0; i < pairs; ++i)
+                        {
+                            float k = 1f - (i + 1) / (float)pairs;
+                            short l = (short)(m_LastL * k), r = (short)(m_LastR * k);
+                            frame[i * 4] = (byte)(l & 0xFF);
+                            frame[i * 4 + 1] = (byte)((l >> 8) & 0xFF);
+                            frame[i * 4 + 2] = (byte)(r & 0xFF);
+                            frame[i * 4 + 3] = (byte)((r >> 8) & 0xFF);
+                        }
+                        return true;
                     }
                     m_Flowed = true;
                     int got = 0;
@@ -150,6 +169,27 @@ namespace Ares.Player
                         }
                     }
                     m_Length -= FrameBytes;
+                    if (m_FadeIn)
+                    {
+                        // the first frame after a gap starts from silence
+                        m_FadeIn = false;
+                        int pairs = FrameBytes / 4;
+                        for (int i = 0; i < pairs; ++i)
+                        {
+                            float k = (i + 1) / (float)pairs;
+                            for (int c = 0; c < 2; ++c)
+                            {
+                                int o = i * 4 + c * 2;
+                                short v = (short)(frame[o] | (frame[o + 1] << 8));
+                                v = (short)(v * k);
+                                frame[o] = (byte)(v & 0xFF);
+                                frame[o + 1] = (byte)((v >> 8) & 0xFF);
+                            }
+                        }
+                    }
+                    m_LastL = (short)(frame[FrameBytes - 4] | (frame[FrameBytes - 3] << 8));
+                    m_LastR = (short)(frame[FrameBytes - 2] | (frame[FrameBytes - 1] << 8));
+                    m_Ends = true;
                     return true;
                 }
             }

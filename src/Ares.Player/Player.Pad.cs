@@ -81,10 +81,11 @@ namespace Ares.Player
             m_PadCloseItem = closeOnClick; // its options are on the "Keyboard and pad" page of the settings
             extrasToolStripMenuItem.DropDownOpening += (s, e) =>
             {
-                m_PadShowItem.Text = (m_Pad != null ? T("Esconder o pad flutuante", "Hide the floating pad") : T("Mostrar o pad flutuante", "Show the floating pad"))
-                    + "   (" + KeyText(PadHotkey) + ")";
+                m_PadShowItem.Text = (m_Pad != null ? T("Esconder o pad flutuante", "Hide the floating pad") : T("Mostrar o pad flutuante", "Show the floating pad"));
+                m_PadShowItem.ShortcutKeyDisplayString = KeyText(PadHotkey); // in the shortcut column, like the other items
             };
-            m_PadShowItem.Text = T("Mostrar o pad flutuante", "Show the floating pad") + "   (" + KeyText(PadHotkey) + ")";
+            m_PadShowItem.Text = T("Mostrar o pad flutuante", "Show the floating pad");
+            m_PadShowItem.ShortcutKeyDisplayString = KeyText(PadHotkey);
             extrasToolStripMenuItem.DropDownItems.Insert(0, m_PadShowItem);
 
             try
