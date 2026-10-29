@@ -198,7 +198,8 @@ namespace Ares.Player
                     return;
                 if (!m_Pages.TryGetValue(key, out source))
                 {
-                    int frames = MarginFrames();
+                    // the pages send blocks of about 170 ms: the buffer must hold more than one block
+                    int frames = Math.Max(MarginFrames(), 14);
                     source = new Source(FrameBytes * frames, FrameBytes * (frames + 30), FrameBytes * (frames + 8), FrameBytes * Math.Max(2, frames * 2 / 3));
                     m_Pages[key] = source;
                     ProcessLoopbackCapture.Log("sound of Apolo: web page sound from inside the page started");

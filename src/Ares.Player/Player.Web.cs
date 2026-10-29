@@ -1051,7 +1051,7 @@ namespace Ares.Player
  }
  function tapOf(ctx) {
   if (ctx.__apoloTap) return ctx.__apoloTap;
-  var sp = ctx.createScriptProcessor(4096, 2, 2);
+  var sp = ctx.createScriptProcessor(8192, 2, 2); // fewer, larger blocks: the page thread is woken less often
   sp.__apoloIsTap = true;
   sp.onaudioprocess = function(e) {
    if (!cap.on) return;
@@ -1078,7 +1078,8 @@ namespace Ares.Player
   if (el.__apoloHooked) return;
   el.__apoloHooked = true;
   try {
-   var ctx = new (window.AudioContext || window.webkitAudioContext)();
+   // 'playback': a deeper buffer in the browser, steadier when the PC is busy (nobody listens on this PC anyway)
+   var ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
    var src = ctx.createMediaElementSource(el);
    src.connect(ctx.destination);
    ctx.resume();
