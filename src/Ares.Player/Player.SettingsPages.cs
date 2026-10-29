@@ -467,8 +467,29 @@ namespace Ares.Player
                 open.Location = new Point(0, 128);
                 DialogKit.Primary(open);
                 open.Click += (s, e) => m_Owner.ShowWebWindow(true);
+                Label marginText = new Label();
+                marginText.Text = Loc.T(
+                    "Margem de segurança do áudio enviado: quanto som das abas (YouTube etc.) o Apolo junta antes de enviar. Mais margem evita picotes quando o PC está pesado, ao custo de um pequeno atraso. Vale a partir da próxima vez que o envio for aberto.",
+                    "Safety margin of the sent audio: how much sound of the tabs (YouTube etc.) Apolo collects before sending. More margin avoids stutter when the PC is busy, at the cost of a small delay. It applies the next time sending is opened.");
+                marginText.AutoSize = false;
+                marginText.SetBounds(0, 190, 640, 70);
+                NumericUpDown margin = new NumericUpDown();
+                margin.Minimum = AppAudioCapture.MinMarginMs;
+                margin.Maximum = AppAudioCapture.MaxMarginMs;
+                margin.Increment = 100;
+                margin.Value = AppAudioCapture.MarginMs;
+                margin.Width = 100;
+                margin.Location = new Point(0, 268);
+                margin.ValueChanged += (s, e) => Ares.CommonGUI.Preferences.Set("AudioSendMargin", ((int)margin.Value).ToString());
+                Label unit = new Label();
+                unit.Text = Loc.T("ms (padrão 300; use 600 a 1000 se ainda picotar)", "ms (default 300; use 600 to 1000 if it still stutters)");
+                unit.AutoSize = true;
+                unit.Location = new Point(110, 272);
                 host.Controls.Add(text);
                 host.Controls.Add(open);
+                host.Controls.Add(marginText);
+                host.Controls.Add(margin);
+                host.Controls.Add(unit);
                 AddPage("vdo", "VDO.Ninja", "send", host, null);
             }
 

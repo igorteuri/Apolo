@@ -360,11 +360,14 @@ namespace Ares.Player
  function reg(s) { s.getAudioTracks().forEach(function(t) { tracks.push(t); if (window.__aresMuted) t.enabled = false; }); return s; }
  // ---- Apolo Audio: virtual microphone fed by the program with its own sound
  var vctx = null, vdest = null, vq = [], vlen = 0, vprimed = false;
+ // safety margin (setting of Apolo): half of it is collected here before the sound starts, and again after a gap
+ function vprime() { return Math.max(8192, Math.round((window.__aresMargin || 300) * 48 / 2)); }
+ function vmax() { return vprime() + 28800; }
  function vfeed(s) {
    var bin = atob(s), n = bin.length >> 1, u8 = new Uint8Array(n * 2);
    for (var i = 0; i < u8.length; i++) u8[i] = bin.charCodeAt(i);
    var arr = new Int16Array(u8.buffer); vq.push(arr); vlen += arr.length >> 1;
-   while (vlen > 38400 && vq.length > 1) { vlen -= vq.shift().length >> 1; }
+   while (vlen > vmax() && vq.length > 1) { vlen -= vq.shift().length >> 1; }
  }
  try { window.chrome.webview.addEventListener('message', function(e) { if (typeof e.data === 'string' && e.data.charAt(0) !== '!') vfeed(e.data); }); } catch (e) {}
  function vstart() {
@@ -376,7 +379,7 @@ namespace Ares.Player
    var pos = 0;
    node.onaudioprocess = function(ev) {
      var L = ev.outputBuffer.getChannelData(0), R = ev.outputBuffer.getChannelData(1), n = L.length;
-     if (!vprimed && vlen >= n * 4) vprimed = true;
+     if (!vprimed && vlen >= vprime()) vprimed = true;
      if (!vprimed) { L.fill(0); R.fill(0); return; }
      for (var i = 0; i < n; i++) {
        if (!vq.length) { vprimed = false; for (; i < n; i++) { L[i] = 0; R[i] = 0; } break; }
@@ -909,7 +912,7 @@ namespace Ares.Player
             if (device.Length == 0)
                 device = ShareDialog.AutoDevice();
             string json = "\"" + device.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
-            return "window.__aresMic = " + json + ";\n" + MuteScript;
+            return "window.__aresMic = " + json + ";\nwindow.__aresMargin = " + AppAudioCapture.MarginMs + ";\n" + MuteScript;
         }
 
         private void UpdateTabState(WebTab tab)

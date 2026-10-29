@@ -29,10 +29,34 @@ namespace Ares.Player
             get { return System.Threading.Thread.VolatileRead(ref s_Active) > 0; }
         }
 
+        public const int MinMarginMs = 100;
+        public const int MaxMarginMs = 3000;
+        public const int DefaultMarginMs = 300;
+
+        /// <summary>
+        /// Safety margin (setting "AudioSendMargin"): how much web page sound is collected before it is sent. More margin means
+        /// a longer delay but no stutter when the PC is busy (a YouTube tab, the encoder of VDO.Ninja).
+        /// </summary>
+        public static int MarginMs
+        {
+            get
+            {
+                int ms;
+                if (!int.TryParse(Ares.CommonGUI.Preferences.Get("AudioSendMargin", DefaultMarginMs.ToString()), out ms))
+                    ms = DefaultMarginMs;
+                return Math.Max(MinMarginMs, Math.Min(MaxMarginMs, ms));
+            }
+        }
+
         private const int FrameBytes = 3840;            // 20 ms
         private const int PrimeBytes = FrameBytes * 3;  // 60 ms collected before the sound of a source is used
         private const int MaxBytes = FrameBytes * 20;   // 400 ms: more than that is dropped (the oldest part)
         private const int KeepBytes = FrameBytes * 6;
+
+        private static int MarginFrames()
+        {
+            return Math.Max(2, MarginMs / 20);
+        }
 
         // a queue of PCM data of one source
         private class Source
@@ -137,7 +161,11 @@ namespace Ares.Player
 
             // the sound of the web pages arrives in bursts (the browser, the encoder of VDO.Ninja and the other tabs share the PC):
             // 100 ms before it starts, up to 600 ms kept, and after a gap only 40 ms are collected again
-            public WebSource() : base(FrameBytes * 5, FrameBytes * 30, FrameBytes * 12, FrameBytes * 2)
+            public WebSource() : this(MarginFrames())
+            {
+            }
+
+            private WebSource(int frames) : base(FrameBytes * frames, FrameBytes * (frames + 30), FrameBytes * (frames + 8), FrameBytes * Math.Max(2, frames * 2 / 3))
             {
             }
         }
@@ -170,7 +198,8 @@ namespace Ares.Player
                     return;
                 if (!m_Pages.TryGetValue(key, out source))
                 {
-                    source = new Source(FrameBytes * 12, FrameBytes * 40, FrameBytes * 14, FrameBytes * 5);
+                    int frames = MarginFrames();
+                    source = new Source(FrameBytes * frames, FrameBytes * (frames + 30), FrameBytes * (frames + 8), FrameBytes * Math.Max(2, frames * 2 / 3));
                     m_Pages[key] = source;
                     ProcessLoopbackCapture.Log("sound of Apolo: web page sound from inside the page started");
                 }
