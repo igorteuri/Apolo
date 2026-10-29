@@ -1008,9 +1008,15 @@ namespace Ares.Player
                     return;
                 try
                 {
-                    byte[] data = Convert.FromBase64String(msg.Substring(10));
+                    // "apolo-pcm:<audio context>:<data>"
+                    int colon = msg.IndexOf(':', 10);
+                    int context = 0;
+                    string body = msg.Substring(10);
+                    if (colon > 10 && int.TryParse(msg.Substring(10, colon - 10), out context))
+                        body = msg.Substring(colon + 1);
+                    byte[] data = Convert.FromBase64String(body);
                     tab.CaptureHooked = true;
-                    AppAudioCapture.PushPageAudio(tab, data, data.Length);
+                    AppAudioCapture.PushPageAudio(Tuple.Create(tab, context), data, data.Length);
                 }
                 catch (FormatException swallowed)
                 {
@@ -1032,8 +1038,10 @@ namespace Ares.Player
   return btoa(s);
  }
  // resampling to 48 kHz keeps its position and its last sample from one block to the next (no clicks at the block borders)
- var rs = { t: 0, pl: 0, pr: 0 };
- function push(l, r, rate) {
+ // every audio context of the page (a page can have several, e.g. one per video element) has its own stream and
+ // resampler state: the program mixes the streams, so they must not be appended to one another
+ var nextId = 0;
+ function push(l, r, rate, rs, id) {
   if (!cap.on) return;
   var step = rate / 48000, N = l.length;
   var out = new Int16Array(Math.ceil((N + 1) / step) * 2 + 4), o = 0;
@@ -1047,16 +1055,17 @@ namespace Ares.Player
    t += step;
   }
   rs.t = t - N; rs.pl = l[N - 1]; rs.pr = r[N - 1];
-  try { wv.postMessage('apolo-pcm:' + toB64(out.subarray(0, o))); } catch (e) {}
+  try { wv.postMessage('apolo-pcm:' + id + ':' + toB64(out.subarray(0, o))); } catch (e) {}
  }
  function tapOf(ctx) {
   if (ctx.__apoloTap) return ctx.__apoloTap;
   var sp = ctx.createScriptProcessor(8192, 2, 2); // fewer, larger blocks: the page thread is woken less often
   sp.__apoloIsTap = true;
+  var id = ++nextId, rs = { t: 0, pl: 0, pr: 0 };
   sp.onaudioprocess = function(e) {
    if (!cap.on) return;
    var ib = e.inputBuffer, l = ib.getChannelData(0), r = ib.numberOfChannels > 1 ? ib.getChannelData(1) : l;
-   push(l, r, ctx.sampleRate);
+   push(l, r, ctx.sampleRate, rs, id);
   };
   origConnect.call(sp, ctx.destination);
   ctx.__apoloTap = sp;
