@@ -898,6 +898,7 @@ namespace Ares.Player
                 }
                 SaveModeTree();
             }, name);
+            AutoEmojiForNewMode(name);
         }
 
         // ---- folders (the modes of the project) ----

@@ -826,6 +826,14 @@ namespace Ares.Player
                     // sound taken from inside the page: used when the PC doesn't play Apolo ("don't listen on this PC")
                     await core.AddScriptToExecuteOnDocumentCreatedAsync(CaptureScript);
                     core.WebMessageReceived += (s, e) => HandlePageMessage(tab, core, e);
+                    // a new page starts muted again until its sound goes through Apolo
+                    core.NavigationStarting += (s, e) =>
+                    {
+                        if (!CaptureMode)
+                            return;
+                        tab.CaptureHooked = false;
+                        core.IsMuted = true;
+                    };
                 }
                 core.IsMuted = tab.Kind != "vdo" && (tab.Muted || CaptureMode);
                 core.PermissionRequested += (s, e) =>
@@ -932,7 +940,7 @@ namespace Ares.Player
                 if (tab.Kind == "vdo")
                     tab.View.CoreWebView2.ExecuteScriptAsync("window.__aresSetMuted && window.__aresSetMuted(" + (muted ? "true" : "false") + ");");
                 else
-                    tab.View.CoreWebView2.IsMuted = muted || CaptureMode;
+                    tab.View.CoreWebView2.IsMuted = muted || (CaptureMode && !tab.CaptureHooked);
             }
             UpdateTabState(tab);
         }
@@ -969,7 +977,7 @@ namespace Ares.Player
                 CoreWebView2 core = tab.View.CoreWebView2;
                 try
                 {
-                    core.IsMuted = tab.Muted || mode;
+                    core.IsMuted = tab.Muted || (mode && !tab.CaptureHooked);
                     core.PostWebMessageAsString(mode ? "apolo-capture:on" : "apolo-capture:off");
                     if (!mode && tab.CaptureHooked)
                     {
@@ -1015,7 +1023,13 @@ namespace Ares.Player
                     if (colon > 10 && int.TryParse(msg.Substring(10, colon - 10), out context))
                         body = msg.Substring(colon + 1);
                     byte[] data = Convert.FromBase64String(body);
-                    tab.CaptureHooked = true;
+                    if (!tab.CaptureHooked)
+                    {
+                        // the page sends its sound through Apolo now (its speakers go to a gain of 0): unmuted, the browser
+                        // uses the clock of the real sound card
+                        tab.CaptureHooked = true;
+                        core.IsMuted = tab.Muted;
+                    }
                     AppAudioCapture.PushPageAudio(Tuple.Create(tab, context), data, data.Length);
                 }
                 catch (FormatException swallowed)
@@ -1071,16 +1085,43 @@ namespace Ares.Player
   ctx.__apoloTap = sp;
   return sp;
  }
+ // while Apolo takes the sound, what would go to the speakers goes to a gain of 0 instead: the tab is not muted, so the
+ // browser keeps the clock of the real sound card (a muted tab runs on a software clock which is ~1.4 % slow and uneven:
+ // heard as short pauses and a faint crackle in the sent sound)
+ function sinkOf(ctx) {
+  if (ctx.__apoloSink) return ctx.__apoloSink;
+  var g = ctx.createGain();
+  g.gain.value = 0;
+  g.__apoloIsTap = true;
+  origConnect.call(g, ctx.destination);
+  ctx.__apoloSink = g;
+  return g;
+ }
  AudioNode.prototype.connect = function(dest) {
+  if (cap.on && dest instanceof AudioDestinationNode && !this.__apoloIsTap) {
+   try {
+    origConnect.call(this, tapOf(dest.context));
+    origConnect.call(this, sinkOf(dest.context));
+    this.__apoloSunk = true;
+    return dest;
+   } catch (e) {}
+  }
   var r = origConnect.apply(this, arguments);
   try { if (dest instanceof AudioDestinationNode && !this.__apoloIsTap) origConnect.call(this, tapOf(dest.context)); } catch (e) {}
   return r;
  };
  AudioNode.prototype.disconnect = function(dest) {
+  var all = arguments.length === 0;
   try {
-   if ((arguments.length === 0 || dest instanceof AudioDestinationNode) && this.context && this.context.__apoloTap && !this.__apoloIsTap)
+   if ((all || dest instanceof AudioDestinationNode) && this.context && this.context.__apoloTap && !this.__apoloIsTap)
     origDisconnect.call(this, this.context.__apoloTap);
   } catch (e) {}
+  if (this.__apoloSunk && (all || dest instanceof AudioDestinationNode)) {
+   // it was connected to the silent gain, not to the speakers
+   try { origDisconnect.call(this, this.context.__apoloSink); } catch (e) {}
+   this.__apoloSunk = false;
+   if (!all) return;
+  }
   return origDisconnect.apply(this, arguments);
  };
  function hook(el) {

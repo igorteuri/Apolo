@@ -70,6 +70,34 @@ namespace Ares.Player
             UpdateElementsPanel();
         }
 
+        /// <summary>
+        /// A new folder gets the emoji which fits its name, like the picture bank does for new buttons. The picture is fetched
+        /// in the background; nothing happens when no emoji fits or there is no internet.
+        /// </summary>
+        private void AutoEmojiForNewMode(string modeTitle)
+        {
+            EmojiEntry entry = EmojiCatalog.Match(modeTitle);
+            string projectPath = m_CurrentProjectPath;
+            if (entry == null || string.IsNullOrEmpty(projectPath))
+                return;
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                string file = null;
+                try { file = EmojiCatalog.GetPicture(entry.Code); }
+                catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
+                if (file == null || IsDisposed)
+                    return;
+                BeginInvoke(new System.Windows.Forms.MethodInvoker(() =>
+                {
+                    if (projectPath != m_CurrentProjectPath || Ares.CommonGUI.ButtonImageStore.Get(projectPath, modeTitle, "") != null)
+                        return;
+                    string spec = Ares.CommonGUI.ButtonImageStore.ImportEmoji(projectPath, file, entry.Code);
+                    Ares.CommonGUI.ButtonImageStore.Set(projectPath, modeTitle, "", spec);
+                    modesList.Invalidate();
+                }));
+            });
+        }
+
         private bool ApplyEmoji(string modeTitle, string elementTitle, EmojiEntry entry)
         {
             Cursor old = Cursor;

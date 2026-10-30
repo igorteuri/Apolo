@@ -23,6 +23,10 @@ namespace Ares.Player
                 m_AddMenu.Items.Add(new ToolStripSeparator());
                 m_AddMenu.Items.Add(T("Vários arquivos (escolher como organizar)...", "Several files (choose how to organize)..."), null, (s, e) => AddFilesDialog());
                 m_AddMenu.Items.Add(T("Pasta do computador (escolher como organizar)...", "Folder of the computer (choose how to organize)..."), null, (s, e) => AddFolderDialog());
+                // folders can be made here too, without turning on the edit mode
+                m_AddMenu.Items.Add(new ToolStripSeparator());
+                m_AddMenu.Items.Add(T("Nova pasta...", "New folder..."), null, (s, e) => NewEmptyMode(false));
+                m_AddMenu.Items.Add(T("Nova subpasta na pasta aberta...", "New subfolder in the open folder..."), null, (s, e) => NewEmptyMode(true));
             }
             m_AddMenu.Show(anchor, at);
         }
