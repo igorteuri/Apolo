@@ -238,7 +238,7 @@ namespace Ares.Player
                 string title = node.Title;
                 IMode mode;
                 if (showKeys && modes.TryGetValue(title, out mode) && mode.KeyCode != 0)
-                    m_ModeKeyTexts[node] = converter.ConvertToString((System.Windows.Forms.Keys)mode.KeyCode);
+                    m_ModeKeyTexts[node] = KeyText((System.Windows.Forms.Keys)mode.KeyCode);
                 m_ModeRows.Add(node);
                 modesList.Items.Add(title);
                 if (!node.Collapsed)

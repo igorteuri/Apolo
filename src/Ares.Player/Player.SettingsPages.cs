@@ -300,7 +300,12 @@ namespace Ares.Player
                 {
                     Button b = child as Button;
                     if (b != null && b.DialogResult != DialogResult.None)
+                    {
+                        // inside the settings tab a "Close" button only opened the same page again: the sidebar is the way out
+                        if (b.Text == "Fechar" || b.Text == "Close")
+                            b.Visible = false;
                         b.Click += (s, e) => form.BeginInvoke(new MethodInvoker(form.Close));
+                    }
                     hook(child);
                 }
             };
@@ -995,6 +1000,9 @@ namespace Ares.Player
                 {
                     old.Height = Math.Max(60, old.AutoScrollMinSize.Height);
                     old.AutoScroll = false;
+                    // measured with the font of the old dialog: with the larger font of the page the texts were cut ("Pasta do usuári")
+                    // and the last row did not fit
+                    old.FontChanged += (s, e) => old.Height = Math.Max(60, legacy.FitGeneralPage(old, old.AutoScrollMinSize.Width));
                     old.Margin = new Padding(0, 0, 0, 8);
                     Add(old);
                 }

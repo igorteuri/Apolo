@@ -203,6 +203,9 @@ namespace Ares.Player
                     {
                         try
                         {
+                            // meanwhile the menu may have moved to the settings (HideAppearanceMenu): it must not come back
+                            if (moving.Owner != menuStrip1 || moving == m_AppearanceItem)
+                                return;
                             menuStrip1.Items.Remove(moving);
                             menuStrip1.Items.Insert(menuStrip1.Items.IndexOf(m_HeaderSpacer), moving);
                         }

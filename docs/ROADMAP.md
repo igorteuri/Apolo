@@ -1,26 +1,45 @@
 # Apolo (fork do Ares) - Roadmap
 
-## Concluído
-Tema escuro/claro, barra de progresso, pausa, seletor de saída de áudio, arrastar pastas/arquivos, Biblioteca,
-ícones modernos (Lucide), abas com páginas web, importação de pastas do disco, edição simples dentro do Player
-(seleção múltipla, apagar, opções ao soltar pastas), atalhos configuráveis, ferramenta de arquivos ausentes,
-controle remoto + plugin Stream Deck com árvore de pastas, bandeja do Windows, bot do Discord, overlay para OBS,
-Editor modernizado (tema, painéis acopláveis, ícones), formato de projeto .apolo, exportação em 3 modos, novos logos, renomeador de músicas, verificador de direitos autorais, "Mostrar na pasta", Foundry VTT (controles) e controle web, imagens sugeridas para os botões e baixador de áudio livre.
+O Apolo é um controlador de músicas e efeitos para mesas de RPG (Windows; versão Linux/macOS em andamento).
+Não vem com músicas: use as suas ou baixe os pacotes prontos.
+
+## Pronto
+**Tocar**
+- Música e efeitos juntos, pausa, anterior/próxima, barra de progresso com pulo, volumes geral/música/sons com curva fina, % e mudo.
+- Repetir em 3 modos (desligado, playlist, faixa); crossfade entre músicas; efeitos que repetem sem estalo (crossfade consigo mesmo).
+- Nivelador de volume (presets e ajuste fino); seletor de saída de áudio; atalhos de teclado configuráveis e atalho global; pad flutuante.
+
+**Organizar**
+- Projetos `.apolo` (abre também `.ares`), pastas e subpastas, botões de música (playlist) e de efeito (SFX).
+- Arrastar arquivos e pastas com importação inteligente; soltar em uma playlist existente; modo de edição; desfazer/refazer.
+- Salvamento automático e seguro (cópia `.bak` e recuperação); registro de erros (`errors.log`, `crash.log`).
+- Cores, emojis, ícones e imagens nos botões; banco de imagens; imagem por link.
+- Lista de músicas com colunas, busca, ordenação, execuções e direitos; projetos enormes sem travar.
+
+**Conteúdo**
+- Instalador 64 bits; pacotes `.apkg` com músicas, ícones, subpastas e créditos; pacotes prontos para baixar.
+- Tour guiado e tutorial; ferramentas: renomeador, verificador de direitos, arquivos ausentes, baixar áudio livre, exportação.
+
+**Conexões**
+- Controle remoto pelo celular (link seguro pela Cloudflare), plugin do Stream Deck, módulo do Foundry VTT.
+- Bot do Discord, envio de áudio por VDO.Ninja, overlay personalizável para o OBS, abas web com captura de áudio.
+
+**Interface**
+- Tema escuro, claro e personalizado; ícones Lucide; Configurações numa aba com barra lateral; janela lembra tamanho e posição.
+
+## Em andamento
+- Ajustes de interface para monitores menores e revisão das páginas de Configurações.
+- Linux e macOS (`src/Apolo.Desktop`, Avalonia): já toca, importa, edita e baixa pacotes. Ver `docs/LINUX-MAC.md`.
 
 ## Próximos passos
-- Instalador do Apolo (Inno Setup, gerado pelo build) — em teste
-- Polimento do motor de áudio (pular dentro de arquivos Opus longos, já com mudança de velocidade sem alterar o tom) — em teste
-- Player: pausa por som, ícones/emojis/cores também nas pastas, menu de contexto reorganizado, ícones guardados na pasta do Apolo e dentro do pacote — em teste
-- **Editor descontinuado**: tudo o que importa está no Player (modo de edição, "Propriedades da playlist", desfazer/refazer). O código do Editor foi removido do repositório na limpeza (continua no histórico do Git) — em teste
-- Atualizações: o Apolo não procura versões sozinho; a janela "Como atualizar" leva ao Cofre de Conteúdo dos Clubistas (itch.io)
-- Stream Deck e controle web mostram o emoji e a cor dos botões; módulo do Foundry com a biblioteca dentro da interface — em teste
-- Ajustes finais de tema e de alinhamento da interface
-
-## Ideias em estudo
-- **Foundry VTT 14**: fase 1 pronta (módulo `FoundryModule/apolo-audio`: os jogadores ouvem o áudio do Apolo, enviado por VDO.Ninja, dentro do Foundry). Próximas fases: painel de controle do Apolo dentro do Foundry e playlists nativas do Foundry criadas a partir de um projeto.
-
-## Próxima etapa: Mac e Linux
-Ver `docs/PORTABILIDADE.md`: o que já é portátil, o que é só de Windows e a ordem sugerida (saída de som nativa, lógica fora das janelas, interface Avalonia).
+- Perfis e melhorias na criação de pastas.
+- Organização interna do código (arquivos grandes, código antigo do Ares que não é mais usado).
+- Mais pacotes de conteúdo.
+- Foundry VTT, fase 2: painel do Apolo dentro do Foundry e playlists do Foundry criadas a partir de um projeto.
 
 ## Futuro (baixa prioridade)
-- Entrada de áudio / gravação dentro do Apolo para usar como música
+- Gravação / entrada de áudio dentro do Apolo.
+- Modo de alto contraste do Windows.
+
+## Fora dos planos
+- Editor separado (removido: tudo está no Player), aviso automático de versão nova, painel de efeitos (os botões de efeito cumprem o papel).

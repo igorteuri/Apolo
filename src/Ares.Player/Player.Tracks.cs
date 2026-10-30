@@ -493,7 +493,17 @@ namespace Ares.Player
         }
 
         private const int MainRightMargin = 12;
-        private const int ElementsMinHeight = 150;
+        // the buttons always keep room for their search bar and two rows of cards: on a small monitor a track list
+        // saved tall on a big one left them a strip where not even the names could be read
+        private int m_ShownCardHeight;
+        private int ElementsMinHeight
+        {
+            get
+            {
+                int card = m_ShownCardHeight > 0 ? m_ShownCardHeight : Font.Height * 4;
+                return Math.Max(150, elementsPanel.Top + 2 * (card + 8) + 16);
+            }
+        }
         private const int TrackStripHeight = 17;
         private const int LeftStripThickness = 17;
         private const int LeftStripWidth = 30;

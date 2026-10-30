@@ -61,13 +61,25 @@ namespace Ares.Player
         {
             if (key == Keys.None)
                 return "";
+            return KeyNames.Format((int)key, Loc.T("pt", "en") == "pt", TypedKeyName);
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern uint MapVirtualKey(uint code, uint mapType);
+
+        // the character a key gives on the keyboard of the user ("Ç" on a Brazilian one), or the name Windows Forms knows
+        private static string TypedKeyName(int code)
+        {
             try
             {
-                return new KeysConverter().ConvertToString(null, CultureInfo.InvariantCulture, key);
+                uint c = MapVirtualKey((uint)code, 2) & 0x7FFFFFFF; // MAPVK_VK_TO_CHAR; the top bit marks dead keys (´ ~)
+                if (c > 32)
+                    return char.ToUpperInvariant((char)c).ToString();
+                return new KeysConverter().ConvertToString(null, CultureInfo.InvariantCulture, (Keys)code);
             }
             catch (Exception)
             {
-                return key.ToString();
+                return ((Keys)code).ToString();
             }
         }
 
@@ -328,6 +340,17 @@ namespace Ares.Player
                 m_List.Columns.Add(T("Atalho", "Shortcut"), 170);
                 m_List.SetBounds(12, 48, 616, 410);
                 m_List.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+                // the help text takes the lines it needs (with a larger font its second line was cut off)
+                Layout += (s, e) =>
+                {
+                    int need = TextRenderer.MeasureText(help.Text, help.Font, new Size(Math.Max(100, help.Width), 0), TextFormatFlags.WordBreak).Height + 4;
+                    if (need == help.Height)
+                        return;
+                    int listBottom = m_List.Bottom;
+                    help.Height = need;
+                    m_List.Top = help.Bottom + 6;
+                    m_List.Height = Math.Max(80, listBottom - m_List.Top);
+                };
                 ListViewGroup progGroup = new ListViewGroup(T("Programa", "Program"));
                 ListViewGroup folderGroup = new ListViewGroup(T("Pastas e playlists do projeto", "Folders and playlists of the project"));
                 m_List.Groups.Add(progGroup);

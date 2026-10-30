@@ -33,6 +33,8 @@ namespace Ares.Player
         {
             AutoScroll = true;
             // the first group: the fields were placed for a narrow font (the time box was on top of its label)
+            // (the designer docks it to Fill: in a tall page it then covered the effects and leveler groups)
+            groupBox1.Dock = DockStyle.None;
             groupBox1.SetBounds(0, 0, Math.Max(480, ClientSize.Width), 252);
             groupBox1.Text = T("Transição entre músicas (fade e crossfade)", "Transition between pieces of music (fade and crossfade)");
             // laid out again from the top: the positions of the designer fitted a narrow font (the text "Duração da transição:"

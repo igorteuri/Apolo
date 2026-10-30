@@ -1242,7 +1242,6 @@ namespace Ares.Player
                 if (m_Project != null && m_Project.GetModes().Count > modeIndex)
                 {
                     bool showKeys = Settings.Settings.Instance.ShowKeysInButtons;
-                    KeysConverter converter = new KeysConverter();
                     Ares.Data.IMode shownMode = m_Project.GetModes()[modeIndex];
                     // the buttons of the folder, then (under a heading each) the ones of its subfolders
                     List<ShownButton> shown = CollectShownButtons(shownMode);
@@ -1272,7 +1271,7 @@ namespace Ares.Player
                         {
                             int keyCode = (elements[i].Trigger as IKeyTrigger).KeyCode;
                             if (keyCode != 0)
-                                keyText = converter.ConvertToString((System.Windows.Forms.Keys)keyCode);
+                                keyText = KeyText((System.Windows.Forms.Keys)keyCode);
                         }
                         keyTexts.Add(keyText);
                         // room for the shortcut card below the name
@@ -1290,6 +1289,13 @@ namespace Ares.Player
                         kinds.Add(kind);
                     }
                     Size cardSize = ElementButton.ComputeCardSize(texts, kinds, elementsPanel.Font);
+                    if (cardSize.Height != m_ShownCardHeight)
+                    {
+                        // the room kept for the buttons depends on the size of the cards
+                        m_ShownCardHeight = cardSize.Height;
+                        if (IsHandleCreated)
+                            BeginInvoke(new System.Windows.Forms.MethodInvoker(LayoutMainColumns));
+                    }
                     int count = 0;
                     for (int i = 0; i < visible.Count; ++i)
                     {

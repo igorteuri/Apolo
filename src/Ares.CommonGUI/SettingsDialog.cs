@@ -147,6 +147,19 @@ namespace Ares.CommonGUI
             return page;
         }
 
+        /// <summary>Lays the page handed out by TakePage(0) out again (its font changed in its new place); returns the height it needs.</summary>
+        public int FitGeneralPage(Control page, int width)
+        {
+            LayoutGeneralPage(width, false);
+            int bottom = 0;
+            foreach (Control c in page.Controls)
+            {
+                if (c.Visible)
+                    bottom = Math.Max(bottom, c.Bottom);
+            }
+            return bottom + 12;
+        }
+
         private static List<Control> GetControls(Control parent)
         {
             List<Control> list = new List<Control>();
