@@ -172,6 +172,7 @@ namespace Ares.Player
             m_EffectsSoften = soften;
             m_EffectsNote = softenNote;
             m_LevelHelp = help;
+            MakeCards();
             // the boxes follow the real width of the page (small windows cut off the sliders)
             SizeChanged += (s, e) => FitLevelerWidth();
             FitLevelerWidth();
@@ -203,6 +204,30 @@ namespace Ares.Player
         private CheckBox m_EffectsSoften;
         private Label m_EffectsNote, m_LevelHelp;
         private readonly List<KeyValuePair<ModernSlider, Label>> m_LevelRows = new List<KeyValuePair<ModernSlider, Label>>();
+
+        // the three groups look like the cards of the other settings pages: title inside the outline, the same spacing
+        private void MakeCards()
+        {
+            GroupBox[] boxes = { groupBox1, m_EffectsBox, m_LevelBox };
+            int top = 0;
+            foreach (GroupBox box in boxes)
+            {
+                box.Tag = "Card";
+                int shift = ThemeManager.CardContentTop(box) - 26;
+                int bottom = 0;
+                foreach (Control c in box.Controls)
+                {
+                    if (c is FlowLayoutPanel && c.AutoSize)
+                        c.Size = c.GetPreferredSize(Size.Empty);
+                    c.Left += 4;
+                    c.Top += shift;
+                    bottom = Math.Max(bottom, c.Bottom);
+                }
+                box.SetBounds(0, top, box.Width, bottom + 16);
+                top = box.Bottom + 16;
+            }
+            AutoScrollMinSize = new Size(0, top);
+        }
 
         private void FitLevelerWidth()
         {

@@ -1401,6 +1401,11 @@ namespace Ares.CommonGUI
             {
                 gr.FillRectangle(back, 0, 0, g.Width, g.Height);
             }
+            if (IsCard(g))
+            {
+                PaintCard(g, gr, p);
+                return;
+            }
             bool hasText = !string.IsNullOrEmpty(g.Text);
             Size ts = hasText ? TextRenderer.MeasureText(gr, g.Text, g.Font) : Size.Empty;
             int top = hasText ? ts.Height / 2 : 0;
@@ -1433,6 +1438,47 @@ namespace Ares.CommonGUI
                     gr.FillRectangle(back, x - 2, 0, ts.Width + 2, ts.Height);
                 }
                 TextRenderer.DrawText(gr, g.Text, g.Font, new Point(x, 0), p.TextDim);
+            }
+        }
+
+        /// <summary>A group box with the Tag "Card" looks like the cards of the settings pages: the outline all around, the title inside it.</summary>
+        public static bool IsCard(GroupBox g)
+        {
+            return g.Tag is string && (string)g.Tag == "Card";
+        }
+
+        /// <summary>Font of the title of a card group box; its content starts at CardContentTop.</summary>
+        public static Font CardTitleFont(Control c)
+        {
+            return new Font(c.Font.FontFamily, c.Font.Size + 1f, FontStyle.Bold);
+        }
+
+        public static int CardContentTop(Control c)
+        {
+            using (Font f = CardTitleFont(c))
+                return 14 + TextRenderer.MeasureText("Ag", f).Height + 8;
+        }
+
+        private static void PaintCard(GroupBox g, Graphics gr, ThemePalette p)
+        {
+            gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            Rectangle r = new Rectangle(0, 0, g.Width - 1, g.Height - 1);
+            int d = 14;
+            using (System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath())
+            using (Pen pen = new Pen(p.Border, 1.5f))
+            {
+                path.AddArc(r.X, r.Y, d, d, 180, 90);
+                path.AddArc(r.Right - d, r.Y, d, d, 270, 90);
+                path.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
+                path.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
+                path.CloseFigure();
+                gr.DrawPath(pen, path);
+            }
+            gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.Default;
+            if (!string.IsNullOrEmpty(g.Text))
+            {
+                using (Font f = CardTitleFont(g))
+                    TextRenderer.DrawText(gr, g.Text, f, new Point(18, 14), p.Text, TextFormatFlags.NoPrefix);
             }
         }
 
@@ -1686,7 +1732,8 @@ namespace Ares.CommonGUI
                 bool dark = !Current.IsClassic && Current.IsDark;
                 if (c is ListView)
                 {
-                    SetWindowTheme(c.Handle, dark ? "DarkMode_ItemsView" : "Explorer", null);
+                    // DarkMode_Explorer also gives the list dark scroll bars (with DarkMode_ItemsView they stayed white)
+                    SetWindowTheme(c.Handle, dark ? "DarkMode_Explorer" : "Explorer", null);
                     // the column header is a window of its own: it is white unless it gets the dark theme too
                     IntPtr header = SendMessage(c.Handle, 0x101F, IntPtr.Zero, IntPtr.Zero);
                     if (header != IntPtr.Zero)
@@ -2032,7 +2079,7 @@ namespace Ares.CommonGUI
 
         private static void ApplyHeaderLook(ListView lv)
         {
-            if (lv.View != View.Details || lv.OwnerDraw || lv.CheckBoxes || lv.Groups.Count > 0)
+            if (lv.View != View.Details || lv.OwnerDraw || lv.CheckBoxes)
                 return;
             object dummy;
             if (s_HeaderLook.TryGetValue(lv, out dummy))

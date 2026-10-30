@@ -239,6 +239,13 @@ namespace Ares.Player
             ShortcutsDialog dlg = new ShortcutsDialog(rows);
             if (m_EmbedHost != null)
             {
+                // inside the settings every change counts at once, like the other settings (no OK / Cancel)
+                dlg.ApplyAtOnce(() =>
+                {
+                    ApplyShortcutRows(rows);
+                    foreach (ShortcutRow row in rows)
+                        row.Original = row.Key;
+                });
                 ShowOrEmbed(dlg, () => { if (dlg.DialogResult == DialogResult.OK) ApplyShortcutRows(rows); });
                 return;
             }
@@ -304,7 +311,16 @@ namespace Ares.Player
         {
             private readonly List<ShortcutRow> m_Rows;
             private readonly ListView m_List;
-            private readonly Button m_Change, m_Remove, m_Default;
+            private readonly Button m_Change, m_Remove, m_Default, m_Ok, m_Cancel;
+            private Action m_Apply;
+
+            /// <summary>Every change is applied at once by "apply"; the OK and Cancel buttons go away.</summary>
+            public void ApplyAtOnce(Action apply)
+            {
+                m_Apply = apply;
+                m_Ok.Visible = false;
+                m_Cancel.Visible = false;
+            }
 
             private static readonly HashSet<Keys> s_Reserved = new HashSet<Keys>
             {
@@ -386,6 +402,8 @@ namespace Ares.Player
                 m_Change.SetBounds(12, 470, 100, 32);
                 m_Remove.SetBounds(120, 470, 100, 32);
                 m_Default.SetBounds(228, 470, 100, 32);
+                m_Ok = ok;
+                m_Cancel = cancel;
                 ok.SetBounds(420, 470, 100, 32);
                 cancel.SetBounds(528, 470, 100, 32);
                 m_Change.Anchor = m_Remove.Anchor = m_Default.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
@@ -424,6 +442,8 @@ namespace Ares.Player
                 row.Key = key;
                 row.Item.SubItems[1].Text = KeyText((Keys)key);
                 UpdateButtons();
+                if (m_Apply != null)
+                    m_Apply();
             }
 
             private void ChangeSelected()

@@ -291,7 +291,10 @@ namespace Ares.Player
                 form.MinimumSize = Size.Empty;
                 form.Dock = DockStyle.Fill;
             }
-            host.Controls.Add(form);
+            if (resizable)
+                host.Controls.Add(form);
+            else
+                PutInCard(host, form);
             // the buttons which closed the dialog (OK, Close ...) close the embedded window
             Action<Control> hook = null;
             hook = c =>
@@ -319,8 +322,29 @@ namespace Ares.Player
                     host.BeginInvoke(again);
             };
             ThemeManager.Apply(form);
-            host.AutoScrollMinSize = resizable ? Size.Empty : form.Size;
+            host.AutoScrollMinSize = Size.Empty;
             form.Show();
+            // no control starts with the focus (the dotted focus frame sat on the first check box of the page)
+            form.ActiveControl = null;
+        }
+
+        /// <summary>Shows "content" in a card as wide as the cards of the other settings pages (it follows the width of the page).</summary>
+        private static CardPanel PutInCard(Panel host, Control content)
+        {
+            CardPanel card = new CardPanel();
+            card.Margin = Padding.Empty;
+            card.Location = Point.Empty;
+            content.Margin = Padding.Empty;
+            card.Controls.Add(content);
+            host.Controls.Add(card);
+            Action fit = () =>
+            {
+                if (!card.IsDisposed)
+                    card.MinimumSize = new Size(Math.Max(0, host.ClientSize.Width - SystemInformation.VerticalScrollBarWidth), 0);
+            };
+            host.Resize += (s, e) => fit();
+            fit();
+            return card;
         }
 
         // ------------------------------------------------------------------ the view
@@ -490,11 +514,15 @@ namespace Ares.Player
                 unit.Text = Loc.T("ms (padrão 300; use 600 a 1000 se ainda picotar)", "ms (default 300; use 600 to 1000 if it still stutters)");
                 unit.AutoSize = true;
                 unit.Location = new Point(110, 272);
-                host.Controls.Add(text);
-                host.Controls.Add(open);
-                host.Controls.Add(marginText);
-                host.Controls.Add(margin);
-                host.Controls.Add(unit);
+                Panel content = new Panel();
+                content.Size = new Size(660, 300);
+                content.Controls.Add(text);
+                content.Controls.Add(open);
+                content.Controls.Add(marginText);
+                content.Controls.Add(margin);
+                content.Controls.Add(unit);
+                host.AutoScroll = true;
+                PutInCard(host, content);
                 AddPage("vdo", "VDO.Ninja", "send", host, null);
             }
 
