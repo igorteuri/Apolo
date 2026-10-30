@@ -949,6 +949,21 @@ namespace Ares.Player
 
         private class GeneralPage : SettingsPage
         {
+            private Panel m_Old;
+            private SettingsDialog m_Legacy;
+
+            // the rows of the old page are laid out with the font they have now (the card cut off its last row)
+            private void FitOld()
+            {
+                if (m_Old != null && !m_Old.IsDisposed)
+                    m_Old.Height = Math.Max(60, m_Legacy.FitGeneralPage(m_Old, Math.Max(m_Old.AutoScrollMinSize.Width, m_Old.Width)));
+            }
+
+            public override void OnPageShown()
+            {
+                FitOld();
+            }
+
             public GeneralPage(Player owner, SettingsDialog legacy) : base(owner, Loc.T("Geral", "General"))
             {
                 ToolStripMenuItem appearance = Owner.m_AppearanceItem;
@@ -1030,7 +1045,9 @@ namespace Ares.Player
                     old.AutoScroll = false;
                     // measured with the font of the old dialog: with the larger font of the page the texts were cut ("Pasta do usuári")
                     // and the last row did not fit
-                    old.FontChanged += (s, e) => old.Height = Math.Max(60, legacy.FitGeneralPage(old, old.AutoScrollMinSize.Width));
+                    old.FontChanged += (s, e) => FitOld();
+                    m_Old = old;
+                    m_Legacy = legacy;
                     old.Margin = new Padding(0, 0, 0, 8);
                     Add(old);
                 }

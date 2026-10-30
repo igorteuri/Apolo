@@ -48,150 +48,18 @@ namespace Ares.Player
             }
         }
 
-        private const int FrameBytes = 3840;            // 20 ms
-        private const int PrimeBytes = FrameBytes * 3;  // 60 ms collected before the sound of a source is used
-        private const int MaxBytes = FrameBytes * 20;   // 400 ms: more than that is dropped (the oldest part)
-        private const int KeepBytes = FrameBytes * 6;
+        private const int FrameBytes = AudioJitterBuffer.FrameBytes; // 20 ms
+        // the margins grow by themselves after a gap (AudioJitterBuffer), up to these limits
+        private const int EngineMarginMs = 60, EngineMaxMs = 500;
+        private const int WebMaxMs = 2000;
+        // the pages send blocks of about 170 ms: their margin holds more than one block
+        private const int PageMinMarginMs = 280;
 
-        private static int MarginFrames()
+        // the sound of one source, waiting to be mixed (see AudioJitterBuffer)
+        private class Source : AudioJitterBuffer
         {
-            return Math.Max(2, MarginMs / 20);
-        }
-
-        // a queue of PCM data of one source
-        private class Source
-        {
-            private readonly object m_Lock = new object();
-            private readonly Queue<byte[]> m_Chunks = new Queue<byte[]>();
-            private int m_Offset;
-            private int m_Length;
-            private bool m_Primed;
-            private bool m_Flowed;
-            private readonly int m_Prime, m_Reprime, m_Max, m_Keep;
-            public long TotalBytes;
-            public bool Reported;
-            /// <summary>Times the source ran dry while sound was flowing (heard as a gap), and times the oldest sound was dropped.</summary>
-            public int Underruns;
-            public int Overflows;
-            // the last sample of the last frame, for a soft end when the source runs dry (a hard cut is heard as a click)
-            private short m_LastL, m_LastR;
-            private bool m_Ends;
-            private bool m_FadeIn;
-
-            public Source() : this(PrimeBytes, MaxBytes, KeepBytes)
+            public Source(int marginMs, int maxMs) : base(marginMs, Math.Max(marginMs, maxMs))
             {
-            }
-
-            // sources which arrive in bursts (the web pages) get a deeper buffer: a smooth sound is better than a short delay
-            public Source(int prime, int max, int keep) : this(prime, max, keep, prime)
-            {
-            }
-
-            // "reprime": how much sound is collected again after the source ran dry (less than at the start: the gap stays short)
-            public Source(int prime, int max, int keep, int reprime)
-            {
-                m_Prime = prime;
-                m_Reprime = Math.Min(prime, reprime);
-                m_Max = max;
-                m_Keep = keep;
-            }
-
-            public void Add(byte[] buffer, int count)
-            {
-                if (count <= 0)
-                    return;
-                byte[] copy = new byte[count];
-                Buffer.BlockCopy(buffer, 0, copy, 0, count);
-                lock (m_Lock)
-                {
-                    m_Chunks.Enqueue(copy);
-                    m_Length += count;
-                    TotalBytes += count;
-                    if (m_Length > m_Max)
-                    {
-                        Overflows++;
-                        while (m_Length > m_Keep && m_Chunks.Count > 0)
-                        {
-                            byte[] old = m_Chunks.Dequeue();
-                            m_Length -= old.Length - m_Offset;
-                            m_Offset = 0;
-                        }
-                    }
-                }
-            }
-
-            // takes one frame (FrameBytes) if the source has enough sound
-            public bool TakeFrame(byte[] frame)
-            {
-                lock (m_Lock)
-                {
-                    if (!m_Primed)
-                    {
-                        if (m_Length >= (m_Flowed ? m_Reprime : m_Prime))
-                            m_Primed = true;
-                        else
-                            return false;
-                    }
-                    if (m_Length < FrameBytes)
-                    {
-                        m_Primed = false;
-                        Underruns++;
-                        if (!m_Ends)
-                            return false;
-                        // one frame which fades from the last sample to silence
-                        m_Ends = false;
-                        m_FadeIn = true;
-                        int pairs = FrameBytes / 4;
-                        for (int i = 0; i < pairs; ++i)
-                        {
-                            float k = 1f - (i + 1) / (float)pairs;
-                            short l = (short)(m_LastL * k), r = (short)(m_LastR * k);
-                            frame[i * 4] = (byte)(l & 0xFF);
-                            frame[i * 4 + 1] = (byte)((l >> 8) & 0xFF);
-                            frame[i * 4 + 2] = (byte)(r & 0xFF);
-                            frame[i * 4 + 3] = (byte)((r >> 8) & 0xFF);
-                        }
-                        return true;
-                    }
-                    m_Flowed = true;
-                    int got = 0;
-                    while (got < FrameBytes)
-                    {
-                        byte[] chunk = m_Chunks.Peek();
-                        int n = Math.Min(chunk.Length - m_Offset, FrameBytes - got);
-                        Buffer.BlockCopy(chunk, m_Offset, frame, got, n);
-                        got += n;
-                        m_Offset += n;
-                        if (m_Offset >= chunk.Length)
-                        {
-                            m_Chunks.Dequeue();
-                            m_Offset = 0;
-                        }
-                    }
-                    m_Length -= FrameBytes;
-                    if (m_FadeIn)
-                    {
-                        // the first frame after a gap starts from silence
-                        m_FadeIn = false;
-                        int pairs = FrameBytes / 4;
-                        for (int i = 0; i < pairs; ++i)
-                        {
-                            float k = (i + 1) / (float)pairs;
-                            for (int c = 0; c < 2; ++c)
-                            {
-                                int o = i * 4 + c * 2;
-                                short v = (short)(frame[o] | (frame[o + 1] << 8));
-                                v = (short)(v * k);
-                                frame[o] = (byte)(v & 0xFF);
-                                frame[o + 1] = (byte)((v >> 8) & 0xFF);
-                            }
-                        }
-                    }
-                    m_LastL = (short)(frame[FrameBytes - 4] | (frame[FrameBytes - 3] << 8));
-                    m_LastR = (short)(frame[FrameBytes - 2] | (frame[FrameBytes - 1] << 8));
-                    m_Ends = true;
-                    return true;
-                }
             }
         }
 
@@ -199,13 +67,8 @@ namespace Ares.Player
         {
             public ProcessLoopbackCapture Capture;
 
-            // the sound of the web pages arrives in bursts (the browser, the encoder of VDO.Ninja and the other tabs share the PC):
-            // 100 ms before it starts, up to 600 ms kept, and after a gap only 40 ms are collected again
-            public WebSource() : this(MarginFrames())
-            {
-            }
-
-            private WebSource(int frames) : base(FrameBytes * frames, FrameBytes * (frames + 30), FrameBytes * (frames + 8), FrameBytes * Math.Max(2, frames * 2 / 3))
+            // the sound of the web pages arrives in bursts (the browser, the encoder of VDO.Ninja and the other tabs share the PC)
+            public WebSource() : base(MarginMs, WebMaxMs)
             {
             }
         }
@@ -238,9 +101,7 @@ namespace Ares.Player
                     return;
                 if (!m_Pages.TryGetValue(key, out source))
                 {
-                    // the pages send blocks of about 170 ms: the buffer must hold more than one block
-                    int frames = Math.Max(MarginFrames(), 14);
-                    source = new Source(FrameBytes * frames, FrameBytes * (frames + 30), FrameBytes * (frames + 8), FrameBytes * Math.Max(2, frames * 2 / 3));
+                    source = new Source(Math.Max(MarginMs, PageMinMarginMs), WebMaxMs);
                     m_Pages[key] = source;
                     ProcessLoopbackCapture.Log("sound of Apolo: web page sound from inside the page started");
                 }
@@ -250,7 +111,7 @@ namespace Ares.Player
 
         private readonly int m_ProcessId;
         private readonly object m_Lock = new object();
-        private readonly Source m_Engine = new Source();
+        private readonly Source m_Engine = new Source(EngineMarginMs, EngineMaxMs);
         private readonly Dictionary<int, WebSource> m_Web = new Dictionary<int, WebSource>();
         private readonly Dictionary<int, DateTime> m_Failed = new Dictionary<int, DateTime>();
         private bool m_EngineListening;
@@ -427,9 +288,8 @@ namespace Ares.Player
                 {
                     for (int i = 0; i < sum.Length; ++i)
                     {
-                        int v = sum[i];
-                        if (v > short.MaxValue) v = short.MaxValue;
-                        else if (v < short.MinValue) v = short.MinValue;
+                        // music and pages together can pass the top: the peaks are rounded off, not cut flat
+                        short v = AudioJitterBuffer.SoftClip(sum[i]);
                         output[i * 2] = (byte)(v & 0xFF);
                         output[i * 2 + 1] = (byte)((v >> 8) & 0xFF);
                     }
@@ -451,22 +311,31 @@ namespace Ares.Player
                         foreach (WebSource w in m_Web.Values)
                             webBytes += w.TotalBytes;
                     }
-                    int webGaps = 0, webOverflows = 0;
+                    // the captures of the browser processes and the sound sent from inside the pages, apart: so the log
+                    // shows which of the two had gaps, and how large the margin grew
+                    int webGaps = 0, webOverflows = 0, webMargin = 0, pageCount = 0, pageGaps = 0, pageOverflows = 0, pageMargin = 0;
+                    long pageBytes = 0;
                     lock (m_Lock)
                     {
                         foreach (WebSource w in m_Web.Values)
                         {
                             webGaps += w.Underruns;
                             webOverflows += w.Overflows;
+                            webMargin = Math.Max(webMargin, w.TargetMs);
                         }
                         foreach (Source pg in m_Pages.Values)
                         {
-                            webGaps += pg.Underruns;
-                            webOverflows += pg.Overflows;
+                            pageCount++;
+                            pageBytes += pg.TotalBytes;
+                            pageGaps += pg.Underruns;
+                            pageOverflows += pg.Overflows;
+                            pageMargin = Math.Max(pageMargin, pg.TargetMs);
                         }
                     }
                     ProcessLoopbackCapture.Log("sound of Apolo: engine " + (m_Engine.TotalBytes / 1024) + " KB (gaps " + m_Engine.Underruns + "), web pages ("
-                        + count + " capture(s)) " + (webBytes / 1024) + " KB (gaps " + webGaps + ", dropped bursts " + webOverflows + ")");
+                        + count + " capture(s)) " + (webBytes / 1024) + " KB (gaps " + webGaps + ", dropped bursts " + webOverflows + ", margin " + webMargin
+                        + " ms), inside pages (" + pageCount + ") " + (pageBytes / 1024) + " KB (gaps " + pageGaps + ", dropped bursts " + pageOverflows
+                        + ", margin " + pageMargin + " ms)");
                 }
             }
         }

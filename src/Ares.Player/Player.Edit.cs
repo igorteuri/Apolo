@@ -881,6 +881,8 @@ namespace Ares.Player
                 EnsureProjectFile(path);
                 OpenProject(path, false);
             }
+            // the subfolders, colors and pictures find a folder by its name: two folders must not share one
+            name = UniqueModeTitle(name, null);
             // the new folder goes into the selected one (subfolder) or beside it (same level)
             ModeNode selected = SelectedModeNode;
             ModeNode parent = asChild ? selected : (selected != null ? selected.Parent : null);
@@ -900,14 +902,37 @@ namespace Ares.Player
 
         // ---- folders (the modes of the project) ----
 
+        /// <summary>"name", or "name 2", "name 3" ... when another folder of the project (not "except") already has it.</summary>
+        private string UniqueModeTitle(string name, IMode except)
+        {
+            if (m_Project == null)
+                return name;
+            Func<string, bool> taken = t => m_Project.GetModes().Any(m => m != except && string.Equals(m.Title, t, StringComparison.OrdinalIgnoreCase));
+            if (!taken(name))
+                return name;
+            for (int i = 2; ; ++i)
+            {
+                string candidate = name + " " + i;
+                if (!taken(candidate))
+                    return candidate;
+            }
+        }
+
         private void RenameCurrentMode()
         {
             IMode mode = CurrentMode();
             if (mode == null)
                 return;
             string name = Prompt(this, T("Renomear pasta", "Rename folder"), T("Novo nome:", "New name:"), mode.Title);
-            if (name == null)
+            if (name == null || name == mode.Title)
                 return;
+            if (UniqueModeTitle(name, mode) != name)
+            {
+                MessageBox.Show(this, T("Já existe uma pasta chamada \"" + name + "\". Escolha outro nome.",
+                    "There is already a folder called \"" + name + "\". Choose another name."),
+                    StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
             int index = SelectedModeIndex;
             string oldTitle = mode.Title;
             Ares.CommonGUI.ButtonImageStore.RenameMode(m_CurrentProjectPath, oldTitle, name);
