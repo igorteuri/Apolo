@@ -23,6 +23,27 @@ namespace Ares.Player
 
         private static int s_Active;
 
+        /// <summary>
+        /// Raised (on the mixing thread) when the browser processes of Apolo play real sound although the pages are taken from
+        /// inside (the PC should not play them): the tabs were not silent, so they must be muted.
+        /// </summary>
+        public static event Action WebLeak;
+
+        private const int LeakPeak = 300, LeakFrames = 40;   // about -40 dB for 0.8 s
+        private int m_LeakFrames;
+        private bool m_LeakRaised;
+
+        private static int PeakOf(byte[] frame)
+        {
+            int peak = 0;
+            for (int i = 0; i + 1 < FrameBytes; i += 2)
+            {
+                int v = Math.Abs((short)(frame[i] | (frame[i + 1] << 8)));
+                if (v > peak) peak = v;
+            }
+            return peak;
+        }
+
         /// <summary>true while the sound of Apolo is being sent somewhere (Discord, virtual microphone, VDO).</summary>
         public static bool AnyActive
         {
@@ -271,6 +292,25 @@ namespace Ares.Player
                 {
                     if (w.TakeFrame(frame))
                     {
+                        // with the pages taken from inside, what the browser plays itself should be silence
+                        if (pages.Length > 0 && !m_LeakRaised)
+                        {
+                            if (PeakOf(frame) > LeakPeak)
+                            {
+                                if (++m_LeakFrames >= LeakFrames)
+                                {
+                                    m_LeakRaised = true;
+                                    Action handler = WebLeak;
+                                    if (handler != null)
+                                    {
+                                        try { handler(); }
+                                        catch (Exception swallowed) { Ares.Settings.ErrorLog.Note(swallowed); }
+                                    }
+                                }
+                            }
+                            else if (m_LeakFrames > 0)
+                                m_LeakFrames--;
+                        }
                         Accumulate(sum, frame);
                         any = true;
                         if (!w.Reported)

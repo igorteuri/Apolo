@@ -228,6 +228,7 @@ namespace Ares.Player
             modesList.AllowDrop = true;
             modesList.DragOver += ModesDragOver;
             modesList.DragDrop += ModesDragDrop;
+            modesList.DragLeave += (s, e) => SetModeDrop(-1, 0);
             Point modeDown = Point.Empty;
             bool modeTracking = false;
             modesList.MouseDown += (s, e) =>
@@ -411,13 +412,55 @@ namespace Ares.Player
             DragInfo info = e.Data.GetData(typeof(DragInfo)) as DragInfo;
             if (!m_EditMode || info == null)
                 return;
-            int row = modesList.IndexFromPoint(modesList.PointToClient(new Point(e.X, e.Y)));
+            Point pt = modesList.PointToClient(new Point(e.X, e.Y));
+            int row = modesList.IndexFromPoint(pt);
             // folders can also be dropped on the empty area (they go to the top level)
             e.Effect = (row >= 0 || info.IsMode) ? DragDropEffects.Move : DragDropEffects.None;
+
+            // near the top or bottom edge the list scrolls, so that every folder can be reached
+            if (Math.Abs(unchecked(Environment.TickCount - m_ModeDropScrollAt)) > 90)
+            {
+                if (pt.Y < 14 && modesList.TopIndex > 0)
+                {
+                    modesList.TopIndex--;
+                    m_ModeDropScrollAt = Environment.TickCount;
+                }
+                else if (pt.Y > modesList.ClientSize.Height - 14 && modesList.TopIndex < modesList.Items.Count - 1)
+                {
+                    modesList.TopIndex++;
+                    m_ModeDropScrollAt = Environment.TickCount;
+                }
+            }
+
+            // the mark of the place where it lands (same rules as ModesDragDrop)
+            if (row < 0 || row >= m_ModeRows.Count)
+            {
+                SetModeDrop(m_ModeRows.Count - 1, info.IsMode && m_ModeRows.Count > 0 ? 4 : 0);
+                return;
+            }
+            if (!info.IsMode)
+            {
+                SetModeDrop(row, 3);
+                return;
+            }
+            ModeNode moved = m_ModeTree != null ? m_ModeTree.Find(info.ModeTitle) : null;
+            ModeNode target = m_ModeRows[row];
+            if (moved == null || target == moved || target.IsDescendantOf(moved))
+            {
+                e.Effect = DragDropEffects.None;
+                SetModeDrop(-1, 0);
+                return;
+            }
+            Rectangle rect = modesList.GetItemRectangle(row);
+            int rel = pt.Y - rect.Y;
+            SetModeDrop(row, rel < rect.Height / 4 ? 1 : (rel > rect.Height * 3 / 4 ? 2 : 3));
         }
+
+        private int m_ModeDropScrollAt;
 
         private void ModesDragDrop(object sender, DragEventArgs e)
         {
+            SetModeDrop(-1, 0);
             DragInfo info = e.Data.GetData(typeof(DragInfo)) as DragInfo;
             if (!m_EditMode || info == null || m_Project == null || m_ModeTree == null)
                 return;
