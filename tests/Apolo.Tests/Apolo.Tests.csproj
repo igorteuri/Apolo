@@ -27,6 +27,7 @@
     <!-- the logic under test is compiled straight from the player sources (no window code) -->
     <Compile Include="..\..\src\Ares.Player\TrackText.cs" Link="Linked\TrackText.cs" />
     <Compile Include="..\..\src\Ares.Player\KeyNames.cs" Link="Linked\KeyNames.cs" />
+    <Compile Include="..\..\src\Ares.Player\AudioJitterBuffer.cs" Link="Linked\AudioJitterBuffer.cs" />
     <Compile Include="..\..\src\Ares.Player\JsonText.cs" Link="Linked\JsonText.cs" />
     <Compile Include="..\..\src\Ares.Player\Player.Rights.cs" Link="Linked\Player.Rights.cs" />
     <Compile Include="..\..\src\Ares.Player\ImageUrlParser.cs" Link="Linked\ImageUrlParser.cs" />

@@ -114,6 +114,7 @@ namespace Ares.Player
             }
             TextRenderer.DrawText(e.Graphics, text, modesList.Font, r, fore,
                 TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.Left);
+            DrawModeDropMark(e.Graphics, e.Bounds, node, e.Index);
         }
 
         // draws the emoji / picture / icon of a folder; false if it has none
@@ -225,6 +226,69 @@ namespace Ares.Player
             {
                 modesList.EndUpdate();
                 m_Listen = oldListen;
+            }
+        }
+
+        // where a dragged folder (or button) would land: a line before / after a row, a frame around a row (inside it) or a
+        // line at the end of the list. Set by ModesDragOver, drawn by ModesDrawItem.
+        private int m_ModeDropRow = -1;
+        private int m_ModeDropKind;       // 0 none, 1 before the row, 2 after the row, 3 inside the row, 4 at the end of the list
+
+        private void SetModeDrop(int row, int kind)
+        {
+            if (row == m_ModeDropRow && kind == m_ModeDropKind)
+                return;
+            m_ModeDropRow = row;
+            m_ModeDropKind = kind;
+            modesList.Invalidate();
+        }
+
+        private void DrawModeDropMark(Graphics g, Rectangle bounds, ModeNode node, int index)
+        {
+            if (m_ModeDropKind == 0)
+                return;
+            Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
+            Color accent = p != null && !p.IsClassic ? p.Accent : SystemColors.Highlight;
+            bool last = index == m_ModeRows.Count - 1;
+            SmoothingMode old = g.SmoothingMode;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            try
+            {
+                if (index == m_ModeDropRow && m_ModeDropKind == 3)
+                {
+                    Rectangle frame = new Rectangle(bounds.X + 1, bounds.Y + 1, bounds.Width - 3, bounds.Height - 3);
+                    using (SolidBrush fill = new SolidBrush(Color.FromArgb(50, accent)))
+                        g.FillRectangle(fill, frame);
+                    using (Pen pen = new Pen(accent, 2f))
+                        g.DrawRectangle(pen, frame);
+                    return;
+                }
+                int y;
+                int depth = node.Depth;
+                if (index == m_ModeDropRow && m_ModeDropKind == 1)
+                    y = bounds.Y + 1;
+                else if (index == m_ModeDropRow && m_ModeDropKind == 2)
+                    y = bounds.Bottom - 2;
+                else if (m_ModeDropKind == 4 && last)
+                {
+                    y = bounds.Bottom - 2;
+                    depth = 0;
+                }
+                else
+                    return;
+                int x1 = bounds.X + 8 + depth * ModeIndentWidth, x2 = bounds.Right - 6;
+                using (Pen pen = new Pen(accent, 3f))
+                {
+                    pen.StartCap = LineCap.Round;
+                    pen.EndCap = LineCap.Round;
+                    g.DrawLine(pen, x1 + 4, y, x2, y);
+                }
+                using (SolidBrush dot = new SolidBrush(accent))
+                    g.FillEllipse(dot, x1 - 1, y - 4, 8, 8);
+            }
+            finally
+            {
+                g.SmoothingMode = old;
             }
         }
 

@@ -289,7 +289,7 @@ namespace Ares.Player
             };
 
             // audio output selector, at the right end of the toolbar
-            m_OutputButton = new ToolStripButton();
+            m_OutputButton = new OutputStripButton(() => m_OutputPopup != null);
             m_OutputButton.Name = "outputDeviceButton";
             m_OutputButton.Tag = "AccentText"; // highlighted like the settings button
             m_OutputButton.Alignment = ToolStripItemAlignment.Right;
@@ -550,8 +550,10 @@ namespace Ares.Player
                 m_OutputPopupClosedAt = Environment.TickCount;
                 m_OutputPopup = null;
                 pop.Dispose();
+                m_OutputButton.Invalidate();
             };
             m_OutputPopup = pop;
+            m_OutputButton.Invalidate();
             pop.Show(this);
             list.Focus();
         }

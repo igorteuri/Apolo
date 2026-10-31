@@ -538,12 +538,15 @@ namespace Ares.Player
                     specs.Add(spec);
                     kinds.Add(kind);
                 }
-                Size card = shown.Count > 0 ? ElementButton.ComputeCardSize(texts, kinds, Font) : new Size(150, 54);
+                // the cards are measured and drawn with the font of the buttons of the main window: the font of the pad is not
+                // scaled with the interface size, so the cards came out too low and the names were cut at the bottom
+                Font cardFont = pl.elementsPanel.Font;
+                Size card = shown.Count > 0 ? ElementButton.ComputeCardSize(texts, kinds, cardFont) : new Size(150, 54);
                 for (int i = 0; i < shown.Count; i++)
                 {
                     IModeElement element = shown[i].Element;
                     ElementButton b = new ElementButton();
-                    b.Font = Font;
+                    b.Font = cardFont;
                     b.Text = texts[i];
                     b.AutoCheck = false;
                     if (kinds[i] == 2)

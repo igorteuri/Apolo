@@ -251,6 +251,7 @@ namespace Ares.Player
         public bool Loaded;    // page loaded
         public VirtualMic Mic; // the virtual microphone "Apolo Audio" (VDO tab)
         public bool CaptureHooked; // the sound of the page was taken from inside the page (PC does not play it)
+        public bool Routed;        // the page says that all its sound goes through Apolo (then the tab need not be muted)
     }
 
     internal class WebAudioInfo
@@ -524,6 +525,7 @@ namespace Ares.Player
             LayoutBar(bar);
 
             Ares.Playing.AudioInit.OutputChanged += OnOutputChangedForTabs;
+            AppAudioCapture.WebLeak += OnWebLeak;
             LoadTabs();
             if (m_Tabs.Count > 0)
                 m_Selected = m_Tabs[0];
@@ -826,6 +828,15 @@ namespace Ares.Player
                     // sound taken from inside the page: used when the PC doesn't play Apolo ("don't listen on this PC")
                     await core.AddScriptToExecuteOnDocumentCreatedAsync(CaptureScript);
                     core.WebMessageReceived += (s, e) => HandlePageMessage(tab, core, e);
+                    // a new page starts muted again until its sound goes through Apolo
+                    core.NavigationStarting += (s, e) =>
+                    {
+                        if (!CaptureMode)
+                            return;
+                        tab.CaptureHooked = false;
+                        tab.Routed = false;
+                        core.IsMuted = true;
+                    };
                 }
                 core.IsMuted = tab.Kind != "vdo" && (tab.Muted || CaptureMode);
                 core.PermissionRequested += (s, e) =>
@@ -932,7 +943,7 @@ namespace Ares.Player
                 if (tab.Kind == "vdo")
                     tab.View.CoreWebView2.ExecuteScriptAsync("window.__aresSetMuted && window.__aresSetMuted(" + (muted ? "true" : "false") + ");");
                 else
-                    tab.View.CoreWebView2.IsMuted = muted || CaptureMode;
+                    tab.View.CoreWebView2.IsMuted = muted || (CaptureMode && !tab.Routed);
             }
             UpdateTabState(tab);
         }
@@ -940,6 +951,35 @@ namespace Ares.Player
         // ---- sound of the web pages when the PC does not play Apolo ----
         // Windows can only capture what a page plays on the speakers. When the output is "don't listen on this PC" the
         // pages are silenced in the browser and their sound is taken from inside the page (Web Audio) and mixed by Apolo.
+
+        // Sound which really comes out of the browser while the pages are taken from inside (see AppAudioCapture.WebLeak):
+        // from then on, for as long as Apolo runs, the tabs stay muted (no more attempts to unmute them)
+        private static bool s_PageLeakSeen;
+
+        private void OnWebLeak()
+        {
+            s_PageLeakSeen = true;
+            try
+            {
+                if (!IsHandleCreated || IsDisposed)
+                    return;
+                BeginInvoke(new Action(() =>
+                {
+                    foreach (WebTab tab in m_Tabs)
+                    {
+                        if (tab.Kind == "vdo" || tab.View == null || tab.View.CoreWebView2 == null)
+                            continue;
+                        tab.Routed = false;
+                        tab.View.CoreWebView2.IsMuted = true;
+                    }
+                    ProcessLoopbackCapture.Log("web page sound: sound was heard coming out of the browser, the tabs are muted again");
+                }));
+            }
+            catch (Exception swallowed)
+            {
+                Ares.Settings.ErrorLog.Note(swallowed);
+            }
+        }
 
         private static bool CaptureMode
         {
@@ -969,7 +1009,8 @@ namespace Ares.Player
                 CoreWebView2 core = tab.View.CoreWebView2;
                 try
                 {
-                    core.IsMuted = tab.Muted || mode;
+                    tab.Routed = tab.Routed && mode;
+                    core.IsMuted = tab.Muted || (mode && !tab.Routed);
                     core.PostWebMessageAsString(mode ? "apolo-capture:on" : "apolo-capture:off");
                     if (!mode && tab.CaptureHooked)
                     {
@@ -1002,6 +1043,18 @@ namespace Ares.Player
             {
                 core.PostWebMessageAsString(CaptureMode ? "apolo-capture:on" : "apolo-capture:off");
             }
+            else if (msg.StartsWith("apolo-routed:", StringComparison.Ordinal))
+            {
+                // "1": all the sound of the page goes through Apolo; "0:<reason>": it does not
+                bool routed = msg.Length > 13 && msg[13] == '1' && !s_PageLeakSeen;
+                if (routed != tab.Routed)
+                {
+                    tab.Routed = routed;
+                    if (CaptureMode)
+                        core.IsMuted = tab.Muted || !routed;
+                    ProcessLoopbackCapture.Log("web page sound: " + (routed ? "all of it goes through Apolo (tab not muted)" : "tab stays muted (" + msg.Substring(13) + ")"));
+                }
+            }
             else if (msg.StartsWith("apolo-pcm:", StringComparison.Ordinal))
             {
                 if (tab.Muted || !CaptureMode)
@@ -1027,7 +1080,7 @@ namespace Ares.Player
 
         private const string CaptureScript = @"(function() {
  if (window.__apoloCap) return;
- var cap = window.__apoloCap = { on: false };
+ var cap = window.__apoloCap = { on: false, leak: false };
  var wv = window.chrome && window.chrome.webview;
  if (!wv) return;
  var origConnect = AudioNode.prototype.connect, origDisconnect = AudioNode.prototype.disconnect;
@@ -1071,16 +1124,45 @@ namespace Ares.Player
   ctx.__apoloTap = sp;
   return sp;
  }
+ // while Apolo takes the sound, what would go to the speakers goes to a gain of 0 instead: the tab is not muted, so the
+ // browser keeps the clock of the real sound card (a muted tab runs on a software clock which is ~1.4 % slow and uneven:
+ // heard as short pauses and a faint crackle in the sent sound)
+ function sinkOf(ctx) {
+  if (ctx.__apoloSink) return ctx.__apoloSink;
+  var g = ctx.createGain();
+  g.gain.value = 0;
+  g.__apoloIsTap = true;
+  origConnect.call(g, ctx.destination);
+  ctx.__apoloSink = g;
+  return g;
+ }
  AudioNode.prototype.connect = function(dest) {
+  // something went to the speakers before the capture was on: that sound can not be taken out of the page any more
+  if (!cap.on && dest instanceof AudioDestinationNode && !this.__apoloIsTap) cap.leak = true;
+  if (cap.on && dest instanceof AudioDestinationNode && !this.__apoloIsTap) {
+   try {
+    origConnect.call(this, tapOf(dest.context));
+    origConnect.call(this, sinkOf(dest.context));
+    this.__apoloSunk = true;
+    return dest;
+   } catch (e) {}
+  }
   var r = origConnect.apply(this, arguments);
   try { if (dest instanceof AudioDestinationNode && !this.__apoloIsTap) origConnect.call(this, tapOf(dest.context)); } catch (e) {}
   return r;
  };
  AudioNode.prototype.disconnect = function(dest) {
+  var all = arguments.length === 0;
   try {
-   if ((arguments.length === 0 || dest instanceof AudioDestinationNode) && this.context && this.context.__apoloTap && !this.__apoloIsTap)
+   if ((all || dest instanceof AudioDestinationNode) && this.context && this.context.__apoloTap && !this.__apoloIsTap)
     origDisconnect.call(this, this.context.__apoloTap);
   } catch (e) {}
+  if (this.__apoloSunk && (all || dest instanceof AudioDestinationNode)) {
+   // it was connected to the silent gain, not to the speakers
+   try { origDisconnect.call(this, this.context.__apoloSink); } catch (e) {}
+   this.__apoloSunk = false;
+   if (!all) return;
+  }
   return origDisconnect.apply(this, arguments);
  };
  function hook(el) {
@@ -1092,8 +1174,29 @@ namespace Ares.Player
    var src = ctx.createMediaElementSource(el);
    src.connect(ctx.destination);
    ctx.resume();
-  } catch (e) {}
+   el.__apoloRouted = true;
+  } catch (e) {
+   // the page made its own source for this element: its sound goes through the graph of the page (watched by cap.leak)
+   if (e && e.name === 'InvalidStateError') el.__apoloRouted = true;
+  }
  }
+ // The tab is unmuted (so that the browser keeps the clock of the real sound card) only while ALL the sound is known to go
+ // through Apolo. This tells the program: 1 = routed, 0:<reason> = not (the program keeps the tab muted then).
+ var lastState = '';
+ function report() {
+  if (!cap.on) return;
+  var state = '1';
+  if (cap.leak) state = '0:graph-before-capture';
+  else {
+   var els = document.querySelectorAll('audio,video');
+   for (var i = 0; i < els.length; i++) {
+    var el = els[i];
+    if (!el.paused && !el.ended && !el.muted && el.volume > 0 && !el.__apoloRouted) { state = '0:media-not-routed'; break; }
+   }
+  }
+  if (state !== lastState) { lastState = state; try { wv.postMessage('apolo-routed:' + state); } catch (e) {} }
+ }
+ setInterval(report, 400);
  var origPlay = HTMLMediaElement.prototype.play;
  HTMLMediaElement.prototype.play = function() { if (cap.on) hook(this); return origPlay.apply(this, arguments); };
  function hookAll() { var els = document.querySelectorAll('audio,video'); for (var i = 0; i < els.length; i++) hook(els[i]); }
