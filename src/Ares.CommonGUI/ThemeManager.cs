@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -1253,7 +1254,71 @@ namespace Ares.CommonGUI
             s_DisabledText.Add(b, new object());
             b.Paint += OnDisabledTextPaint;
             b.EnabledChanged += delegate { b.Invalidate(); };
+            b.MouseEnter += delegate { b.Invalidate(); };
+            b.MouseLeave += delegate { b.Invalidate(); };
             b.Invalidate();
+        }
+
+        // The mark of a radio button / check box, drawn in the colors of the theme (the system one is a blue picture of another style).
+        private static void PaintGlyph(ButtonBase b, Graphics g, ThemePalette p)
+        {
+            ContentAlignment check = b is CheckBox ? ((CheckBox)b).CheckAlign : ((RadioButton)b).CheckAlign;
+            if (check != ContentAlignment.MiddleLeft)
+                return;
+            bool radio = b is RadioButton;
+            int size = radio
+                ? RadioButtonRenderer.GetGlyphSize(g, System.Windows.Forms.VisualStyles.RadioButtonState.UncheckedNormal).Width
+                : CheckBoxRenderer.GetGlyphSize(g, System.Windows.Forms.VisualStyles.CheckBoxState.UncheckedNormal).Width;
+            bool on = b is CheckBox ? ((CheckBox)b).CheckState != CheckState.Unchecked : ((RadioButton)b).Checked;
+            bool hot = b.Enabled && b.ClientRectangle.Contains(b.PointToClient(Cursor.Position));
+            int top = (b.Height - size) / 2;
+            Rectangle cover = new Rectangle(0, top - 1, size + 3, size + 2);
+            Rectangle r = new Rectangle(1, top, size - 1, size - 1);
+            SmoothingMode old = g.SmoothingMode;
+            using (SolidBrush back = new SolidBrush(OpaqueBack(b)))
+                g.FillRectangle(back, cover);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            Color edge = !b.Enabled ? p.Border : (on || hot ? p.Accent : p.ControlBorder);
+            Color fill = !b.Enabled ? p.Surface : (on && !radio ? p.Accent : p.Surface);
+            using (SolidBrush f = new SolidBrush(fill))
+            using (Pen pen = new Pen(edge, 1.5f))
+            {
+                if (radio)
+                {
+                    g.FillEllipse(f, r);
+                    g.DrawEllipse(pen, r);
+                }
+                else
+                {
+                    g.FillRectangle(f, r);
+                    g.DrawRectangle(pen, r);
+                }
+            }
+            if (on)
+            {
+                Color mark = b.Enabled ? (radio ? p.Accent : p.Window) : p.TextDim;
+                if (radio)
+                {
+                    int d = Math.Max(4, size / 2 - 1);
+                    using (SolidBrush m = new SolidBrush(mark))
+                        g.FillEllipse(m, r.X + (r.Width - d) / 2f, r.Y + (r.Height - d) / 2f, d, d);
+                }
+                else
+                {
+                    using (Pen m = new Pen(mark, 2f))
+                    {
+                        m.StartCap = LineCap.Round;
+                        m.EndCap = LineCap.Round;
+                        g.DrawLines(m, new PointF[]
+                        {
+                            new PointF(r.X + r.Width * 0.22f, r.Y + r.Height * 0.52f),
+                            new PointF(r.X + r.Width * 0.43f, r.Y + r.Height * 0.74f),
+                            new PointF(r.X + r.Width * 0.80f, r.Y + r.Height * 0.28f)
+                        });
+                    }
+                }
+            }
+            g.SmoothingMode = old;
         }
 
         // The text of a disabled radio button / check box is blurred by Windows (embossed gray): draw it again, crisp and dim.
@@ -1261,7 +1326,10 @@ namespace Ares.CommonGUI
         {
             ButtonBase b = (ButtonBase)sender;
             ThemePalette p = Current;
-            if (p == null || p.IsClassic || b.Enabled || string.IsNullOrEmpty(b.Text) || b.Image != null)
+            if (p == null || p.IsClassic || b.Image != null)
+                return;
+            PaintGlyph(b, e.Graphics, p);
+            if (b.Enabled || string.IsNullOrEmpty(b.Text))
                 return;
             ContentAlignment check = b is CheckBox ? ((CheckBox)b).CheckAlign : ((RadioButton)b).CheckAlign;
             if (check != ContentAlignment.MiddleLeft && check != ContentAlignment.TopLeft && check != ContentAlignment.BottomLeft)

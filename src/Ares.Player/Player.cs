@@ -575,7 +575,7 @@ namespace Ares.Player
             }
             catch (Ares.Playing.AudioInitException)
             {
-                MessageBox.Show(this, String.Format(StringResources.DeviceInitError), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Ares.CommonGUI.MessageDialog.Show(this, String.Format(StringResources.DeviceInitError), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             UpdateOutputButton();
         }
@@ -757,7 +757,7 @@ namespace Ares.Player
             String path = m_Project.FileName;
             if (e.FullPath == path)
             {
-                if (MessageBox.Show(this, StringResources.ReloadProject, StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                if (Ares.CommonGUI.MessageDialog.Show(this, StringResources.ReloadProject, StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
                 {
                     StopAllPlaying();
                     OpenProject(path, false);
@@ -788,7 +788,7 @@ namespace Ares.Player
             }
             catch (Ares.Playing.AudioInitException)
             {
-                MessageBox.Show(this, String.Format(StringResources.DeviceInitError), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Ares.CommonGUI.MessageDialog.Show(this, String.Format(StringResources.DeviceInitError), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Ares.Settings.Settings.Instance.OutputDeviceIndex = -1;
                 Ares.Settings.Settings.Instance.OutputDeviceName = String.Empty;
             }
@@ -816,7 +816,7 @@ namespace Ares.Player
             }
             else
             {
-                if (MessageBox.Show(this, String.Format(StringResources.OpenProjectQuestion, projectName), StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                if (Ares.CommonGUI.MessageDialog.Show(this, String.Format(StringResources.OpenProjectQuestion, projectName), StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
                 {
                     OpenProject(projectPath, false);
                 }
@@ -897,13 +897,13 @@ namespace Ares.Player
                 }
                 Ares.Settings.Settings.Instance.RecentFiles.AddFile(new RecentFiles.ProjectEntry(m_Project.FileName, m_Project.Title));
                 if (Ares.Data.ProjectRecovery.UsedBackup && !onControllerRequest)
-                    MessageBox.Show(this, T("O arquivo do projeto estava danificado. Abri a cópia da versão anterior (.bak); o arquivo danificado ficou guardado como .corrompido.", "The project file was damaged. I opened the copy of the previous version (.bak); the damaged file was kept as .corrompido."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Ares.CommonGUI.MessageDialog.Show(this, T("O arquivo do projeto estava danificado. Abri a cópia da versão anterior (.bak); o arquivo danificado ficou guardado como .corrompido.", "The project file was damaged. I opened the copy of the previous version (.bak); the damaged file was kept as .corrompido."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception e)
             {
                 if (!onControllerRequest)
                 {
-                    MessageBox.Show(this, String.Format(StringResources.LoadError, e.Message), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Ares.CommonGUI.MessageDialog.Show(this, String.Format(StringResources.LoadError, e.Message), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else
                 {
@@ -1679,7 +1679,7 @@ namespace Ares.Player
                     if (warnOnNetworkFail)
                     {
                         warnOnNetworkFail = false;
-                        MessageBox.Show(this, StringResources.NoStatusInfoError, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        Ares.CommonGUI.MessageDialog.Show(this, StringResources.NoStatusInfoError, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -1694,7 +1694,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, String.Format(StringResources.WriteSettingsError, ex.Message), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Ares.CommonGUI.MessageDialog.Show(this, String.Format(StringResources.WriteSettingsError, ex.Message), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
         }
@@ -1705,7 +1705,7 @@ namespace Ares.Player
             bool hasSettings = Ares.Settings.Settings.Instance.Initialize(Ares.Settings.Settings.PlayerID, foundSettings ? m_BasicSettings.GetSettingsDir() : null);
             if (!hasSettings)
             {
-                MessageBox.Show(this, StringResources.NoSettings, StringResources.Ares);
+                Ares.CommonGUI.MessageDialog.Show(this, StringResources.NoSettings, StringResources.Ares);
                 ShowSettingsDialog(-1);
                 SettingsChanged(true);
             }
@@ -1834,7 +1834,7 @@ namespace Ares.Player
             }
             catch (Ares.Tags.TagsDbException ex)
             {
-                MessageBox.Show(this, String.Format(StringResources.TagsDbError, ex.Message), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Ares.CommonGUI.MessageDialog.Show(this, String.Format(StringResources.TagsDbError, ex.Message), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -1870,7 +1870,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, String.Format(StringResources.EditorStartError, ex.Message), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Ares.CommonGUI.MessageDialog.Show(this, String.Format(StringResources.EditorStartError, ex.Message), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 #endif
         }
@@ -2228,7 +2228,7 @@ namespace Ares.Player
         {
             public Ares.ModelInfo.MessageBoxResult ShowYesNoCancelBox(string prompt)
             {
-                switch (MessageBox.Show(prompt, StringResources.Ares, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
+                switch (Ares.CommonGUI.MessageDialog.Show(prompt, StringResources.Ares, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
                 {
                     case DialogResult.Yes:
                         return Ares.ModelInfo.MessageBoxResult.Yes;
@@ -2320,7 +2320,7 @@ namespace Ares.Player
                     }
                     else
                     {
-                        System.Windows.Forms.MessageBox.Show(String.Format(StringResources.ImportError, error.Message), StringResources.Ares,
+                        Ares.CommonGUI.MessageDialog.Show(String.Format(StringResources.ImportError, error.Message), StringResources.Ares,
                             System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
                     }
                 }
@@ -2474,7 +2474,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, String.Format(StringResources.OpenUrlError, ex.Message), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Ares.CommonGUI.MessageDialog.Show(this, String.Format(StringResources.OpenUrlError, ex.Message), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
         }

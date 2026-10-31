@@ -127,7 +127,7 @@ namespace Ares.Player
         {
             if (m_Project == null)
             {
-                MessageBox.Show(this, T("Abra um projeto primeiro.", "Open a project first."), StringResources.Ares,
+                Ares.CommonGUI.MessageDialog.Show(this, T("Abra um projeto primeiro.", "Open a project first."), StringResources.Ares,
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -138,7 +138,7 @@ namespace Ares.Player
             finally { Cursor = old; }
             if (missing.Count == 0)
             {
-                MessageBox.Show(this, T("Todos os arquivos de áudio do projeto foram encontrados.", "All audio files of the project were found."),
+                Ares.CommonGUI.MessageDialog.Show(this, T("Todos os arquivos de áudio do projeto foram encontrados.", "All audio files of the project were found."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -300,7 +300,7 @@ namespace Ares.Player
                 m_RemoveButton.SetBounds(408, 474, 170, 32);
                 m_RemoveButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
                 m_RemoveButton.Click += (s, e) => RemoveSelected();
-                m_Apply.SetBounds(690, 474, 56, 32);
+                m_Apply.SetBounds(648, 474, 98, 32);
                 cancel.SetBounds(750, 474, 58, 32);
                 m_Search.Anchor = m_Locate.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
                 m_Apply.Anchor = cancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
@@ -340,7 +340,7 @@ namespace Ares.Player
                 if (chosen.Count == 0)
                     return;
                 int uses = chosen.Sum(c => c.Refs.Count);
-                if (MessageBox.Show(this,
+                if (Ares.CommonGUI.MessageDialog.Show(this,
                         T("Remover " + chosen.Count + " arquivo(s) do projeto? Eles saem de " + uses + " lugar(es) nas playlists e deixam de dar erro.\n(Nada é apagado do computador. Vale ao clicar em \"Corrigir\".)",
                           "Remove " + chosen.Count + " file(s) from the project? They are taken out of " + uses + " place(s) in the playlists and stop giving errors.\n(Nothing is deleted from the computer. Takes effect when you click \"Fix\".)"),
                         StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
@@ -424,7 +424,7 @@ namespace Ares.Player
                 UpdateSummary();
                 if (count == 0)
                 {
-                    MessageBox.Show(this, T("Nenhum dos arquivos ausentes foi encontrado nessa pasta.", "None of the missing files was found in that folder."),
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Nenhum dos arquivos ausentes foi encontrado nessa pasta.", "None of the missing files was found in that folder."),
                         StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }

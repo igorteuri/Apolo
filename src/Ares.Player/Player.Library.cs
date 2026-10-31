@@ -192,7 +192,7 @@ namespace Ares.Player
                 Ares.CommonGUI.DropScan scan = Ares.CommonGUI.DropScan.Read(paths);
                 if (scan.IsEmpty)
                 {
-                    MessageBox.Show(this, IsPt ? "Nenhum arquivo de áudio encontrado no que foi arrastado."
+                    Ares.CommonGUI.MessageDialog.Show(this, IsPt ? "Nenhum arquivo de áudio encontrado no que foi arrastado."
                         : "No audio files found in what was dropped.", StringResources.Ares,
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
@@ -285,7 +285,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, (IsPt ? "Erro ao importar: " : "Import error: ") + ex.Message,
+                Ares.CommonGUI.MessageDialog.Show(this, (IsPt ? "Erro ao importar: " : "Import error: ") + ex.Message,
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }

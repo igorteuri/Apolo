@@ -178,7 +178,7 @@ namespace Ares.Player
                 {
                     if (m_PadHotkeyWindow != null)
                         m_PadHotkeyWindow.Register(PadHotkey);
-                    MessageBox.Show(this, T("Essa combinação já é usada por outro programa. Escolha outra.", "That combination is already used by another program. Choose another."),
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Essa combinação já é usada por outro programa. Escolha outra.", "That combination is already used by another program. Choose another."),
                         StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }

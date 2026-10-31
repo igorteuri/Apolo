@@ -600,7 +600,7 @@ namespace Ares.Player
             PlaylistSettings settings = PlaylistEditing.Read(me.StartElement);
             if (!PlaylistEditing.HasAnything(settings))
             {
-                MessageBox.Show(this, T("Esta playlist não tem propriedades para editar.", "This playlist has no properties to edit."),
+                Ares.CommonGUI.MessageDialog.Show(this, T("Esta playlist não tem propriedades para editar.", "This playlist has no properties to edit."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }

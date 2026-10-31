@@ -46,7 +46,7 @@ namespace Ares.Player
             if (Ares.Settings.Settings.Instance.RecentFiles.GetFiles().Count > 0)
                 return;
             Ares.CommonGUI.Preferences.SetBool("PacksOffered", true);
-            if (MessageBox.Show(this,
+            if (Ares.CommonGUI.MessageDialog.Show(this,
                 T("Quer ver os pacotes prontos (pastas, botões e músicas livres) para começar mais rápido?\n\nEles são baixados da internet só se você escolher. Dá para abrir depois em Projeto > Pacotes de conteúdo prontos.",
                   "Do you want to see the ready-made packs (folders, buttons and free music) to start faster?\n\nThey are downloaded from the internet only if you choose. You can open this later in Project > Ready-made content packs."),
                 StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
@@ -209,7 +209,7 @@ namespace Ares.Player
                     if (busy)
                     {
                         e.Cancel = true; // the download is still running
-                        MessageBox.Show(form, T("Espere o download terminar.", "Wait for the download to finish."), StringResources.Ares,
+                        Ares.CommonGUI.MessageDialog.Show(form, T("Espere o download terminar.", "Wait for the download to finish."), StringResources.Ares,
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
@@ -280,7 +280,7 @@ namespace Ares.Player
             catch (Exception ex)
             {
                 TryDelete(packFile);
-                MessageBox.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Ares.CommonGUI.MessageDialog.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             StopAllPlaying();
@@ -291,7 +291,7 @@ namespace Ares.Player
                 TryDelete(packFile);
                 if (error != null)
                 {
-                    MessageBox.Show(String.Format(StringResources.ImportError, error.Message), StringResources.Ares,
+                    Ares.CommonGUI.MessageDialog.Show(String.Format(StringResources.ImportError, error.Message), StringResources.Ares,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else if (!cancelled)
@@ -309,7 +309,7 @@ namespace Ares.Player
         {
             if (m_Project == null)
             {
-                MessageBox.Show(this, T("Abra um projeto primeiro.", "Open a project first."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Ares.CommonGUI.MessageDialog.Show(this, T("Abra um projeto primeiro.", "Open a project first."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             string creditsFile = ProjectCredits.FileFor(m_Project.FileName);
@@ -356,13 +356,13 @@ namespace Ares.Player
                         if (!File.Exists(creditsFile))
                             File.WriteAllText(creditsFile, ProjectCredits.Template(), new UTF8Encoding(true));
                         Process.Start(new ProcessStartInfo(creditsFile) { UseShellExecute = true });
-                        MessageBox.Show(form, T("Edite o arquivo que abriu, salve, e clique em OK aqui para atualizar.", "Edit the file that opened, save it, and click OK here to refresh."),
+                        Ares.CommonGUI.MessageDialog.Show(form, T("Edite o arquivo que abriu, salve, e clique em OK aqui para atualizar.", "Edit the file that opened, save it, and click OK here to refresh."),
                             StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                         refresh();
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show(form, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        Ares.CommonGUI.MessageDialog.Show(form, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 };
                 form.Controls.Add(edit);

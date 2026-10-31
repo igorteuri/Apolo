@@ -102,7 +102,7 @@ namespace Ares.Player
                     text = (pt ? "Ocorreu um erro inesperado, mas o Apolo continua aberto. Seu projeto é salvo a cada alteração." : "An unexpected error occurred, but Apolo stays open. Your project is saved after every change.")
                         + nl + detail + nl
                         + (pt ? "O registro completo está em crash.log, na pasta de dados do Apolo." : "The full record is in crash.log, in the Apolo data folder.");
-                MessageBox.Show(text, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Ares.CommonGUI.MessageDialog.Show(text, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             catch (Exception swallowed)
             {
@@ -138,7 +138,7 @@ namespace Ares.Player
             SplashForm.ShowSplash();
             try
             {
-                using (Ares.Playing.AudioInit bassInit = new Ares.Playing.AudioInit(-1, s => MessageBox.Show(s, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning)))
+                using (Ares.Playing.AudioInit bassInit = new Ares.Playing.AudioInit(-1, s => Ares.CommonGUI.MessageDialog.Show(s, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning)))
                 {
                     Application.Run(new Player(bassInit));
                 }
@@ -152,7 +152,7 @@ namespace Ares.Player
             catch (Ares.Playing.AudioInitException ex)
             {
                 SplashForm.CloseSplash();
-                MessageBox.Show(ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                Ares.CommonGUI.MessageDialog.Show(ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Stop);
             }
             finally
             {

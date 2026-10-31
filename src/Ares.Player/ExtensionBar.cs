@@ -385,12 +385,12 @@ namespace Ares.Player
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(FindForm(), ex.Message, "Apolo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    Ares.CommonGUI.MessageDialog.Show(FindForm(), ex.Message, "Apolo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             });
             menu.Items.Add(T("Remover", "Remove"), null, async (s, e) =>
             {
-                if (MessageBox.Show(FindForm(), T("Remover a extensão \"" + entry.Name + "\"?", "Remove the extension \"" + entry.Name + "\"?"), "Apolo",
+                if (Ares.CommonGUI.MessageDialog.Show(FindForm(), T("Remover a extensão \"" + entry.Name + "\"?", "Remove the extension \"" + entry.Name + "\"?"), "Apolo",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                     return;
                 try
@@ -401,7 +401,7 @@ namespace Ares.Player
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(FindForm(), ex.Message, "Apolo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    Ares.CommonGUI.MessageDialog.Show(FindForm(), ex.Message, "Apolo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             });
             menu.Items.Add(new ToolStripSeparator());

@@ -350,7 +350,7 @@ namespace Ares.Player
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        Ares.CommonGUI.MessageDialog.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                     files.Sort(StringComparer.CurrentCultureIgnoreCase);
                     Add(files);
@@ -361,7 +361,7 @@ namespace Ares.Player
             {
                 if (m_Owner.m_Project == null)
                 {
-                    MessageBox.Show(this, T("Abra um projeto primeiro.", "Open a project first."), StringResources.Ares,
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Abra um projeto primeiro.", "Open a project first."), StringResources.Ares,
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
@@ -580,13 +580,13 @@ namespace Ares.Player
                 string pattern = m_PatternBox.Text;
                 if (usePattern && string.IsNullOrWhiteSpace(pattern))
                 {
-                    MessageBox.Show(this, T("Escreva o padrão do nome, por exemplo {artista} - {titulo}.", "Write the name pattern, for example {artista} - {titulo}."),
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Escreva o padrão do nome, por exemplo {artista} - {titulo}.", "Write the name pattern, for example {artista} - {titulo}."),
                         StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
                 if (!clean && !online && !usePattern)
                 {
-                    MessageBox.Show(this, T("Marque pelo menos uma opção em \"O que fazer\".", "Tick at least one option in \"What to do\"."),
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Marque pelo menos uma opção em \"O que fazer\".", "Tick at least one option in \"What to do\"."),
                         StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
@@ -737,10 +737,10 @@ namespace Ares.Player
                 List<ToolItem> chosen = m_Items.Where(i => i.Row != null && i.Row.Checked && HasChange(i)).ToList();
                 if (chosen.Count == 0)
                 {
-                    MessageBox.Show(this, T("Nada marcado para mudar.", "Nothing ticked to change."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Nada marcado para mudar.", "Nothing ticked to change."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
-                if (MessageBox.Show(this, T(chosen.Count + " arquivo(s) serão alterados (nomes e/ou tags). Você poderá desfazer esta renomeação depois. Continuar?",
+                if (Ares.CommonGUI.MessageDialog.Show(this, T(chosen.Count + " arquivo(s) serão alterados (nomes e/ou tags). Você poderá desfazer esta renomeação depois. Continuar?",
                         chosen.Count + " file(s) will be changed (names and/or tags). You can undo this renaming afterwards. Continue?"),
                         StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                     return;
@@ -803,7 +803,7 @@ namespace Ares.Player
             {
                 if (!File.Exists(UndoFile))
                     return;
-                if (MessageBox.Show(this, T("Desfazer a última renomeação (nomes e tags)?", "Undo the last renaming (names and tags)?"),
+                if (Ares.CommonGUI.MessageDialog.Show(this, T("Desfazer a última renomeação (nomes e tags)?", "Undo the last renaming (names and tags)?"),
                         StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                     return;
                 m_Owner.StopAllPlaying();
@@ -811,7 +811,7 @@ namespace Ares.Player
                 try { lines = File.ReadAllLines(UndoFile, Encoding.UTF8); }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Ares.CommonGUI.MessageDialog.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
                 Dictionary<string, string> moved = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

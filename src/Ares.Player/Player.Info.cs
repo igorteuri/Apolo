@@ -93,7 +93,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, T("Não foi possível criar o projeto: ", "Could not create the project: ") + ex.Message,
+                Ares.CommonGUI.MessageDialog.Show(this, T("Não foi possível criar o projeto: ", "Could not create the project: ") + ex.Message,
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
@@ -150,7 +150,7 @@ The code of Apolo is open and lives on GitHub:
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, T("Não consegui abrir o endereço: ", "Could not open the address: ") + url + "\r\n" + ex.Message,
+                Ares.CommonGUI.MessageDialog.Show(this, T("Não consegui abrir o endereço: ", "Could not open the address: ") + url + "\r\n" + ex.Message,
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
@@ -373,7 +373,7 @@ TIPS
             string dir = FoundryFolder;
             if (!Directory.Exists(dir))
             {
-                MessageBox.Show(this, T("A pasta do módulo não está na pasta do Apolo (FoundryModule). Ela vem no pacote gerado pelo build.",
+                Ares.CommonGUI.MessageDialog.Show(this, T("A pasta do módulo não está na pasta do Apolo (FoundryModule). Ela vem no pacote gerado pelo build.",
                     "The module folder is not in the Apolo folder (FoundryModule). It comes in the package made by the build."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
@@ -386,7 +386,7 @@ TIPS
             string zip = Path.Combine(FoundryFolder, "apolo-audio.zip");
             if (!File.Exists(zip))
             {
-                MessageBox.Show(this, T("O arquivo do módulo (FoundryModule\\apolo-audio.zip) não está na pasta do Apolo. Ele vem no pacote gerado pelo build.",
+                Ares.CommonGUI.MessageDialog.Show(this, T("O arquivo do módulo (FoundryModule\\apolo-audio.zip) não está na pasta do Apolo. Ele vem no pacote gerado pelo build.",
                     "The module file (FoundryModule\\apolo-audio.zip) is not in the Apolo folder. It comes in the package made by the build."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
@@ -422,13 +422,13 @@ TIPS
                                 input.CopyTo(output);
                         }
                     }
-                    MessageBox.Show(this, T("Módulo instalado em:\r\n" + target + "\r\n\r\nAgora reinicie o Foundry e ative \"Apolo - Áudio ao vivo\" em Gerenciar módulos.",
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Módulo instalado em:\r\n" + target + "\r\n\r\nAgora reinicie o Foundry e ative \"Apolo - Áudio ao vivo\" em Gerenciar módulos.",
                         "Module installed in:\r\n" + target + "\r\n\r\nNow restart Foundry and enable \"Apolo - Áudio ao vivo\" in Manage Modules."),
                         StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(this, T("Não consegui instalar o módulo: ", "Could not install the module: ") + ex.Message,
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Não consegui instalar o módulo: ", "Could not install the module: ") + ex.Message,
                         StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }

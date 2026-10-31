@@ -460,7 +460,7 @@ namespace Ares.Player
                 }
                 if (s_Reserved.Contains((Keys)key))
                 {
-                    MessageBox.Show(this, T("Essa tecla é reservada pelo programa (setas, Esc, Delete, Insert, PageUp/PageDown). Escolha outra.",
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Essa tecla é reservada pelo programa (setas, Esc, Delete, Insert, PageUp/PageDown). Escolha outra.",
                         "That key is reserved by the program (arrows, Esc, Delete, Insert, PageUp/PageDown). Choose another one."),
                         StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
@@ -474,7 +474,7 @@ namespace Ares.Player
                         || (other.Kind == "mode") || (row.Kind == "mode") || other.ModeTitle == row.ModeTitle;
                     if (!sameScope)
                         continue;
-                    DialogResult answer = MessageBox.Show(this,
+                    DialogResult answer = Ares.CommonGUI.MessageDialog.Show(this,
                         T("A tecla " + KeyText((Keys)key) + " já é usada por \"" + other.Label.Trim() + "\". Tirar de lá e usar aqui?",
                           "The key " + KeyText((Keys)key) + " is already used by \"" + other.Label.Trim() + "\". Take it from there and use it here?"),
                         StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question);

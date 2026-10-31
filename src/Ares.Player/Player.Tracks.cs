@@ -83,7 +83,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Ares.CommonGUI.MessageDialog.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -978,7 +978,7 @@ namespace Ares.Player
                 // random lists and effect choices have no fixed order: offer a sequential list instead
                 if (m_TrackKind.Enabled && m_TrackKind.SelectedIndex != 1)
                 {
-                    MessageBox.Show(this,
+                    Ares.CommonGUI.MessageDialog.Show(this,
                         T("Esta lista não toca em ordem fixa, por isso a ordem não importa. Para reorganizar, mude o tipo para \"Música — em sequência\" (você será perguntado).",
                           "This list has no fixed order. To reorder tracks, change the type to a sequential list (you will be asked)."),
                         StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -999,7 +999,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, T("Não consegui mover a música: ", "Could not move the track: ") + ex.Message,
+                Ares.CommonGUI.MessageDialog.Show(this, T("Não consegui mover a música: ", "Could not move the track: ") + ex.Message,
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
@@ -1029,7 +1029,7 @@ namespace Ares.Player
             IModeElement old = FindTrackModeElement(m_TrackElementId, out mode);
             if (mode == null || old == null || kind < 0 || kind == TrackKindOf(old.StartElement))
                 return;
-            if (MessageBox.Show(this,
+            if (Ares.CommonGUI.MessageDialog.Show(this,
                     T("Mudar o tipo de \"" + old.Title + "\"?\nA lista é recriada com os mesmos arquivos (ajustes de efeitos por arquivo são perdidos) e a reprodução é interrompida.",
                       "Change the type of \"" + old.Title + "\"?\nThe list is rebuilt with the same files (per-file effect settings are lost) and playback is stopped."),
                     StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)

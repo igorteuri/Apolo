@@ -155,14 +155,14 @@ namespace Ares.Player
                 return;
             if (Bank.Entries.Count == 0)
             {
-                MessageBox.Show(this, T("O banco de imagens não foi encontrado nesta instalação.", "The image bank was not found in this installation."),
+                Ares.CommonGUI.MessageDialog.Show(this, T("O banco de imagens não foi encontrado nesta instalação.", "The image bank was not found in this installation."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             BankEntry entry = Bank.Match(me.Title);
             if (entry == null)
             {
-                MessageBox.Show(this, T("Não achei no banco uma imagem para o nome \"" + me.Title + "\". Escolha uma na lista.",
+                Ares.CommonGUI.MessageDialog.Show(this, T("Não achei no banco uma imagem para o nome \"" + me.Title + "\". Escolha uma na lista.",
                     "No picture of the bank fits the name \"" + me.Title + "\". Choose one from the list."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 entry = BankPickerDialog.Pick(this, Bank, me.Title);
@@ -182,7 +182,7 @@ namespace Ares.Player
                 return;
             if (Bank.Entries.Count == 0)
             {
-                MessageBox.Show(this, T("O banco de imagens não foi encontrado nesta instalação.", "The image bank was not found in this installation."),
+                Ares.CommonGUI.MessageDialog.Show(this, T("O banco de imagens não foi encontrado nesta instalação.", "The image bank was not found in this installation."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -198,7 +198,7 @@ namespace Ares.Player
                 return;
             if (Bank.Entries.Count == 0)
             {
-                MessageBox.Show(this, T("O banco de imagens não foi encontrado nesta instalação.", "The image bank was not found in this installation."),
+                Ares.CommonGUI.MessageDialog.Show(this, T("O banco de imagens não foi encontrado nesta instalação.", "The image bank was not found in this installation."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -237,7 +237,7 @@ namespace Ares.Player
                 return;
             if (Bank.Entries.Count == 0)
             {
-                MessageBox.Show(this, T("O banco de imagens não foi encontrado nesta instalação.", "The image bank was not found in this installation."),
+                Ares.CommonGUI.MessageDialog.Show(this, T("O banco de imagens não foi encontrado nesta instalação.", "The image bank was not found in this installation."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }

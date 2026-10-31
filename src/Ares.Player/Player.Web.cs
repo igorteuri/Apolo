@@ -1295,7 +1295,7 @@ namespace Ares.Player
             }
             if (core == null)
             {
-                MessageBox.Show(FindForm(), T("Abra uma aba da internet primeiro.", "Open a web tab first."), "Apolo",
+                Ares.CommonGUI.MessageDialog.Show(FindForm(), T("Abra uma aba da internet primeiro.", "Open a web tab first."), "Apolo",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -1353,7 +1353,7 @@ namespace Ares.Player
 
         public void RemoveTab(WebTab tab)
         {
-            if (MessageBox.Show(FindForm(), T("Remover a aba \"", "Remove the tab \"") + tab.Name + "\"?", "Apolo",
+            if (Ares.CommonGUI.MessageDialog.Show(FindForm(), T("Remover a aba \"", "Remove the tab \"") + tab.Name + "\"?", "Apolo",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
             int index = m_Tabs.IndexOf(tab);
@@ -1415,7 +1415,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(FindForm(), ex.Message, "Apolo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Ares.CommonGUI.MessageDialog.Show(FindForm(), ex.Message, "Apolo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
     }

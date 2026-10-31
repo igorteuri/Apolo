@@ -127,7 +127,7 @@ namespace Ares.Player
                         string errorMsg = reader.ReadLine();
                         if (!String.IsNullOrEmpty(errorMsg))
                         {
-                            MessageBox.Show(this, String.Format(StringResources.WinSecurityError, errorMsg), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            Ares.CommonGUI.MessageDialog.Show(this, String.Format(StringResources.WinSecurityError, errorMsg), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                             while (!String.IsNullOrEmpty(errorMsg))
                             {
                                 errorMsg = reader.ReadLine();
@@ -135,14 +135,14 @@ namespace Ares.Player
                         }
                         else
                         {
-                            MessageBox.Show(this, String.Format(StringResources.WinSecurityError, "Unknown"), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            Ares.CommonGUI.MessageDialog.Show(this, String.Format(StringResources.WinSecurityError, "Unknown"), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, String.Format(StringResources.WinSecurityError, ex.Message), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Ares.CommonGUI.MessageDialog.Show(this, String.Format(StringResources.WinSecurityError, ex.Message), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {

@@ -151,7 +151,7 @@ namespace Ares.Player
             finally { Cursor = old; }
             if (problem != null)
             {
-                MessageBox.Show(this, problem, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Ares.CommonGUI.MessageDialog.Show(this, problem, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             ApplyPictureBytes(mode.Title, me.Title, picture);
@@ -163,7 +163,7 @@ namespace Ares.Player
             byte[] readable = Ares.CommonGUI.ImageDecoder.ToReadable(picture);
             if (readable == null)
             {
-                MessageBox.Show(this, T("Não consegui ler essa imagem (formato com problema).", "I could not read that picture (damaged format)."),
+                Ares.CommonGUI.MessageDialog.Show(this, T("Não consegui ler essa imagem (formato com problema).", "I could not read that picture (damaged format)."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
@@ -178,7 +178,7 @@ namespace Ares.Player
             }
             catch (Exception)
             {
-                MessageBox.Show(this, T("Não consegui usar essa imagem.", "I could not use that picture."),
+                Ares.CommonGUI.MessageDialog.Show(this, T("Não consegui usar essa imagem.", "I could not use that picture."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
@@ -319,7 +319,7 @@ namespace Ares.Player
                 try { picture = File.ReadAllBytes(info.Files[0]); }
                 catch (Exception)
                 {
-                    MessageBox.Show(this, T("Não consegui ler o arquivo de imagem.", "I could not read the picture file."),
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Não consegui ler o arquivo de imagem.", "I could not read the picture file."),
                         StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
@@ -337,7 +337,7 @@ namespace Ares.Player
                 finally { Cursor = old; }
                 if (problem != null)
                 {
-                    MessageBox.Show(this, problem, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    Ares.CommonGUI.MessageDialog.Show(this, problem, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
             }

@@ -156,7 +156,7 @@ namespace Ares.Player
 			#if !MONO
             if (encodingBox.SelectedIndex == 1)
             {
-                MessageBox.Show(this, StringResources.GetLameYourself, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Ares.CommonGUI.MessageDialog.Show(this, StringResources.GetLameYourself, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
 			#endif
             UpdateUrl();

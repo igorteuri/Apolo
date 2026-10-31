@@ -944,13 +944,13 @@ namespace Ares.Player
                         string password = pw.Text.Trim();
                         if (password.Length < 4)
                         {
-                            MessageBox.Show(form, T("A senha precisa ter pelo menos 4 caracteres.", "The password needs at least 4 characters."),
+                            Ares.CommonGUI.MessageDialog.Show(form, T("A senha precisa ter pelo menos 4 caracteres.", "The password needs at least 4 characters."),
                                 StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             return;
                         }
                         if (!CloudflareTunnel.Available)
                         {
-                            if (MessageBox.Show(form, T("Falta o componente que cria o link (cloudflared, programa oficial e gratuito da Cloudflare, ~20 MB).\n\nBaixar agora do site oficial (github.com/cloudflare/cloudflared)? Só é preciso uma vez.",
+                            if (Ares.CommonGUI.MessageDialog.Show(form, T("Falta o componente que cria o link (cloudflared, programa oficial e gratuito da Cloudflare, ~20 MB).\n\nBaixar agora do site oficial (github.com/cloudflare/cloudflared)? Só é preciso uma vez.",
                                 "The component that creates the link is missing (cloudflared, the official free Cloudflare program, ~20 MB).\n\nDownload it now from the official site (github.com/cloudflare/cloudflared)? This is needed only once."),
                                 StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                                 return;
@@ -962,7 +962,7 @@ namespace Ares.Player
                             form.Cursor = oldCursor;
                             if (dlError != null)
                             {
-                                MessageBox.Show(form, T("Não consegui baixar: ", "Download failed: ") + dlError,
+                                Ares.CommonGUI.MessageDialog.Show(form, T("Não consegui baixar: ", "Download failed: ") + dlError,
                                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                                 refresh();
                                 return;
@@ -971,7 +971,7 @@ namespace Ares.Player
                         Ares.CommonGUI.Preferences.Set("RemotePassword", password);
                         if (!m_Remote.Start(8766, password))
                         {
-                            MessageBox.Show(form, T("Não consegui iniciar o servidor local: ", "Could not start the local server: ") + m_Remote.LastError,
+                            Ares.CommonGUI.MessageDialog.Show(form, T("Não consegui iniciar o servidor local: ", "Could not start the local server: ") + m_Remote.LastError,
                                 StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                             return;
                         }
@@ -979,7 +979,7 @@ namespace Ares.Player
                         if (!m_Tunnel.Start(m_Remote.Port, out error))
                         {
                             m_Remote.Stop();
-                            MessageBox.Show(form, T("Não consegui iniciar o túnel: ", "Could not start the tunnel: ") + error,
+                            Ares.CommonGUI.MessageDialog.Show(form, T("Não consegui iniciar o túnel: ", "Could not start the tunnel: ") + error,
                                 StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }

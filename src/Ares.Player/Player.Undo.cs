@@ -197,7 +197,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, T("Erro ao desfazer: ", "Undo error: ") + ex.Message, StringResources.Ares,
+                Ares.CommonGUI.MessageDialog.Show(this, T("Erro ao desfazer: ", "Undo error: ") + ex.Message, StringResources.Ares,
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally

@@ -132,7 +132,7 @@ namespace Ares.Player
             }
             if ((kinds != 1 && kinds != 2) || files == null || files.Count == 0)
             {
-                MessageBox.Show(this, T("Este botão tem uma estrutura especial (por exemplo, mistura música e efeitos, ou tem vários níveis). "
+                Ares.CommonGUI.MessageDialog.Show(this, T("Este botão tem uma estrutura especial (por exemplo, mistura música e efeitos, ou tem vários níveis). "
                     + "Não dá para trocar o tipo automaticamente; use \"Propriedades da playlist\".",
                     "This button has a special structure (for example it mixes music and effects, or has several levels). "
                     + "Its kind cannot be switched automatically; use \"Playlist properties\"."),
@@ -144,7 +144,7 @@ namespace Ares.Player
             string title = me.Title;
             if (toSfx && files.Count > 1)
             {
-                if (MessageBox.Show(this, T("A playlist \"" + title + "\" tem " + files.Count + " músicas.\n\n"
+                if (Ares.CommonGUI.MessageDialog.Show(this, T("A playlist \"" + title + "\" tem " + files.Count + " músicas.\n\n"
                         + "Como efeito sonoro, TODAS vão tocar ao mesmo tempo quando você clicar no botão. "
                         + "Isso serve para montar uma cena misturando vários sons, mas não é o normal para músicas.\n\n"
                         + "Tem certeza de que quer transformar em efeito sonoro?",
@@ -157,7 +157,7 @@ namespace Ares.Player
             }
             else if (!toSfx && files.Count > 1 && container is IElementContainer<IParallelElement>)
             {
-                if (MessageBox.Show(this, T("Este efeito sonoro toca " + files.Count + " sons juntos.\n\n"
+                if (Ares.CommonGUI.MessageDialog.Show(this, T("Este efeito sonoro toca " + files.Count + " sons juntos.\n\n"
                         + "Como música, os arquivos passam a tocar um de cada vez (em ordem sorteada).\n\nContinuar?",
                         "This sound effect plays " + files.Count + " sounds together.\n\n"
                         + "As music, the files play one at a time (in random order).\n\nContinue?"),

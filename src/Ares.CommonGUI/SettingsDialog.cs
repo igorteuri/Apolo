@@ -190,7 +190,7 @@ namespace Ares.CommonGUI
             {
                 if (String.IsNullOrEmpty(otherDirLabel.Text))
                 {
-                    MessageBox.Show(this, StringResources.NeedDirectory, "Ares", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Ares.CommonGUI.MessageDialog.Show(this, StringResources.NeedDirectory, "Ares", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return false;
                 }
                 m_BasicSettings.UserSettingsLocation = BasicSettings.SettingsLocation.Custom;

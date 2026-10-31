@@ -202,7 +202,7 @@ namespace Ares.Player
             if (!Visible || WindowState == FormWindowState.Minimized)
                 RestoreFromTray();
             string name = !string.IsNullOrEmpty(m_Project.Title) ? m_Project.Title : System.IO.Path.GetFileName(m_Project.FileName);
-            DialogResult answer = MessageBox.Show(this,
+            DialogResult answer = Ares.CommonGUI.MessageDialog.Show(this,
                 T("O projeto \"" + name + "\" tem alterações que não foram salvas.\n\nSalvar antes de sair?",
                   "The project \"" + name + "\" has unsaved changes.\n\nSave before leaving?"),
                 StringResources.Ares, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);

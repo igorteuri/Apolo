@@ -30,7 +30,7 @@ namespace Ares.Player
         {
             if (m_Project == null || string.IsNullOrEmpty(m_CurrentProjectPath))
             {
-                MessageBox.Show(this, T("Abra um projeto primeiro.", "Open a project first."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Ares.CommonGUI.MessageDialog.Show(this, T("Abra um projeto primeiro.", "Open a project first."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             using (AutoIconDialog dlg = new AutoIconDialog(this))
@@ -60,7 +60,7 @@ namespace Ares.Player
             EmojiEntry entry = EmojiCatalog.Match(me.Title);
             if (entry == null)
             {
-                MessageBox.Show(this, T("Não encontrei um emoji para o nome \"" + me.Title + "\". Escolha um na lista.",
+                Ares.CommonGUI.MessageDialog.Show(this, T("Não encontrei um emoji para o nome \"" + me.Title + "\". Escolha um na lista.",
                     "No emoji fits the name \"" + me.Title + "\". Choose one from the list."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 entry = EmojiPickerDialog.Pick(this, "");
                 if (entry == null)
@@ -107,7 +107,7 @@ namespace Ares.Player
                 string file = EmojiCatalog.GetPicture(entry.Code);
                 if (file == null)
                 {
-                    MessageBox.Show(this, T("Não consegui baixar a imagem do emoji. Confira a internet e tente de novo.",
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Não consegui baixar a imagem do emoji. Confira a internet e tente de novo.",
                         "The emoji picture could not be downloaded. Check the internet and try again."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return false;
                 }
@@ -157,7 +157,7 @@ namespace Ares.Player
             EmojiEntry entry = EmojiCatalog.Match(mode.Title);
             if (entry == null)
             {
-                MessageBox.Show(this, T("Não encontrei um emoji para o nome \"" + mode.Title + "\". Escolha um na lista.",
+                Ares.CommonGUI.MessageDialog.Show(this, T("Não encontrei um emoji para o nome \"" + mode.Title + "\". Escolha um na lista.",
                     "No emoji fits the name \"" + mode.Title + "\". Choose one from the list."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 entry = EmojiPickerDialog.Pick(this, "");
                 if (entry == null)
@@ -198,7 +198,7 @@ namespace Ares.Player
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    Ares.CommonGUI.MessageDialog.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
         }
@@ -368,7 +368,7 @@ namespace Ares.Player
                 }
                 if (rows.Count == 0)
                 {
-                    MessageBox.Show(this, Player.T("Nada marcado.", "Nothing ticked."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Ares.CommonGUI.MessageDialog.Show(this, Player.T("Nada marcado.", "Nothing ticked."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
                 m_Busy = true;

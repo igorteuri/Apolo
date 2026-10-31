@@ -190,7 +190,7 @@ namespace Ares.Player
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(this, T("Erro ao exportar: ", "Export error: ") + ex.Message, StringResources.Ares,
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Erro ao exportar: ", "Export error: ") + ex.Message, StringResources.Ares,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -261,7 +261,7 @@ namespace Ares.Player
                         }
                         if (error != null)
                         {
-                            MessageBox.Show(T("Erro ao exportar: ", "Export error: ") + error.Message, StringResources.Ares,
+                            Ares.CommonGUI.MessageDialog.Show(T("Erro ao exportar: ", "Export error: ") + error.Message, StringResources.Ares,
                                 MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                         else
@@ -273,7 +273,7 @@ namespace Ares.Player
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(this, T("Erro ao exportar: ", "Export error: ") + ex.Message, StringResources.Ares,
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Erro ao exportar: ", "Export error: ") + ex.Message, StringResources.Ares,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -419,7 +419,7 @@ namespace Ares.Player
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(this, T("Erro ao exportar: ", "Export error: ") + ex.Message, StringResources.Ares,
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Erro ao exportar: ", "Export error: ") + ex.Message, StringResources.Ares,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -448,11 +448,11 @@ namespace Ares.Player
                         }
                         if (!valid)
                         {
-                            MessageBox.Show(this, T("Este arquivo não é um backup de configurações do Apolo.", "This file is not an Apolo settings backup."),
+                            Ares.CommonGUI.MessageDialog.Show(this, T("Este arquivo não é um backup de configurações do Apolo.", "This file is not an Apolo settings backup."),
                                 StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                             return;
                         }
-                        if (MessageBox.Show(this, T("As configurações atuais serão substituídas pelas do backup (" + entries.Count + " arquivos). O Apolo precisa ser reiniciado depois. Continuar?",
+                        if (Ares.CommonGUI.MessageDialog.Show(this, T("As configurações atuais serão substituídas pelas do backup (" + entries.Count + " arquivos). O Apolo precisa ser reiniciado depois. Continuar?",
                                 "The current settings will be replaced by those of the backup (" + entries.Count + " files). Apolo has to be restarted afterwards. Continue?"),
                                 StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                             return;
@@ -468,12 +468,12 @@ namespace Ares.Player
                                 input.CopyTo(output);
                         }
                     }
-                    MessageBox.Show(this, T("Configurações restauradas. Feche e abra o Apolo de novo para aplicá-las.",
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Configurações restauradas. Feche e abra o Apolo de novo para aplicá-las.",
                         "Settings restored. Close and open Apolo again to apply them."), StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(this, T("Erro ao importar: ", "Import error: ") + ex.Message, StringResources.Ares,
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Erro ao importar: ", "Import error: ") + ex.Message, StringResources.Ares,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -494,7 +494,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Ares.CommonGUI.MessageDialog.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

@@ -356,7 +356,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, ex.Message, "Apolo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Ares.CommonGUI.MessageDialog.Show(this, ex.Message, "Apolo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
     }

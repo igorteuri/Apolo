@@ -63,7 +63,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, T("Erro ao salvar: ", "Save error: ") + ex.Message, StringResources.Ares,
+                Ares.CommonGUI.MessageDialog.Show(this, T("Erro ao salvar: ", "Save error: ") + ex.Message, StringResources.Ares,
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -92,7 +92,7 @@ namespace Ares.Player
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(this, T("Erro ao salvar: ", "Save error: ") + ex.Message, StringResources.Ares,
+                    Ares.CommonGUI.MessageDialog.Show(this, T("Erro ao salvar: ", "Save error: ") + ex.Message, StringResources.Ares,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -685,7 +685,7 @@ namespace Ares.Player
             if (mode == null || m_SelectedElements.Count == 0)
                 return;
             List<int> ids = m_SelectedElements.ToList();
-            if (MessageBox.Show(this, T("Excluir as " + ids.Count + " playlists selecionadas?\n(Os arquivos de áudio não são apagados.)",
+            if (Ares.CommonGUI.MessageDialog.Show(this, T("Excluir as " + ids.Count + " playlists selecionadas?\n(Os arquivos de áudio não são apagados.)",
                     "Delete the " + ids.Count + " selected playlists?\n(Audio files are not deleted.)"),
                     StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
@@ -722,7 +722,7 @@ namespace Ares.Player
             }
             if (titles.Count == 0)
                 return;
-            if (MessageBox.Show(this, T("Excluir as " + titles.Count + " pastas selecionadas e todas as playlists delas?\n(Os arquivos de áudio não são apagados.)",
+            if (Ares.CommonGUI.MessageDialog.Show(this, T("Excluir as " + titles.Count + " pastas selecionadas e todas as playlists delas?\n(Os arquivos de áudio não são apagados.)",
                     "Delete the " + titles.Count + " selected folders and all their playlists?\n(Audio files are not deleted.)"),
                     StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
@@ -795,7 +795,7 @@ namespace Ares.Player
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, T("Erro ao editar: ", "Edit error: ") + ex.Message, StringResources.Ares,
+                Ares.CommonGUI.MessageDialog.Show(this, T("Erro ao editar: ", "Edit error: ") + ex.Message, StringResources.Ares,
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
@@ -840,7 +840,7 @@ namespace Ares.Player
                 // the project in memory may be half changed and was not saved
                 if (m_Project != null)
                     m_Project.Changed = true;
-                MessageBox.Show(this, T("Erro ao editar: ", "Edit error: ") + ex.Message, StringResources.Ares,
+                Ares.CommonGUI.MessageDialog.Show(this, T("Erro ao editar: ", "Edit error: ") + ex.Message, StringResources.Ares,
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
@@ -972,7 +972,7 @@ namespace Ares.Player
                 return;
             if (UniqueModeTitle(name, mode) != name)
             {
-                MessageBox.Show(this, T("Já existe uma pasta chamada \"" + name + "\". Escolha outro nome.",
+                Ares.CommonGUI.MessageDialog.Show(this, T("Já existe uma pasta chamada \"" + name + "\". Escolha outro nome.",
                     "There is already a folder called \"" + name + "\". Choose another name."),
                     StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
@@ -1003,7 +1003,7 @@ namespace Ares.Player
             ModeNode node = SelectedModeNode;
             string extra = node != null && node.Children.Count > 0
                 ? T("\n(As subpastas dela sobem um nível e continuam existindo.)", "\n(Its subfolders move up one level and stay.)") : "";
-            if (MessageBox.Show(this, T("Excluir a pasta \"" + mode.Title + "\" e todas as suas playlists?\n(Os arquivos de áudio não são apagados.)" + extra,
+            if (Ares.CommonGUI.MessageDialog.Show(this, T("Excluir a pasta \"" + mode.Title + "\" e todas as suas playlists?\n(Os arquivos de áudio não são apagados.)" + extra,
                     "Delete folder \"" + mode.Title + "\" and all its playlists?\n(Audio files are not deleted.)" + extra),
                     StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
@@ -1100,7 +1100,7 @@ namespace Ares.Player
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    Ares.CommonGUI.MessageDialog.Show(this, ex.Message, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
         }
@@ -1139,7 +1139,7 @@ namespace Ares.Player
             IModeElement me = MenuElement(out mode, out index);
             if (me == null)
                 return;
-            if (MessageBox.Show(this, T("Excluir a playlist \"" + me.Title + "\"?", "Delete playlist \"" + me.Title + "\"?"),
+            if (Ares.CommonGUI.MessageDialog.Show(this, T("Excluir a playlist \"" + me.Title + "\"?", "Delete playlist \"" + me.Title + "\"?"),
                     StringResources.Ares, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
             int modeIndex = ModeIndexByTitle(mode.Title);

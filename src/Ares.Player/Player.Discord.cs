@@ -345,7 +345,7 @@ namespace Ares.Player
                     string value = token.Text.Trim();
                     if (value.Length < 20)
                     {
-                        MessageBox.Show(form, T("Cole o token do bot primeiro. Clique em \"Como obter?\" se precisar de ajuda.",
+                        Ares.CommonGUI.MessageDialog.Show(form, T("Cole o token do bot primeiro. Clique em \"Como obter?\" se precisar de ajuda.",
                             "Paste the bot token first. Click \"How to get it?\" if you need help."),
                             StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return;
@@ -355,7 +355,7 @@ namespace Ares.Player
                     string error = m_Discord.Connect(value);
                     if (error != null && error != "missing")
                     {
-                        MessageBox.Show(form, error, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        Ares.CommonGUI.MessageDialog.Show(form, error, StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                     refresh();
                 };

@@ -589,7 +589,7 @@ namespace Ares.Player
                 {
                     if (!Ares.Tags.AudioTags.Write(full, "", tArtist.Text.Trim(), tAlbum.Text.Trim()))
                     {
-                        MessageBox.Show(this, T("Não foi possível gravar as tags do arquivo (ele está tocando, em uso ou é somente leitura?).",
+                        Ares.CommonGUI.MessageDialog.Show(this, T("Não foi possível gravar as tags do arquivo (ele está tocando, em uso ou é somente leitura?).",
                             "The tags of the file could not be written (is it playing, in use or read-only?)."),
                             StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }

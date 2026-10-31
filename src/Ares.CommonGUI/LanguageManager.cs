@@ -64,7 +64,7 @@ namespace Ares.CommonGUI
                         if (m != null)
                             m.Checked = ((string)m.Tag == code);
                     }
-                    MessageBox.Show(IsPt
+                    Ares.CommonGUI.MessageDialog.Show(IsPt
                         ? "O idioma será aplicado na próxima vez que o programa for aberto."
                         : "The language will be applied the next time the program starts.",
                         "Ares", MessageBoxButtons.OK, MessageBoxIcon.Information);

@@ -51,7 +51,7 @@ namespace Ares.Player
                 ImportDroppedPaths(paths, fallbackFolder);
                 return;
             }
-            DialogResult answer = MessageBox.Show(this,
+            DialogResult answer = Ares.CommonGUI.MessageDialog.Show(this,
                 T("Adicionar " + files.Count + " música(s) à playlist \"" + me.Title + "\"?",
                   "Add " + files.Count + " track(s) to the playlist \"" + me.Title + "\"?")
                 + "\n\n" + T("Sim: coloca na playlist que já existe.\nNão: cria botões novos (com as opções de sempre).\nCancelar: não faz nada.",

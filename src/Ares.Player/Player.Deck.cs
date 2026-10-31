@@ -250,7 +250,7 @@ namespace Ares.Player
                     string file = DeckPluginFile;
                     if (!File.Exists(file))
                     {
-                        MessageBox.Show(form, T("O arquivo do plugin não está na pasta do Apolo (StreamDeck\\Apolo.streamDeckPlugin). Ele vem no pacote gerado pelo build.yml atualizado.",
+                        Ares.CommonGUI.MessageDialog.Show(form, T("O arquivo do plugin não está na pasta do Apolo (StreamDeck\\Apolo.streamDeckPlugin). Ele vem no pacote gerado pelo build.yml atualizado.",
                             "The plugin file is not in the Apolo folder (StreamDeck\\Apolo.streamDeckPlugin). It comes in the package made by the updated build.yml."),
                             StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return;
@@ -258,7 +258,7 @@ namespace Ares.Player
                     try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(file) { UseShellExecute = true }); }
                     catch (Exception ex)
                     {
-                        MessageBox.Show(form, T("Não consegui abrir o plugin. O programa do Stream Deck está instalado?\n\n", "Could not open the plugin. Is the Stream Deck software installed?\n\n") + ex.Message,
+                        Ares.CommonGUI.MessageDialog.Show(form, T("Não consegui abrir o plugin. O programa do Stream Deck está instalado?\n\n", "Could not open the plugin. Is the Stream Deck software installed?\n\n") + ex.Message,
                             StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 };
@@ -290,7 +290,7 @@ namespace Ares.Player
                     if (m_Deck.Running)
                         StartDeck();
                     refresh();
-                    MessageBox.Show(form, T("Nova chave criada. Atualize a chave no plugin do Stream Deck.", "New key created. Update the key in the Stream Deck plugin."),
+                    Ares.CommonGUI.MessageDialog.Show(form, T("Nova chave criada. Atualize a chave no plugin do Stream Deck.", "New key created. Update the key in the Stream Deck plugin."),
                         StringResources.Ares, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 };
 
