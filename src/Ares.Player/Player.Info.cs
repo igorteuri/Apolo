@@ -19,7 +19,7 @@ namespace Ares.Player
         private const string SupportersUrl = "https://cutt.ly/clubecritico";
         private const string SourceUrl = "https://github.com/igorteuri/Apolo";
         // the tutorials: for now the search for the channel; later the playlist of videos about Apolo
-        private const string TutorialsUrl = "https://www.youtube.com/results?search_query=Dados+Cr%C3%ADticos+Apolo";
+        private const string TutorialsUrl = "https://www.youtube.com/@dadoscriticos/search?query=apolo";
         private const string VaultUrl = "https://igorteuri.itch.io/contedo-exclusivo-dados-criticos";
 
         private void InitInfoMenus()

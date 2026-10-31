@@ -26,7 +26,10 @@ namespace Ares.Player
         {
             if (mode == m_RepeatModeShown)
                 return;
+            bool first = m_RepeatModeShown == -1;
             m_RepeatModeShown = mode;
+            if (!first)
+                Ares.CommonGUI.Preferences.Set("MusicRepeatMode", mode.ToString());
             repeatButton.Checked = mode != 0;
             repeatCurrentMusicToolStripMenuItem.Checked = mode != 0;
             repeatButton.ToolTipText = T("Repetir: ", "Repeat: ") + RepeatModeText(mode)

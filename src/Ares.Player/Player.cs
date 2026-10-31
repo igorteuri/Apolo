@@ -104,6 +104,10 @@ namespace Ares.Player
 #endif
             PrepareModelChecks();
             m_PlayingControl = new PlayingControl();
+            // the repeat mode of the last session
+            int savedRepeat;
+            if (int.TryParse(Ares.CommonGUI.Preferences.Get("MusicRepeatMode", "0"), out savedRepeat) && savedRepeat >= 0 && savedRepeat <= 2)
+                m_PlayingControl.SetMusicRepeatMode(savedRepeat);
             InitMusicProgressBar();
             InitLibraryDrop();
             InitModeTree();
@@ -1295,8 +1299,7 @@ namespace Ares.Player
                     {
                         // the room kept for the buttons depends on the size of the cards
                         m_ShownCardHeight = cardSize.Height;
-                        if (IsHandleCreated)
-                            BeginInvoke(new System.Windows.Forms.MethodInvoker(LayoutMainColumns));
+                        m_CardHeightChanged = true;
                     }
                     int count = 0;
                     for (int i = 0; i < visible.Count; ++i)
@@ -1361,9 +1364,17 @@ namespace Ares.Player
                 m_TagsControlsActive = false;
                 elementsPanel.Visible = true;
                 elementsPanel.ResumeLayout(true);
+                if (m_CardHeightChanged)
+                {
+                    // the room kept for the buttons depends on the size of the cards: done now, while nothing is drawn yet
+                    m_CardHeightChanged = false;
+                    LayoutMainColumns();
+                }
                 ResumeRedraw(elementsPanel);
             }
         }
+
+        private bool m_CardHeightChanged;
 
         private void PrepareModelChecks()
         {
@@ -2332,6 +2343,8 @@ namespace Ares.Player
             if (SelectedModeIndex >= 0 && m_Project != null)
             {
                 m_PlayingControl.SetMode(m_Project.GetModes()[SelectedModeIndex]);
+                // the panel is built right below: the status poll must not build it a second time (a visible blink)
+                lastMode = m_Project.GetModes()[SelectedModeIndex].Title;
             }
             m_Listen = false;
             UpdateElementsPanel();
