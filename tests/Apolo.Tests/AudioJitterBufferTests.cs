@@ -81,6 +81,8 @@ namespace Apolo.Tests
         [Theory]
         [InlineData(0.997)]
         [InlineData(1.003)]
+        [InlineData(0.989)]   // measured in the log of a YouTube tab: the page delivers ~1.1 % less than real time
+        [InlineData(1.01)]
         public void SmallClockDifferenceIsAbsorbed(double speed)
         {
             // 10 minutes: without the speed adjustment 0.3 % slower would empty the margin every ~90 s, faster would overflow

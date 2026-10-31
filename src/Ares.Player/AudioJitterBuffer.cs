@@ -3,10 +3,10 @@
 
  The waiting room of one sound source which is sent out (VDO.Ninja, Discord): 48 kHz, stereo, 16 bit, taken 20 ms at a time.
  The web pages deliver their sound in bursts and on the clock of the browser, while the frames are taken on the clock of the
- program. Two things keep the sound whole:
+ program (the clock of a page was measured ~1 % slow). Two things keep the sound whole:
   - the margin grows by half when the source ran dry (and shrinks slowly again after a long calm time), so that a gap
     does not come back every few seconds;
-  - the speed at which the samples are read is adjusted by at most 0.5 % (not heard) so that the filling stays around the
+  - the speed at which the samples are read is adjusted by at most 2 % (about 1 % is not noticed) so that the filling stays around the
     margin: no gaps when the source is a little slower, nothing dropped when it is a little faster.
  Kept free of any window code so that it can be tested automatically.
 */
@@ -19,7 +19,8 @@ namespace Ares.Player
         public const int FrameSamples = 960;              // stereo samples of 20 ms
         public const int FrameBytes = FrameSamples * 4;
         private const int Rate = 48000;
-        private const double MaxAdjust = 0.005;           // 0.5 % faster or slower at most
+        private const double MaxAdjust = 0.02;            // 2 % faster or slower at most (a page clock ~1 % slow was measured)
+        private const double Gain = 0.1;                 // 10 % too empty / too full asks for 1 % of speed change
         private const int GrowSamples = Rate * 40 / 1000; // after a gap the margin grows by half (at least 40 ms)
         private const int CalmFrames = 3000;              // 60 s without a gap: the margin shrinks by 20 ms
 
@@ -100,7 +101,7 @@ namespace Ares.Player
                 // the filling, smoothed over about a second (the bursts make it jump), steers the reading speed
                 m_Level += (m_Count - m_Level) * 0.02;
                 double error = (m_Level - m_Target) / m_Target;
-                double ratio = 1 + Math.Max(-MaxAdjust, Math.Min(MaxAdjust, error * MaxAdjust));
+                double ratio = 1 + Math.Max(-MaxAdjust, Math.Min(MaxAdjust, error * Gain));
                 double end = m_Frac + FrameSamples * ratio;
                 if ((int)end + 1 >= m_Count)
                     return RanDry(frame);
