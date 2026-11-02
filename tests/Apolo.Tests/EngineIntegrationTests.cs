@@ -129,11 +129,23 @@ namespace Apolo.Tests
                 control.CycleMusicRepeatMode();
                 Assert.Equal(0, control.MusicRepeatMode);
 
-                // the music is 0.8 s long and has no repeat of its own: with 'repeat playlist' it is still playing after 2 s
+                // the music is 0.8 s long and has no repeat of its own: with 'repeat playlist' it is still playing
+                // well after its end. Measured from the real start (a slow machine may take a while to start it),
+                // and looked at several times (a single look can fall into the short pause between two rounds).
                 control.SetMusicRepeatMode(1);
                 Assert.True(control.SwitchElement(mode.GetElements().First().Id));
-                Thread.Sleep(2000);
-                Assert.True(control.CurrentMusicElement != -1, "the music did not repeat");
+                DateTime wait = DateTime.UtcNow.AddSeconds(5);
+                while (DateTime.UtcNow < wait && control.CurrentMusicElement == -1)
+                    Thread.Sleep(20);
+                Assert.True(control.CurrentMusicElement != -1, "the music did not start");
+                DateTime started = DateTime.UtcNow;
+                bool playingLater = false;
+                while (DateTime.UtcNow < started.AddSeconds(3) && !playingLater)
+                {
+                    playingLater = DateTime.UtcNow > started.AddSeconds(1.6) && control.CurrentMusicElement != -1;
+                    Thread.Sleep(20);
+                }
+                Assert.True(playingLater, "the music did not repeat");
 
                 // turned off, it ends at the end of the current round
                 control.SetMusicRepeatMode(0);
