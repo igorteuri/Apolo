@@ -11,6 +11,7 @@ O arquivo `.github/workflows/build.yml` compila tudo a cada envio (`push`): publ
 1. Instale o [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 2. Rode a verificação completa (compila o Apolo + testes, para no primeiro erro): `powershell -ExecutionPolicy Bypass -File tools/ci.ps1`. Só os testes: `dotnet test tests/Apolo.Tests`.
    - Para isso rodar sozinho antes de cada `push` (também pelo GitHub Desktop), ative uma vez no clone: `git config core.hooksPath .githooks`. Numa emergência: `git push --no-verify`.
+   - Pasta pronta para abrir, sem instalador (para testar rápido): `powershell -ExecutionPolicy Bypass -File tools/pasta-de-teste.ps1` (cria `Teste\Apolo.exe` ao lado do clone).
 3. Gere o programa: `dotnet publish src/Ares.Player/Ares.Player.csproj -c Release -r win-x64 --self-contained true -o dist`.
 4. Copie para `dist` as bibliotecas nativas da pasta `Libraries` (`chromaprint.dll`, `avcodec-54.dll`, `avutil-52.dll`, `msvcp100.dll`, `msvcr100.dll`).
 5. O ajudante de firewall precisa do MSBuild (Visual Studio ou Build Tools): `msbuild tools/WinSecurity.slnf /p:Configuration=Release /p:Platform=x86`.
