@@ -34,5 +34,6 @@
     <Compile Include="..\..\src\Ares.Player\ImageBankIndex.cs" Link="Linked\ImageBankIndex.cs" />
     <Compile Include="..\..\src\Ares.Playing\Audio\LevelCompressor.cs" Link="Linked\LevelCompressor.cs" />
     <Compile Include="..\..\src\Ares.Player\ProjectCredits.cs" Link="Linked\ProjectCredits.cs" />
+    <Compile Include="..\..\src\Ares.Player\RemoteServer.cs" Link="Linked\RemoteServer.cs" />
   </ItemGroup>
 </Project>

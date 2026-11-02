@@ -54,6 +54,39 @@ namespace Apolo.Tests
         }
 
         [Fact]
+        public void SavedProject_KeepsAccentsEmojiAndXmlCharacters_InTitlesAndMusicPaths()
+        {
+            string folder = Path.Combine(m_Dir, "Músicas do Mestre");
+            string project = "Campanha 🐉 <Dragões & \"Masmorras\">";
+            string modeTitle = "Taverna à noite 🍺";
+            string buttonTitle = "Ação & tensão <boss>";
+            string music = Path.Combine(folder, "Ambiência – São João (versão 2).mp3");
+
+            IProject created = DataModule.ProjectManager.CreateProject(project);
+            IMode mode = created.AddMode(modeTitle);
+            IModeElement button = AddButton(mode, buttonTitle);
+            ISequentialContainer container = (ISequentialContainer)button.StartElement;
+            container.AddElement(DataModule.ElementFactory.CreateFileElement(music, SoundFileType.Music));
+
+            Directory.CreateDirectory(folder);
+            string file = Path.Combine(folder, "Mesa ção.apolo");
+            DataModule.ProjectManager.SaveProject(created, file);
+            DataModule.ProjectManager.UnloadProject(created);
+            IProject loaded = DataModule.ProjectManager.LoadProject(file);
+
+            Assert.Equal(project, loaded.Title);
+            Assert.Equal(modeTitle, loaded.GetModes()[0].Title);
+            IModeElement again = loaded.GetModes()[0].GetElements()[0];
+            Assert.Equal(buttonTitle, again.Title);
+            var files = ((ISequentialContainer)again.StartElement).GetElements();
+            Assert.Single(files);
+            IFileElement fileElement = (IFileElement)files[0].InnerElement;
+            Assert.Equal(music, fileElement.FilePath);
+            Assert.Equal(SoundFileType.Music, fileElement.SoundFileType);
+            DataModule.ProjectManager.UnloadProject(loaded);
+        }
+
+        [Fact]
         public void SavedProject_KeepsOrderOfButtons()
         {
             IProject project = DataModule.ProjectManager.CreateProject("Ordem");

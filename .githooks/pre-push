@@ -1,0 +1,6 @@
+#!/bin/sh
+# Antes de enviar ao GitHub: compila o Apolo e roda os testes (tools/ci.ps1).
+# Ativar uma vez no clone: git config core.hooksPath .githooks
+# Pular numa emergência: git push --no-verify
+echo "Apolo: conferindo compilação e testes antes do push..."
+exec powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/ci.ps1
