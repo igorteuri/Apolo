@@ -47,6 +47,18 @@ namespace Ares.Players
             Album = album ?? String.Empty;
         }
 
+        /// <summary>"Artist - Album - Title" with the parts which exist; when the tag has none of them, the fallback (the title of the element).</summary>
+        public static String BuildLongTitle(String artist, String album, String title, String fallback)
+        {
+            List<String> parts = new List<String>();
+            foreach (String part in new[] { artist, album, title })
+            {
+                if (!String.IsNullOrWhiteSpace(part))
+                    parts.Add(part.Trim());
+            }
+            return parts.Count > 0 ? String.Join(" - ", parts) : (fallback ?? String.Empty);
+        }
+
         public static MusicInfo GetInfo(int musicElementId)
         {
             if (musicElementId != -1)
@@ -69,15 +81,7 @@ namespace Ares.Players
                     Ares.Tags.AudioTagInfo tag = Ares.Tags.AudioTags.Read(path);
                     if (tag != null)
                     {
-                        StringBuilder musicInfoBuilder = new StringBuilder();
-                        musicInfoBuilder.Append(tag.artist);
-                        if (musicInfoBuilder.Length > 0)
-                            musicInfoBuilder.Append(" - ");
-                        musicInfoBuilder.Append(tag.album);
-                        if (musicInfoBuilder.Length > 0)
-                            musicInfoBuilder.Append(" - ");
-                        musicInfoBuilder.Append(tag.title);
-                        longTitle = musicInfoBuilder.ToString();
+                        longTitle = BuildLongTitle(tag.artist, tag.album, tag.title, longTitle);
                         tagArtist = tag.artist;
                         tagAlbum = tag.album;
                         if (!String.IsNullOrEmpty(tag.title))
