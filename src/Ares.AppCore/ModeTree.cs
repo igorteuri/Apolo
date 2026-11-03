@@ -203,14 +203,19 @@ namespace Ares.Player
             node.Parent = null;
         }
 
-        public void Attach(ModeNode node, ModeNode parent, int index)
+        /// <summary>Puts "node" into "parent" at "index" (-1 = at the end). A folder never goes into itself or into one
+        /// of its own subfolders (that would cut the branch off the tree): then nothing changes and false is returned.</summary>
+        public bool Attach(ModeNode node, ModeNode parent, int index)
         {
+            if (node == null || parent == null || parent == node || parent.IsDescendantOf(node))
+                return false;
             Detach(node);
             node.Parent = parent;
             if (index < 0 || index > parent.Children.Count)
                 parent.Children.Add(node);
             else
                 parent.Children.Insert(index, node);
+            return true;
         }
     }
 }

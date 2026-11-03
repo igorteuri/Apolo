@@ -61,5 +61,75 @@ namespace Apolo.Tests
             File.WriteAllText(ModeTree.FileFor(project), "{ this is not json");
             Assert.Empty(ModeTree.Load(project).Root.Children);
         }
+
+        // Taverna > (Balcão > Porão), Masmorra
+        private static ModeTree Sample()
+        {
+            ModeTree tree = new ModeTree();
+            tree.Sync(new[] { "Taverna", "Balcão", "Porão", "Masmorra" });
+            tree.Attach(tree.Find("Balcão"), tree.Find("Taverna"), -1);
+            tree.Attach(tree.Find("Porão"), tree.Find("Balcão"), -1);
+            return tree;
+        }
+
+        private static string Shape(ModeNode node)
+        {
+            return string.Join(",", node.Children.Select(c => c.Children.Count == 0 ? c.Title : c.Title + "(" + Shape(c) + ")"));
+        }
+
+        [Fact]
+        public void Sync_AddsNewFoldersAtTheEnd_AndANewTreeHasThemInOrder()
+        {
+            ModeTree tree = new ModeTree();
+            Assert.True(tree.Sync(new[] { "A", "B" }));
+            Assert.Equal("A,B", Shape(tree.Root));
+            Assert.False(tree.Sync(new[] { "A", "B" }));   // nothing changed
+            Assert.True(tree.Sync(new[] { "A", "B", "Nova" }));
+            Assert.Equal("A,B,Nova", Shape(tree.Root));
+        }
+
+        [Fact]
+        public void Sync_RemovedFolder_ItsSubfoldersMoveUpToItsPlace()
+        {
+            ModeTree tree = Sample();
+            Assert.Equal("Taverna(Balcão(Porão)),Masmorra", Shape(tree.Root));
+            tree.Sync(new[] { "Taverna", "Porão", "Masmorra" });
+            Assert.Equal("Taverna(Porão),Masmorra", Shape(tree.Root));
+            Assert.Same(tree.Find("Taverna"), tree.Find("Porão").Parent);
+            tree.Sync(new[] { "Porão", "Masmorra" });
+            Assert.Equal("Porão,Masmorra", Shape(tree.Root));
+        }
+
+        [Fact]
+        public void Sync_TwoNodesWithTheSameName_KeepsOnlyOne()
+        {
+            ModeTree tree = new ModeTree();
+            tree.Root.Children.Add(new ModeNode { Title = "A", Parent = tree.Root });
+            tree.Root.Children.Add(new ModeNode { Title = "A", Parent = tree.Root });
+            Assert.True(tree.Sync(new[] { "A" }));
+            Assert.Equal("A", Shape(tree.Root));
+        }
+
+        [Fact]
+        public void Attach_MovesAndOrders_AndDepthFollows()
+        {
+            ModeTree tree = Sample();
+            Assert.Equal(2, tree.Find("Porão").Depth);
+            Assert.True(tree.Attach(tree.Find("Masmorra"), tree.Find("Taverna"), 0));
+            Assert.Equal("Taverna(Masmorra,Balcão(Porão))", Shape(tree.Root));
+            Assert.True(tree.Attach(tree.Find("Porão"), tree.Root, 99));   // beyond the end = at the end
+            Assert.Equal("Taverna(Masmorra,Balcão),Porão", Shape(tree.Root));
+            Assert.Equal(0, tree.Find("Porão").Depth);
+        }
+
+        [Fact]
+        public void Attach_AFolderIntoItselfOrItsSubfolder_IsRefused_AndNothingIsLost()
+        {
+            ModeTree tree = Sample();
+            Assert.False(tree.Attach(tree.Find("Taverna"), tree.Find("Porão"), -1));
+            Assert.False(tree.Attach(tree.Find("Taverna"), tree.Find("Taverna"), -1));
+            Assert.Equal("Taverna(Balcão(Porão)),Masmorra", Shape(tree.Root));
+            Assert.Equal(4, tree.All().Count());
+        }
     }
 }
