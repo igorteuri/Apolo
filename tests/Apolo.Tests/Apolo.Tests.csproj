@@ -38,6 +38,7 @@
     <Compile Include="..\..\src\Ares.Player\FolderNames.cs" Link="Linked\FolderNames.cs" />
     <Compile Include="..\..\src\Ares.Player\RecentProjects.cs" Link="Linked\RecentProjects.cs" />
     <Compile Include="..\..\src\Ares.Player\CaptureScripts.cs" Link="Linked\CaptureScripts.cs" />
+    <Compile Include="..\..\src\Ares.Player\RemoteStateJson.cs" Link="Linked\RemoteStateJson.cs" />
   </ItemGroup>
   <ItemGroup>
     <!-- fake browser for CaptureScriptTests (run with node) -->

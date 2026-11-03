@@ -237,106 +237,62 @@ namespace Ares.Player
                     m_RemoteInfo = null;
                 }
                 MusicInfo info = m_RemoteInfo;
-                StringBuilder json = new StringBuilder();
-                json.Append("{\"playing\":").Append(playing ? "true" : "false");
-                json.Append(",\"paused\":").Append(paused ? "true" : "false");
-                json.Append(",\"title\":").Append(JsonString(info != null ? info.Title : ""));
-                json.Append(",\"artist\":").Append(JsonString(info != null ? info.Artist : ""));
-                json.Append(",\"list\":").Append(JsonString(listTitle));
-                json.Append(",\"position\":").Append(position.ToString("0.0", CultureInfo.InvariantCulture));
-                json.Append(",\"length\":").Append(length.ToString("0.0", CultureInfo.InvariantCulture));
-                json.Append(",\"repeat\":").Append(control.MusicRepeatMode != 0 ? "true" : "false");
-                json.Append(",\"repeatMode\":").Append(control.MusicRepeatMode);
-                json.Append(",\"vol\":{\"overall\":").Append(control.GlobalVolume);
-                json.Append(",\"music\":").Append(control.MusicVolume);
-                json.Append(",\"sound\":").Append(control.SoundVolume).Append("}");
-
-                int modeIndex = -1;
-                json.Append(",\"modes\":[");
+                RemoteState state = new RemoteState
+                {
+                    Playing = playing,
+                    Paused = paused,
+                    Title = info != null ? info.Title : "",
+                    Artist = info != null ? info.Artist : "",
+                    List = listTitle,
+                    Position = position,
+                    Length = length,
+                    RepeatMode = control.MusicRepeatMode,
+                    VolOverall = control.GlobalVolume,
+                    VolMusic = control.MusicVolume,
+                    VolSound = control.SoundVolume
+                };
                 if (m_Project != null)
                 {
                     Ares.Data.IMode current = control.CurrentMode;
                     int i = 0;
                     foreach (Ares.Data.IMode mode in m_Project.GetModes())
                     {
-                        if (i > 0)
-                            json.Append(",");
-                        json.Append(JsonString(mode.Title));
-                        if (current != null && mode.Title == current.Title && modeIndex < 0)
-                            modeIndex = i;
+                        state.Modes.Add(mode.Title);
+                        if (current != null && mode.Title == current.Title && state.Mode < 0)
+                            state.Mode = i;
                         i++;
                     }
-                }
-                json.Append("],\"tree\":[");
-                if (m_Project != null)
-                {
-                    bool firstFolder = true;
                     foreach (FolderInfo folder in FolderRows())
-                    {
-                        if (!firstFolder)
-                            json.Append(",");
-                        firstFolder = false;
-                        json.Append("{\"i\":").Append(folder.Index).Append(",\"p\":").Append(folder.Parent)
-                            .Append(",\"d\":").Append(folder.Depth).Append("}");
-                    }
+                        state.Tree.Add(new[] { folder.Index, folder.Parent, folder.Depth });
                 }
-                json.Append("],\"mode\":").Append(modeIndex);
                 HashSet<int> active = new HashSet<int>();
                 foreach (Ares.Data.IModeElement playingElement in control.CurrentModeElements)
                     active.Add(playingElement.Id);
-                json.Append(",\"elements\":[");
-                if (m_Project != null && modeIndex >= 0)
+                if (m_Project != null && state.Mode >= 0)
                 {
-                    Ares.Data.IMode mode = m_Project.GetModes()[modeIndex];
-                    bool first = true;
+                    Ares.Data.IMode mode = m_Project.GetModes()[state.Mode];
                     foreach (Ares.Data.IModeElement me in mode.GetElements())
                     {
-                        if (!me.IsVisibleInPlayer)
-                            continue;
-                        if (!first)
-                            json.Append(",");
-                        first = false;
-                        json.Append("{\"id\":").Append(me.Id).Append(",\"title\":").Append(JsonString(me.Title));
-                        json.Append(",\"active\":").Append(active.Contains(me.Id) ? "true" : "false");
-                        AppendLook(json, mode.Title, me.Title);
-                        json.Append("}");
+                        if (me.IsVisibleInPlayer)
+                            state.Elements.Add(RemoteButtonOf(me, mode.Title, active));
                     }
-                }
-                // the buttons of the subfolders of the open folder, one group (with the name of the subfolder) after the other
-                json.Append("],\"groups\":[");
-                if (m_Project != null && modeIndex >= 0)
-                {
-                    Ares.Data.IMode shownMode = m_Project.GetModes()[modeIndex];
-                    bool firstGroup = true, openGroup = false, firstInGroup = true;
-                    foreach (ShownButton sub in CollectShownButtons(shownMode))
+                    // the buttons of the subfolders of the open folder, one group (with the name of the subfolder) after the other
+                    RemoteGroup group = null;
+                    foreach (ShownButton sub in CollectShownButtons(mode))
                     {
-                        if (sub.OwnerTitle == shownMode.Title)
+                        if (sub.OwnerTitle == mode.Title)
                             continue;
-                        if (sub.Header != null)
+                        if (sub.Header != null || group == null)
                         {
-                            if (openGroup)
-                                json.Append("]}");
-                            if (!firstGroup)
-                                json.Append(",");
-                            firstGroup = false;
-                            openGroup = true;
-                            firstInGroup = true;
-                            json.Append("{\"title\":").Append(JsonString(sub.Header)).Append(",\"elements\":[");
+                            group = new RemoteGroup { Title = sub.Header ?? "" };
+                            state.Groups.Add(group);
                         }
-                        if (!firstInGroup)
-                            json.Append(",");
-                        firstInGroup = false;
-                        json.Append("{\"id\":").Append(sub.Element.Id).Append(",\"title\":").Append(JsonString(sub.Element.Title));
-                        json.Append(",\"active\":").Append(active.Contains(sub.Element.Id) ? "true" : "false");
-                        AppendLook(json, sub.OwnerTitle, sub.Element.Title);
-                        json.Append("}");
+                        group.Buttons.Add(RemoteButtonOf(sub.Element, sub.OwnerTitle, active));
                     }
-                    if (openGroup)
-                        json.Append("]}");
                 }
                 // ids of everything which is playing (also buttons of other folders): for the keys of the Stream Deck
-                json.Append("],\"active\":[").Append(string.Join(",", active.Select(a => a.ToString()).ToArray())).Append("]}");
-                string stateText = json.ToString();
+                state.Active.AddRange(active);
+                string stateText = RemoteStateJson.Build(state);
                 if (remoteOn)
                     m_Remote.SetState(stateText);
                 if (deckOn)
@@ -349,6 +305,13 @@ namespace Ares.Player
                 // the remote control must never disturb playing
                 Ares.Settings.ErrorLog.Note(swallowed);
             }
+        }
+
+        private RemoteButton RemoteButtonOf(Ares.Data.IModeElement element, string modeTitle, HashSet<int> active)
+        {
+            RemoteButton button = new RemoteButton { Id = element.Id, Title = element.Title, Active = active.Contains(element.Id) };
+            LookOf(modeTitle, element.Title, out button.Image, out button.Color);
+            return button;
         }
 
         // runs the command from the web page on the user interface thread

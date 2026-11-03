@@ -149,6 +149,28 @@ namespace Ares.Player
         }
 
         // picture (emoji) and color of a button, as the Player shows them: ,"img":"name.png","color":"#rrggbb"
+        /// <summary>The picture (file of the icons folder) and the color of a button, for the remote control and the Stream Deck.</summary>
+        private void LookOf(string modeTitle, string elementTitle, out string image, out string color)
+        {
+            image = null;
+            color = null;
+            try
+            {
+                if (string.IsNullOrEmpty(m_CurrentProjectPath))
+                    return;
+                string spec = Ares.CommonGUI.ButtonImageStore.Get(m_CurrentProjectPath, modeTitle, elementTitle);
+                if (spec != null && spec.StartsWith("lib:") && spec.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                    image = spec.Substring(4);
+                Color c = Ares.CommonGUI.ButtonImageStore.GetColor(m_CurrentProjectPath, modeTitle, elementTitle);
+                if (!c.IsEmpty)
+                    color = "#" + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
+            }
+            catch (Exception swallowed)
+            {
+                Ares.Settings.ErrorLog.Note(swallowed);
+            }
+        }
+
         private void AppendLook(StringBuilder json, string modeTitle, string elementTitle)
         {
             try
