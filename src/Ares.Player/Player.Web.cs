@@ -1136,6 +1136,17 @@ namespace Ares.Player
   if (N >= 2) { rs.has = true; rs.dl = l[N - 1] - l[N - 2]; rs.dr = r[N - 1] - r[N - 2]; }
   try { wv.postMessage('apolo-pcm:' + id + ':' + toB64(out.subarray(0, o))); } catch (e) {}
  }
+ // the browser cannot record the next sound while the handler of a block runs (it drops pieces of ~3 ms then, heard as
+ // clicks just after the block borders): the handler only copies the block, the work is done right after in a new task
+ var later = [], laterChannel = null;
+ function runLater(fn) {
+  if (!laterChannel) {
+   laterChannel = new MessageChannel();
+   laterChannel.port1.onmessage = function() { var fns = later; later = []; for (var i = 0; i < fns.length; i++) { try { fns[i](); } catch (e) {} } };
+  }
+  later.push(fn);
+  if (later.length === 1) laterChannel.port2.postMessage(0);
+ }
  function tapOf(ctx) {
   if (ctx.__apoloTap) return ctx.__apoloTap;
   var sp = ctx.createScriptProcessor(8192, 2, 2); // fewer, larger blocks: the page thread is woken less often
@@ -1143,8 +1154,9 @@ namespace Ares.Player
   var id = ++nextId, rs = { t: 0, pl: 0, pr: 0 };
   sp.onaudioprocess = function(e) {
    if (!cap.on) return;
-   var ib = e.inputBuffer, l = ib.getChannelData(0), r = ib.numberOfChannels > 1 ? ib.getChannelData(1) : l;
-   push(l, r, ctx.sampleRate, rs, id);
+   var ib = e.inputBuffer, l = ib.getChannelData(0).slice(0), r = ib.numberOfChannels > 1 ? ib.getChannelData(1).slice(0) : l;
+   var rate = ctx.sampleRate;
+   runLater(function() { push(l, r, rate, rs, id); });
   };
   origConnect.call(sp, ctx.destination);
   ctx.__apoloTap = sp;
