@@ -6,7 +6,8 @@ param(
     [Parameter(Mandatory = $true)][string]$Janela,
     [Parameter(Mandatory = $true)][string]$Saida,
     [string]$Exe,
-    [int]$Espera = 6
+    [int]$Espera = 6,
+    [string]$Titulo   # optional: the title of the window to take (when a window opens several, like the tour)
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
@@ -25,6 +26,8 @@ public static class PreviewWin {
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
     [DllImport("user32.dll")] public static extern IntPtr GetWindow(IntPtr h, uint cmd);
     [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr hdc, uint flags);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
+    public static string Title(IntPtr h) { var sb = new System.Text.StringBuilder(256); GetWindowText(h, sb, 256); return sb.ToString(); }
     [StructLayout(LayoutKind.Sequential)] public struct RECT { public int L, T, R, B; }
     [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int a, out RECT r, int size);
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
@@ -66,7 +69,8 @@ try {
         # the window opens 5 s after the start (the splash screen is gone by then): main window + the dialog on top
         if (((Get-Date) - $proc.StartTime).TotalSeconds -lt 6) { continue }
         $d = [PreviewWin]::Visible([uint32]$proc.Id)
-        if ($d.Count -ge 2) { $found = $d[0] }
+        if ($Titulo) { foreach ($h in $d) { if ([PreviewWin]::Title($h) -eq $Titulo) { $found = $h } } }
+        elseif ($d.Count -ge 2) { $found = $d[0] }
     }
     if ($found -eq [IntPtr]::Zero) { throw "a janela '$Janela' não abriu" }
     Start-Sleep -Milliseconds 1500   # the theme is applied when the program is idle
@@ -75,7 +79,11 @@ try {
     $w = $r.R - $r.L; $h = $r.B - $r.T
     $bmp = New-Object System.Drawing.Bitmap $w, $h
     $g = [System.Drawing.Graphics]::FromImage($bmp)
-    $g.CopyFromScreen($r.L, $r.T, 0, 0, (New-Object System.Drawing.Size $w, $h))
+    # the content of the window itself (PW_RENDERFULLCONTENT), even when another window is in front of it
+    $hdc = $g.GetHdc()
+    $ok = [PreviewWin]::PrintWindow($found, $hdc, 2)
+    $g.ReleaseHdc($hdc)
+    if (-not $ok) { $g.CopyFromScreen($r.L, $r.T, 0, 0, (New-Object System.Drawing.Size $w, $h)) }
     $g.Dispose()
     $bmp.Save($Saida, [System.Drawing.Imaging.ImageFormat]::Png)
     $bmp.Dispose()

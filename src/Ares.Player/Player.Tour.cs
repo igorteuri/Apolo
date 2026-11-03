@@ -81,7 +81,7 @@ namespace Ares.Player
 
     internal class GuidedTour
     {
-        private const int CardWidth = 380;
+        private const int CardWidth = 428;
 
         private readonly Form m_Owner;
         private readonly List<TourStep> m_Steps;
@@ -91,6 +91,7 @@ namespace Ares.Player
         private TourLayer m_Dim, m_Blocker;
         private Form m_Card;
         private Label m_Title, m_Body, m_Counter;
+        private DialogKit.Rule m_Rule;
         private Button m_Back, m_Next, m_Skip;
         private int m_Index = -1;
         private bool m_Done;
@@ -144,18 +145,22 @@ namespace Ares.Player
 
             m_Title = new Label();
             m_Title.Font = new Font(card.Font.FontFamily, 13f, FontStyle.Bold);
-            m_Title.SetBounds(16, 12, CardWidth - 32, 28);
+            m_Title.SetBounds(DialogKit.Margin, 18, CardWidth - 2 * DialogKit.Margin, 30);
             card.Controls.Add(m_Title);
 
             m_Body = new Label();
             m_Body.AutoSize = false;
             m_Body.Font = new Font(card.Font.FontFamily, 10f);
-            m_Body.SetBounds(16, 46, CardWidth - 32, 80);
+            m_Body.SetBounds(DialogKit.Margin, 56, CardWidth - 2 * DialogKit.Margin, 80);
             card.Controls.Add(m_Body);
 
             m_Counter = new Label();
             m_Counter.AutoSize = true;
+            DialogKit.Muted(m_Counter);
             card.Controls.Add(m_Counter);
+
+            m_Rule = DialogKit.MakeRule(0, CardWidth - 2 * DialogKit.Margin);
+            card.Controls.Add(m_Rule);
 
             m_Skip = new Button();
             m_Skip.AutoSize = true;
@@ -168,6 +173,7 @@ namespace Ares.Player
             card.Controls.Add(m_Back);
 
             m_Next = new Button();
+            DialogKit.Primary(m_Next);
             m_Next.Click += (s, e) => Go(1);
             card.Controls.Add(m_Next);
 
@@ -282,22 +288,23 @@ namespace Ares.Player
             // the card
             m_Title.Text = step.Title;
             m_Body.Text = step.Text;
-            Size need = TextRenderer.MeasureText(step.Text, m_Body.Font, new Size(CardWidth - 32, 2000), TextFormatFlags.WordBreak | TextFormatFlags.NoPadding);
+            Size need = TextRenderer.MeasureText(step.Text, m_Body.Font, new Size(CardWidth - 2 * DialogKit.Margin, 2000), TextFormatFlags.WordBreak | TextFormatFlags.NoPadding);
             int bodyHeight = Math.Max(40, need.Height + 6);
             m_Body.Height = bodyHeight;
-            int buttonsTop = m_Body.Bottom + 14;
+            m_Rule.Top = m_Body.Bottom + 16;
+            int buttonsTop = m_Rule.Top + 17;
             bool first = m_Index == 0 || ShownNumber() <= 1;
             bool last = ShownNumber() >= ShownCount();
             m_Skip.Text = first ? m_T("Pular o tour", "Skip the tour") : m_T("Sair do tour", "Leave the tour");
             m_Next.Text = first && step.Centered ? m_T("Começar", "Start") : (last ? m_T("Concluir", "Finish") : m_T("Próximo", "Next"));
             m_Back.Enabled = !first;
             m_Counter.Text = ShownNumber() + " / " + ShownCount();
-            m_Next.SetBounds(CardWidth - 16 - 100, buttonsTop, 100, 30);
-            m_Back.SetBounds(m_Next.Left - 8 - 80, buttonsTop, 80, 30);
-            m_Skip.Location = new Point(16, buttonsTop + 2);
-            m_Counter.Location = new Point(16, buttonsTop + 36);
-            m_Skip.Height = 26;
-            m_Card.ClientSize = new Size(CardWidth, m_Counter.Bottom + 10);
+            m_Next.SetBounds(CardWidth - DialogKit.Margin - 110, buttonsTop, 110, DialogKit.ButtonHeight);
+            m_Back.SetBounds(m_Next.Left - 8 - 96, buttonsTop, 96, DialogKit.ButtonHeight);
+            m_Skip.AutoSize = false;
+            m_Skip.SetBounds(DialogKit.Margin, buttonsTop, Math.Max(110, TextRenderer.MeasureText(m_Skip.Text, m_Skip.Font).Width + 24), DialogKit.ButtonHeight);
+            m_Counter.Location = new Point(DialogKit.Margin, buttonsTop + DialogKit.ButtonHeight + 10);
+            m_Card.ClientSize = new Size(CardWidth, m_Counter.Bottom + 16);
             PlaceCard(hole, window);
             m_Card.Activate();
             m_Next.Focus();
