@@ -2,5 +2,14 @@
 # Antes de enviar ao GitHub: compila o Apolo e roda os testes (tools/ci.ps1).
 # Ativar uma vez no clone: git config core.hooksPath .githooks
 # Pular numa emergência: git push --no-verify
+# O teste roda nos arquivos da pasta: se houver código alterado fora do commit, o que vai para o GitHub
+# não é o que foi testado. Então isso é recusado primeiro.
+pendente=$(git status --porcelain -- src tests tools .github 2>/dev/null)
+if [ -n "$pendente" ]; then
+  echo "Apolo: há alterações fora do commit (o que vai para o GitHub não seria o que foi testado):"
+  echo "$pendente"
+  echo "Faça o commit delas (ou guarde com git stash) e envie de novo."
+  exit 1
+fi
 echo "Apolo: conferindo compilação e testes antes do push..."
 exec powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/ci.ps1
