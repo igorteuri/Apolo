@@ -259,7 +259,7 @@ namespace Ares.Player
             };
             modesList.KeyDown += (s, e) =>
             {
-                if (m_EditMode && e.KeyCode == System.Windows.Forms.Keys.F2)
+                if (e.KeyCode == System.Windows.Forms.Keys.F2)
                     RenameCurrentMode();
                 else if (m_EditMode && e.KeyCode == System.Windows.Forms.Keys.Delete)
                     DeleteCurrentMode();
@@ -917,6 +917,37 @@ namespace Ares.Player
                 T("Nome da pasta:", "Folder name:"), "");
             if (name == null)
                 return;
+            CreateMode(name, asChild);
+        }
+
+        /// <summary>Asks for audio files and makes a new folder with them (name suggested from where the files are).</summary>
+        private void NewModeWithFiles()
+        {
+            string[] files;
+            using (var dlg = new OpenFileDialog())
+            {
+                dlg.Multiselect = true;
+                dlg.Title = T("Escolher as músicas da nova pasta", "Choose the tracks of the new folder");
+                dlg.Filter = T("Arquivos de áudio", "Audio files")
+                    + "|*.mp3;*.wav;*.ogg;*.opus;*.flac;*.m4a;*.aac;*.wma;*.aif;*.aiff;*.mp2;*.mp1";
+                if (dlg.ShowDialog(this) != DialogResult.OK)
+                    return;
+                files = dlg.FileNames;
+            }
+            if (files.Length == 0)
+                return;
+            string name = Prompt(this, T("Nova pasta com músicas", "New folder with tracks"), T("Nome da pasta:", "Folder name:"),
+                FolderNames.SuggestFor(files));
+            if (name == null)
+                return;
+            string created = CreateMode(name, false);
+            if (created != null)
+                ImportDroppedPaths(files, created);
+        }
+
+        /// <summary>Makes an empty folder beside the selected one (or inside it); returns its final (unique) name.</summary>
+        private string CreateMode(string name, bool asChild)
+        {
             if (m_Project == null)
             {
                 // no project open: use the library
@@ -925,6 +956,8 @@ namespace Ares.Player
                 OpenProject(path, false);
             }
             // the subfolders, colors and pictures find a folder by its name: two folders must not share one
+            if (m_Project == null)
+                return null;
             name = UniqueModeTitle(name, null);
             // the new folder goes into the selected one (subfolder) or beside it (same level)
             ModeNode selected = SelectedModeNode;
@@ -942,6 +975,7 @@ namespace Ares.Player
                 SaveModeTree();
             }, name);
             AutoEmojiForNewMode(name);
+            return name;
         }
 
         // ---- folders (the modes of the project) ----
@@ -950,16 +984,8 @@ namespace Ares.Player
         private string UniqueModeTitle(string name, IMode except)
         {
             if (m_Project == null)
-                return name;
-            Func<string, bool> taken = t => m_Project.GetModes().Any(m => m != except && string.Equals(m.Title, t, StringComparison.OrdinalIgnoreCase));
-            if (!taken(name))
-                return name;
-            for (int i = 2; ; ++i)
-            {
-                string candidate = name + " " + i;
-                if (!taken(candidate))
-                    return candidate;
-            }
+                return (name ?? "").Trim();
+            return FolderNames.Unique(name, m_Project.GetModes().Where(m => m != except).Select(m => m.Title));
         }
 
         private void RenameCurrentMode()
@@ -970,7 +996,7 @@ namespace Ares.Player
             string name = Prompt(this, T("Renomear pasta", "Rename folder"), T("Novo nome:", "New name:"), mode.Title);
             if (name == null || name == mode.Title)
                 return;
-            if (UniqueModeTitle(name, mode) != name)
+            if (!FolderNames.CanRename(name, mode.Title, m_Project.GetModes().Where(m => m != mode).Select(m => m.Title)))
             {
                 Ares.CommonGUI.MessageDialog.Show(this, T("Já existe uma pasta chamada \"" + name + "\". Escolha outro nome.",
                     "There is already a folder called \"" + name + "\". Choose another name."),

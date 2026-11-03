@@ -26,6 +26,7 @@ namespace Ares.Player
                 // folders can be made here too, without turning on the edit mode
                 m_AddMenu.Items.Add(new ToolStripSeparator());
                 m_AddMenu.Items.Add(T("Nova pasta...", "New folder..."), null, (s, e) => NewEmptyMode(false));
+                m_AddMenu.Items.Add(T("Nova pasta com músicas...", "New folder with tracks..."), null, (s, e) => NewModeWithFiles());
                 m_AddMenu.Items.Add(T("Nova subpasta na pasta aberta...", "New subfolder in the open folder..."), null, (s, e) => NewEmptyMode(true));
             }
             m_AddMenu.Show(anchor, at);
