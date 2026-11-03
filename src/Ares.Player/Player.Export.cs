@@ -105,7 +105,7 @@ namespace Ares.Player
                 dlg.ShowInTaskbar = false;
                 dlg.AutoSize = true;
                 dlg.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-                dlg.Padding = new Padding(12);
+                dlg.Padding = new Padding(DialogKit.Margin);
                 FlowLayoutPanel flow = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, WrapContents = false, Dock = DockStyle.Fill };
                 dlg.Controls.Add(flow);
                 flow.Controls.Add(new Label { AutoSize = true, Margin = new Padding(0, 0, 0, 8), Text = T("O que você quer exportar?", "What do you want to export?") });
@@ -121,13 +121,14 @@ namespace Ares.Player
                       "Appearance, shortcuts and preferences of Apolo in a .zip file (no projects, no audio)."), true);
                 (hasProject ? list : settings).Checked = true;
                 FlowLayoutPanel buttons = new FlowLayoutPanel { FlowDirection = FlowDirection.RightToLeft, AutoSize = true, Dock = DockStyle.Fill, Margin = new Padding(0, 10, 0, 0) };
-                Button ok = new Button { Text = T("Exportar", "Export"), DialogResult = DialogResult.OK, AutoSize = true };
-                Button cancel = new Button { Text = T("Cancelar", "Cancel"), DialogResult = DialogResult.Cancel, AutoSize = true };
+                Button ok = new Button { Text = T("Exportar", "Export"), DialogResult = DialogResult.OK, AutoSize = true, MinimumSize = new Size(120, DialogKit.ButtonHeight) };
+                DialogKit.Primary(ok);
+                Button cancel = new Button { Text = T("Cancelar", "Cancel"), DialogResult = DialogResult.Cancel, AutoSize = true, MinimumSize = new Size(110, DialogKit.ButtonHeight) };
                 buttons.Controls.Add(cancel);
                 buttons.Controls.Add(ok);
                 flow.Controls.Add(buttons);
-                dlg.AcceptButton = ok;
                 dlg.CancelButton = cancel;
+                DialogKit.Finish(dlg, ok, ok);
                 if (dlg.ShowDialog(this) != DialogResult.OK)
                     return false;
                 kind = list.Checked ? ExportKind.ListOnly : (audio.Checked ? ExportKind.WithAudio : ExportKind.SettingsBackup);
@@ -140,13 +141,11 @@ namespace Ares.Player
             RadioButton radio = new RadioButton { AutoSize = true, Text = title, Enabled = enabled, Margin = new Padding(0, 4, 0, 0) };
             Label label = new Label
             {
-                AutoSize = false,
-                Width = 440,
-                Height = 34,
+                AutoSize = true,
+                MaximumSize = new Size(460, 0),
                 Text = description,
-                Enabled = enabled,
                 Margin = new Padding(20, 0, 0, 4),
-                ForeColor = SystemColors.GrayText
+                Tag = "Muted"
             };
             flow.Controls.Add(radio);
             flow.Controls.Add(label);

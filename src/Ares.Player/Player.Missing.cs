@@ -245,8 +245,8 @@ namespace Ares.Player
                 m_Entries = entries;
                 Text = T("Arquivos de áudio ausentes", "Missing audio files");
                 AutoScaleMode = AutoScaleMode.Font;
-                ClientSize = new Size(820, 520);
-                MinimumSize = new Size(640, 400);
+                ClientSize = new Size(868, 560);
+                MinimumSize = new Size(680, 420);
                 StartPosition = FormStartPosition.CenterParent;
                 ShowInTaskbar = false;
                 MinimizeBox = false;
@@ -254,7 +254,7 @@ namespace Ares.Player
                 Label help = new Label();
                 help.Text = T("Estes arquivos não estão mais onde o projeto espera. Se você os moveu para outra pasta, escolha a pasta nova e o Apolo procura pelo nome do arquivo. Depois clique em \"Corrigir\".",
                     "These files are no longer where the project expects them. If you moved them to another folder, choose the new folder and Apolo looks for them by file name. Then click \"Fix\".");
-                help.SetBounds(12, 10, 796, 40);
+                help.SetBounds(DialogKit.Margin, 20, 820, 44);
                 help.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
                 Controls.Add(help);
 
@@ -267,7 +267,7 @@ namespace Ares.Player
                 m_List.Columns.Add(T("Estava em", "Was in"), 280);
                 m_List.Columns.Add(T("Usado em", "Used in"), 90);
                 m_List.Columns.Add(T("Novo local", "New location"), 230);
-                m_List.SetBounds(12, 54, 796, 380);
+                m_List.SetBounds(DialogKit.Margin, 72, 820, 384);
                 m_List.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
                 foreach (MissingEntry e in m_Entries)
                 {
@@ -286,7 +286,7 @@ namespace Ares.Player
                 Controls.Add(m_List);
 
                 m_Summary = new Label();
-                m_Summary.SetBounds(12, 440, 796, 22);
+                m_Summary.SetBounds(DialogKit.Margin, 466, 820, 22);
                 m_Summary.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
                 Controls.Add(m_Summary);
 
@@ -295,13 +295,14 @@ namespace Ares.Player
                 m_RemoveButton = new Button { Text = T("Remover do projeto", "Remove from project") };
                 m_Apply = new Button { Text = T("Corrigir", "Fix"), DialogResult = DialogResult.OK };
                 Button cancel = new Button { Text = T("Fechar", "Close"), DialogResult = DialogResult.Cancel };
-                m_Search.SetBounds(12, 474, 190, 32);
-                m_Locate.SetBounds(210, 474, 190, 32);
-                m_RemoveButton.SetBounds(408, 474, 170, 32);
+                m_Search.SetBounds(DialogKit.Margin, 500, 200, DialogKit.ButtonHeight);
+                m_Locate.SetBounds(DialogKit.Margin + 208, 500, 200, DialogKit.ButtonHeight);
+                m_RemoveButton.SetBounds(DialogKit.Margin + 416, 500, 180, DialogKit.ButtonHeight);
                 m_RemoveButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
                 m_RemoveButton.Click += (s, e) => RemoveSelected();
-                m_Apply.SetBounds(648, 474, 98, 32);
-                cancel.SetBounds(750, 474, 58, 32);
+                m_Apply.SetBounds(616, 500, 120, DialogKit.ButtonHeight);
+                DialogKit.Primary(m_Apply);
+                cancel.SetBounds(744, 500, 100, DialogKit.ButtonHeight);
                 m_Search.Anchor = m_Locate.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
                 m_Apply.Anchor = cancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
                 m_Search.Click += (s, e) => SearchInFolder();

@@ -112,6 +112,7 @@ namespace Ares.Player
             InitLibraryDrop();
             InitModeTree();
             InitEditMode();
+            InitPreview();
             InitTray();
             InitWeb();
             InitStatusBar();

@@ -283,19 +283,20 @@ namespace Ares.Player
             m_Index = index;
             Text = Loc.T("Banco de imagens", "Image bank");
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(680, 520);
-            MinimumSize = new Size(480, 360);
+            ClientSize = new Size(720, 560);
+            MinimumSize = new Size(500, 380);
             StartPosition = FormStartPosition.CenterParent;
             ShowInTaskbar = false;
             MinimizeBox = false;
 
             Label hint = new Label();
-            hint.SetBounds(12, 12, 656, 20);
+            hint.SetBounds(DialogKit.Margin, 20, 672, 22);
+            DialogKit.Muted(hint);
             hint.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             hint.Text = Loc.T("Procure por uma palavra (floresta, dragão, taverna...) e dê dois cliques na imagem.", "Search for a word (forest, dragon, tavern...) and double click the picture.");
             Controls.Add(hint);
 
-            m_Search.SetBounds(12, 36, 656, 24);
+            m_Search.SetBounds(DialogKit.Margin, 48, 672, 24);
             m_Search.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             m_Search.Text = "";
             m_Search.TextChanged += (s, e) => Fill();
@@ -303,7 +304,7 @@ namespace Ares.Player
 
             m_Images.ImageSize = new Size(96, 96);
             m_Images.ColorDepth = ColorDepth.Depth32Bit;
-            m_List.SetBounds(12, 68, 656, 396);
+            m_List.SetBounds(DialogKit.Margin, 84, 672, 396);
             m_List.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             m_List.View = View.LargeIcon;
             m_List.LargeImageList = m_Images;
@@ -318,13 +319,14 @@ namespace Ares.Player
 
             Button ok = new Button();
             ok.Text = Loc.T("Usar esta imagem", "Use this picture");
-            ok.SetBounds(ClientSize.Width - 12 - 120 - 8 - 90, 476, 120, 30);
+            ok.SetBounds(ClientSize.Width - DialogKit.Margin - 110 - 8 - 170, 500, 170, DialogKit.ButtonHeight);
+            DialogKit.Primary(ok);
             ok.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             ok.DialogResult = DialogResult.OK;
             Controls.Add(ok);
             Button cancel = new Button();
             cancel.Text = Loc.T("Cancelar", "Cancel");
-            cancel.SetBounds(ClientSize.Width - 12 - 90, 476, 90, 30);
+            cancel.SetBounds(ClientSize.Width - DialogKit.Margin - 110, 500, 110, DialogKit.ButtonHeight);
             cancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             cancel.DialogResult = DialogResult.Cancel;
             Controls.Add(cancel);

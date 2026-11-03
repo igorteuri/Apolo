@@ -71,43 +71,48 @@ namespace Ares.Player
                 form.MinimizeBox = false;
                 form.MaximizeBox = false;
                 form.ShowInTaskbar = false;
-                form.ClientSize = new Size(560, 400);
+                form.ClientSize = new Size(648, 466);
+                const int W = 600;
 
                 Label intro = new Label();
-                intro.SetBounds(16, 12, 528, 36);
+                intro.SetBounds(DialogKit.Margin, 20, W, 40);
                 intro.Text = T("Escolha um pacote para baixar. Ele vira um projeto novo, com as pastas, os botões, as imagens e as músicas.",
                     "Choose a pack to download. It becomes a new project, with the folders, buttons, pictures and music.");
                 form.Controls.Add(intro);
 
                 ListBox list = new ListBox();
-                list.SetBounds(16, 54, 528, 130);
+                list.SetBounds(DialogKit.Margin, 68, W, 130);
                 form.Controls.Add(list);
 
                 TextBox info = new TextBox();
                 info.Multiline = true;
                 info.ReadOnly = true;
                 info.ScrollBars = ScrollBars.Vertical;
-                info.SetBounds(16, 194, 528, 100);
+                info.SetBounds(DialogKit.Margin, 210, W, 100);
                 form.Controls.Add(info);
 
                 Label status = new Label();
-                status.SetBounds(16, 304, 528, 20);
+                status.SetBounds(DialogKit.Margin, 322, W, 22);
+                DialogKit.Muted(status);
                 status.Text = T("Procurando os pacotes...", "Looking for the packs...");
                 form.Controls.Add(status);
 
                 ProgressBar bar = new ProgressBar();
-                bar.SetBounds(16, 328, 528, 18);
+                bar.SetBounds(DialogKit.Margin, 348, W, 18);
+                bar.Visible = false; // only while a pack is downloaded
                 form.Controls.Add(bar);
+                form.Controls.Add(DialogKit.MakeRule(386, W));
 
                 Button download = new Button();
                 download.Text = T("Baixar e abrir", "Download and open");
-                download.SetBounds(16, 358, 150, 30);
+                download.SetBounds(DialogKit.Margin, 406, 190, DialogKit.ButtonHeight);
+                DialogKit.Primary(download);
                 download.Enabled = false;
                 form.Controls.Add(download);
 
                 Button close = new Button();
                 close.Text = T("Fechar", "Close");
-                close.SetBounds(464, 358, 80, 30);
+                close.SetBounds(DialogKit.Margin + W - 110, 406, 110, DialogKit.ButtonHeight);
                 close.DialogResult = DialogResult.Cancel;
                 form.Controls.Add(close);
                 form.CancelButton = close;
@@ -170,6 +175,7 @@ namespace Ares.Player
                             TryDelete(temp);
                             return;
                         }
+                        bar.Visible = false;
                         list.Enabled = true;
                         download.Enabled = true;
                         if (e2.Cancelled || e2.Error != null)
@@ -191,6 +197,7 @@ namespace Ares.Player
                     };
                     status.Text = T("Baixando...", "Downloading...");
                     bar.Value = 0;
+                    bar.Visible = true;
                     try
                     {
                         client.DownloadFileAsync(new Uri(p.Url), temp);
@@ -218,7 +225,7 @@ namespace Ares.Player
                     }
                 };
 
-                Ares.CommonGUI.ThemeManager.Apply(form);
+                DialogKit.Finish(form, close, list);
                 try { catalog.DownloadStringAsync(new Uri(PacksCatalogUrl)); }
                 catch (Exception ex) { status.Text = ex.Message; }
                 form.ShowDialog(this);
@@ -321,10 +328,11 @@ namespace Ares.Player
                 form.MinimizeBox = false;
                 form.MaximizeBox = false;
                 form.ShowInTaskbar = false;
-                form.ClientSize = new Size(620, 440);
+                form.ClientSize = new Size(668, 506);
+                const int W = 620;
 
                 Label intro = new Label();
-                intro.SetBounds(16, 12, 588, 52);
+                intro.SetBounds(DialogKit.Margin, 20, W, 56);
                 intro.Text = T("Autores e licenças das músicas deste projeto. Este texto vai junto quando você exporta o projeto completo (.apkg). A parte de cima é escrita por você; a lista de sons vem das informações gravadas nos arquivos de áudio.",
                     "Authors and licences of the music of this project. This text goes along when you export the complete project (.apkg). The top part is written by you; the list of sounds comes from the information stored in the audio files.");
                 form.Controls.Add(intro);
@@ -333,8 +341,9 @@ namespace Ares.Player
                 text.Multiline = true;
                 text.ReadOnly = true;
                 text.ScrollBars = ScrollBars.Vertical;
-                text.SetBounds(16, 70, 588, 310);
+                text.SetBounds(DialogKit.Margin, 84, W, 330);
                 form.Controls.Add(text);
+                form.Controls.Add(DialogKit.MakeRule(430, W));
 
                 Action refresh = () =>
                 {
@@ -348,7 +357,8 @@ namespace Ares.Player
 
                 Button edit = new Button();
                 edit.Text = T("Escrever créditos", "Write credits");
-                edit.SetBounds(16, 394, 150, 30);
+                edit.SetBounds(DialogKit.Margin, 446, 190, DialogKit.ButtonHeight);
+                DialogKit.Primary(edit);
                 edit.Click += (s, e) =>
                 {
                     try
@@ -369,12 +379,12 @@ namespace Ares.Player
 
                 Button close = new Button();
                 close.Text = T("Fechar", "Close");
-                close.SetBounds(524, 394, 80, 30);
+                close.SetBounds(DialogKit.Margin + W - 110, 446, 110, DialogKit.ButtonHeight);
                 close.DialogResult = DialogResult.Cancel;
                 form.Controls.Add(close);
                 form.CancelButton = close;
 
-                Ares.CommonGUI.ThemeManager.Apply(form);
+                DialogKit.Finish(form, close, close);
                 form.ShowDialog(this);
             }
         }
