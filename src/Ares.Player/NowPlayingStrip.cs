@@ -30,6 +30,8 @@ namespace Ares.Player
         {
             public bool Web;
             public int Handle;
+            public int FileId;
+            public byte[] Wave;
             public string Title;
             public double Position;
             public double Length;
@@ -48,6 +50,9 @@ namespace Ares.Player
         private Rectangle m_OverflowRect = Rectangle.Empty;
         private Chip m_HoverChip;
         private Part m_HoverPart = Part.None;
+
+        /// <summary>Gives the rough waveform of a sound file (by its id), or null while it is not known; drawn inside the chip.</summary>
+        public Func<int, byte[]> WaveProvider;
 
         public event Action<int> StopRequested;
         public event Action<int> PauseRequested;
@@ -84,6 +89,8 @@ namespace Ares.Player
             {
                 Chip c = new Chip();
                 c.Handle = s.Handle;
+                c.FileId = s.FileId;
+                c.Wave = WaveProvider != null ? WaveProvider(s.FileId) : null;
                 c.Title = s.Title;
                 c.Position = s.Position;
                 c.Length = s.Length;
@@ -300,6 +307,37 @@ namespace Ares.Player
             return (t / 60) + ":" + (t % 60).ToString("00");
         }
 
+        // the loudness of the sound as thin bars behind the text, inside the chip (the played part in the accent color)
+        private void DrawChipWave(Graphics g, GraphicsPath path, Rectangle r, Chip c, Color dim, Color accent)
+        {
+            int bodyH = r.Height - SeekZone;
+            int width = r.Width - 4;
+            const int step = 3;
+            int bars = Math.Max(1, width / step);
+            int playedX = (int)(width * Math.Max(0, Math.Min(1, c.Position / c.Length)));
+            Region old = g.Clip;
+            SmoothingMode mode = g.SmoothingMode;
+            g.SetClip(path, CombineMode.Intersect);
+            g.SmoothingMode = SmoothingMode.None;
+            using (SolidBrush a = new SolidBrush(Color.FromArgb(110, accent)))
+            using (SolidBrush b = new SolidBrush(Color.FromArgb(55, dim)))
+            {
+                for (int i = 0; i < bars; i++)
+                {
+                    int from = i * c.Wave.Length / bars;
+                    int to = Math.Max(from + 1, (i + 1) * c.Wave.Length / bars);
+                    int peak = 0;
+                    for (int k = from; k < to && k < c.Wave.Length; k++)
+                        peak = Math.Max(peak, c.Wave[k]);
+                    int h = Math.Max(1, (int)Math.Round((bodyH - 6) * peak / 255.0));
+                    int x = r.X + 2 + i * step;
+                    g.FillRectangle(i * step < playedX ? a : b, x, r.Y + (bodyH - h) / 2, 2, h);
+                }
+            }
+            g.SmoothingMode = mode;
+            g.Clip = old;
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             Ares.CommonGUI.ThemePalette p = Ares.CommonGUI.ThemeManager.Current;
@@ -344,6 +382,8 @@ namespace Ares.Player
                             g.Clip = old;
                         }
                     }
+                    if (!c.Web && c.Wave != null && c.Length > 0)
+                        DrawChipWave(g, path, r, c, dim, accent);
                     using (Pen pen = new Pen(c.Web && !c.Muted ? accent : border))
                         g.DrawPath(pen, path);
                 }

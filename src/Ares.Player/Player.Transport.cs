@@ -198,6 +198,7 @@ namespace Ares.Player
             // the slim "playing now" strip below the header
             m_NowPlaying = new NowPlayingStrip();
             m_NowPlaying.Name = "nowPlayingStrip";
+            m_NowPlaying.WaveProvider = SoundWaveFor;
             m_NowPlaying.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             m_NowPlaying.StopRequested += npHandle => { PlayingControl npc = m_PlayingControl; if (npc != null) npc.StopSound(npHandle); };
             m_NowPlaying.PauseRequested += npHandle => { PlayingControl npc = m_PlayingControl; if (npc != null) npc.ToggleSoundPause(npHandle); };
@@ -326,14 +327,65 @@ namespace Ares.Player
         private WaveformCache m_WaveCache;
         private static readonly System.Threading.SemaphoreSlim s_WaveGate = new System.Threading.SemaphoreSlim(1, 1);
 
-        private string MusicFilePathOf(int elementId)
+        private static string FilePathOf(int elementId, string directory)
         {
             if (elementId == -1)
                 return null;
             Ares.Data.IFileElement file = Ares.Data.DataModule.ElementRepository.GetElement(elementId) as Ares.Data.IFileElement;
             if (file == null || string.IsNullOrEmpty(file.FilePath))
                 return null;
-            return System.IO.Path.Combine(Ares.Settings.Settings.Instance.MusicDirectory ?? "", file.FilePath);
+            return System.IO.Path.Combine(directory ?? "", file.FilePath);
+        }
+
+        private string MusicFilePathOf(int elementId)
+        {
+            return FilePathOf(elementId, Ares.Settings.Settings.Instance.MusicDirectory);
+        }
+
+        // waveforms of the sound effects (by file id), for the chips; the user interface thread only
+        private readonly Dictionary<int, byte[]> m_SoundWaves = new Dictionary<int, byte[]>();
+
+        // the waveform if known; otherwise null, and it is analyzed in the background (the chips ask again every moment)
+        private byte[] SoundWaveFor(int fileId)
+        {
+            byte[] known;
+            if (m_SoundWaves.TryGetValue(fileId, out known))
+                return known;
+            m_SoundWaves[fileId] = null; // being prepared (or impossible): do not start it twice
+            string path = FilePathOf(fileId, Ares.Settings.Settings.Instance.SoundDirectory);
+            if (path == null)
+                return null;
+            if (m_WaveCache == null)
+                m_WaveCache = new WaveformCache(System.IO.Path.Combine(Ares.Settings.AppFolders.Root, "waveforms"));
+            WaveformCache cache = m_WaveCache;
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                byte[] wave = cache.Get(path);
+                if (wave == null)
+                {
+                    s_WaveGate.Wait();
+                    try
+                    {
+                        wave = Ares.Playing.Audio.WaveformAnalyzer.Analyze(path);
+                        cache.Put(path, wave);
+                    }
+                    finally
+                    {
+                        s_WaveGate.Release();
+                    }
+                }
+                if (wave == null || IsDisposed)
+                    return;
+                try
+                {
+                    BeginInvoke(new System.Windows.Forms.MethodInvoker(() => m_SoundWaves[fileId] = wave));
+                }
+                catch (Exception swallowed)
+                {
+                    Ares.Settings.ErrorLog.Note(swallowed);
+                }
+            });
+            return null;
         }
 
         // when the music changes: the plain bar at once; the waveform from the cache, or analyzed in the background
