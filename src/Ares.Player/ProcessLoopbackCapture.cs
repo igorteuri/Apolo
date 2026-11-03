@@ -69,7 +69,7 @@ namespace Ares.Player
         {
             try
             {
-                string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Apolo");
+                string dir = Ares.Settings.AppFolders.Root; // %APPDATA%\Apolo, or the folder of APOLO_DATA_DIR (tests, portable copy)
                 System.IO.Directory.CreateDirectory(dir);
                 string file = System.IO.Path.Combine(dir, "audio-capture.log");
                 if (System.IO.File.Exists(file) && new System.IO.FileInfo(file).Length > 200000)

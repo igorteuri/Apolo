@@ -827,6 +827,30 @@ namespace Ares.Player
                 {
                     // sound taken from inside the page: used when the PC doesn't play Apolo ("don't listen on this PC")
                     await core.AddScriptToExecuteOnDocumentCreatedAsync(CaptureScript);
+                    // the recorder of the audio thread is answered by Apolo at an address of the page's own site: sites like
+                    // YouTube refuse worklets from blob:/data: addresses, but allow their own site
+                    // all source kinds: the plain filter only sees the requests of the document itself
+                    core.AddWebResourceRequestedFilter("*" + CaptureWorkletPath, CoreWebView2WebResourceContext.All, CoreWebView2WebResourceRequestSourceKinds.All);
+                    core.WebResourceRequested += (s, e) =>
+                    {
+                        try
+                        {
+                            string uri = e.Request.Uri;
+                            int query = uri.IndexOf('?');
+                            if (query >= 0)
+                                uri = uri.Substring(0, query);
+                            if (!uri.EndsWith(CaptureWorkletPath, StringComparison.OrdinalIgnoreCase))
+                                return;
+                            byte[] js = System.Text.Encoding.UTF8.GetBytes(CaptureWorklet);
+                            ProcessLoopbackCapture.Log("web page sound: recorder of the audio thread given to " + e.Request.Uri);
+                            e.Response = env.CreateWebResourceResponse(new System.IO.MemoryStream(js), 200, "OK",
+                                "Content-Type: text/javascript; charset=utf-8\r\nCache-Control: no-store\r\nAccess-Control-Allow-Origin: *");
+                        }
+                        catch (Exception swallowed)
+                        {
+                            Ares.Settings.ErrorLog.Note(swallowed);
+                        }
+                    };
                     core.WebMessageReceived += (s, e) => HandlePageMessage(tab, core, e);
                     // a new page starts muted again until its sound goes through Apolo
                     core.NavigationStarting += (s, e) =>
@@ -1055,6 +1079,11 @@ namespace Ares.Player
                     ProcessLoopbackCapture.Log("web page sound: " + (routed ? "all of it goes through Apolo (tab not muted)" : "tab stays muted (" + msg.Substring(13) + ")"));
                 }
             }
+            else if (msg.StartsWith("apolo-capmode:", StringComparison.Ordinal))
+            {
+                // how the page records its sound: "worklet" (audio thread, nothing lost) or "script:<reason>" (page thread)
+                ProcessLoopbackCapture.Log("web page sound: recorded by " + msg.Substring(14));
+            }
             else if (msg.StartsWith("apolo-seam:", StringComparison.Ordinal))
             {
                 // "apolo-seam:<audio context>:<count>": the page lost a piece of sound and the jump was smoothed
@@ -1085,6 +1114,29 @@ namespace Ares.Player
                 }
             }
         }
+
+        private const string CaptureWorkletPath = "/__apolo-capture-worklet.js";
+
+        // runs on the audio thread of the page: takes every 128 frames as they come (a busy page cannot make it lose any) and
+        // hands them to the page in blocks of 2048 frames; the page sends them to Apolo when it has time
+        private const string CaptureWorklet = @"class ApoloTap extends AudioWorkletProcessor {
+ constructor() { super(); this.size = 2048; this.n = 0; this.l = new Float32Array(this.size); this.r = new Float32Array(this.size); }
+ process(inputs) {
+  var inp = inputs[0], frames = 128;
+  if (inp && inp.length) frames = inp[0].length;
+  for (var i = 0; i < frames; i++) {
+   var a = inp && inp.length ? inp[0][i] : 0, b = inp && inp.length > 1 ? inp[1][i] : a;
+   this.l[this.n] = a; this.r[this.n] = b;
+   if (++this.n === this.size) {
+    this.port.postMessage({ l: this.l, r: this.r }, [this.l.buffer, this.r.buffer]);
+    this.l = new Float32Array(this.size); this.r = new Float32Array(this.size); this.n = 0;
+   }
+  }
+  return true;
+ }
+}
+registerProcessor('apolo-tap', ApoloTap);
+";
 
         private const string CaptureScript = @"(function() {
  if (window.__apoloCap) return;
@@ -1147,20 +1199,42 @@ namespace Ares.Player
   later.push(fn);
   if (later.length === 1) laterChannel.port2.postMessage(0);
  }
+ // everything the page plays goes into one entry per audio context; behind it the recorder of the page thread works at
+ // once, and the recorder of the audio thread (nothing lost when the page is busy) takes over as soon as it is loaded
  function tapOf(ctx) {
   if (ctx.__apoloTap) return ctx.__apoloTap;
+  var entry = ctx.createGain();
+  entry.__apoloIsTap = true;
   var sp = ctx.createScriptProcessor(8192, 2, 2); // fewer, larger blocks: the page thread is woken less often
   sp.__apoloIsTap = true;
-  var id = ++nextId, rs = { t: 0, pl: 0, pr: 0 };
+  var id = ++nextId, rs = { t: 0, pl: 0, pr: 0 }, onWorklet = false;
   sp.onaudioprocess = function(e) {
-   if (!cap.on) return;
+   if (!cap.on || onWorklet) return;
    var ib = e.inputBuffer, l = ib.getChannelData(0).slice(0), r = ib.numberOfChannels > 1 ? ib.getChannelData(1).slice(0) : l;
    var rate = ctx.sampleRate;
    runLater(function() { push(l, r, rate, rs, id); });
   };
+  origConnect.call(entry, sp);
   origConnect.call(sp, ctx.destination);
-  ctx.__apoloTap = sp;
-  return sp;
+  ctx.__apoloTap = entry;
+  startWorklet(ctx, entry, sp, rs, id, function() { onWorklet = true; });
+  return entry;
+ }
+ function capMode(text) { try { wv.postMessage('apolo-capmode:' + text); } catch (e) {} }
+ function startWorklet(ctx, entry, sp, rs, id, done) {
+  try {
+   if (!ctx.audioWorklet || !window.AudioWorkletNode || !location.origin || location.origin === 'null') { capMode('page thread (no worklet here)'); return; }
+   ctx.audioWorklet.addModule(location.origin + '/__apolo-capture-worklet.js').then(function() {
+    var wn = new AudioWorkletNode(ctx, 'apolo-tap', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 2, channelCountMode: 'explicit' });
+    wn.__apoloIsTap = true;
+    wn.port.onmessage = function(e) { if (cap.on) push(e.data.l, e.data.r, ctx.sampleRate, rs, id); };
+    origConnect.call(entry, wn);
+    origConnect.call(wn, ctx.destination);
+    done();
+    try { origDisconnect.call(entry, sp); origDisconnect.call(sp); } catch (e) {}
+    capMode('audio thread (worklet)');
+   }, function(e) { capMode('page thread (worklet refused: ' + (e && e.name) + ')'); });
+  } catch (e) { capMode('page thread (' + (e && e.message) + ')'); }
  }
  // while Apolo takes the sound, what would go to the speakers goes to a gain of 0 instead: the tab is not muted, so the
  // browser keeps the clock of the real sound card (a muted tab runs on a software clock which is ~1.4 % slow and uneven:
@@ -1292,6 +1366,12 @@ namespace Ares.Player
         }
 
         // ------------------------------------------------------------------ favorites
+
+        /// <summary>For tools/preview.ps1: a page opened without asking and without being saved.</summary>
+        internal WebTab AddTabForPreview(string url)
+        {
+            return AddTab("Teste", url, "web", false);
+        }
 
         public WebTab AddFavorite()
         {

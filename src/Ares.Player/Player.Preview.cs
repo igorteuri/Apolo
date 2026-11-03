@@ -39,6 +39,10 @@ namespace Ares.Player
                 case "prompt": NewEmptyMode(false); break;
                 case "tour": ShowGuidedTour(false); break;
                 case "export": { ExportKind kind; AskExportKind(out kind); } break;
+                case "webcap":
+                    // a web page in a tab (APOLO_PREVIEW_URL), to check the recording of its sound in audio-capture.log
+                    ShowWebTab(m_WebWindow.AddTabForPreview(Environment.GetEnvironmentVariable("APOLO_PREVIEW_URL") ?? "https://www.youtube.com/"));
+                    break;
                 case "bank": BankPickerDialog.Pick(this, Bank, "drag"); break;
                 case "missing":
                     {
