@@ -162,7 +162,7 @@ namespace Ares.Player
                 string discordText = DiscordStatusText(out discordActive);
                 SetStat(m_StatDiscord, discordText, discordActive && p != null && !p.IsClassic ? p.Accent
                     : (m_Discord != null && m_Discord.State == DiscordState.Off && p != null && !p.IsClassic ? p.TextDim : ForeColor));
-                SetStat(m_StatProject, m_Project != null ? m_Project.Title : "", ForeColor);
+                SetStat(m_StatProject, m_Project != null ? m_Project.Title + "  ▴" : "", ForeColor); // the arrow: a click opens the project switch
                 UpdateSavedLabel(p);
                 if (m_StatSavedDivider != null)
                     m_StatSavedDivider.Visible = m_StatSaved.Visible;

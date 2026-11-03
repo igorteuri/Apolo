@@ -35,6 +35,7 @@ namespace Ares.Player
             switch (which)
             {
                 case "packs": ShowPacksDialog(); break;
+                case "switch": ShowProjectSwitch(); break;
                 case "credits": ShowProjectCredits(); break;
                 case "prompt": NewEmptyMode(false); break;
                 case "tour": ShowGuidedTour(false); break;

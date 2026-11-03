@@ -116,6 +116,7 @@ namespace Ares.Player
             InitTray();
             InitWeb();
             InitStatusBar();
+            InitProjectSwitch();
             InitListMode();
             InitTrackPanel();
             InitTransportRow();

@@ -36,5 +36,6 @@
     <Compile Include="..\..\src\Ares.Player\ProjectCredits.cs" Link="Linked\ProjectCredits.cs" />
     <Compile Include="..\..\src\Ares.Player\RemoteServer.cs" Link="Linked\RemoteServer.cs" />
     <Compile Include="..\..\src\Ares.Player\FolderNames.cs" Link="Linked\FolderNames.cs" />
+    <Compile Include="..\..\src\Ares.Player\RecentProjects.cs" Link="Linked\RecentProjects.cs" />
   </ItemGroup>
 </Project>
