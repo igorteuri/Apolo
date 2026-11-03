@@ -1,0 +1,2 @@
+# shell scripts of the git hooks must keep LF line endings (sh fails on CRLF)
+.githooks/* text eol=lf
