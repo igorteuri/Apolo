@@ -49,6 +49,14 @@ namespace Ares.Player
         private int m_HoverX;
 
         private const int Padding_ = 10;
+        private byte[] m_Wave;
+
+        /// <summary>The rough loudness of the music along its length (0..255 per slice), drawn in the bar; null = a plain bar.</summary>
+        public void SetWave(byte[] wave)
+        {
+            m_Wave = wave != null && wave.Length > 1 ? wave : null;
+            Invalidate();
+        }
         private string m_Title = "";
 
         /// <summary>Name of the music which is playing, shown between the two times.</summary>
@@ -238,7 +246,10 @@ namespace Ares.Player
             double shown = m_Dragging ? m_DragPosition : m_Position;
             Rectangle tr = TrackRectangle;
 
+            bool wave = m_Wave != null && m_Seekable && !Compact;
+
             // track
+            if (!wave)
             using (GraphicsPath path = RoundedRect(tr, tr.Height / 2))
             using (SolidBrush b = new SolidBrush(m_Seekable ? track : Blend(track, back, 0.5)))
             {
@@ -248,7 +259,9 @@ namespace Ares.Player
             if (m_Seekable)
             {
                 int fillWidth = PixelFor(shown);
-                if (fillWidth > 0)
+                if (wave)
+                    DrawWave(g, fill, Blend(dim, back, 0.55), fillWidth);
+                if (fillWidth > 0 && !wave)
                 {
                     Rectangle fr = new Rectangle(tr.X, tr.Y, Math.Max(tr.Height, fillWidth), tr.Height);
                     using (GraphicsPath path = RoundedRect(fr, tr.Height / 2))
@@ -262,7 +275,10 @@ namespace Ares.Player
                 int cx = tr.X + fillWidth;
                 using (SolidBrush b = new SolidBrush(fill))
                 {
-                    g.FillEllipse(b, cx - d / 2, TrackCenterY - d / 2, d, d);
+                    if (wave)
+                        g.FillRectangle(b, cx - 1, TrackCenterY - 10, 2, 20);
+                    else
+                        g.FillEllipse(b, cx - d / 2, TrackCenterY - d / 2, d, d);
                 }
 
                 // hover time bubble
@@ -310,6 +326,32 @@ namespace Ares.Player
                         TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
                 }
             }
+        }
+
+        // thin vertical bars: the played part in the accent color, the rest dimmed
+        private void DrawWave(Graphics g, Color played, Color rest, int playedWidth)
+        {
+            int width = Width - 2 * Padding_;
+            const int barWidth = 2, step = 3, half = 9;
+            int bars = Math.Max(1, width / step);
+            SmoothingMode old = g.SmoothingMode;
+            g.SmoothingMode = SmoothingMode.None;
+            using (SolidBrush a = new SolidBrush(played))
+            using (SolidBrush b = new SolidBrush(rest))
+            {
+                for (int i = 0; i < bars; i++)
+                {
+                    int from = i * m_Wave.Length / bars;
+                    int to = Math.Max(from + 1, (i + 1) * m_Wave.Length / bars);
+                    int peak = 0;
+                    for (int k = from; k < to && k < m_Wave.Length; k++)
+                        peak = Math.Max(peak, m_Wave[k]);
+                    int h = Math.Max(1, (int)Math.Round(half * peak / 255.0));
+                    int x = Padding_ + i * step;
+                    g.FillRectangle(x - Padding_ < playedWidth ? a : b, x, TrackCenterY - h, barWidth, h * 2);
+                }
+            }
+            g.SmoothingMode = old;
         }
 
         private static Color Blend(Color a, Color b, double amountOfB)

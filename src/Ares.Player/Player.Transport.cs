@@ -319,6 +319,72 @@ namespace Ares.Player
             m_ProgressTimer.Start();
         }
 
+        // ---------------------------------------------------------------- waveform of the music in the seek bar
+
+        private string m_WavePath;
+        private int m_WaveToken;
+        private WaveformCache m_WaveCache;
+        private static readonly System.Threading.SemaphoreSlim s_WaveGate = new System.Threading.SemaphoreSlim(1, 1);
+
+        private string MusicFilePathOf(int elementId)
+        {
+            if (elementId == -1)
+                return null;
+            Ares.Data.IFileElement file = Ares.Data.DataModule.ElementRepository.GetElement(elementId) as Ares.Data.IFileElement;
+            if (file == null || string.IsNullOrEmpty(file.FilePath))
+                return null;
+            return System.IO.Path.Combine(Ares.Settings.Settings.Instance.MusicDirectory ?? "", file.FilePath);
+        }
+
+        // when the music changes: the plain bar at once; the waveform from the cache, or analyzed in the background
+        private void UpdateWave(int elementId)
+        {
+            string path = MusicFilePathOf(elementId);
+            if (path == m_WavePath)
+                return;
+            m_WavePath = path;
+            int token = ++m_WaveToken;
+            m_MusicProgressBar.SetWave(null);
+            if (path == null)
+                return;
+            if (m_WaveCache == null)
+                m_WaveCache = new WaveformCache(System.IO.Path.Combine(Ares.Settings.AppFolders.Root, "waveforms"));
+            WaveformCache cache = m_WaveCache;
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                byte[] wave = cache.Get(path);
+                if (wave == null)
+                {
+                    s_WaveGate.Wait();
+                    try
+                    {
+                        if (token != m_WaveToken)
+                            return; // the music changed meanwhile
+                        wave = Ares.Playing.Audio.WaveformAnalyzer.Analyze(path);
+                        cache.Put(path, wave);
+                    }
+                    finally
+                    {
+                        s_WaveGate.Release();
+                    }
+                }
+                if (wave == null || IsDisposed)
+                    return;
+                try
+                {
+                    BeginInvoke(new System.Windows.Forms.MethodInvoker(() =>
+                    {
+                        if (token == m_WaveToken)
+                            m_MusicProgressBar.SetWave(wave);
+                    }));
+                }
+                catch (Exception swallowed)
+                {
+                    Ares.Settings.ErrorLog.Note(swallowed); // the window was closed
+                }
+            });
+        }
+
         private string PauseText(bool paused)
         {
             string lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
@@ -359,6 +425,7 @@ namespace Ares.Player
                 if (control == null || WindowState == FormWindowState.Minimized || !Visible)
                     return;
                 m_MusicProgressBar.Title = control.CurrentMusicElement == -1 ? "" : (musicLabel.Text ?? "");
+                UpdateWave(control.CurrentMusicElement);
                 double position, length;
                 if (control.GetMusicPosition(out position, out length))
                     m_MusicProgressBar.SetProgress(position, length);
