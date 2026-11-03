@@ -98,7 +98,7 @@ namespace Ares.Player
             add("home", "Ir para a aba Apolo (tela inicial)", "Go to the Apolo tab (home)", ShowHome);
             add("nexttab", "Próxima aba", "Next tab", () => CycleTab(1));
             add("prevtab", "Aba anterior", "Previous tab", () => CycleTab(-1));
-            add("pause", "Pausar / continuar", "Pause / resume", () => { if (m_PauseButton != null) m_PauseButton.PerformClick(); });
+            add("pause", "Pausar / continuar", "Pause / resume", () => TogglePauseAll());
             add("stop", "Parar tudo", "Stop all", () => stopButton_Click(this, EventArgs.Empty));
             add("previous", "Música anterior", "Previous track", () => previousButton_Click(this, EventArgs.Empty));
             add("next", "Próxima música", "Next track", () => nextButton_Click(this, EventArgs.Empty));

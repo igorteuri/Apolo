@@ -96,5 +96,34 @@ namespace Apolo.Tests
                 Assert.Equal("", r.GetProperty("title").GetString());
             }
         }
+
+        [Fact]
+        public void SoundEffects_AndTheirPauseState_GoToThePhone_EvenWithQuotesAndEmoji()
+        {
+            RemoteState s = new RemoteState { MusicPaused = true, SoundsPaused = false };
+            s.Sounds.Add(new RemoteSound { Handle = 11, Title = "Trovão \"forte\" ⚡", Paused = true });
+            s.Sounds.Add(new RemoteSound { Handle = 12, Title = "Chuva" });
+            using (JsonDocument doc = JsonDocument.Parse(RemoteStateJson.Build(s)))
+            {
+                JsonElement r = doc.RootElement;
+                Assert.True(r.GetProperty("musicPaused").GetBoolean());
+                Assert.False(r.GetProperty("soundsPaused").GetBoolean());
+                Assert.Equal(2, r.GetProperty("sounds").GetArrayLength());
+                Assert.Equal(11, r.GetProperty("sounds")[0].GetProperty("h").GetInt32());
+                Assert.Equal("Trovão \"forte\" ⚡", r.GetProperty("sounds")[0].GetProperty("title").GetString());
+                Assert.True(r.GetProperty("sounds")[0].GetProperty("paused").GetBoolean());
+                Assert.False(r.GetProperty("sounds")[1].GetProperty("paused").GetBoolean());
+            }
+        }
+
+        [Fact]
+        public void NothingPlaying_HasNoSoundsAndNothingPaused()
+        {
+            using (JsonDocument doc = JsonDocument.Parse(RemoteStateJson.Build(new RemoteState())))
+            {
+                Assert.Equal(0, doc.RootElement.GetProperty("sounds").GetArrayLength());
+                Assert.False(doc.RootElement.GetProperty("musicPaused").GetBoolean());
+            }
+        }
     }
 }

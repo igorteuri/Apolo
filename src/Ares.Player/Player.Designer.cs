@@ -82,7 +82,7 @@ namespace Ares.Player
             this.settingsButton = new System.Windows.Forms.ToolStripButton();
             this.aboutButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            this.stopButton = new System.Windows.Forms.ToolStripButton();
+            this.stopButton = new Ares.CommonGUI.MenuHintButton();
             this.previousButton = new System.Windows.Forms.ToolStripButton();
             this.nextButton = new System.Windows.Forms.ToolStripButton();
             this.repeatButton = new System.Windows.Forms.ToolStripButton();
@@ -874,7 +874,7 @@ namespace Ares.Player
         private System.Windows.Forms.ToolStripButton settingsButton;
         private System.Windows.Forms.ToolStripButton aboutButton;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-        private System.Windows.Forms.ToolStripButton stopButton;
+        private Ares.CommonGUI.MenuHintButton stopButton;
         private System.Windows.Forms.ToolStripButton previousButton;
         private System.Windows.Forms.ToolStripButton nextButton;
         private System.Windows.Forms.Timer broadCastTimer;

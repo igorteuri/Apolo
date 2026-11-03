@@ -13,25 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set the version (file VERSION + build number)
-        shell: pwsh
-        run: |
-          $base = (Get-Content VERSION -Raw).Trim()
-          $version = "$base.${{ github.run_number }}.0"
-          Write-Host "Apolo version: $version"
-          $f = "src/Ares.Player/Properties/AssemblyInfo.cs"
-          $t = [System.IO.File]::ReadAllText($f)
-          $t = [regex]::Replace($t, 'AssemblyVersion\("[^"]*"\)', "AssemblyVersion(`"$version`")")
-          $t = [regex]::Replace($t, 'AssemblyFileVersion\("[^"]*"\)', "AssemblyFileVersion(`"$version`")")
-          [System.IO.File]::WriteAllText($f, $t)
-
       - name: Setup MSBuild (for the small firewall helper)
         uses: microsoft/setup-msbuild@v2
 
       - name: Publish Apolo (.NET 8, self-contained, x64)
         shell: pwsh
         run: |
-          dotnet publish src/Ares.Player/Ares.Player.csproj -c Release -r win-x64 --self-contained true --nologo -v:q -clp:ErrorsOnly -o dist
+          dotnet publish src/Ares.Player/Ares.Player.csproj -c Release -r win-x64 --self-contained true --nologo -p:ApoloBuild=${{ github.run_number }} -v:q -clp:ErrorsOnly -o dist
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: Build the firewall helper (Ares.WinSecurity, .NET Framework 4.8)

@@ -402,6 +402,36 @@ namespace Ares.Players
             return PlayingModule.ProjectPlayer.IsPaused();
         }
 
+        public bool ToggleMusicPause()
+        {
+            return PlayingModule.ProjectPlayer.ToggleMusicPause();
+        }
+
+        public bool ToggleSoundsPause()
+        {
+            return PlayingModule.ProjectPlayer.ToggleSoundsPause();
+        }
+
+        public bool IsMusicPaused()
+        {
+            return PlayingModule.ProjectPlayer.IsMusicPaused();
+        }
+
+        public bool IsSoundsPaused()
+        {
+            return PlayingModule.ProjectPlayer.IsSoundsPaused();
+        }
+
+        public void StopMusicOnly()
+        {
+            PlayingModule.ProjectPlayer.StopMusicOnly();
+        }
+
+        public void StopSoundEffectsOnly()
+        {
+            PlayingModule.ProjectPlayer.StopSoundEffectsOnly();
+        }
+
         public void SeekMusic(double positionSeconds)
         {
             PlayingModule.ProjectPlayer.SetMusicPosition(positionSeconds);

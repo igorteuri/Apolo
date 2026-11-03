@@ -32,4 +32,16 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2592.51" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
   </ItemGroup>
+  <!-- Version = arquivo VERSION + número do build (o GitHub passa -p:ApoloBuild=<número>; localmente fica 0). Vale também para a pasta de teste. -->
+  <PropertyGroup>
+    <ApoloBase>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)..\..\VERSION').Trim())</ApoloBase>
+    <ApoloBuild Condition="'$(ApoloBuild)' == ''">0</ApoloBuild>
+    <ApoloVersion>$(ApoloBase).$(ApoloBuild).0</ApoloVersion>
+  </PropertyGroup>
+  <Target Name="ApoloVersionFile" BeforeTargets="CoreCompile">
+    <WriteLinesToFile File="$(IntermediateOutputPath)ApoloVersion.g.cs" Overwrite="true" Lines="[assembly: System.Reflection.AssemblyVersion(&quot;$(ApoloVersion)&quot;)];[assembly: System.Reflection.AssemblyFileVersion(&quot;$(ApoloVersion)&quot;)]" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)ApoloVersion.g.cs" />
+    </ItemGroup>
+  </Target>
 </Project>

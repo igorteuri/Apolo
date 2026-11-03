@@ -386,6 +386,24 @@ namespace Ares.Playing
         /// </summary>
         bool IsPaused();
 
+        /// <summary>Pauses only the music (or resumes it). Returns whether the music is paused afterwards.</summary>
+        bool ToggleMusicPause();
+
+        /// <summary>Pauses only the sound effects (or resumes them). Returns whether they are paused afterwards.</summary>
+        bool ToggleSoundsPause();
+
+        /// <summary>Whether the music is paused.</summary>
+        bool IsMusicPaused();
+
+        /// <summary>Whether a sound effect is paused.</summary>
+        bool IsSoundsPaused();
+
+        /// <summary>Stops the music and leaves the sound effects playing.</summary>
+        void StopMusicOnly();
+
+        /// <summary>Stops all the sound effects and leaves the music playing.</summary>
+        void StopSoundEffectsOnly();
+
         /// <summary>
         /// Adds a music tag to the list of possible tags. If there is a file
         /// with the tag and no tagged music was playing, starts tagged music.

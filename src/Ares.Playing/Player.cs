@@ -1009,6 +1009,36 @@ namespace Ares.Playing
             return ((FilePlayer)PlayingModule.FilePlayer).IsAnyPaused();
         }
 
+        public bool ToggleMusicPause()
+        {
+            return ((FilePlayer)PlayingModule.FilePlayer).ToggleGroupPause(true);
+        }
+
+        public bool ToggleSoundsPause()
+        {
+            return ((FilePlayer)PlayingModule.FilePlayer).ToggleGroupPause(false);
+        }
+
+        public bool IsMusicPaused()
+        {
+            return ((FilePlayer)PlayingModule.FilePlayer).IsGroupPaused(true);
+        }
+
+        public bool IsSoundsPaused()
+        {
+            return ((FilePlayer)PlayingModule.FilePlayer).IsGroupPaused(false);
+        }
+
+        public void StopMusicOnly()
+        {
+            StopMusic(0);
+        }
+
+        public void StopSoundEffectsOnly()
+        {
+            StopSounds(0);
+        }
+
         public bool SetMusicPosition(double positionSeconds)
         {
             IMusicPlayer active = ActiveMusicPlayer;

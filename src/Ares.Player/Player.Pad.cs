@@ -362,7 +362,7 @@ namespace Ares.Player
                 AddHeaderButton("chevron-left", 1.6, T("Pasta anterior", "Previous folder"), () => ChangeMode(-1));
                 AddHeaderButton("chevron-right", 1.6, T("Próxima pasta", "Next folder"), () => ChangeMode(1));
                 AddHeaderButton("skip-back", 1.0, T("Música anterior", "Previous track"), () => m_Player.previousButton_Click(this, EventArgs.Empty));
-                m_PauseIcon = AddHeaderButton("pause", 1.0, T("Pausar ou continuar", "Pause or resume"), () => m_Player.m_PauseButton.PerformClick());
+                m_PauseIcon = AddHeaderButton("pause", 1.0, T("Pausar ou continuar", "Pause or resume"), () => m_Player.TogglePauseAll());
                 AddHeaderButton("square", 1.0, T("Parar tudo", "Stop all"), () => m_Player.stopButton_Click(this, EventArgs.Empty));
                 AddHeaderButton("skip-forward", 1.0, T("Próxima música", "Next track"), () => m_Player.nextButton_Click(this, EventArgs.Empty));
                 AddHeaderButton("repeat", 1.0, T("Repetir a música atual", "Repeat the current track"), () => m_Player.repeatButton_Click(this, EventArgs.Empty));

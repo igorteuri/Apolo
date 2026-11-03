@@ -386,6 +386,69 @@ namespace Ares.Playing
             return pausedSomething;
         }
 
+        // the music (and web radio) is one group, the sound effects the other
+        private List<AudioChannel> GroupChannels(bool music)
+        {
+            List<AudioChannel> channels = new List<AudioChannel>();
+            foreach (int handle in GetRunningHandles())
+            {
+                bool isEffect;
+                lock (m_Mutex)
+                {
+                    RunningFileInfo info;
+                    if (!m_RunningFiles.TryGetValue(handle, out info) || info.File == null)
+                        continue;
+                    isEffect = info.File.SoundFileType == SoundFileType.SoundEffect;
+                }
+                if (isEffect == music)
+                    continue;
+                AudioChannel channel = GetChannel(handle);
+                if (channel != null)
+                    channels.Add(channel);
+            }
+            return channels;
+        }
+
+        /// <summary>Whether something of the group (music, or sound effects) is paused.</summary>
+        public bool IsGroupPaused(bool music)
+        {
+            foreach (AudioChannel channel in GroupChannels(music))
+            {
+                if (channel.State == ChannelState.Paused)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>Pauses what plays of the group (music, or sound effects), or resumes it when it is paused.</summary>
+        /// <returns>whether the group is paused afterwards</returns>
+        public bool ToggleGroupPause(bool music)
+        {
+            List<AudioChannel> channels = GroupChannels(music);
+            bool anyPaused = false;
+            foreach (AudioChannel channel in channels)
+            {
+                if (channel.State == ChannelState.Paused)
+                    anyPaused = true;
+            }
+            if (anyPaused)
+            {
+                foreach (AudioChannel channel in channels)
+                {
+                    if (channel.State == ChannelState.Paused)
+                        channel.Resume();
+                }
+                return false;
+            }
+            bool pausedSomething = false;
+            foreach (AudioChannel channel in channels)
+            {
+                if (channel.State == ChannelState.Playing && channel.Pause())
+                    pausedSomething = true;
+            }
+            return pausedSomething;
+        }
+
         private List<int> GetRunningHandles()
         {
             lock (m_Mutex)

@@ -23,6 +23,14 @@ namespace Ares.Player
         public List<RemoteButton> Buttons = new List<RemoteButton>();
     }
 
+    /// <summary>A sound effect which is playing (the remote control page can pause / stop it on its own).</summary>
+    internal sealed class RemoteSound
+    {
+        public int Handle;
+        public string Title;
+        public bool Paused;
+    }
+
     /// <summary>What the player is doing, for the remote control page (polled by phones, the Stream Deck and Foundry).</summary>
     internal sealed class RemoteState
     {
@@ -36,6 +44,8 @@ namespace Ares.Player
         public int Mode = -1;                          // index of the open folder in Modes
         public List<RemoteButton> Elements = new List<RemoteButton>();
         public List<RemoteGroup> Groups = new List<RemoteGroup>();
+        public bool MusicPaused, SoundsPaused;         // the music / the sound effects are paused (the "Paused" flag is for the main button)
+        public List<RemoteSound> Sounds = new List<RemoteSound>();
         public List<int> Active = new List<int>();     // ids of everything which plays (also in other folders)
     }
 
@@ -65,6 +75,11 @@ namespace Ares.Player
             json.Append(",\"elements\":[").Append(string.Join(",", s.Elements.Select(Button))).Append("]");
             json.Append(",\"groups\":[").Append(string.Join(",", s.Groups.Select(g =>
                 "{\"title\":" + JsonText.Quote(g.Title ?? "") + ",\"elements\":[" + string.Join(",", g.Buttons.Select(Button)) + "]}"))).Append("]");
+            json.Append(",\"musicPaused\":").Append(Bool(s.MusicPaused));
+            json.Append(",\"soundsPaused\":").Append(Bool(s.SoundsPaused));
+            json.Append(",\"sounds\":[").Append(string.Join(",", s.Sounds.Select(x =>
+                "{\"h\":" + x.Handle.ToString(CultureInfo.InvariantCulture) + ",\"title\":" + JsonText.Quote(x.Title ?? "")
+                + ",\"paused\":" + Bool(x.Paused) + "}"))).Append("]");
             json.Append(",\"active\":[").Append(string.Join(",", s.Active.Select(a => a.ToString(CultureInfo.InvariantCulture)))).Append("]}");
             return json.ToString();
         }

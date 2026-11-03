@@ -251,6 +251,10 @@ namespace Ares.Player
                     VolMusic = control.MusicVolume,
                     VolSound = control.SoundVolume
                 };
+                state.MusicPaused = playing && control.IsMusicPaused();
+                state.SoundsPaused = control.IsSoundsPaused();
+                foreach (Ares.Playing.PlayingFileInfo sound in control.GetRunningSounds())
+                    state.Sounds.Add(new RemoteSound { Handle = sound.Handle, Title = sound.Title, Paused = sound.Paused });
                 if (m_Project != null)
                 {
                     Ares.Data.IMode current = control.CurrentMode;
@@ -333,6 +337,16 @@ namespace Ares.Player
                     switch (cmd)
                     {
                         case "pause": control.TogglePause(); break;
+                        case "pause_music": control.ToggleMusicPause(); break;
+                        case "pause_sounds": control.ToggleSoundsPause(); break;
+                        case "stop_music": control.StopMusicOnly(); break;
+                        case "stop_sounds": control.StopSoundEffectsOnly(); break;
+                        case "sound_pause":
+                            if (int.TryParse(arg, out n)) control.ToggleSoundPause(n);
+                            break;
+                        case "sound_stop":
+                            if (int.TryParse(arg, out n)) control.StopSound(n);
+                            break;
                         case "stop": StopAllPlaying(); break;
                         case "prev": previousButton_Click(null, EventArgs.Empty); break;
                         case "next": nextButton_Click(null, EventArgs.Empty); break;

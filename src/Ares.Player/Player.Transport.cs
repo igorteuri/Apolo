@@ -80,10 +80,60 @@ namespace Ares.Player
             }
         }
 
+        private ToolStripMenuItem m_MusicPauseItem, m_SoundsPauseItem;
+
+        /// <summary>The main pause button: pauses everything, or resumes it.</summary>
+        internal void TogglePauseAll()
+        {
+            PlayingControl control = m_PlayingControl;
+            if (control != null)
+            {
+                control.TogglePause();
+                UpdatePauseButton(control.IsPaused());
+            }
+        }
+
+        // Pause and Stop: a click acts on everything; a right click offers only the music or only the effects
+        private void AddScopeItems()
+        {
+            ContextMenuStrip pauseMenu = new ContextMenuStrip();
+            ContextMenuStrip stopMenu = new ContextMenuStrip();
+            m_MusicPauseItem = ScopeItem(pauseMenu, T("Pausar só a música", "Pause only the music"), c => c.ToggleMusicPause());
+            m_SoundsPauseItem = ScopeItem(pauseMenu, T("Pausar só os efeitos", "Pause only the effects"), c => c.ToggleSoundsPause());
+            ScopeItem(stopMenu, T("Parar só a música", "Stop only the music"), c => c.StopMusicOnly());
+            ScopeItem(stopMenu, T("Parar só os efeitos", "Stop only the effects"), c => c.StopSoundEffectsOnly());
+            RightClickMenu(m_PauseButton, pauseMenu);
+            RightClickMenu(stopButton, stopMenu);
+            m_PauseButton.ToolTipText = PauseText(false);
+        }
+
+        // left click = everything (the button itself); right click = the choice "only the music / only the effects"
+        private void RightClickMenu(ToolStripItem button, ContextMenuStrip menu)
+        {
+            button.MouseUp += (s, e) =>
+            {
+                if (e.Button == MouseButtons.Right)
+                    menu.Show(Cursor.Position);
+            };
+        }
+
+        private ToolStripMenuItem ScopeItem(ContextMenuStrip menu, string text, Action<PlayingControl> action)
+        {
+            ToolStripMenuItem item = new ToolStripMenuItem(text);
+            item.Click += (s, e) =>
+            {
+                PlayingControl control = m_PlayingControl;
+                if (control != null)
+                    action(control);
+            };
+            menu.Items.Add(item);
+            return item;
+        }
+
         private MusicProgressBar m_MusicProgressBar;
         private SoundProgressPanel m_SoundPanel;
         private NowPlayingStrip m_NowPlaying;
-        private ToolStripButton m_PauseButton;
+        private Ares.CommonGUI.MenuHintButton m_PauseButton;
         private Size m_PauseIconSize;
         private bool m_PauseShown;
         private ToolStripButton m_OutputButton;
@@ -156,19 +206,12 @@ namespace Ares.Player
             Controls.Add(m_NowPlaying);
 
             // pause button, right behind the stop button
-            m_PauseButton = new ToolStripButton();
+            m_PauseButton = new Ares.CommonGUI.MenuHintButton();
             m_PauseButton.Name = "pauseButton";
             m_PauseButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
             m_PauseButton.ImageScaling = ToolStripItemImageScaling.None;
-            m_PauseButton.Click += (sender, e) =>
-            {
-                PlayingControl control = m_PlayingControl;
-                if (control != null)
-                {
-                    control.TogglePause();
-                    UpdatePauseButton(control.IsPaused());
-                }
-            };
+            m_PauseButton.Click += (sender, e) => TogglePauseAll();
+            AddScopeItems();
             int stopIndex = toolStrip1.Items.IndexOf(stopButton);
             toolStrip1.Items.Insert(stopIndex < 0 ? toolStrip1.Items.Count : stopIndex + 1, m_PauseButton);
             m_PauseShown = true; // forces the first update
@@ -335,6 +378,11 @@ namespace Ares.Player
                 // nothing playing: the button shows "play" and is dimmed (it was a "pause" icon beside the status "Stopped")
                 bool idle = m_TrayState == Ares.CommonGUI.ApoloState.Idle;
                 UpdatePauseButton(control.IsPaused() || idle);
+                if (m_MusicPauseItem != null)
+                {
+                    m_MusicPauseItem.Text = control.IsMusicPaused() ? T("Continuar a música", "Resume the music") : T("Pausar só a música", "Pause only the music");
+                    m_SoundsPauseItem.Text = control.IsSoundsPaused() ? T("Continuar os efeitos", "Resume the effects") : T("Pausar só os efeitos", "Pause only the effects");
+                }
                 if (m_PauseButton != null && m_PauseButton.Enabled == idle)
                     m_PauseButton.Enabled = !idle;
                 UpdateOutputButton();

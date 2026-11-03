@@ -233,6 +233,22 @@ namespace Ares.CommonGUI
 
             protected override void OnRenderButtonBackground(ToolStripItemRenderEventArgs e)
             {
+                DrawButtonBackground(e);
+                if (e.Item is MenuHintButton)
+                {
+                    // small chevron at the right: a right click offers more options
+                    Rectangle b = new Rectangle(Point.Empty, e.Item.Size);
+                    int cx = b.Right - 7, cy = b.Top + b.Height / 2;
+                    System.Drawing.Drawing2D.SmoothingMode old = e.Graphics.SmoothingMode;
+                    e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    using (Pen p = new Pen(e.Item.Enabled ? Current.TextDim : Color.FromArgb(90, Current.TextDim), 1.5f))
+                        e.Graphics.DrawLines(p, new Point[] { new Point(cx - 3, cy - 1), new Point(cx, cy + 2), new Point(cx + 3, cy - 1) });
+                    e.Graphics.SmoothingMode = old;
+                }
+            }
+
+            private void DrawButtonBackground(ToolStripItemRenderEventArgs e)
+            {
                 ToolStripButton button = e.Item as ToolStripButton;
                 if (button != null && button.Checked && button.Enabled)
                 {
