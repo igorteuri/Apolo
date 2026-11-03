@@ -62,19 +62,33 @@ namespace Ares.CommonGUI
             return v == "1" || v.Equals("true", StringComparison.OrdinalIgnoreCase);
         }
 
+        // a line break in a value would start a new "key=value" line in the file
+        private static string OneLine(string text)
+        {
+            return (text ?? "").Replace("\r\n", " ").Replace('\r', ' ').Replace('\n', ' ');
+        }
+
         public static void Set(string key, string value)
         {
             Load();
-            s_Values[key] = value;
+            s_Values[OneLine(key).Replace("=", "")] = OneLine(value);
             try
             {
                 var lines = new List<string>();
                 foreach (var pair in s_Values)
                     lines.Add(pair.Key + "=" + pair.Value);
-                File.WriteAllLines(FilePath, lines.ToArray());
+                // written beside and then swapped: a crash while writing never leaves a half file (all options lost)
+                string target = FilePath;
+                string temp = target + ".tmp";
+                File.WriteAllLines(temp, lines.ToArray());
+                if (File.Exists(target))
+                    File.Replace(temp, target, null);
+                else
+                    File.Move(temp, target);
             }
-            catch (Exception)
+            catch (Exception swallowed)
             {
+                Ares.Settings.ErrorLog.Note(swallowed);
             }
         }
 
