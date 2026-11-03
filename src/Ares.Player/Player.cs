@@ -1706,14 +1706,11 @@ namespace Ares.Player
             bool hasSettings = Ares.Settings.Settings.Instance.Initialize(Ares.Settings.Settings.PlayerID, foundSettings ? m_BasicSettings.GetSettingsDir() : null);
             if (!hasSettings)
             {
-                Ares.CommonGUI.MessageDialog.Show(this, StringResources.NoSettings, StringResources.Ares);
-                ShowSettingsDialog(-1);
-                SettingsChanged(true);
+                // first start: the default settings are kept (the guided tour explains the program) and written at once,
+                // instead of the old "first start of the player" message with the settings window
+                WriteSettings();
             }
-            else
-            {
-                SettingsChanged(true);
-            }
+            SettingsChanged(true);
 #if !MONO
             Ares.Settings.Settings.Instance.SettingsChanged += new EventHandler<Settings.Settings.SettingsEventArgs>(SettingsChanged);
 #endif

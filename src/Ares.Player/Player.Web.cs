@@ -1055,6 +1055,14 @@ namespace Ares.Player
                     ProcessLoopbackCapture.Log("web page sound: " + (routed ? "all of it goes through Apolo (tab not muted)" : "tab stays muted (" + msg.Substring(13) + ")"));
                 }
             }
+            else if (msg.StartsWith("apolo-seam:", StringComparison.Ordinal))
+            {
+                // "apolo-seam:<audio context>:<count>": the page lost a piece of sound and the jump was smoothed
+                string[] parts = msg.Split(':');
+                int count;
+                if (parts.Length == 3 && int.TryParse(parts[2], out count) && (count == 1 || count == 10 || count % 50 == 0))
+                    ProcessLoopbackCapture.Log("web page sound: " + count + " piece(s) lost by the page so far (audio context " + parts[1] + "), the jumps were smoothed");
+            }
             else if (msg.StartsWith("apolo-pcm:", StringComparison.Ordinal))
             {
                 if (tab.Muted || !CaptureMode)
@@ -1097,6 +1105,23 @@ namespace Ares.Player
  function push(l, r, rate, rs, id) {
   if (!cap.on) return;
   var step = rate / 48000, N = l.length;
+  // a block which does not go on where the last one ended (the page was busy and the browser lost a piece of sound):
+  // the step is faded out over ~4 ms instead of being heard as a click (when the sound is whole nothing changes)
+  if (rs.has && N >= 2) {
+   var jl = rs.pl + rs.dl - l[0], jr = rs.pr + rs.dr - r[0];
+   var lim = 0.018 + 4 * Math.max(Math.abs(rs.dl), Math.abs(rs.dr));
+   if (Math.abs(jl) > lim || Math.abs(jr) > lim) {
+    var l2 = new Float32Array(l), r2 = r === l ? l2 : new Float32Array(r), M = Math.min(N, Math.round(rate * 0.004));
+    for (var j = 0; j < M; j++) {
+     var w = 0.5 + 0.5 * Math.cos(Math.PI * j / M); // soft at both ends
+     l2[j] += jl * w;
+     if (r2 !== l2) r2[j] += jr * w;
+    }
+    l = l2; r = r2;
+    rs.seams = (rs.seams || 0) + 1;
+    try { wv.postMessage('apolo-seam:' + id + ':' + rs.seams); } catch (e) {}
+   }
+  }
   var out = new Int16Array(Math.ceil((N + 1) / step) * 2 + 4), o = 0;
   var t = rs.t;
   while (t < N - 1) {
@@ -1108,6 +1133,7 @@ namespace Ares.Player
    t += step;
   }
   rs.t = t - N; rs.pl = l[N - 1]; rs.pr = r[N - 1];
+  if (N >= 2) { rs.has = true; rs.dl = l[N - 1] - l[N - 2]; rs.dr = r[N - 1] - r[N - 2]; }
   try { wv.postMessage('apolo-pcm:' + id + ':' + toB64(out.subarray(0, o))); } catch (e) {}
  }
  function tapOf(ctx) {
