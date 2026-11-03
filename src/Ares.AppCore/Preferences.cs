@@ -81,15 +81,43 @@ namespace Ares.CommonGUI
                 string target = FilePath;
                 string temp = target + ".tmp";
                 File.WriteAllLines(temp, lines.ToArray());
-                if (File.Exists(target))
-                    File.Replace(temp, target, null);
-                else
-                    File.Move(temp, target);
+                SwapIn(temp, target);
             }
             catch (Exception swallowed)
             {
                 Ares.Settings.ErrorLog.Note(swallowed);
             }
+        }
+
+        // the antivirus or the search index of Windows can hold a file which was just written for a moment: a few tries,
+        // and as the last way the file is written over directly (better than losing the option)
+        private static void SwapIn(string temp, string target)
+        {
+            for (int attempt = 0; ; attempt++)
+            {
+                try
+                {
+                    if (File.Exists(target))
+                        File.Replace(temp, target, null);
+                    else
+                        File.Move(temp, target);
+                    return;
+                }
+                catch (IOException)
+                {
+                    if (attempt >= 4)
+                        break;
+                    System.Threading.Thread.Sleep(25);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    if (attempt >= 4)
+                        break;
+                    System.Threading.Thread.Sleep(25);
+                }
+            }
+            File.Copy(temp, target, true);
+            try { File.Delete(temp); } catch (Exception) { }
         }
 
         public static void SetBool(string key, bool value)

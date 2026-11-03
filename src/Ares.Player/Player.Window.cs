@@ -228,7 +228,7 @@ namespace Ares.Player
 
         // ---- start of the program: the window appears only when it is complete and has its theme ----
 
-        private bool m_StartupDone;
+        private bool m_StartupDone, m_StartupShown;
 
         private void BeginHiddenStart()
         {
@@ -236,6 +236,7 @@ namespace Ares.Player
             Opacity = 0;
             Shown += (s, e) =>
             {
+                m_StartupShown = true;
                 // after the first idle time: the theme and the menus of the appearance are in place
                 EventHandler once = null;
                 once = (s2, e2) =>
@@ -245,11 +246,18 @@ namespace Ares.Player
                 };
                 Application.Idle += once;
             };
-            // in any case after some seconds (e.g. when the program starts hidden in the tray)
+            // in any case some seconds after the window was shown (e.g. when the program starts hidden in the tray); never
+            // before it was shown: the first start after an install is slow, and the window then appeared half built
+            DateTime started = DateTime.UtcNow;
             Timer fallback = new Timer();
             fallback.Interval = 4000;
             fallback.Tick += (s, e) =>
             {
+                if (!m_StartupShown && (DateTime.UtcNow - started).TotalSeconds < 20)
+                {
+                    fallback.Interval = 500;
+                    return;
+                }
                 fallback.Stop();
                 fallback.Dispose();
                 FinishStartup();
@@ -266,6 +274,9 @@ namespace Ares.Player
             {
                 Ares.CommonGUI.ThemeManager.Apply(this);
                 KeepWindowOnScreen(); // the text size of the theme can make the window bigger than the screen
+                // the theme changed the fonts (and with them the sizes of the panels): the columns are laid out again now,
+                // while the window is still invisible, instead of later when a web tab has loaded (the buttons jumped then)
+                LayoutMainColumns();
                 PreloadWebTabs();
                 if (Visible)
                     Refresh(); // paints everything with the theme while the window is still invisible

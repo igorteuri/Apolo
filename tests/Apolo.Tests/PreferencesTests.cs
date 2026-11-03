@@ -54,6 +54,17 @@ namespace Apolo.Tests
         }
 
         [Fact]
+        public void AFileHeldByAnotherProgram_StillGetsTheNewValue()
+        {
+            Preferences.Set("PrefTest.Segurado", "antes");
+            // like the antivirus: the file is open (it can be read and written, not deleted or replaced)
+            using (new FileStream(File_, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                Preferences.Set("PrefTest.Segurado", "depois");
+            Restart();
+            Assert.Equal("depois", Preferences.Get("PrefTest.Segurado", null));
+        }
+
+        [Fact]
         public void Saving_LeavesNoTemporaryFileBehind()
         {
             Preferences.Set("PrefTest.Atomico", "1");
