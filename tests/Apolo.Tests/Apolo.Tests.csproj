@@ -37,5 +37,10 @@
     <Compile Include="..\..\src\Ares.Player\RemoteServer.cs" Link="Linked\RemoteServer.cs" />
     <Compile Include="..\..\src\Ares.Player\FolderNames.cs" Link="Linked\FolderNames.cs" />
     <Compile Include="..\..\src\Ares.Player\RecentProjects.cs" Link="Linked\RecentProjects.cs" />
+    <Compile Include="..\..\src\Ares.Player\CaptureScripts.cs" Link="Linked\CaptureScripts.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- fake browser for CaptureScriptTests (run with node) -->
+    <None Include="capture-harness.js" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
