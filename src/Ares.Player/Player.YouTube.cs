@@ -3,9 +3,10 @@
 
  Buttons which play a YouTube playlist. The button is a normal button (a web radio element whose address is the playlist, see
  YouTubePlaylist.cs); the engine hands it over before playing (PlayingModule.ExternalElementHook) and it plays in the YouTube tab
- of Apolo: the first video of the list is opened and YouTube goes on from there. A click on the same button pauses / continues.
- The titles of the list are read from the page and shown in the track list below the buttons; a click on a title plays that video.
- When a music button of Apolo starts, the playlist is paused.
+ of Apolo: the first video of the list is opened and YouTube goes on from there.
+ While it plays it is "the music" of the program (PlayingControl.External): pause, previous, next, stop (Esc), the seek bar, the
+ volume sliders, the title and the track list below the buttons all act on the YouTube video, like on a music of Apolo.
+ A music of Apolo that starts stops the playlist. (No waveform: the sound does not pass through the engine.)
 */
 using System;
 using System.Collections.Generic;
@@ -17,24 +18,30 @@ namespace Ares.Player
     public partial class Player
     {
         private int m_YtElementId = -1;                  // the button which plays a playlist now (or paused)
+        private IModeElement m_YtMode;
         private string m_YtListId = "";
-        private bool m_YtPaused;
+        private volatile bool m_YtPaused;
         private WebTab m_YtTab;
-        private int m_YtPhase;                           // 0 = nothing, 1 = waiting for the browser, 2 = waiting for the list page, 3 = playing
+        private volatile int m_YtPhase;                  // 0 = nothing, 1 = waiting for the browser, 2 = waiting for the list page, 3 = playing
         private int m_YtTries;
         private int m_YtMiss;                            // reads in a row in which the tab was not on the playlist
-        private int m_YtTick;
         private int m_YtPendingJump = -1;                // a title chosen in the track list before the playlist was running
         private bool m_YtReturnHome;
         private bool m_YtBusy;
         private YouTubePlaylist.Snapshot m_YtLast;
         private Timer m_YtTimer;
+        private volatile int m_YtTrackId = -1;           // stand-in element of the video which plays now
+        private volatile int m_YtVolume = -1;            // wanted volume of the video, 0 to 100 (-1 = leave as it is)
+        private double m_YtPos, m_YtLen;
+        private int m_YtPosTick;
         private readonly List<IFileElement> m_YtRowFiles = new List<IFileElement>();   // one stand-in element for each title (created once)
         private List<string> m_YtTitles = new List<string>();
 
         private void InitYouTube()
         {
             Ares.Playing.PlayingModule.ExternalElementHook = YtHook;
+            if (m_PlayingControl != null)
+                m_PlayingControl.External = new YtMusic(this);
             m_YtTimer = new Timer();
             m_YtTimer.Interval = 700;
             m_YtTimer.Tick += (s, e) => YtTick();
@@ -43,6 +50,59 @@ namespace Ares.Player
                 Ares.Playing.PlayingModule.ExternalElementHook = null;
                 m_YtTimer.Stop();
             };
+        }
+
+        // The playlist as "the music" for the controls of the program (see PlayingControl.External)
+        private sealed class YtMusic : Ares.Players.IExternalMusic
+        {
+            private readonly Player m_P;
+            public YtMusic(Player p) { m_P = p; }
+
+            public bool Active { get { return m_P.m_YtPhase == 3; } }
+            public IModeElement ModeElement { get { return m_P.m_YtMode; } }
+            public int ListId { get { IModeElement m = m_P.m_YtMode; return m != null && m.StartElement != null ? m.StartElement.Id : -1; } }
+            public int TrackId { get { return m_P.m_YtTrackId; } }
+            public bool IsPaused { get { return m_P.m_YtPaused; } }
+            public void TogglePause() { m_P.YtPost(() => m_P.YtSetPaused(!m_P.m_YtPaused)); }
+            public void Next() { m_P.YtPost(() => m_P.YtRun(YouTubePlaylist.NextScript)); }
+            public void Previous() { m_P.YtPost(() => m_P.YtRun(YouTubePlaylist.PreviousScript)); }
+            public void Stop() { m_P.YtPost(m_P.YtStopPlayback); }
+            public void Seek(double positionSeconds)
+            {
+                m_P.YtPost(() =>
+                {
+                    m_P.YtRun(YouTubePlaylist.SeekScript(positionSeconds));
+                    m_P.m_YtPos = positionSeconds;
+                    m_P.m_YtPosTick = Environment.TickCount;
+                });
+            }
+            public bool GetPosition(out double positionSeconds, out double lengthSeconds)
+            {
+                lengthSeconds = m_P.m_YtLen;
+                double pos = m_P.m_YtPos;
+                if (!m_P.m_YtPaused)
+                    pos += unchecked(Environment.TickCount - m_P.m_YtPosTick) / 1000.0;
+                positionSeconds = Math.Max(0, Math.Min(lengthSeconds, pos));
+                return lengthSeconds > 0;
+            }
+            public void SetVolume(int percent)
+            {
+                m_P.m_YtVolume = percent;
+                m_P.YtPost(() => m_P.YtRun(YouTubePlaylist.VolumeScript(percent)));
+            }
+        }
+
+        private void YtRun(string script)
+        {
+            try
+            {
+                if (m_YtTab != null && m_YtTab.View != null && m_YtTab.View.CoreWebView2 != null)
+                    m_YtTab.View.CoreWebView2.ExecuteScriptAsync(script);
+            }
+            catch (Exception swallowed)
+            {
+                Ares.Settings.ErrorLog.Note(swallowed);
+            }
         }
 
         private static string YtListIdOf(IModeElement me)
@@ -78,9 +138,9 @@ namespace Ares.Player
                 YtPost(() => YtToggle(me, id));
                 return true;
             }
-            // a music of Apolo starts: the playlist of YouTube gives way
-            if (m_YtPhase == 3 && !m_YtPaused && (KindsOf(me.StartElement, 0) & 1) != 0)
-                YtPost(() => YtSetPaused(true));
+            // a music of Apolo starts: there is only one music at a time, the playlist of YouTube stops
+            if (m_YtPhase != 0 && (KindsOf(me.StartElement, 0) & 1) != 0)
+                YtPost(YtStopPlayback);
             return false;
         }
 
@@ -155,19 +215,26 @@ namespace Ares.Player
         {
             if (m_WebWindow == null || m_WebWindow.IsDisposed)
                 return;
-            int previous = m_YtElementId;
+            m_PlayingControl.External = m_PlayingControl.External ?? new YtMusic(this);
+            if (m_YtPhase != 0)
+                YtStopPlayback();   // another playlist of YouTube was playing
+            // only one music at a time: the music of Apolo stops (and another playlist of YouTube too)
             m_PlayingControl.StopMusicOnly();
             m_YtTab = YtFindTab();
+            m_YtMode = me;
             m_YtElementId = me.Id;
             m_YtListId = listId;
             m_YtPaused = false;
             m_YtLast = null;
             m_YtMiss = 0;
             m_YtTries = 0;
-            m_YtPhase = 1;
+            m_YtTrackId = -1;
+            m_YtPos = 0;
+            m_YtLen = 0;
+            m_YtTitles = new List<string>();
+            m_YtVolume = m_PlayingControl.MusicVolume * m_PlayingControl.GlobalVolume / 100;
             m_YtReturnHome = !m_ShowingWeb;
-            if (previous != -1 && previous != me.Id)
-                YtSetButtonChecked(previous, false);
+            m_YtPhase = 1;
             YtSetButtonChecked(me.Id, true);
             ShowYtRows(me.Id);
             // the browser of a tab is created when the tab is first shown
@@ -178,18 +245,21 @@ namespace Ares.Player
 
         private void YtSetPaused(bool pause)
         {
-            if (m_YtPhase != 3 || m_YtTab == null || m_YtTab.View == null || m_YtTab.View.CoreWebView2 == null)
+            if (m_YtPhase != 3)
                 return;
-            try
-            {
-                m_YtTab.View.CoreWebView2.ExecuteScriptAsync(pause ? YouTubePlaylist.PauseScript : YouTubePlaylist.PlayScript);
-            }
-            catch (Exception swallowed)
-            {
-                Ares.Settings.ErrorLog.Note(swallowed);
-            }
+            YtRun(pause ? YouTubePlaylist.PauseScript : YouTubePlaylist.PlayScript);
             m_YtPaused = pause;
             YtSetButtonChecked(m_YtElementId, !pause);
+        }
+
+        // stop (the Esc key, the stop button, another music starting): the video is paused and the program lets go of it
+        private void YtStopPlayback()
+        {
+            if (m_YtPhase == 0)
+                return;
+            if (m_YtPhase == 3)
+                YtRun(YouTubePlaylist.PauseScript);
+            YtStop(false);
         }
 
         private void YtStop(bool tell)
@@ -197,10 +267,17 @@ namespace Ares.Player
             int id = m_YtElementId;
             m_YtPhase = 0;
             m_YtElementId = -1;
+            m_YtMode = null;
             m_YtPaused = false;
+            m_YtTrackId = -1;
             m_YtPendingJump = -1;
             m_YtTimer.Stop();
             YtSetButtonChecked(id, false);
+            if (m_TrackPanel != null && m_TrackElementId == id)
+            {
+                BuildTrackRows(FindTrackModeElement(id));
+                FillTrackList(false);
+            }
             if (tell)
                 ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
                     T("A playlist do YouTube parou.", "The YouTube playlist stopped.")));
@@ -257,9 +334,8 @@ namespace Ares.Player
                     string answer = await core.ExecuteScriptAsync(YouTubePlaylist.StartScript);
                     if (answer != null && answer.Trim('"') == "1")
                     {
-                        m_YtPhase = 3;
+                        m_YtPhase = 3;   // from now on it is "the music" of the program
                         m_YtMiss = 0;
-                        m_YtTick = 0;
                         if (m_YtReturnHome && m_ShowingWeb)
                             ShowHome();
                     }
@@ -269,9 +345,6 @@ namespace Ares.Player
                     }
                     return;
                 }
-                // playing: look at the page every other tick
-                if ((m_YtTick++ & 1) != 0)
-                    return;
                 YouTubePlaylist.Snapshot snap = YouTubePlaylist.Snapshot.Parse(await core.ExecuteScriptAsync(YouTubePlaylist.ReadScript));
                 if (m_YtPhase != 3)
                     return;
@@ -306,12 +379,19 @@ namespace Ares.Player
                 m_YtPaused = paused;
                 YtSetButtonChecked(m_YtElementId, !paused);
             }
+            m_YtPos = snap.Position;
+            m_YtLen = snap.Duration;
+            m_YtPosTick = Environment.TickCount;
+            // the volume of the sliders of Apolo is kept (YouTube sets its own when a new video starts)
+            int wanted = m_YtVolume;
+            if (wanted >= 0 && snap.Volume >= 0 && Math.Abs(snap.Volume * 100 - wanted) > 2)
+                YtRun(YouTubePlaylist.VolumeScript(wanted));
             if (m_YtPendingJump >= 0 && m_YtPendingJump < snap.Items.Count)
             {
                 int jump = m_YtPendingJump;
                 m_YtPendingJump = -1;
                 if (jump != snap.Index)
-                    m_YtTab.View.CoreWebView2.ExecuteScriptAsync(YouTubePlaylist.JumpScript(jump));
+                    YtRun(YouTubePlaylist.JumpScript(jump));
             }
             bool changed = snap.Items.Count != m_YtTitles.Count;
             for (int i = 0; !changed && i < snap.Items.Count; i++)
@@ -320,12 +400,14 @@ namespace Ares.Player
             {
                 m_YtTitles = new List<string>(snap.Items);
                 while (m_YtRowFiles.Count < m_YtTitles.Count)
-                {
-                    IFileElement stand = DataModule.ElementFactory.CreateFileElement("YouTube", SoundFileType.Music);
-                    m_YtRowFiles.Add(stand);
-                }
-                ShowYtRows(m_YtElementId);
+                    m_YtRowFiles.Add(DataModule.ElementFactory.CreateFileElement(YouTubePlaylist.StandInPath, SoundFileType.Music));
+                for (int i = 0; i < m_YtTitles.Count; i++)
+                    m_YtRowFiles[i].Title = string.IsNullOrEmpty(m_YtTitles[i]) ? "YouTube " + (i + 1) : m_YtTitles[i];
             }
+            // the video which plays now is "the music": its stand-in element gives the title to the program
+            m_YtTrackId = snap.Index >= 0 && snap.Index < m_YtRowFiles.Count ? m_YtRowFiles[snap.Index].Id : -1;
+            if (changed)
+                ShowYtRows(m_YtElementId);
             YtSelectCurrentRow();
         }
 
@@ -342,7 +424,6 @@ namespace Ares.Player
             for (int i = 0; i < m_YtTitles.Count && i < m_YtRowFiles.Count; i++)
             {
                 IFileElement stand = m_YtRowFiles[i];
-                stand.Title = string.IsNullOrEmpty(m_YtTitles[i]) ? "YouTube " + (i + 1) : m_YtTitles[i];
                 m_TrackRows.Add(new TrackRow { File = stand, Index = -1, Number = i + 1, Original = i + 1, Loaded = true });
             }
             return true;
@@ -382,9 +463,9 @@ namespace Ares.Player
         private void YtPlayRow(IModeElement me, int originalNumber)
         {
             int index = originalNumber - 1;
-            if (m_YtPhase == 3 && m_YtElementId == me.Id && m_YtTab != null && m_YtTab.View != null && m_YtTab.View.CoreWebView2 != null)
+            if (m_YtPhase == 3 && m_YtElementId == me.Id)
             {
-                m_YtTab.View.CoreWebView2.ExecuteScriptAsync(YouTubePlaylist.JumpScript(index));
+                YtRun(YouTubePlaylist.JumpScript(index));
                 if (m_YtPaused)
                     YtSetPaused(false);
                 return;

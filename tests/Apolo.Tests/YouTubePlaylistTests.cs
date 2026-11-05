@@ -96,6 +96,62 @@ namespace Apolo.Tests
         }
 
         [Fact]
+        public void Snapshot_ReadsPositionLengthAndVolume_AndSurvivesLiveStreams()
+        {
+            YouTubePlaylist.Snapshot s = YouTubePlaylist.Snapshot.Parse("{\"page\":\"watch\",\"items\":[\"a\"],\"index\":0,\"pos\":12.5,\"len\":200,\"vol\":0.4}");
+            Assert.Equal(12.5, s.Position);
+            Assert.Equal(200, s.Duration);
+            Assert.Equal(0.4, s.Volume, 3);
+            YouTubePlaylist.Snapshot live = YouTubePlaylist.Snapshot.Parse("{\"page\":\"watch\",\"pos\":-3,\"len\":0}");
+            Assert.Equal(0, live.Position);
+            Assert.Equal(0, live.Duration);
+            Assert.Equal(-1, live.Volume);   // unknown
+        }
+
+        [Fact]
+        public void SeekAndVolumeScripts_AreSafe()
+        {
+            Assert.Contains("currentTime=12.5;", YouTubePlaylist.SeekScript(12.5));
+            Assert.Contains("volume=0.35;", YouTubePlaylist.VolumeScript(35));
+            Assert.Contains("volume=1;", YouTubePlaylist.VolumeScript(500));
+            Assert.Contains("volume=0;", YouTubePlaylist.VolumeScript(-9));
+        }
+
+        [Fact]
+        public void AllScripts_AreValidJavaScript()
+        {
+            // a typo in a script only shows in the real page: node at least checks the syntax
+            string[] scripts =
+            {
+                YouTubePlaylist.StartScript, YouTubePlaylist.ReadScript, YouTubePlaylist.PauseScript, YouTubePlaylist.PlayScript,
+                YouTubePlaylist.NextScript, YouTubePlaylist.PreviousScript, YouTubePlaylist.JumpScript(3),
+                YouTubePlaylist.SeekScript(1.5), YouTubePlaylist.VolumeScript(50)
+            };
+            string dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "apolo-ytjs-" + System.Guid.NewGuid().ToString("N"));
+            System.IO.Directory.CreateDirectory(dir);
+            try
+            {
+                for (int i = 0; i < scripts.Length; i++)
+                {
+                    string file = System.IO.Path.Combine(dir, "s" + i + ".js");
+                    System.IO.File.WriteAllText(file, "new Function(" + System.Text.Json.JsonSerializer.Serialize(scripts[i]) + ");");
+                    System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo("node") { RedirectStandardError = true, UseShellExecute = false };
+                    psi.ArgumentList.Add(file);
+                    using (System.Diagnostics.Process p = System.Diagnostics.Process.Start(psi))
+                    {
+                        string err = p.StandardError.ReadToEnd();
+                        p.WaitForExit(20000);
+                        Assert.True(p.ExitCode == 0, "script " + i + " is not valid JavaScript: " + err);
+                    }
+                }
+            }
+            finally
+            {
+                try { System.IO.Directory.Delete(dir, true); } catch (System.Exception) { }
+            }
+        }
+
+        [Fact]
         public void JumpScript_UsesTheNumber()
         {
             Assert.Contains("n[7]", YouTubePlaylist.JumpScript(7));

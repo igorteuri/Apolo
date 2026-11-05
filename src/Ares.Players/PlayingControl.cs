@@ -62,10 +62,37 @@ namespace Ares.Players
             }
         }
 
+        /// <summary>Music outside the engine (a YouTube playlist); the controls below act on it when it is active.</summary>
+        public IExternalMusic External { get; set; }
+
+        private bool ExtActive
+        {
+            get
+            {
+                IExternalMusic e = External;
+                return e != null && e.Active;
+            }
+        }
+
+        private void ApplyExternalVolume()
+        {
+            IExternalMusic e = External;
+            if (e == null)
+                return;
+            int percent;
+            lock (syncObject)
+            {
+                percent = m_MusicVolume * m_GlobalVolume / 100;
+            }
+            e.SetVolume(Math.Max(0, Math.Min(100, percent)));
+        }
+
         public bool KeyReceived(int key)
         {
             if (key == (int)Keys.Escape)
             {
+                if (ExtActive)
+                    External.Stop();
                 PlayingModule.ProjectPlayer.StopAll();
                 if (Settings.Settings.Instance.UseStreaming)
                 {
@@ -77,12 +104,14 @@ namespace Ares.Players
             {
                 int value = ModifyVolume(ref m_GlobalVolume, true);
                 PlayingModule.ProjectPlayer.SetVolume(VolumeTarget.Both, value);
+                ApplyExternalVolume();
                 return true;
             }
             else if (key == (int)Keys.Down)
             {
                 int value = ModifyVolume(ref m_GlobalVolume, false);
                 PlayingModule.ProjectPlayer.SetVolume(VolumeTarget.Both, value);
+                ApplyExternalVolume();
                 return true;
             }
             else if (key == (int)Keys.PageUp)
@@ -101,21 +130,33 @@ namespace Ares.Players
             {
                 int value = ModifyVolume(ref m_MusicVolume, true);
                 PlayingModule.ProjectPlayer.SetVolume(VolumeTarget.Music, value);
+                ApplyExternalVolume();
                 return true;
             }
             else if (key == (int)Keys.Delete)
             {
                 int value = ModifyVolume(ref m_MusicVolume, false);
                 PlayingModule.ProjectPlayer.SetVolume(VolumeTarget.Music, value);
+                ApplyExternalVolume();
                 return true;
             }
             else if (key == (int)Keys.Right)
             {
+                if (ExtActive)
+                {
+                    External.Next();
+                    return true;
+                }
                 PlayingModule.ProjectPlayer.NextMusicTitle();
                 return true;
             }
             else if (key == (int)Keys.Left)
             {
+                if (ExtActive)
+                {
+                    External.Previous();
+                    return true;
+                }
                 PlayingModule.ProjectPlayer.PreviousMusicTitle();
                 return true;
             }
@@ -259,6 +300,8 @@ namespace Ares.Players
                 lock (syncObject)
                 {
                     List<IModeElement> copy = new List<IModeElement>(m_ModeElements);
+                    if (ExtActive && External.ModeElement != null && !copy.Contains(External.ModeElement))
+                        copy.Add(External.ModeElement);
                     return copy;
                 }
             }
@@ -284,6 +327,8 @@ namespace Ares.Players
         {
             get
             {
+                if (ExtActive)
+                    return External.TrackId;
                 lock (syncObject)
                 {
                     return m_MusicElement;
@@ -310,6 +355,7 @@ namespace Ares.Players
                     m_GlobalVolume = value;
                 }
                 PlayingModule.ProjectPlayer.SetVolume(VolumeTarget.Both, value);
+                ApplyExternalVolume();
             }
         }
 
@@ -332,6 +378,7 @@ namespace Ares.Players
                     m_MusicVolume = value;
                 }
                 PlayingModule.ProjectPlayer.SetVolume(VolumeTarget.Music, value);
+                ApplyExternalVolume();
             }
         }
 
@@ -364,6 +411,8 @@ namespace Ares.Players
 
         public bool GetMusicPosition(out double positionSeconds, out double lengthSeconds)
         {
+            if (ExtActive)
+                return External.GetPosition(out positionSeconds, out lengthSeconds);
             return PlayingModule.ProjectPlayer.GetMusicPosition(out positionSeconds, out lengthSeconds);
         }
 
@@ -394,16 +443,31 @@ namespace Ares.Players
 
         public bool TogglePause()
         {
+            if (ExtActive)
+            {
+                External.TogglePause();
+                // the effects of the engine follow (when there are some)
+                if (PlayingModule.ProjectPlayer.GetRunningSounds().Count > 0 && PlayingModule.ProjectPlayer.IsSoundsPaused() != External.IsPaused)
+                    PlayingModule.ProjectPlayer.ToggleSoundsPause();
+                return External.IsPaused;
+            }
             return PlayingModule.ProjectPlayer.TogglePause();
         }
 
         public bool IsPaused()
         {
+            if (ExtActive)
+                return External.IsPaused;
             return PlayingModule.ProjectPlayer.IsPaused();
         }
 
         public bool ToggleMusicPause()
         {
+            if (ExtActive)
+            {
+                External.TogglePause();
+                return External.IsPaused;
+            }
             return PlayingModule.ProjectPlayer.ToggleMusicPause();
         }
 
@@ -414,6 +478,8 @@ namespace Ares.Players
 
         public bool IsMusicPaused()
         {
+            if (ExtActive)
+                return External.IsPaused;
             return PlayingModule.ProjectPlayer.IsMusicPaused();
         }
 
@@ -424,6 +490,8 @@ namespace Ares.Players
 
         public void StopMusicOnly()
         {
+            if (ExtActive)
+                External.Stop();
             PlayingModule.ProjectPlayer.StopMusicOnly();
         }
 
@@ -434,6 +502,11 @@ namespace Ares.Players
 
         public void SeekMusic(double positionSeconds)
         {
+            if (ExtActive)
+            {
+                External.Seek(positionSeconds);
+                return;
+            }
             PlayingModule.ProjectPlayer.SetMusicPosition(positionSeconds);
         }
 
@@ -547,6 +620,8 @@ namespace Ares.Players
         {
             get
             {
+                if (ExtActive)
+                    return External.ListId;
                 lock (syncObject)
                 {
                     return m_CurrentMusicList;

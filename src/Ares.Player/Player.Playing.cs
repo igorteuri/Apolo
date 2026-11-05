@@ -27,7 +27,9 @@ namespace Ares.Player
                 return 0;
             if (element is IFileElement)
                 return ((IFileElement)element).SoundFileType == SoundFileType.Music ? 1 : 2;
-            if (element is IWebRadioElement || element is IMusicList)
+            if (element is IWebRadioElement)
+                return YouTubePlaylist.IdOfButtonUrl(((IWebRadioElement)element).Url) != null ? 4 : 1;   // 4 = a YouTube playlist
+            if (element is IMusicList)
                 return 1;
             IReferenceElement reference = element as IReferenceElement;
             if (reference != null)
@@ -157,7 +159,7 @@ namespace Ares.Player
             try
             {
                 IFileElement file = DataModule.ElementRepository.GetElement(musicElementId) as IFileElement;
-                if (file == null)
+                if (file == null || file.FilePath == YouTubePlaylist.StandInPath)
                     return;
                 string full = FullPathOf(file);
                 int n = PlayCounts.Add(full);

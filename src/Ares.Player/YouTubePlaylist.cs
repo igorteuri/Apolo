@@ -74,7 +74,22 @@ if(location.pathname==='/watch')page='watch';else if(location.pathname==='/playl
 for(var i=0;i<nodes.length;i++){var t=nodes[i].querySelector('#video-title');items.push(((t&&(t.getAttribute('title')||t.textContent))||'').trim());if(nodes[i].hasAttribute('selected'))cur=i;}
 var q=new URLSearchParams(location.search);
 if(cur<0&&q.get('index')&&nodes.length)cur=Math.min(nodes.length-1,Math.max(0,parseInt(q.get('index'),10)-1));
-return JSON.stringify({page:page,list:q.get('list')||'',items:items,index:cur,paused:v?v.paused:true,ended:v?v.ended:false,title:document.title});}catch(e){return JSON.stringify({page:'error'});}})()";
+return JSON.stringify({page:page,list:q.get('list')||'',items:items,index:cur,paused:v?v.paused:true,ended:v?v.ended:false,pos:v?v.currentTime:0,len:v&&isFinite(v.duration)?v.duration:0,vol:v?v.volume:-1,title:document.title});}catch(e){return JSON.stringify({page:'error'});}})()";
+
+        /// <summary>The path of the stand-in element made for each title of a playlist (it is not a file; nothing is counted or read for it).</summary>
+        public const string StandInPath = "YouTube";
+
+        public static string SeekScript(double seconds)
+        {
+            return "(function(){var v=document.querySelector('video');if(v)v.currentTime=" + seconds.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + ";})()";
+        }
+
+        /// <summary>Volume of the video, 0 to 100.</summary>
+        public static string VolumeScript(int percent)
+        {
+            percent = Math.Max(0, Math.Min(100, percent));
+            return "(function(){var v=document.querySelector('video');if(v)v.volume=" + (percent / 100.0).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + ";})()";
+        }
 
         public const string PauseScript = "(function(){var v=document.querySelector('video');if(v)v.pause();})()";
         public const string PlayScript = "(function(){var v=document.querySelector('video');if(v)v.play();})()";
@@ -97,6 +112,9 @@ return JSON.stringify({page:page,list:q.get('list')||'',items:items,index:cur,pa
             public int Index = -1;                   // the video which plays now (from 0), -1 = unknown
             public bool Paused = true;
             public bool Ended;
+            public double Position;                  // seconds into the video
+            public double Duration;                  // seconds, 0 when unknown (live)
+            public double Volume = -1;               // 0 to 1, -1 when unknown
             public string Title = "";
 
             /// <summary>Reads the answer of ExecuteScriptAsync (the JSON text may come wrapped once more as a JSON string); null when it is not usable.</summary>
@@ -134,6 +152,11 @@ return JSON.stringify({page:page,list:q.get('list')||'',items:items,index:cur,pa
                             s.Index = -1;
                         JsonElement paused;
                         s.Paused = !root.TryGetProperty("paused", out paused) || paused.ValueKind != JsonValueKind.False;
+                        s.Position = Number(root, "pos", 0);
+                        s.Duration = Number(root, "len", 0);
+                        s.Volume = Number(root, "vol", -1);
+                        if (s.Position < 0) s.Position = 0;
+                        if (s.Duration < 0) s.Duration = 0;
                         JsonElement ended;
                         s.Ended = root.TryGetProperty("ended", out ended) && ended.ValueKind == JsonValueKind.True;
                         return s;
@@ -147,6 +170,12 @@ return JSON.stringify({page:page,list:q.get('list')||'',items:items,index:cur,pa
                 {
                     return null;
                 }
+            }
+
+            private static double Number(JsonElement root, string name, double fallback)
+            {
+                JsonElement e;
+                return root.TryGetProperty(name, out e) && e.ValueKind == JsonValueKind.Number ? e.GetDouble() : fallback;
             }
 
             private static string Text(JsonElement root, string name, string fallback)

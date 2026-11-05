@@ -117,6 +117,12 @@ namespace Ares.Player
                 return;
             IElement start = me.StartElement;
             int kinds = KindsOf(start, 0);
+            if (kinds == 4)
+            {
+                ShowToast(new Ares.Players.Message(Ares.Players.MessageType.Info,
+                    T("Este botão toca uma playlist do YouTube; não dá para trocar para efeito sonoro.", "This button plays a YouTube playlist; it cannot be switched to a sound effect.")));
+                return;
+            }
             IFileElement single = start as IFileElement;
             List<IFileElement> files = null;
             IGeneralElementContainer container = start as IGeneralElementContainer;

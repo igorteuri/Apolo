@@ -57,7 +57,7 @@ namespace Ares.Player
 
         private int BadgeCount()
         {
-            return ((m_Kind & 1) != 0 ? 1 : 0) + ((m_Kind & 2) != 0 ? 1 : 0);
+            return ((m_Kind & 1) != 0 ? 1 : 0) + ((m_Kind & 2) != 0 ? 1 : 0) + ((m_Kind & 4) != 0 ? 1 : 0);
         }
 
         // where the small badges are drawn (the same place for painting and for the click)
@@ -508,6 +508,8 @@ namespace Ares.Player
                         glyphs.Add("\u266B");
                     if ((m_Kind & 2) != 0)
                         glyphs.Add("\u26A1");
+                    if ((m_Kind & 4) != 0)
+                        glyphs.Add("YT");   // plays a playlist of YouTube
                     int bd = Math.Max(22, (int)Math.Round(25 * Scale));
                     using (Font gf = new Font("Segoe UI Symbol", Math.Max(10f, Font.Size + 2f), FontStyle.Bold))
                     {
