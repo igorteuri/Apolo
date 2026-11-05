@@ -402,7 +402,7 @@ namespace Ares.Player
                         int badgeId = element.Id;
                         checkBox.KindBadgeClicked += (Object, EventArgs) => RunAfterDrag(() => ToggleButtonKind(badgeId));
                         checkBox.SetBounds(0, 0, cardSize.Width, cardSize.Height);
-                        checkBox.Checked = m_PlayingControl.CurrentModeElements.Contains(element);
+                        checkBox.Checked = m_PlayingControl.CurrentModeElements.Contains(element) || (element.Id == m_YtElementId && !m_YtPaused);
                         int id = element.Id;
                         EventHandler handler = new EventHandler((Object, EventArgs) =>
                         {

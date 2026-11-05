@@ -56,6 +56,7 @@ namespace Ares.Player
                 if (i > 0 && i - 1 < m_WebWindow.Tabs.Count)
                     m_WebWindow.ShowTabMenu(m_WebWindow.Tabs[i - 1], pt);
             };
+            InitYouTube();
             m_WebWindow.TabsChanged += RefreshTabBar;
             m_WebWindow.SelectionChanged += RefreshTabBar;
             WebWindow.StateChanged += RefreshTabBar;
@@ -1347,6 +1348,17 @@ namespace Ares.Player
         // ------------------------------------------------------------------ VDO.Ninja
 
         /// <summary>Returns the VDO.Ninja sender tab, creating it when needed.</summary>
+        public WebTab EnsureYouTubeTab()
+        {
+            WebTab tab = m_Tabs.Find(t => t.Kind == "web" && t.Url != null && t.Url.IndexOf("youtube.com", StringComparison.OrdinalIgnoreCase) >= 0);
+            if (tab == null)
+            {
+                tab = AddTab("YouTube", "https://www.youtube.com", "web", false);
+                SaveTabs();
+            }
+            return tab;
+        }
+
         public WebTab EnsureVdoTab()
         {
             WebTab tab = m_Tabs.Find(t => t.Kind == "vdo");

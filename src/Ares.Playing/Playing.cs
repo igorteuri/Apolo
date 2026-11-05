@@ -338,6 +338,12 @@ namespace Ares.Playing
 
     public static class PlayingModule
     {
+        /// <summary>
+        /// Lets the program take over a button before the engine plays it (the YouTube playlist buttons play in a web tab):
+        /// returns true when it handled the button. Called for every button started by a click, a key or the remote control.
+        /// </summary>
+        public static Func<Ares.Data.IModeElement, bool> ExternalElementHook;
+
         public static IFilePlayer CreatePlayer()
         {
             return new FilePlayer();

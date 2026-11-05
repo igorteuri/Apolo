@@ -20,6 +20,7 @@ namespace Ares.Player
                 m_AddMenu = new ContextMenuStrip();
                 m_AddMenu.Items.Add(T("Playlist de música...", "Music playlist..."), null, (s, e) => AddButtonOfKind(false));
                 m_AddMenu.Items.Add(T("Efeito sonoro (SFX)...", "Sound effect (SFX)..."), null, (s, e) => AddButtonOfKind(true));
+                m_AddMenu.Items.Add(T("Playlist do YouTube...", "YouTube playlist..."), null, (s, e) => AddYouTubeButton());
                 m_AddMenu.Items.Add(new ToolStripSeparator());
                 m_AddMenu.Items.Add(T("Vários arquivos (escolher como organizar)...", "Several files (choose how to organize)..."), null, (s, e) => AddFilesDialog());
                 m_AddMenu.Items.Add(T("Pasta do computador (escolher como organizar)...", "Folder of the computer (choose how to organize)..."), null, (s, e) => AddFolderDialog());
@@ -69,6 +70,12 @@ namespace Ares.Player
             foreach (IModeElement element in elements)
                 element.Title = name;
 
+            AddElementsToOpenFolder(elements, name);
+        }
+
+        // puts new buttons into the folder which is shown (the "Buttons" folder if none), opening the library when no project is open
+        private void AddElementsToOpenFolder(List<IModeElement> elements, string name)
+        {
             if (m_Project == null)
             {
                 string libPath = LibraryProjectPath;

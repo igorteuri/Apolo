@@ -1366,6 +1366,9 @@ namespace Ares.Playing
         {
             if (element == null)
                 return false;
+            Func<IModeElement, bool> hook = PlayingModule.ExternalElementHook;
+            if (hook != null && hook(element))
+                return true;
             if (element.IsEndless() && element.IsPlaying)
             {
                 StopElement(element);

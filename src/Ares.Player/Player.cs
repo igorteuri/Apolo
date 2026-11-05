@@ -478,7 +478,7 @@ namespace Ares.Player
             }
             foreach (int id in m_ButtonsForIds.Keys)
             {
-                m_ButtonsForIds[id].Checked = currentModeElementIds.Contains(id);
+                m_ButtonsForIds[id].Checked = currentModeElementIds.Contains(id) || (id == m_YtElementId && !m_YtPaused);
             }
             elementsLabel.Text = modeElementsText.ToString();
             StringBuilder soundElementsText = new StringBuilder();

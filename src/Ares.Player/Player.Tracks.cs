@@ -782,6 +782,8 @@ namespace Ares.Player
         private void BuildTrackRows(IModeElement me)
         {
             m_TrackRows.Clear();
+            if (YtBuildRows(me))
+                return;
             IGeneralElementContainer container = me.StartElement as IGeneralElementContainer;
             IList<IContainerElement> top = null;
             IList<IFileElement> files = null;
@@ -898,6 +900,11 @@ namespace Ares.Player
             IModeElement me = FindTrackModeElement(m_TrackElementId);
             if (me == null || me.StartElement == null)
                 return;
+            if (YtIsYouTubeButton(me))
+            {
+                YtPlayRow(me, m_TrackShown[idx].Original);
+                return;
+            }
             int fileId = m_TrackShown[idx].File.Id;
             if (me.StartElement is IFileElement)
             {
