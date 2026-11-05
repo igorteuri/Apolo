@@ -236,6 +236,7 @@ namespace Ares.Player
             m_YtVolume = m_PlayingControl.MusicVolume * m_PlayingControl.GlobalVolume / 100;
             m_YtShownTab = false;
             m_YtPhase = 1;
+            m_YtTimer.Interval = 300;   // quick while the page is being opened
             YtSetButtonChecked(me.Id, true);
             ShowYtRows(me.Id);
             // the browser of a tab is created when the tab is first shown: here it is made in the background, the user stays
@@ -317,14 +318,14 @@ namespace Ares.Player
                     if (core == null)
                     {
                         // the background start did not work (8 s): the old way, the tab is shown for a moment
-                        if (m_YtTries == 12 && !m_YtShownTab)
+                        if (m_YtTries == 27 && !m_YtShownTab)
                         {
                             m_YtShownTab = true;
                             m_YtTab.Started = false;
                             m_YtReturnHome = !m_ShowingWeb;
                             ShowWebTab(m_YtTab);
                         }
-                        if (++m_YtTries > 40)
+                        if (++m_YtTries > 90)
                             YtFail("O navegador do Apolo não abriu a aba do YouTube.", "Apolo's browser did not open the YouTube tab.");
                         return;
                     }
@@ -340,7 +341,7 @@ namespace Ares.Player
                     string src = tab.View.Source != null ? tab.View.Source.ToString() : "";
                     if (src.IndexOf("/playlist", StringComparison.OrdinalIgnoreCase) < 0 || src.IndexOf(m_YtListId, StringComparison.Ordinal) < 0)
                     {
-                        if (++m_YtTries > 60)
+                        if (++m_YtTries > 130)
                             YtFail("A playlist do YouTube não abriu. Confira o endereço e a internet.", "The YouTube playlist did not open. Check the address and the internet.");
                         return;
                     }
@@ -348,11 +349,12 @@ namespace Ares.Player
                     if (answer != null && answer.Trim('"') == "1")
                     {
                         m_YtPhase = 3;   // from now on it is "the music" of the program
+                        m_YtTimer.Interval = 700;
                         m_YtMiss = 0;
                         if (m_YtReturnHome && m_ShowingWeb)
                             ShowHome();
                     }
-                    else if (++m_YtTries > 60)
+                    else if (++m_YtTries > 130)
                     {
                         YtFail("Não consegui iniciar a playlist (a playlist está vazia ou é privada?).", "Could not start the playlist (is it empty or private?).");
                     }

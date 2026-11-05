@@ -775,7 +775,9 @@ namespace Ares.Player
             if (s_Env == null)
             {
                 string dir = Path.Combine(Ares.Settings.AppFolders.Root, "WebView2");
-                CoreWebView2EnvironmentOptions options = new CoreWebView2EnvironmentOptions("--autoplay-policy=no-user-gesture-required");
+                CoreWebView2EnvironmentOptions options = new CoreWebView2EnvironmentOptions("--autoplay-policy=no-user-gesture-required"
+                    // pages which are not on the screen (a YouTube tab in the background) keep running at full speed
+                    + " --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows");
                 options.AreBrowserExtensionsEnabled = true;
                 s_Env = CoreWebView2Environment.CreateAsync(null, dir, options);
             }
