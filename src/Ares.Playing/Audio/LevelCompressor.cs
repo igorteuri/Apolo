@@ -53,6 +53,10 @@ namespace Ares.Playing
         /// <summary>The most it makes loud material quieter (dB).</summary>
         public static float MaxCutDb { get { return s_MaxCutDb; } set { s_MaxCutDb = Math.Max(0f, Math.Min(30f, value)); } }
 
+        private static volatile int s_SoundTick = Environment.TickCount;
+        /// <summary>Environment.TickCount of the last block of the engine with any sound in it (leveler on or off); at the start of the program it is the start itself.</summary>
+        public static int SoundTick { get { return s_SoundTick; } internal set { s_SoundTick = value; } }
+
         private static volatile int s_ActiveTick;
         /// <summary>Environment.TickCount of the last block with sound above the gate (to tell "playing" from "silent").</summary>
         public static int ActiveTick { get { return s_ActiveTick; } internal set { s_ActiveTick = value; } }

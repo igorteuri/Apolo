@@ -145,6 +145,7 @@ namespace Ares.Player
             copyright.Click += (s, e) => ShowCopyrightCheck();
             extrasToolStripMenuItem.DropDownItems.Add(renamer);
             extrasToolStripMenuItem.DropDownItems.Add(copyright);
+            InitWaveScan();
         }
 
         private void ShowMusicRenamer()
@@ -160,6 +161,12 @@ namespace Ares.Player
         }
 
         private List<string> MusicFilesOfProject()
+        {
+            return AudioFilesOfProject(true);
+        }
+
+        // the existing audio files of the open project (music only, or music and sound effects)
+        private List<string> AudioFilesOfProject(bool musicOnly)
         {
             List<string> result = new List<string>();
             if (m_Project == null)
@@ -178,7 +185,7 @@ namespace Ares.Player
             HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (FileRef r in collector.Files)
             {
-                if (r.File.SoundFileType != SoundFileType.Music)
+                if (musicOnly && r.File.SoundFileType != SoundFileType.Music)
                     continue;
                 string full = FullPathOf(r.File);
                 try

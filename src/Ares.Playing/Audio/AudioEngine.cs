@@ -388,6 +388,19 @@ namespace Ares.Playing.Audio
                     }
                 }
             }
+            if (channels.Length > 0)
+            {
+                // any sound at all (for "the program has been quiet for a while")
+                for (int i = 0; i < m_Mix.Length; i += 16)
+                {
+                    float a = m_Mix[i];
+                    if (a > 0.0005f || a < -0.0005f)
+                    {
+                        Ares.Playing.AudioLeveler.SoundTick = Environment.TickCount;
+                        break;
+                    }
+                }
+            }
             // leveler: brings quiet and loud material to about the same loudness (and limits the peaks)
             m_Leveler.Process(m_Mix, BlockFrames, n, SampleRate, Ares.Playing.AudioLeveler.Enabled);
             // master volume (smooth over the block), and keep the signal in range
