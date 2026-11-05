@@ -30,11 +30,69 @@ namespace Ares.Player
  }
 }
 registerProcessor('apolo-tap', ApoloTap);
+
+// The leveler of the web pages: the same slow automatic gain as the leveler of Apolo's own music (LevelCompressor.cs), so
+// that a page (YouTube...) sounds as even as the rest. Runs on the audio thread of the page.
+class ApoloLevel extends AudioWorkletProcessor {
+ constructor() {
+  super();
+  this.on = false; this.target = -20; this.strength = 0.8; this.boost = 9; this.cut = 12;
+  this.levelDb = -20; this.gainDb = 0; this.gain = 1; this.sum = 0; this.count = 0; this.frames = 0; this.desiredDb = 0; this.peak = 0;
+  this.port.onmessage = e => {
+   var d = e.data || {};
+   this.on = !!d.on;
+   if (typeof d.target === 'number') this.target = d.target;
+   if (typeof d.strength === 'number') this.strength = d.strength;
+   if (typeof d.boost === 'number') this.boost = d.boost;
+   if (typeof d.cut === 'number') this.cut = d.cut;
+  };
+ }
+ coef(seconds, tau) { return 1 - Math.exp(-seconds / tau); }
+ process(inputs, outputs) {
+  var inp = inputs[0], out = outputs[0];
+  if (!out || !out.length) return true;
+  if (!inp || !inp.length) return true;
+  var frames = inp[0].length, chans = out.length, i, c;
+  var sum = 0, peak = 0;
+  for (c = 0; c < inp.length; c++) {
+   var ch = inp[c];
+   for (i = 0; i < frames; i++) { var s = ch[i]; sum += s * s; var a = s < 0 ? -s : s; if (a > peak) peak = a; }
+  }
+  this.sum += sum; this.count += frames * inp.length; this.frames += frames;
+  if (peak > this.peak) this.peak = peak;
+  // the loudness is judged on windows of ~1024 frames (the gain follows slowly, like in Apolo)
+  if (this.frames >= 1024) {
+   var seconds = this.frames / sampleRate;
+   var powerDb = 10 * Math.log10(this.sum / Math.max(1, this.count) + 1e-12);
+   var desired = 0;
+   if (this.on) {
+    if (powerDb > -50) this.levelDb += (powerDb - this.levelDb) * this.coef(seconds, powerDb > this.levelDb ? 0.5 : 2.0);
+    desired = (this.target - this.levelDb) * this.strength;
+    if (desired > this.boost) desired = this.boost; else if (desired < -this.cut) desired = -this.cut;
+    if (powerDb <= -50 && desired > this.gainDb) desired = this.gainDb;   // no boost while nothing plays
+   }
+   this.gainDb += (desired - this.gainDb) * this.coef(seconds, desired < this.gainDb ? 0.3 : 2.0);
+   this.sum = 0; this.count = 0; this.frames = 0; this.peak = 0;
+  }
+  var end = Math.pow(10, this.gainDb / 20);
+  if (peak > 0 && end > 0.95 / peak) { end = 0.95 / peak; this.gainDb = 20 * Math.log10(end); }   // limiter
+  var start = this.gain;
+  if (start > 0.95 / Math.max(peak, 1e-9)) start = 0.95 / Math.max(peak, 1e-9);
+  for (c = 0; c < chans; c++) {
+   var src = inp[c < inp.length ? c : inp.length - 1], dst = out[c];
+   for (i = 0; i < frames; i++) dst[i] = src[i] * (start + (end - start) * (i + 1) / frames);
+  }
+  this.gain = end;
+  return true;
+ }
+}
+registerProcessor('apolo-level', ApoloLevel);
 ";
 
         public const string Page = @"(function() {
  if (window.__apoloCap) return;
- var cap = window.__apoloCap = { on: false, leak: false };
+ var cap = window.__apoloCap = { on: false, leak: false, level: false, lv: { on: false, target: -20, strength: 0.8, boost: 9, cut: 12 } };
+ var levelNodes = [];
  var wv = window.chrome && window.chrome.webview;
  if (!wv) return;
  var origConnect = AudioNode.prototype.connect, origDisconnect = AudioNode.prototype.disconnect;
@@ -114,11 +172,45 @@ registerProcessor('apolo-tap', ApoloTap);
   startWorklet(ctx, entry, sp, rs, id, function() { onWorklet = true; });
   return entry;
  }
+ // the module of the worklets is loaded once for each audio context (it holds the recorder and the leveler)
+ function moduleOf(ctx) {
+  if (!ctx.__apoloModule) ctx.__apoloModule = ctx.audioWorklet.addModule(location.origin + '/__apolo-capture-worklet.js');
+  return ctx.__apoloModule;
+ }
+ // The leveler of the pages: what the page plays goes through one entry per audio context, a worklet which evens out the
+ // volume (like the leveler for the music of Apolo), and from there on to the speakers (or to the recorder)
+ function sendLevel(wn) {
+  try { wn.port.postMessage({ on: cap.level, target: cap.lv.target, strength: cap.lv.strength, boost: cap.lv.boost, cut: cap.lv.cut }); } catch (e) {}
+ }
+ function levelOf(ctx) {
+  if (ctx.__apoloLevel) return ctx.__apoloLevel;
+  var inNode = ctx.createGain(), outNode = ctx.createGain();
+  inNode.__apoloIsTap = true;
+  outNode.__apoloLevelOut = true;
+  origConnect.call(inNode, outNode);
+  ctx.__apoloLevel = inNode;
+  outNode.connect(ctx.destination);
+  try {
+   if (ctx.audioWorklet && window.AudioWorkletNode && location.origin && location.origin !== 'null') {
+    // until the worklet is loaded the sound goes straight through; if the page refuses the worklet it stays that way
+    moduleOf(ctx).then(function() {
+     var wn = new AudioWorkletNode(ctx, 'apolo-level', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 2, channelCountMode: 'explicit' });
+     wn.__apoloIsTap = true;
+     origConnect.call(inNode, wn);
+     origConnect.call(wn, outNode);
+     try { origDisconnect.call(inNode, outNode); } catch (e) {}
+     levelNodes.push(wn);
+     sendLevel(wn);
+    }, function() {});
+   }
+  } catch (e) {}
+  return inNode;
+ }
  function capMode(text) { try { wv.postMessage('apolo-capmode:' + text); } catch (e) {} }
  function startWorklet(ctx, entry, sp, rs, id, done) {
   try {
    if (!ctx.audioWorklet || !window.AudioWorkletNode || !location.origin || location.origin === 'null') { capMode('page thread (no worklet here)'); return; }
-   ctx.audioWorklet.addModule(location.origin + '/__apolo-capture-worklet.js').then(function() {
+   moduleOf(ctx).then(function() {
     var wn = new AudioWorkletNode(ctx, 'apolo-tap', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 2, channelCountMode: 'explicit' });
     wn.__apoloIsTap = true;
     wn.port.onmessage = function(e) { if (cap.on) push(e.data.l, e.data.r, ctx.sampleRate, rs, id); };
@@ -144,7 +236,14 @@ registerProcessor('apolo-tap', ApoloTap);
  }
  AudioNode.prototype.connect = function(dest) {
   // something went to the speakers before the capture was on: that sound can not be taken out of the page any more
-  if (!cap.on && dest instanceof AudioDestinationNode && !this.__apoloIsTap) cap.leak = true;
+  if (cap.level && dest instanceof AudioDestinationNode && !this.__apoloIsTap && !this.__apoloLevelOut) {
+   try {
+    origConnect.call(this, levelOf(dest.context));
+    this.__apoloLeveled = true;
+    return dest;
+   } catch (e) {}
+  }
+  if (!cap.on && dest instanceof AudioDestinationNode && !this.__apoloIsTap && !this.__apoloLevelOut) cap.leak = true;
   if (cap.on && dest instanceof AudioDestinationNode && !this.__apoloIsTap) {
    try {
     origConnect.call(this, tapOf(dest.context));
@@ -159,6 +258,11 @@ registerProcessor('apolo-tap', ApoloTap);
  };
  AudioNode.prototype.disconnect = function(dest) {
   var all = arguments.length === 0;
+  if (this.__apoloLeveled && (all || dest instanceof AudioDestinationNode)) {
+   try { origDisconnect.call(this, this.context.__apoloLevel); } catch (e) {}
+   this.__apoloLeveled = false;
+   if (!all) return;
+  }
   try {
    if ((all || dest instanceof AudioDestinationNode) && this.context && this.context.__apoloTap && !this.__apoloIsTap)
     origDisconnect.call(this, this.context.__apoloTap);
@@ -171,8 +275,21 @@ registerProcessor('apolo-tap', ApoloTap);
   }
   return origDisconnect.apply(this, arguments);
  };
- function hook(el) {
+ // only for the leveler (nothing is sent): never route what could become silent - protected media (DRM), or media of
+ // another site which does not allow it (the browser gives silence then)
+ function mayRoute(el) {
+  try {
+   if (el.mediaKeys) return false;
+   if (el.srcObject) return true;
+   var u = el.currentSrc || el.src || '';
+   if (!u) return false;
+   if (u.indexOf('blob:') === 0) return true;
+   return el.crossOrigin != null || new URL(u, location.href).origin === location.origin;
+  } catch (e) { return false; }
+ }
+ function hook(el, guarded) {
   if (el.__apoloHooked) return;
+  if (guarded && !mayRoute(el)) return;
   el.__apoloHooked = true;
   try {
    // 'playback': a deeper buffer in the browser, steadier when the PC is busy (nobody listens on this PC anyway)
@@ -204,11 +321,25 @@ registerProcessor('apolo-tap', ApoloTap);
  }
  setInterval(report, 400);
  var origPlay = HTMLMediaElement.prototype.play;
- HTMLMediaElement.prototype.play = function() { if (cap.on) hook(this); return origPlay.apply(this, arguments); };
- function hookAll() { var els = document.querySelectorAll('audio,video'); for (var i = 0; i < els.length; i++) hook(els[i]); }
+ HTMLMediaElement.prototype.play = function() { if (cap.on) hook(this); else if (cap.level) hook(this, true); return origPlay.apply(this, arguments); };
+ function hookAll() { var els = document.querySelectorAll('audio,video'); for (var i = 0; i < els.length; i++) hook(els[i], !cap.on); }
+ // media which was not allowed yet when it started (no address yet) is looked at again while it plays
+ setInterval(function() {
+  if (!cap.level || cap.on) return;
+  var els = document.querySelectorAll('audio,video');
+  for (var i = 0; i < els.length; i++) if (!els[i].paused) hook(els[i], true);
+ }, 700);
  wv.addEventListener('message', function(e) {
   if (e.data === 'apolo-capture:on') { cap.on = true; hookAll(); }
   else if (e.data === 'apolo-capture:off') { cap.on = false; }
+  else if (typeof e.data === 'string' && e.data.indexOf('apolo-level:') === 0) {
+   // apolo-level:<1|0>|<target dB>|<strength>|<boost dB>|<cut dB>
+   var v = e.data.substring(12).split('|'), wasOn = cap.level;
+   cap.level = v[0] === '1';
+   if (v.length >= 5) cap.lv = { target: parseFloat(v[1]), strength: parseFloat(v[2]), boost: parseFloat(v[3]), cut: parseFloat(v[4]) };
+   for (var k = 0; k < levelNodes.length; k++) sendLevel(levelNodes[k]);
+   if (cap.level && !wasOn && !cap.on) hookAll();
+  }
  });
  wv.postMessage('apolo-hello');
 })();";

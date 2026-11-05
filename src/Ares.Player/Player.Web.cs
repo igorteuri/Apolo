@@ -469,6 +469,7 @@ namespace Ares.Player
         public WebWindow(Player player)
         {
             m_Player = player;
+            StartLevelWatch();
             Panel bar = new Panel();
             m_Bar = bar;
             bar.Dock = DockStyle.Top;
@@ -1023,6 +1024,49 @@ namespace Ares.Player
             }
         }
 
+        // the leveler for the sound of the pages: the same switch and values as the leveler of the music (AudioLeveler)
+        private static string LevelMessage()
+        {
+            System.Globalization.CultureInfo inv = System.Globalization.CultureInfo.InvariantCulture;
+            return "apolo-level:" + (Ares.Playing.AudioLeveler.Enabled ? "1" : "0")
+                + "|" + (-Math.Abs(Ares.Playing.AudioLeveler.TargetDb)).ToString("0.##", inv)
+                + "|" + Ares.Playing.AudioLeveler.Strength.ToString("0.###", inv)
+                + "|" + Ares.Playing.AudioLeveler.MaxBoostDb.ToString("0.##", inv)
+                + "|" + Ares.Playing.AudioLeveler.MaxCutDb.ToString("0.##", inv);
+        }
+
+        private string m_LevelSent = "";
+        private Timer m_LevelTimer;
+
+        // looks about once a second whether the leveler was switched or changed, and tells the pages
+        private void StartLevelWatch()
+        {
+            m_LevelTimer = new Timer();
+            m_LevelTimer.Interval = 1000;
+            m_LevelTimer.Tick += (s, e) =>
+            {
+                string msg = LevelMessage();
+                if (msg == m_LevelSent)
+                    return;
+                m_LevelSent = msg;
+                foreach (WebTab tab in m_Tabs)
+                {
+                    if (tab.Kind == "vdo" || tab.View == null || tab.View.CoreWebView2 == null)
+                        continue;
+                    try
+                    {
+                        tab.View.CoreWebView2.PostWebMessageAsString(msg);
+                    }
+                    catch (Exception swallowed)
+                    {
+                        Ares.Settings.ErrorLog.Note(swallowed);
+                    }
+                }
+            };
+            m_LevelTimer.Start();
+            Disposed += (s, e) => m_LevelTimer.Dispose();
+        }
+
         private void ApplyCaptureModeAll()
         {
             bool mode = CaptureMode;
@@ -1066,6 +1110,7 @@ namespace Ares.Player
             if (msg == "apolo-hello")
             {
                 core.PostWebMessageAsString(CaptureMode ? "apolo-capture:on" : "apolo-capture:off");
+                core.PostWebMessageAsString(LevelMessage());
             }
             else if (msg.StartsWith("apolo-routed:", StringComparison.Ordinal))
             {
