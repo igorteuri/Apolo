@@ -88,8 +88,22 @@ return JSON.stringify({page:page,list:q.get('list')||'',items:items,index:cur,pa
         public static string VolumeScript(int percent)
         {
             percent = Math.Max(0, Math.Min(100, percent));
-            return "(function(){var v=document.querySelector('video');if(v)v.volume=" + (percent / 100.0).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + ";})()";
+            string f = (percent / 100.0).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+            // also kept in the page (VolumeHookScript uses it for the next videos)
+            return "(function(){try{localStorage.setItem('__apoloVol','" + f + "');}catch(e){}var v=document.querySelector('video');if(v)v.volume=" + f + ";})()";
         }
+
+        /// <summary>Stops keeping the volume (the playlist is no longer the music of Apolo).</summary>
+        public const string ClearVolumeScript = "(function(){try{localStorage.removeItem('__apoloVol');}catch(e){}})()";
+
+        /// <summary>
+        /// Runs at the start of every page of the YouTube tab: each video that loads, plays or changes volume gets the volume Apolo
+        /// wants at once (YouTube starts every new video at its own volume, which was heard as a short loud burst).
+        /// </summary>
+        public const string VolumeHookScript = @"(function(){if(window.__apoloVolHook)return;window.__apoloVolHook=true;
+function want(){try{var s=localStorage.getItem('__apoloVol');if(s===null)return -1;var f=parseFloat(s);return isNaN(f)?-1:f;}catch(e){return -1;}}
+['loadstart','loadedmetadata','play','playing','canplay','volumechange'].forEach(function(n){
+document.addEventListener(n,function(e){var t=e.target;if(!t||t.tagName!=='VIDEO')return;var g=want();if(g>=0&&Math.abs(t.volume-g)>0.005)t.volume=g;},true);});})();";
 
         public const string PauseScript = "(function(){var v=document.querySelector('video');if(v)v.pause();})()";
         public const string PlayScript = "(function(){var v=document.querySelector('video');if(v)v.play();})()";

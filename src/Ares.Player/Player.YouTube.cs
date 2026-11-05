@@ -27,7 +27,8 @@ namespace Ares.Player
         private int m_YtMiss;                            // reads in a row in which the tab was not on the playlist
         private int m_YtPendingJump = -1;                // a title chosen in the track list before the playlist was running
         private bool m_YtReturnHome;
-        private bool m_YtShownTab;                       // the tab had to be shown to start its browser
+        private int m_YtWaitPlay;                        // reads while waiting for the video to start (to go back to the home screen)
+        private Microsoft.Web.WebView2.Core.CoreWebView2 m_YtHookedCore;   // the browser which already has the volume script
         private bool m_YtBusy;
         private YouTubePlaylist.Snapshot m_YtLast;
         private Timer m_YtTimer;
@@ -234,18 +235,15 @@ namespace Ares.Player
             m_YtLen = 0;
             m_YtTitles = new List<string>();
             m_YtVolume = m_PlayingControl.MusicVolume * m_PlayingControl.GlobalVolume / 100;
-            m_YtShownTab = false;
+            m_YtWaitPlay = 0;
+            m_YtReturnHome = !m_ShowingWeb;
             m_YtPhase = 1;
             m_YtTimer.Interval = 300;   // quick while the page is being opened
             YtSetButtonChecked(me.Id, true);
             ShowYtRows(me.Id);
-            // the browser of a tab is created when the tab is first shown: here it is made in the background, the user stays
-            // on the screen he is on (if that does not work, the tab is shown for a moment, see YtTick)
-            if (m_YtTab.View == null || m_YtTab.View.CoreWebView2 == null)
-            {
-                m_YtReturnHome = false;
-                m_WebWindow.StartInBackground(m_YtTab);
-            }
+            // A tab which is not on the screen loads slowly (the browser holds it back), so the YouTube tab is shown while the
+            // playlist opens and the program goes back to the home screen by itself when the video is playing (see YtFollow)
+            ShowWebTab(m_YtTab);
             m_YtTimer.Start();
         }
 
@@ -278,6 +276,7 @@ namespace Ares.Player
             m_YtTrackId = -1;
             m_YtPendingJump = -1;
             m_YtTimer.Stop();
+            YtRun(YouTubePlaylist.ClearVolumeScript);
             YtSetButtonChecked(id, false);
             if (m_TrackPanel != null && m_TrackElementId == id)
             {
@@ -317,18 +316,17 @@ namespace Ares.Player
                 {
                     if (core == null)
                     {
-                        // the background start did not work (8 s): the old way, the tab is shown for a moment
-                        if (m_YtTries == 27 && !m_YtShownTab)
-                        {
-                            m_YtShownTab = true;
-                            m_YtTab.Started = false;
-                            m_YtReturnHome = !m_ShowingWeb;
-                            ShowWebTab(m_YtTab);
-                        }
                         if (++m_YtTries > 90)
                             YtFail("O navegador do Apolo não abriu a aba do YouTube.", "Apolo's browser did not open the YouTube tab.");
                         return;
                     }
+                    if (!ReferenceEquals(m_YtHookedCore, core))
+                    {
+                        // keeps the volume of Apolo on every new video from its first moment (YouTube starts each one at its own volume)
+                        await core.AddScriptToExecuteOnDocumentCreatedAsync(YouTubePlaylist.VolumeHookScript);
+                        m_YtHookedCore = core;
+                    }
+                    YtRun(YouTubePlaylist.VolumeScript(Math.Max(0, m_YtVolume)));
                     core.Navigate(YouTubePlaylist.UrlFor(m_YtListId));
                     m_YtPhase = 2;
                     m_YtTries = 0;
@@ -351,8 +349,6 @@ namespace Ares.Player
                         m_YtPhase = 3;   // from now on it is "the music" of the program
                         m_YtTimer.Interval = 700;
                         m_YtMiss = 0;
-                        if (m_YtReturnHome && m_ShowingWeb)
-                            ShowHome();
                     }
                     else if (++m_YtTries > 130)
                     {
@@ -393,6 +389,13 @@ namespace Ares.Player
             {
                 m_YtPaused = paused;
                 YtSetButtonChecked(m_YtElementId, !paused);
+            }
+            // the video is really playing: back to the home screen (after 30 s anyway)
+            if (m_YtReturnHome && (snap.Position > 0.4 || ++m_YtWaitPlay > 40))
+            {
+                m_YtReturnHome = false;
+                if (m_ShowingWeb)
+                    ShowHome();
             }
             m_YtPos = snap.Position;
             m_YtLen = snap.Duration;

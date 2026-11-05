@@ -125,7 +125,7 @@ namespace Apolo.Tests
             {
                 YouTubePlaylist.StartScript, YouTubePlaylist.ReadScript, YouTubePlaylist.PauseScript, YouTubePlaylist.PlayScript,
                 YouTubePlaylist.NextScript, YouTubePlaylist.PreviousScript, YouTubePlaylist.JumpScript(3),
-                YouTubePlaylist.SeekScript(1.5), YouTubePlaylist.VolumeScript(50)
+                YouTubePlaylist.SeekScript(1.5), YouTubePlaylist.VolumeScript(50), YouTubePlaylist.VolumeHookScript, YouTubePlaylist.ClearVolumeScript
             };
             string dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "apolo-ytjs-" + System.Guid.NewGuid().ToString("N"));
             System.IO.Directory.CreateDirectory(dir);
