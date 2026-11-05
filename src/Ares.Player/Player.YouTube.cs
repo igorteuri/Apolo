@@ -27,6 +27,7 @@ namespace Ares.Player
         private int m_YtMiss;                            // reads in a row in which the tab was not on the playlist
         private int m_YtPendingJump = -1;                // a title chosen in the track list before the playlist was running
         private bool m_YtReturnHome;
+        private bool m_YtShownTab;                       // the tab had to be shown to start its browser
         private bool m_YtBusy;
         private YouTubePlaylist.Snapshot m_YtLast;
         private Timer m_YtTimer;
@@ -233,13 +234,17 @@ namespace Ares.Player
             m_YtLen = 0;
             m_YtTitles = new List<string>();
             m_YtVolume = m_PlayingControl.MusicVolume * m_PlayingControl.GlobalVolume / 100;
-            m_YtReturnHome = !m_ShowingWeb;
+            m_YtShownTab = false;
             m_YtPhase = 1;
             YtSetButtonChecked(me.Id, true);
             ShowYtRows(me.Id);
-            // the browser of a tab is created when the tab is first shown
+            // the browser of a tab is created when the tab is first shown: here it is made in the background, the user stays
+            // on the screen he is on (if that does not work, the tab is shown for a moment, see YtTick)
             if (m_YtTab.View == null || m_YtTab.View.CoreWebView2 == null)
-                ShowWebTab(m_YtTab);
+            {
+                m_YtReturnHome = false;
+                m_WebWindow.StartInBackground(m_YtTab);
+            }
             m_YtTimer.Start();
         }
 
@@ -311,6 +316,14 @@ namespace Ares.Player
                 {
                     if (core == null)
                     {
+                        // the background start did not work (8 s): the old way, the tab is shown for a moment
+                        if (m_YtTries == 12 && !m_YtShownTab)
+                        {
+                            m_YtShownTab = true;
+                            m_YtTab.Started = false;
+                            m_YtReturnHome = !m_ShowingWeb;
+                            ShowWebTab(m_YtTab);
+                        }
                         if (++m_YtTries > 40)
                             YtFail("O navegador do Apolo não abriu a aba do YouTube.", "Apolo's browser did not open the YouTube tab.");
                         return;

@@ -782,12 +782,24 @@ namespace Ares.Player
             return s_Env;
         }
 
-        private async void StartTab(WebTab tab)
+        /// <summary>Starts the browser of a tab without showing the tab (the user stays where he is).</summary>
+        public void StartInBackground(WebTab tab)
+        {
+            StartTab(tab, true);
+        }
+
+        private void StartTab(WebTab tab)
+        {
+            StartTab(tab, false);
+        }
+
+        private async void StartTab(WebTab tab, bool background)
         {
             if (tab.Started)
                 return;
             // the embedded browser can only be created once the window exists and is visible
-            if (!IsHandleCreated || !Visible || tab != m_Selected)
+            // (in the background the handle is made by hand, the tab stays hidden)
+            if (!IsHandleCreated || (!background && (!Visible || tab != m_Selected)))
                 return;
             tab.Started = true;
             int attempt = 0;
@@ -800,6 +812,11 @@ namespace Ares.Player
                 tab.View = new WebView2();
                 tab.View.Dock = DockStyle.Fill;
                 tab.Page.Controls.Add(tab.View);
+                if (background)
+                {
+                    IntPtr handle = tab.View.Handle;   // forces the window of the browser to exist although the tab is hidden
+                    GC.KeepAlive(handle);
+                }
                 CoreWebView2Environment env = await GetEnvironment();
                 await tab.View.EnsureCoreWebView2Async(env);
                 CoreWebView2 core = tab.View.CoreWebView2;
